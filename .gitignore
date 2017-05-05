@@ -250,3 +250,10 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Project Specific
+.settings/
+.vscode/
+target/
+.classpath
+.project

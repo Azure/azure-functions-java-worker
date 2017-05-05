@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.microsoft.azure.webjobs.script.rpc.messages";
+option java_outer_classname = "RPCInvokeFunctionProto";
+option objc_class_prefix = "RpcFunction";
+option csharp_namespace = "Microsoft.Azure.WebJobs.Script.Rpc.Messages";
+
+package RpcFunction;
+
+service RpcFunction {
+  rpc RpcInvokeFunction(RpcFunctionInvokeMetadata) returns (RpcFunctionResultMetadata) {}
+}
+
+enum RpcDataType {
+  String = 0;
+}
+
+message RpcDataValue {
+  string stringValue = 1;
+}
+
+message RpcFunctionInvokeMetadata {
+  string invocationId = 1;
+  string scriptFile = 3;
+  string entryPoint = 9;
+  RpcDataType inputType = 12;
+  RpcDataValue inputValue = 22;
+  RpcDataType outputType = 13;
+}
+
+message RpcFunctionResultMetadata {
+  string invocationId = 1;
+  RpcDataValue outputValue = 23;
+}
