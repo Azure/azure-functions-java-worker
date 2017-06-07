@@ -11,6 +11,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## IntelliJ
 
 * Import this repository folder as an existing project in IntelliJ
+* Configure the Language level (under Project Structure -> Modules -> Sources) to 8
 
 ## Eclipse
 
@@ -19,3 +20,5 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 * Configure the project Java compiler compliance level to 1.8
 * Set the JRE libraries to JRE 1.8
 * "Ignore optional compiler problems" in "Java Build Path" for "target/generated-sources/\*\*/\*.java"
+
+# Coding Convention
