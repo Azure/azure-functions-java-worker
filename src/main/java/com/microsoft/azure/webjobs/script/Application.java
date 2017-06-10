@@ -19,11 +19,11 @@ public final class Application {
     public int getPort() { return this.port; }
     public String getRequestId() { return this.requestId; }
 
-    public void printUsage() {
+
+    private void printUsage() {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("Application", this.OPTIONS, true);
     }
-
 
     private boolean isCommandlineValid() { return this.commandParseSucceeded; }
 
@@ -37,7 +37,7 @@ public final class Application {
             this.requestId = this.parseRequestId(commands.getOptionValue("q"));
             this.commandParseSucceeded = true;
         } catch (ParseException ex) {
-            System.err.println(ex.getMessage());
+            LOGGER.severe(ex.toString());
             this.commandParseSucceeded = false;
         }
     }
@@ -95,9 +95,9 @@ public final class Application {
             System.exit(1);
         } else {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
-                client.establishCommunication();
+                client.establishCommunication(app.getRequestId());
             } catch (Exception ex) {
-                ex.printStackTrace();
+                LOGGER.severe(ex.toString());
                 System.exit(-1);
             }
         }
