@@ -3,16 +3,15 @@ package com.microsoft.azure.webjobs.script;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import javax.annotation.*;
 
 import com.google.protobuf.*;
-import com.microsoft.azure.webjobs.script.broker.JavaFunctionBroker;
 import io.grpc.*;
 import io.grpc.stub.*;
 
-import com.microsoft.azure.webjobs.script.rpc.messages.*;
+import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.handler.*;
-
-import javax.annotation.PostConstruct;
+import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMessage> {
     public JavaWorkerClient(Application app) {
@@ -70,9 +69,9 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
                             Message content = message.getContent().unpack((Class<Message>) contentClass);
                             handler.execute(content).ifPresent((c) -> this.send(c, message.getRequestId()));
                         } catch (InvalidProtocolBufferException ex) {
-                            Application.LOGGER.severe("Unable to unpack content: " + ex);
+                            Application.LOGGER.severe("Unable to unpack content: " + Application.stackTraceToString(ex));
                         } catch (ClassCastException ex) {
-                            Application.LOGGER.severe("Unable to cast to Class<Message>: " + ex);
+                            Application.LOGGER.severe("Unable to cast to Class<Message>: " + Application.stackTraceToString(ex));
                         }
                     } else {
                         Application.LOGGER.severe("Content class not registered for \"" + message.getType() + "\"");

@@ -97,9 +97,20 @@ public final class Application {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
                 client.establishCommunication(app.getRequestId());
             } catch (Exception ex) {
-                LOGGER.severe(ex.toString());
+                LOGGER.severe(stackTraceToString(ex));
                 System.exit(-1);
             }
+        }
+    }
+
+    public static String stackTraceToString(Throwable t) {
+        try (StringWriter writer = new StringWriter();
+             PrintWriter printer = new PrintWriter(writer)) {
+            t.printStackTrace(printer);
+            return writer.toString();
+        } catch (IOException nestedException) {
+            nestedException.printStackTrace();
+            return t.toString();
         }
     }
 
