@@ -2,7 +2,12 @@ package com.microsoft.azure.webjobs.script.broker;
 
 import javax.annotation.*;
 
+import com.google.common.collect.Iterables;
+import com.google.gson.JsonParser;
+import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
+
+import java.net.URI;
 
 public class JavaMethodInput {
     public JavaMethodInput(ParameterBinding parameter) {
@@ -37,6 +42,15 @@ public class JavaMethodInput {
         switch (type) {
             case String:
                 this.value = data.getStringVal();
+                break;
+            case Json:
+                this.value = new JsonParser().parse(data.getStringVal());
+                break;
+            case Bytes:
+                this.value = data.getBytesVal();
+                break;
+            case Http:
+                this.value = data.getHttpVal();
                 break;
             default:
                 throw new IllegalArgumentException("ParameterBinding data type \"" + type + "\" is not supported");

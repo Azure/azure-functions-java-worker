@@ -1,5 +1,8 @@
 package com.microsoft.azure.webjobs.script.broker;
 
+import com.microsoft.azure.webjobs.script.rpc.messages.RpcHttp;
+import com.microsoft.azure.webjobs.script.rpc.messages.TypedData;
+
 import java.lang.reflect.*;
 import java.net.*;
 import java.nio.file.*;
@@ -24,6 +27,18 @@ public class JavaMethodExecutor {
         // TODO: Get a more precise method overload from inputs types
         Method targetMethod = this.candidates.get(0);
         Object instance = Modifier.isStatic(targetMethod.getModifiers()) ? null : this.classInstance;
+
+        // TODO: Change type converter here
+        parameters = Arrays.stream(parameters).map((p) -> {
+            if (p instanceof RpcHttp) {
+                TypedData body = ((RpcHttp) p).getBody();
+                if (body == null) {
+                    return null;
+                }
+                return body.getStringVal();
+            }
+            return p.toString();
+        }).toArray();
         Object returnValue = targetMethod.invoke(instance, parameters);
 
         // TODO: Consider multiple outputs here
