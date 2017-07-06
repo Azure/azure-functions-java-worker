@@ -8,5 +8,6 @@
   <modules>
     <module>azure-functions-java-core</module>
     <module>azure-functions-java-worker</module>
+    <module>azure-functions-java-sample</module>
   </modules>
 </project>

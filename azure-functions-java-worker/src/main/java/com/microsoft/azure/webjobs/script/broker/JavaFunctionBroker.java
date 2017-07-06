@@ -4,6 +4,7 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 
+import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
@@ -16,15 +17,15 @@ public class JavaFunctionBroker {
     }
 
     public void loadMethod(String id, String jarPath, String methodName)
-            throws ClassNotFoundException, MalformedURLException, IllegalAccessException, InstantiationException {
+            throws ClassNotFoundException, MalformedURLException, IllegalAccessException {
         if (id == null || jarPath == null || methodName == null) {
             throw new NullPointerException("id, jarPath, methodName should not be null");
         }
         this.methods.put(id, new JavaMethodExecutor(jarPath, methodName));
     }
 
-    public ParameterBinding.Builder invokeMethod(String id, List<ParameterBinding> parameters)
-            throws InvocationTargetException, IllegalAccessException {
+    public ParameterBinding invokeMethod(String id, List<ParameterBinding> parameters)
+            throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         if (id == null) {
             throw new NullPointerException("id should not be null");
         }
@@ -35,7 +36,7 @@ public class JavaFunctionBroker {
 
         // TODO: Consider trigger metadata here
         JavaMethodInput[] inputs = parameters.stream().map(JavaMethodInput::new).toArray(JavaMethodInput[]::new);
-        JavaMethodOutput output = executor.execute(inputs);
+        JavaMethodOutput output = executor.execute(inputs, new ExecutionContext());
         return output.toParameterBinding();
     }
 

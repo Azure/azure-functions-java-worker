@@ -1,45 +1,36 @@
 package com.microsoft.azure.webjobs.script.broker;
 
-import com.microsoft.azure.webjobs.script.rpc.messages.RpcHttp;
-import com.microsoft.azure.webjobs.script.rpc.messages.TypedData;
-
 import java.lang.reflect.*;
 import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import javax.annotation.*;
 
+import com.microsoft.azure.serverless.functions.*;
+
 /**
  * This class is used for reflect a Java method with its parameters.
  */
 public class JavaMethodExecutor {
     public JavaMethodExecutor(String jar, String fullMethodName)
-            throws MalformedURLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+            throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
         this.jarPath = jar;
         this.candidates = new ArrayList<>();
         this.splitFullMethodName(fullMethodName);
         this.retrieveCandidates();
     }
 
-    public JavaMethodOutput execute(JavaMethodInput[] inputs) throws InvocationTargetException, IllegalAccessException {
-        Object[] parameters = Arrays.stream(inputs).map(JavaMethodInput::getValue).toArray();
+    public JavaMethodOutput execute(JavaMethodInput[] inputs, ExecutionContext context)
+            throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        OverloadResolver overloadResolver = new OverloadResolver(context, inputs);
+        Optional<OverloadResolver.Result> result = overloadResolver.resolve(this.candidates);
+        if (!result.isPresent()) {
+            throw new NoSuchMethodException("Cannot locate the method signature with the given input");
+        }
 
-        // TODO: Get a more precise method overload from inputs types
-        Method targetMethod = this.candidates.get(0);
-        Object instance = Modifier.isStatic(targetMethod.getModifiers()) ? null : this.classInstance;
-
-        // TODO: Change type converter here
-        parameters = Arrays.stream(parameters).map((p) -> {
-            if (p instanceof RpcHttp) {
-                TypedData body = ((RpcHttp) p).getBody();
-                if (body == null) {
-                    return null;
-                }
-                return body.getStringVal();
-            }
-            return p.toString();
-        }).toArray();
-        Object returnValue = targetMethod.invoke(instance, parameters);
+        Method targetMethod = result.get().getMethod();
+        Object instance = Modifier.isStatic(targetMethod.getModifiers()) ? null : this.containingClass.newInstance();
+        Object returnValue = targetMethod.invoke(instance, result.get().getArguments());
 
         // TODO: Consider multiple outputs here
         return new JavaMethodOutput(returnValue);
@@ -59,11 +50,11 @@ public class JavaMethodExecutor {
     }
 
     @PostConstruct
-    private void retrieveCandidates() throws MalformedURLException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private void retrieveCandidates() throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
         URL jarUrl = Paths.get(this.jarPath).toUri().toURL();
         URLClassLoader classLoader = new URLClassLoader(new URL[] { jarUrl });
-        Class<?> reflectedClass = Class.forName(this.fullClassName, true, classLoader);
-        for (Method method : reflectedClass.getMethods()) {
+        this.containingClass = Class.forName(this.fullClassName, true, classLoader);
+        for (Method method : this.containingClass.getMethods()) {
             if (method.getName().equals(this.methodName)) {
                 this.candidates.add(method);
             }
@@ -71,16 +62,11 @@ public class JavaMethodExecutor {
         if (this.candidates.isEmpty()) {
             throw new NoSuchMethodError("\"" + this.methodName + "\" not found in \"" + this.fullClassName + "\"");
         }
-        if (this.candidates.stream().allMatch((m) -> Modifier.isStatic(m.getModifiers()))) {
-            this.classInstance = null;
-        } else {
-            this.classInstance = reflectedClass.newInstance();
-        }
     }
 
     private String jarPath;
     private String fullClassName;
     private String methodName;
-    private Object classInstance;
+    private Class<?> containingClass;
     private List<Method> candidates;
 }

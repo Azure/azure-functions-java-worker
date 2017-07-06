@@ -35,7 +35,7 @@ public class InvocationRequestHandler extends ReactiveMessageHandler<InvocationR
         });
 
         try {
-            ParameterBinding.Builder returnValue = this.broker.invokeMethod(functionId, request.getInputDataList());
+            ParameterBinding returnValue = this.broker.invokeMethod(functionId, request.getInputDataList());
             Application.LOGGER.info("Function \"" + functionId + "\" executed");
 
             StatusResult.Builder statusResult = StatusResult.newBuilder()

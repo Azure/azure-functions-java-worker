@@ -15,22 +15,12 @@ public class JavaMethodOutput {
         this.value = value;
     }
 
-    public ParameterBinding.Builder toParameterBinding() {
-        return ParameterBinding.newBuilder().setName(this.getName()).setData(this.getData());
+    public ParameterBinding toParameterBinding() {
+        return ParameterBinding.newBuilder().setName(this.getName()).setData(TypeResolver.toTypedData(this.value)).build();
     }
 
     private String getName() {
         return "$return";
-    }
-
-    private TypedData.Builder getData() {
-        TypedData.Builder builder = TypedData.newBuilder();
-        if (value instanceof String) {
-            builder.setTypeVal(TypedData.Type.String).setStringVal(value.toString());
-        } else {
-            throw new IllegalArgumentException("Return value type \"" + value.getClass() + "\" is not supported");
-        }
-        return builder;
     }
 
     private Object value;
