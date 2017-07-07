@@ -17,7 +17,7 @@ public class JavaFunctionBroker {
     }
 
     public void loadMethod(String id, String jarPath, String methodName)
-            throws ClassNotFoundException, MalformedURLException, IllegalAccessException {
+            throws ClassNotFoundException, MalformedURLException, IllegalAccessException, NoSuchMethodException {
         if (id == null || jarPath == null || methodName == null) {
             throw new NullPointerException("id, jarPath, methodName should not be null");
         }

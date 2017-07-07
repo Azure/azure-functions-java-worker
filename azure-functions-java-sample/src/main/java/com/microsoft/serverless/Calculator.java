@@ -1,14 +1,8 @@
 package com.microsoft.serverless;
 
 import java.util.Arrays;
-import com.microsoft.azure.serverless.functions.HttpRequestMessage;
-import com.microsoft.azure.serverless.functions.HttpResponseMessage;
 
 public class Calculator {
-    public static String echo(String input) {
-        return "Hello, " + input + "!";
-    }
-
     public static int negate(int n) {
         return -n;
     }
@@ -20,28 +14,18 @@ public class Calculator {
     public static ComplexNumber multiply(TwoComplexNumbers operands) {
         ComplexNumber n1 = operands.getN1(),
                       n2 = operands.getN2();
-        return new ComplexNumber(n1.getR() * n2.getR() - n1.getI() * n2.getI(), n1.getR() * n2.getI() + n1.getI() + n2.getR());
-    }
-
-    public static String echo(HttpRequestMessage request) {
-        String source = request.getQueryParameters().getOrDefault("name", null);
-        if (source == null || source.isEmpty()) {
-            source = request.getBody();
-        }
-        return echo(source);
-    }
-
-    public static HttpResponseMessage upload(byte[] data) {
-        return new HttpResponseMessage(202, data.length + " bytes");
+        return new ComplexNumber(
+                n1.getRe() * n2.getRe() - n1.getIm() * n2.getIm(),
+                n1.getRe() * n2.getIm() + n1.getIm() * n2.getRe());
     }
 
     public static class ComplexNumber {
-        public ComplexNumber(int r, int i) {
-            this.r = r;
-            this.i = i;
+        public ComplexNumber(int re, int im) {
+            this.r = re;
+            this.i = im;
         }
-        int getR() { return this.r; }
-        int getI() { return this.i; }
+        int getRe() { return this.r; }
+        int getIm() { return this.i; }
         private int r;
         private int i;
     }

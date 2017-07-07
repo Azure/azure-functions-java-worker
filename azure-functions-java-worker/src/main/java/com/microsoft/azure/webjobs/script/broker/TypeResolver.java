@@ -39,7 +39,7 @@ public class TypeResolver {
                 return TypedData.newBuilder().setTypeVal(TypedData.Type.Json).setStringVal(new Gson().toJson(data)).build();
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("Return value type \"" + data.getClass() + "\" is not supported");
+            throw new IllegalArgumentException("Return value type \"" + data.getClass() + "\" is not supported", e);
         }
     }
 
@@ -61,6 +61,8 @@ public class TypeResolver {
     public static Optional<Object> tryAssign(Class<?> targetType, Object data) {
         if (targetType.isAssignableFrom(data.getClass())) {
             return Optional.of(data);
+        } else if (data instanceof RpcHttp && targetType.equals(HttpRequestMessage.class)) {
+            return Optional.of(parseRpcHttp((RpcHttp) data));
         }
         return Optional.empty();
     }
@@ -78,11 +80,7 @@ public class TypeResolver {
                     return Optional.of(new Gson().fromJson(data.toString(), targetType));
                 }
             } else if (data instanceof RpcHttp) {
-                if (targetType.equals(HttpRequestMessage.class)) {
-                    return Optional.of(parseRpcHttp((RpcHttp) data));
-                } else {
-                    return tryConvert(targetType, parseTypedData(((RpcHttp) data).getBody()));
-                }
+                return tryConvert(targetType, parseTypedData(((RpcHttp) data).getBody()));
             } else if (data instanceof ByteString) {
                 if (targetType.equals(byte[].class) || targetType.equals(Byte[].class)) {
                     return Optional.of(((ByteString) data).toByteArray());
@@ -94,6 +92,7 @@ public class TypeResolver {
             throw e;
         } catch (Exception e) {
             Application.LOGGER.info("Unable to convert data from \"" + data.getClass() + "\" to \"" + targetType + "\"");
+            Application.LOGGER.info(Application.stackTraceToString(e));
         }
         return Optional.empty();
     }

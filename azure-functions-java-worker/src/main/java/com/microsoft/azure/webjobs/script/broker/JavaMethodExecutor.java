@@ -13,7 +13,7 @@ import com.microsoft.azure.serverless.functions.*;
  */
 public class JavaMethodExecutor {
     public JavaMethodExecutor(String jar, String fullMethodName)
-            throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
+            throws MalformedURLException, ClassNotFoundException, IllegalAccessException, NoSuchMethodException {
         this.jarPath = jar;
         this.candidates = new ArrayList<>();
         this.splitFullMethodName(fullMethodName);
@@ -50,7 +50,7 @@ public class JavaMethodExecutor {
     }
 
     @PostConstruct
-    private void retrieveCandidates() throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
+    private void retrieveCandidates() throws MalformedURLException, ClassNotFoundException, IllegalAccessException, NoSuchMethodException {
         URL jarUrl = Paths.get(this.jarPath).toUri().toURL();
         URLClassLoader classLoader = new URLClassLoader(new URL[] { jarUrl });
         this.containingClass = Class.forName(this.fullClassName, true, classLoader);
@@ -60,7 +60,7 @@ public class JavaMethodExecutor {
             }
         }
         if (this.candidates.isEmpty()) {
-            throw new NoSuchMethodError("\"" + this.methodName + "\" not found in \"" + this.fullClassName + "\"");
+            throw new NoSuchMethodException("\"" + this.methodName + "\" not found in \"" + this.fullClassName + "\"");
         }
     }
 

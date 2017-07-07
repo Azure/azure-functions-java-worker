@@ -9,7 +9,7 @@ public class JavaMethodOutput {
         System.out.println("-------------------------------------------------------");
         System.out.println("Name:      " + "$return");
         System.out.println("Data Type: " + value.getClass());
-        System.out.println("Data:      " + value.toString());
+        System.out.println("Data:      " + TypeResolver.toTypedData(value).toString());
         System.out.println("=======================================================");
 
         this.value = value;

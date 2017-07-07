@@ -8,6 +8,7 @@ import java.util.Map;
 public class HttpRequestMessage {
     private HttpRequestMessage() {
         this.headers = new HashMap<>();
+        this.query = new HashMap<>();
     }
 
     public URI getUri() { return this.uri; }
@@ -28,11 +29,15 @@ public class HttpRequestMessage {
         public Builder setMethod(String method) { this.message.method = method; return this; }
         public Builder setBody(String body) { this.message.body = body; return this; }
         public Builder putAllHeaders(Map<String, String> headers) {
-            this.message.headers.putAll(headers);
+            if (headers != null) {
+                this.message.headers.putAll(headers);
+            }
             return this;
         }
         public Builder putAllQueryParameters(Map<String, String> parameters) {
-            this.message.query.putAll(parameters);
+            if (parameters != null) {
+                this.message.query.putAll(parameters);
+            }
             return this;
         }
 
