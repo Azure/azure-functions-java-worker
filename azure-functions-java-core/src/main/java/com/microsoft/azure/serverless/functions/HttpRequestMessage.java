@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HttpRequestMessage {
+public final class HttpRequestMessage {
     private HttpRequestMessage() {
         this.headers = new HashMap<>();
         this.query = new HashMap<>();

@@ -114,5 +114,6 @@ public final class Application {
         }
     }
 
-    public static final Logger LOGGER = Logger.getGlobal();
+    // Get an anonymous logger so that the client code won't pollute it through the LogManager
+    public static final Logger LOGGER = Logger.getAnonymousLogger();
 }

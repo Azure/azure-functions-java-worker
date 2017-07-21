@@ -1,5 +1,7 @@
 package com.microsoft.azure.webjobs.script.handler;
 
+import java.util.*;
+
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
@@ -14,28 +16,8 @@ public class InvocationRequestHandler extends ReactiveMessageHandler<InvocationR
         final String functionId = request.getFunctionId();
         final String invocationId = request.getInvocationId();
 
-        request.getTriggerMetadataMap().forEach((key, data) -> {
-            System.out.println("-------------------------------------------------------");
-            System.out.println("                    Trigger Metadata");
-            System.out.println("-------------------------------------------------------");
-            System.out.println("Key:       " + key);
-            System.out.println("Data Type: " + data.getTypeVal());
-            switch (data.getTypeVal()) {
-                case String:
-                    System.out.println("Data:      " + data.getStringVal());
-                    break;
-                case Bytes:
-                    System.out.println("Data:      " + data.getBytesVal());
-                    break;
-                case Http:
-                    System.out.println("Data:      " + data.getHttpVal());
-                    break;
-            }
-            System.out.println("=======================================================");
-        });
-
         try {
-            ParameterBinding returnValue = this.broker.invokeMethod(functionId, request.getInputDataList());
+            List<ParameterBinding> outputBindings = this.broker.invokeMethod(functionId, request.getInputDataList());
             Application.LOGGER.info("Function \"" + functionId + "\" executed");
 
             StatusResult.Builder statusResult = StatusResult.newBuilder()
@@ -43,7 +25,7 @@ public class InvocationRequestHandler extends ReactiveMessageHandler<InvocationR
                     .setResult("Function Executed, Return Value Here");
             return InvocationResponse.newBuilder()
                     .setInvocationId(invocationId)
-                    .addOutputData(returnValue)
+                    .addAllOutputData(outputBindings)
                     .setResult(statusResult);
         } catch (Exception ex) {
             Application.LOGGER.warning("Function \"" + functionId + "\" cannot be invoked: " + Application.stackTraceToString(ex));

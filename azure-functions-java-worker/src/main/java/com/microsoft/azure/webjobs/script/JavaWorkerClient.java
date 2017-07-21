@@ -23,6 +23,7 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
     }
 
     public void establishCommunication(String requestId) throws InterruptedException {
+        Application.LOGGER.info("Java language worker initializing...");
         if (this.listenerLatch == null) {
             this.listenerLatch = new CountDownLatch(1);
             this.listenerError = null;
@@ -37,8 +38,9 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
                         ? (RuntimeException) this.listenerError
                         : new RuntimeException(this.listenerError);
             }
+            Application.LOGGER.info("Java language worker initialized");
         } else {
-            Application.LOGGER.severe("Trying to establish duplicated communication");
+            Application.LOGGER.severe("Duplicated Java language worker initialization");
         }
     }
 
@@ -61,9 +63,9 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
     public void onNext(StreamingMessage message) {
         if (this.listenerLatch != null) {
             if (message != null) {
-                IMessageHandler handler = this.handlers.getOrDefault(message.getType(), null);
+                IMessageHandler handler = this.handlers.get(message.getType());
                 if (handler != null) {
-                    Class<?> contentClass = INBOUND_TYPE_MAPPING.getOrDefault(message.getType(), null);
+                    Class<?> contentClass = INBOUND_TYPE_MAPPING.get(message.getType());
                     if (contentClass != null) {
                         try {
                             Message content = message.getContent().unpack((Class<Message>) contentClass);
@@ -110,7 +112,7 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
 
     private void send(Message content, String requestId) {
         if (this.requestObserver != null) {
-            StreamingMessage.Type contentType = OUTBOUND_TYPE_MAPPING.getOrDefault(content.getClass(), null);
+            StreamingMessage.Type contentType = OUTBOUND_TYPE_MAPPING.get(content.getClass());
             if (contentType != null) {
                 StreamingMessage message = StreamingMessage.newBuilder()
                         .setType(contentType)
@@ -143,13 +145,13 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
     private StreamObserver<StreamingMessage> requestObserver;
     private HashMap<StreamingMessage.Type, IMessageHandler> handlers;
 
-    private static final HashMap<Class<?>, StreamingMessage.Type> OUTBOUND_TYPE_MAPPING =
+    private static final Map<Class<?>, StreamingMessage.Type> OUTBOUND_TYPE_MAPPING =
             new HashMap<Class<?>, StreamingMessage.Type>() {{
                 put(StartStream.class, StreamingMessage.Type.StartStream);
                 put(FunctionLoadResponse.class, StreamingMessage.Type.FunctionLoadResponse);
                 put(InvocationResponse.class, StreamingMessage.Type.InvocationResponse);
             }};
-    private static final HashMap<StreamingMessage.Type, Class<?>> INBOUND_TYPE_MAPPING =
+    private static final Map<StreamingMessage.Type, Class<?>> INBOUND_TYPE_MAPPING =
             new HashMap<StreamingMessage.Type, Class<?>>() {{
                 put(StreamingMessage.Type.FunctionLoadRequest, FunctionLoadRequest.class);
                 put(StreamingMessage.Type.InvocationRequest, InvocationRequest.class);

@@ -3,42 +3,48 @@ package com.microsoft.azure.webjobs.script.broker;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.*;
 
 import com.microsoft.azure.serverless.functions.*;
+import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
- * A broker between JAR methods and the function RPC. It can load methods by using reflection, and invoke them at
- * runtime.
+ * A broker between JAR methods and the function RPC. It can load methods using reflection, and invoke them at runtime.
  */
 public class JavaFunctionBroker {
     public JavaFunctionBroker() {
-        this.methods = new HashMap<>();
     }
 
     public void loadMethod(String id, String jarPath, String methodName)
-            throws ClassNotFoundException, MalformedURLException, IllegalAccessException, NoSuchMethodException {
+            throws ClassNotFoundException, MalformedURLException, IllegalAccessException {
         if (id == null || jarPath == null || methodName == null) {
             throw new NullPointerException("id, jarPath, methodName should not be null");
         }
         this.methods.put(id, new JavaMethodExecutor(jarPath, methodName));
     }
 
-    public ParameterBinding invokeMethod(String id, List<ParameterBinding> parameters)
+    public List<ParameterBinding> invokeMethod(String id, List<ParameterBinding> parameters)
             throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
-        if (id == null) {
-            throw new NullPointerException("id should not be null");
-        }
-        JavaMethodExecutor executor = this.methods.getOrDefault(id, null);
+        JavaMethodExecutor executor = this.methods.get(id);
         if (executor == null) {
-            throw new NullPointerException("Cannot find method with ID \"" + id + "\"");
+            throw new NoSuchMethodException("Cannot find method with ID \"" + id + "\"");
         }
 
         // TODO: Consider trigger metadata here
-        JavaMethodInput[] inputs = parameters.stream().map(JavaMethodInput::new).toArray(JavaMethodInput[]::new);
-        JavaMethodOutput output = executor.execute(inputs, new ExecutionContext());
-        return output.toParameterBinding();
+        InputDataStore inputs = new InputDataStore(parameters);
+        OutputDataStore outputs = new OutputDataStore();
+        executor.execute(inputs, outputs);
+        return outputs.toParameterBindings();
     }
 
-    private Map<String, JavaMethodExecutor> methods;
+    private ExecutionContext createExecutionContext(String invocationId) {
+        Logger executionLogger = Logger.getAnonymousLogger();
+        return new ExecutionContext.Builder()
+                .setInvocationId(invocationId)
+                .setLogger(executionLogger)
+                .build();
+    }
+
+    private Map<String, JavaMethodExecutor> methods = new HashMap<>();
 }

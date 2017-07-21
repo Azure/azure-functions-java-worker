@@ -1,6 +1,6 @@
 package com.microsoft.azure.serverless.functions;
 
-public class HttpResponseMessage {
+public final class HttpResponseMessage {
     public HttpResponseMessage(int status) {
         this(status, null);
     }
