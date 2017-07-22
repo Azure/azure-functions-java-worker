@@ -3,9 +3,9 @@ package com.microsoft.azure.webjobs.script;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.*;
 import javax.annotation.*;
 
-import com.google.protobuf.*;
 import io.grpc.*;
 import io.grpc.stub.*;
 
@@ -13,43 +13,26 @@ import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.handler.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMessage> {
-    public JavaWorkerClient(Application app) {
-        this.listenerLatch = null;
+class JavaWorkerClient implements Closeable {
+    JavaWorkerClient(Application app) {
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
-        this.functionStub = FunctionRpcGrpc.newStub(this.channel);
-        this.requestObserver = null;
         this.addHandlers();
     }
 
-    public void establishCommunication(String requestId) throws InterruptedException {
-        Application.LOGGER.info("Java language worker initializing...");
-        if (this.listenerLatch == null) {
-            this.listenerLatch = new CountDownLatch(1);
-            this.listenerError = null;
+    @PostConstruct
+    private void addHandlers() {
+        JavaFunctionBroker broker = new JavaFunctionBroker();
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, WorkerInitRequestHandler::new);
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
+    }
 
-            this.requestObserver = this.functionStub.eventStream(this);
-            this.send(StartStream.newBuilder().build(), requestId);
-
-            this.listenerLatch.await();
-            this.listenerLatch = null;
-            if (this.listenerError != null) {
-                throw (this.listenerError instanceof RuntimeException)
-                        ? (RuntimeException) this.listenerError
-                        : new RuntimeException(this.listenerError);
-            }
-            Application.LOGGER.info("Java language worker initialized");
-        } else {
-            Application.LOGGER.severe("Duplicated Java language worker initialization");
-        }
+    void listen(String requestId) throws InterruptedException {
+        new StreamingMessagePeer(requestId).await();
     }
 
     @Override
     public void close() throws IOException {
-        if (this.requestObserver != null) {
-            this.requestObserver.onCompleted();
-            this.requestObserver = null;
-        }
         this.channel.shutdown();
         try {
             this.channel.awaitTermination(15, TimeUnit.SECONDS);
@@ -58,102 +41,40 @@ public class JavaWorkerClient implements Closeable, StreamObserver<StreamingMess
         }
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void onNext(StreamingMessage message) {
-        if (this.listenerLatch != null) {
-            if (message != null) {
-                IMessageHandler handler = this.handlers.get(message.getType());
-                if (handler != null) {
-                    Class<?> contentClass = INBOUND_TYPE_MAPPING.get(message.getType());
-                    if (contentClass != null) {
-                        try {
-                            Message content = message.getContent().unpack((Class<Message>) contentClass);
-                            handler.execute(content).ifPresent((c) -> this.send(c, message.getRequestId()));
-                        } catch (InvalidProtocolBufferException ex) {
-                            Application.LOGGER.severe("Unable to unpack content: " + Application.stackTraceToString(ex));
-                        } catch (ClassCastException ex) {
-                            Application.LOGGER.severe("Unable to cast to Class<Message>: " + Application.stackTraceToString(ex));
-                        }
-                    } else {
-                        Application.LOGGER.severe("Content class not registered for \"" + message.getType() + "\"");
-                    }
-                } else {
-                    Application.LOGGER.severe("No handlers for \"" + message.getType() + "\"");
-                }
-            } else {
-                Application.LOGGER.warning("Received null StreamingMessage");
+    private class StreamingMessagePeer implements StreamObserver<StreamingMessage> {
+        StreamingMessagePeer(String requestId) {
+            this.send(requestId, new StartStreamHandler());
+        }
+
+        void await() throws InterruptedException {
+            this.latch.await();
+            if (this.error != null) {
+                throw new RuntimeException(this.error);
             }
-        } else {
-            Application.LOGGER.severe("Received message without listening");
         }
-    }
 
-    @Override
-    public void onError(Throwable t) {
-        if (this.listenerLatch != null) {
-            if (t != null) {
-                this.listenerError = t;
-                this.listenerLatch.countDown();
-            }
-        } else {
-            Application.LOGGER.severe("Received message without listening");
+        @Override
+        public void onNext(StreamingMessage message) {
+            MessageHandler<?, ?> handler = JavaWorkerClient.this.handlerSuppliers.get(message.getContentCase()).get();
+            this.send(message.getRequestId(), handler.setRequest(message).handle());
         }
-    }
 
-    @Override
-    public void onCompleted() {
-        if (this.listenerLatch != null) {
-            this.listenerLatch.countDown();
-        } else {
-            Application.LOGGER.severe("Received message without listening");
+        @Override
+        public void onCompleted() { this.latch.countDown(); }
+
+        @Override
+        public void onError(Throwable t) { this.error = t; this.onCompleted(); }
+
+        private void send(String requestId, MessageHandler<?, ?> marshaller) {
+            StreamingMessage.Builder messageBuilder = StreamingMessage.newBuilder().setRequestId(requestId);
+            this.observer.onNext(marshaller.marshalResponse(messageBuilder).build());
         }
+
+        private Throwable error = null;
+        private CountDownLatch latch = new CountDownLatch(1);
+        private StreamObserver<StreamingMessage> observer = FunctionRpcGrpc.newStub(JavaWorkerClient.this.channel).eventStream(this);
     }
 
-    private void send(Message content, String requestId) {
-        if (this.requestObserver != null) {
-            StreamingMessage.Type contentType = OUTBOUND_TYPE_MAPPING.get(content.getClass());
-            if (contentType != null) {
-                StreamingMessage message = StreamingMessage.newBuilder()
-                        .setType(contentType)
-                        .setContent(Any.pack(content))
-                        .setRequestId(requestId)
-                        .build();
-                this.requestObserver.onNext(message);
-            } else {
-                Application.LOGGER.severe("Message class \"" + content.getClass() + "\" is not supported");
-            }
-        } else {
-            Application.LOGGER.severe("requestObserver is null");
-        }
-    }
-
-    @PostConstruct
-    private void addHandlers() {
-        JavaFunctionBroker broker = new JavaFunctionBroker();
-
-        this.handlers = new HashMap<>();
-        this.handlers.put(StreamingMessage.Type.WorkerInitRequest, new WorkerInitRequestHandler());
-        this.handlers.put(StreamingMessage.Type.FunctionLoadRequest, new FunctionLoadRequestHandler(broker));
-        this.handlers.put(StreamingMessage.Type.InvocationRequest, new InvocationRequestHandler(broker));
-    }
-
-    private CountDownLatch listenerLatch;
-    private Throwable listenerError;
     private ManagedChannel channel;
-    private FunctionRpcGrpc.FunctionRpcStub functionStub;
-    private StreamObserver<StreamingMessage> requestObserver;
-    private HashMap<StreamingMessage.Type, IMessageHandler> handlers;
-
-    private static final Map<Class<?>, StreamingMessage.Type> OUTBOUND_TYPE_MAPPING =
-            new HashMap<Class<?>, StreamingMessage.Type>() {{
-                put(StartStream.class, StreamingMessage.Type.StartStream);
-                put(FunctionLoadResponse.class, StreamingMessage.Type.FunctionLoadResponse);
-                put(InvocationResponse.class, StreamingMessage.Type.InvocationResponse);
-            }};
-    private static final Map<StreamingMessage.Type, Class<?>> INBOUND_TYPE_MAPPING =
-            new HashMap<StreamingMessage.Type, Class<?>>() {{
-                put(StreamingMessage.Type.FunctionLoadRequest, FunctionLoadRequest.class);
-                put(StreamingMessage.Type.InvocationRequest, InvocationRequest.class);
-            }};
+    private HashMap<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers = new HashMap<>();
 }

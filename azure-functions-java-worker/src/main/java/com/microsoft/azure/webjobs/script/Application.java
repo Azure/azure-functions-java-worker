@@ -95,12 +95,16 @@ public final class Application {
             System.exit(1);
         } else {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
-                client.establishCommunication(app.getRequestId());
+                client.listen(app.getRequestId());
             } catch (Exception ex) {
                 LOGGER.severe(stackTraceToString(ex));
                 System.exit(-1);
             }
         }
+    }
+
+    public static String version() {
+        return Application.class.getPackage().getImplementationVersion();
     }
 
     public static String stackTraceToString(Throwable t) {

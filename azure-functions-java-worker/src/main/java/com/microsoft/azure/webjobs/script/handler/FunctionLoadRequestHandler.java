@@ -1,31 +1,25 @@
 package com.microsoft.azure.webjobs.script.handler;
 
-import com.microsoft.azure.webjobs.script.Application;
 import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-public class FunctionLoadRequestHandler extends ReactiveMessageHandler<FunctionLoadRequest, FunctionLoadResponse> {
+public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadRequest, FunctionLoadResponse.Builder> {
     public FunctionLoadRequestHandler(JavaFunctionBroker broker) {
+        super(StreamingMessage::getFunctionLoadRequest,
+              FunctionLoadResponse::newBuilder,
+              FunctionLoadResponse.Builder::setResult,
+              StreamingMessage.Builder::setFunctionLoadResponse);
         this.broker = broker;
     }
 
     @Override
-    public FunctionLoadResponse.Builder executeCore(FunctionLoadRequest request) {
+    String execute(FunctionLoadRequest request, FunctionLoadResponse.Builder response) throws Exception {
         final String functionId = request.getFunctionId();
-        final RpcFunctionMetadata metadata = request.getMetadata();
-        final String script = metadata.getScriptFile();
-        final String entryPoint = metadata.getEntryPoint();
-        try {
-            this.broker.loadMethod(functionId, script, entryPoint);
-            Application.LOGGER.info(functionId + " - \"" + script + "\"::\"" + entryPoint + "\" loaded");
-            return FunctionLoadResponse.newBuilder()
-                    .setFunctionId(functionId)
-                    .setResult(succeededStatus("Function Loaded"));
-        } catch (Exception ex) {
-            Application.LOGGER.warning(
-                    functionId + " - \"" + script + "\"::\"" + entryPoint + "\" cannot be loaded: " + ex);
-            return FunctionLoadResponse.newBuilder().setResult(failedStatus(ex));
-        }
+        final String script = request.getMetadata().getScriptFile();
+        final String entryPoint = request.getMetadata().getEntryPoint();
+        this.broker.loadMethod(functionId, script, entryPoint);
+        response.setFunctionId(functionId);
+        return functionId + " - \"" + script + "\"::\"" + entryPoint + "\" loaded";
     }
 
     private JavaFunctionBroker broker;

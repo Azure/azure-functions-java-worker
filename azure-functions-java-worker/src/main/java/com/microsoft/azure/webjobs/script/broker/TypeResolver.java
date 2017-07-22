@@ -9,7 +9,9 @@ import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
+@Deprecated
 public class TypeResolver {
+    /*
     public static Object parseTypedData(TypedData data) {
         try {
             switch (data.getTypeVal()) {
@@ -41,8 +43,9 @@ public class TypeResolver {
         } catch (Exception e) {
             throw new IllegalArgumentException("Return value type \"" + data.getClass() + "\" is not supported", e);
         }
-    }
+    }*/
 
+    /*
     private static HttpRequestMessage parseRpcHttp(RpcHttp rpc) {
         return new HttpRequestMessage.Builder().setMethod(rpc.getMethod())
                 .setUri(URI.create(rpc.getUrl()))
@@ -57,7 +60,9 @@ public class TypeResolver {
                 .setBody(toTypedData(response.getBody()))
                 .build();
     }
+    */
 
+    /*
     public static Optional<Object> tryAssign(Class<?> targetType, Object data) {
         if (targetType.isAssignableFrom(data.getClass())) {
             return Optional.of(data);
@@ -96,4 +101,5 @@ public class TypeResolver {
         }
         return Optional.empty();
     }
+    */
 }

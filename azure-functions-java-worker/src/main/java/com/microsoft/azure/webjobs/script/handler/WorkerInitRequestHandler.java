@@ -3,9 +3,17 @@ package com.microsoft.azure.webjobs.script.handler;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-public class WorkerInitRequestHandler extends ActionMessageHandler<WorkerInitRequest> {
+public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, WorkerInitResponse.Builder> {
+    public WorkerInitRequestHandler() {
+        super(StreamingMessage::getWorkerInitRequest,
+              WorkerInitResponse::newBuilder,
+              WorkerInitResponse.Builder::setResult,
+              StreamingMessage.Builder::setWorkerInitResponse);
+    }
+
     @Override
-    public void executeCore(WorkerInitRequest request) {
-        Application.LOGGER.severe("Not implemented");
+    String execute(WorkerInitRequest request, WorkerInitResponse.Builder response) {
+        response.setWorkerVersion(Application.version());
+        return "Worker initialized";
     }
 }

@@ -16,7 +16,7 @@ public final class InputDataStore {
         }
     }
 
-    public void addSource(InputData data) {
+    private void addSource(InputData data) {
         this.inputs.add(data);
     }
 
