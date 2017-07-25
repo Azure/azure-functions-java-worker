@@ -4,7 +4,7 @@
  * license information.
  */
 
-package com.microsoft.azure.serverless.functions.annotations;
+package com.microsoft.azure.serverless.functions.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,11 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface QueueTrigger {
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+public @interface HttpOutput {
     String name();
-
-    String queueName();
-
-    String connection();
 }

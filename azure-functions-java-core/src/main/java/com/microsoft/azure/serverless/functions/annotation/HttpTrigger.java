@@ -4,7 +4,7 @@
  * license information.
  */
 
-package com.microsoft.azure.serverless.functions.annotations;
+package com.microsoft.azure.serverless.functions.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,12 +13,22 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+public @interface HttpTrigger {
+    enum AuthorizationLevel {
+        ANONYMOUS,
+        USER,
+        FUNCTION,
+        SYSTEM,
+        ADMIN
+    }
+
     String name();
 
-    String schedule();
+    String route() default "";
 
-    boolean useMonitor();
+    String[] methods() default {};
 
-    boolean runOnStartup() default false;
+    AuthorizationLevel authLevel() default AuthorizationLevel.FUNCTION;
+
+    String webHookType() default "";
 }
