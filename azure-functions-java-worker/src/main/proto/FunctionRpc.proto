@@ -69,7 +69,7 @@ message StartStream {
 message WorkerInitRequest {
   string host_version = 1;
 
-  // A map of host supported features/capabilities
+  // A mapOptional of host supported features/capabilities
   map<string, string> capabilites = 2;
 
   // inform worker of supported categories and their levels
@@ -79,7 +79,7 @@ message WorkerInitRequest {
 
 message WorkerInitResponse {
   string worker_version = 1;
-  // A map of worker supported features/capabilities
+  // A mapOptional of worker supported features/capabilities
   map<string, string> capabilites = 2;
   StatusResult result = 3;
 }
@@ -218,7 +218,7 @@ message RpcLog {
   string event_id = 5;
   RpcException exception = 6;
 
-  // json serialized property bag, or could use a type scheme like map<string, TypedData>
+  // json serialized property bag, or could use a type scheme like mapOptional<string, TypedData>
   string properties = 7;
 }
 

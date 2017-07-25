@@ -7,11 +7,8 @@ import javax.annotation.*;
 
 import com.microsoft.azure.webjobs.script.binding.*;
 
-/**
- * This class is used for reflect a Java method with its parameters.
- */
-public class JavaMethodExecutor {
-    public JavaMethodExecutor(String jar, String fullMethodName)
+class JavaMethodExecutor {
+    JavaMethodExecutor(String jar, String fullMethodName)
             throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
         this.jarPath = jar;
         this.overloadResolver = new OverloadResolver();
@@ -19,11 +16,10 @@ public class JavaMethodExecutor {
         this.retrieveCandidates();
     }
 
-    public void execute(InputDataStore inputs, OutputDataStore outputs)
-            throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    void execute(InputDataStore inputs, OutputDataStore outputs) throws Exception {
         this.overloadResolver.resolve(inputs, outputs)
             .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
-            .invoke(() -> this.containingClass.newInstance());
+            .invoke(() -> this.containingClass.newInstance(), outputs);
     }
 
     @PostConstruct

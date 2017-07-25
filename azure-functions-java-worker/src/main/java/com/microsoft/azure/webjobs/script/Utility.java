@@ -6,31 +6,25 @@ import java.util.function.*;
 
 public class Utility {
     @SuppressWarnings("unchecked")
-    public static <TSource, TResult> TResult[] map(TSource[] source, Function<TSource, TResult> mapper) {
-        final TResult[] result = (TResult[]) Array.newInstance(Object.class, source.length);
-        for (int i = 0; i < source.length; i++) {
-            result[i] = mapper.apply(source[i]);
-        }
+    public static <TSource, TResult> TResult[] map(TSource[] source, Class<TResult> resultType, Function<TSource, TResult> mapper) {
+        final TResult[] result = (TResult[]) Array.newInstance(resultType, source.length);
+        for (int i = 0; i < source.length; i++) { result[i] = mapper.apply(source[i]); }
         return result;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> T[] toArray(List<T> list) {
-        final T[] result = (T[]) Array.newInstance(Object.class, list.size());
-        return list.toArray(result);
+    public static <TSource, TResult> List<TResult> map(Iterable<TSource> source, Function<TSource, TResult> mapper) {
+        final List<TResult> result = new ArrayList<>();
+        for (TSource item : source) { result.add(mapper.apply(item)); }
+        return result;
     }
 
     public static <T> void forEach(T[] source, Consumer<T> consumer) {
-        for (T item : source) {
-            consumer.accept(item);
-        }
+        for (T item : source) { consumer.accept(item); }
     }
 
-    public static <TSource, TResult> List<TResult> map(Iterable<TSource> source, Function<TSource, Optional<TResult>> mapper) {
+    public static <TSource, TResult> List<TResult> mapOptional(Iterable<TSource> source, Function<TSource, Optional<TResult>> mapper) {
         final List<TResult> result = new ArrayList<>();
-        for (TSource item : source) {
-            mapper.apply(item).ifPresent(result::add);
-        }
+        for (TSource item : source) { mapper.apply(item).ifPresent(result::add); }
         return result;
     }
 

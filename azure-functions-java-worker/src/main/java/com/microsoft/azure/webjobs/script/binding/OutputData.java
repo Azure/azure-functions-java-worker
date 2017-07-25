@@ -1,14 +1,22 @@
 package com.microsoft.azure.webjobs.script.binding;
 
-import com.microsoft.azure.webjobs.script.broker.TypeResolver;
+import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-public class OutputData extends BindingData {
-    public OutputData(Value value) {
-        super("$return", value);
+abstract class OutputData extends BindingData<OutputParameter<?>> {
+    OutputData(Object retValue) {
+        super("$return", new Value<>(new OutputParameter<>(retValue)));
     }
 
-    // public ParameterBinding toParameterBinding() {
-        // return ParameterBinding.newBuilder().setName(this.getName()).setData(TypeResolver.toTypedData(this.value)).build();
-    // }
+    OutputData(String name, Class<?> target) throws InstantiationException, IllegalAccessException {
+        super(name, new Value<>((OutputParameter<?>) target.newInstance()));
+    }
+
+    ParameterBinding toParameterBinding() {
+        TypedData.Builder dataBuilder = TypedData.newBuilder();
+        this.buildTypedData(dataBuilder);
+        return ParameterBinding.newBuilder().setName(this.getName()).setData(dataBuilder).build();
+    }
+
+    abstract void buildTypedData(TypedData.Builder data);
 }

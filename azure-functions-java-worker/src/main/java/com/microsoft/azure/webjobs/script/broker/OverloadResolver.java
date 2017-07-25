@@ -4,6 +4,7 @@ import java.lang.invoke.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.microsoft.azure.serverless.functions.OutputParameter;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.binding.*;
 
@@ -22,58 +23,41 @@ import com.microsoft.azure.webjobs.script.binding.*;
  * m(HttpRequestMessage, String, ExecutionContext)
  * m(HttpRequestMessage, String, String, ExecutionContext)
  */
-public class OverloadResolver {
-    public OverloadResolver() {
+class OverloadResolver {
+    OverloadResolver() {
         this.candidates = new ArrayList<>();
     }
 
-    public void addCandidate(Method method) {
+    void addCandidate(Method method) {
         this.candidates.add(new MethodBindInfo(method));
     }
 
-    public Optional<JavaMethodInvokeInfo> resolve(InputDataStore inputs, OutputDataStore outputs) {
-        this.inputs = inputs;
-        this.outputs = outputs;
-        return Utility.singleMax(Utility.map(this.candidates, this::resolve),
+    Optional<JavaMethodInvokeInfo> resolve(InputDataStore inputs, OutputDataStore outputs) {
+        return Utility.singleMax(Utility.mapOptional(this.candidates, m -> this.resolve(m, inputs, outputs)),
             Comparator.comparingInt(InvokeInfoBuilder::getAssignedCount)
                     .thenComparingInt(InvokeInfoBuilder::getConvertedCount)
         ).map(InvokeInfoBuilder::build);
     }
 
-    private Optional<InvokeInfoBuilder> resolve(MethodBindInfo method) {
+    private Optional<InvokeInfoBuilder> resolve(MethodBindInfo method, InputDataStore inputs, OutputDataStore outputs) {
         try {
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             Utility.forEach(method.params, param -> {
-                invokeInfo.appendArgument(this.inputs.tryAssignAs(param.type).map(v -> { invokeInfo.assignedCount++; return v; })
-                        .orElseGet(() -> this.inputs.tryConvertTo(param.type).map(v -> { invokeInfo.convertedCount++; return v; })
-                        .orElseThrow(WrongMethodTypeException::new))
-                        .getActual());
+                Optional<BindingData.Value<?>> argument;
+                if (OutputParameter.class.isAssignableFrom(param.type)) {
+                    argument = outputs.tryGenerate(param.name, param.type);
+                } else {
+                    argument = inputs.tryAssignAs(param.type).map(v -> { invokeInfo.assignedCount++; return v; });
+                    if (!argument.isPresent()) {
+                        argument = inputs.tryConvertTo(param.type).map(v -> { invokeInfo.convertedCount++; return v; });
+                    }
+                }
+                invokeInfo.appendArgument(argument.orElseThrow(WrongMethodTypeException::new).getActual());
             });
             return Optional.of(invokeInfo);
         } catch (Exception ex) {
             return Optional.empty();
         }
-
-        /*
-        for (int i = 0; i < method.getParamsCount(); i++) {
-            // If input data
-            if (method.getBind(i) != null) {
-                // Try query name
-                // If succeeded, increment name count
-                // If failed, return failed.
-            } else {
-                // Try assign
-                // If succeeded, increment assignment count
-                // If failed, try convert
-                // If succeeded, increment convert count
-                // If failed, return failed
-            }
-            // If output data
-            // Ensure bind exists
-            // Generate output binding
-            // If failed, return failed.
-        }
-        */
     }
 
     private final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
@@ -86,7 +70,7 @@ public class OverloadResolver {
     private final class MethodBindInfo {
         MethodBindInfo(Method m) {
             this.entry = m;
-            this.params = Utility.map(this.entry.getParameters(), ParamBindInfo::new);
+            this.params = Utility.map(this.entry.getParameters(), ParamBindInfo.class, ParamBindInfo::new);
         }
         private Method entry;
         private ParamBindInfo[] params;
@@ -94,12 +78,12 @@ public class OverloadResolver {
 
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
+            this.name = param.getName();
             this.type = param.getType();
         }
+        private String name;
         private Class<?> type;
     }
 
     private List<MethodBindInfo> candidates;
-    private InputDataStore inputs;
-    private OutputDataStore outputs;
 }

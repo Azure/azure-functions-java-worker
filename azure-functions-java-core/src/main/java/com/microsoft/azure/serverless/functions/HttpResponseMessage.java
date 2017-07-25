@@ -14,7 +14,7 @@ public final class HttpResponseMessage {
         this.body = (body != null ? body : "");
     }
 
-    public int getStatus() { return this.status; }
+    public Integer getStatus() { return this.status; }
     public Object getBody() { return this.body; }
 
     private int status;

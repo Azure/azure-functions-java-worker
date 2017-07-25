@@ -15,26 +15,18 @@ public final class InputDataStore {
             this.addSource(RpcInputData.parse(source));
         }
     }
+    public <T> void addSource(T value) { this.addSource(new InputData<>(new BindingData.Value<>(value))); }
+    private void addSource(InputData data) { this.inputs.add(data); }
 
-    private void addSource(InputData data) {
-        this.inputs.add(data);
+    public Optional<BindingData.Value<?>> tryAssignAs(Class<?> target) {
+        try { return Utility.single(this.inputs, in -> in.assignTo(target)); }
+        catch (Exception ex) { return Optional.empty(); }
     }
 
-    public Optional<BindingData.Value> tryAssignAs(Class<?> target) {
-        try {
-            return Utility.single(this.inputs, in -> in.assignTo(target));
-        } catch (Exception ex) {
-            return Optional.empty();
-        }
+    public Optional<BindingData.Value<?>> tryConvertTo(Class<?> target) {
+        try { return Utility.single(this.inputs, in -> in.convertTo(target)); }
+        catch (Exception ex) { return Optional.empty(); }
     }
 
-    public Optional<BindingData.Value> tryConvertTo(Class<?> target) {
-        try {
-            return Utility.single(this.inputs, in -> in.convertTo(target));
-        } catch (Exception ex) {
-            return Optional.empty();
-        }
-    }
-
-    private List<InputData> inputs = new ArrayList<>();
+    private List<InputData<?>> inputs = new ArrayList<>();
 }

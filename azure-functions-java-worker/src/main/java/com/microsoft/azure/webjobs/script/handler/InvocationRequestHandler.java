@@ -17,8 +17,9 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
     @Override
     String execute(InvocationRequest request, InvocationResponse.Builder response) throws Exception {
         final String functionId = request.getFunctionId();
-        List<ParameterBinding> outputBindings = this.broker.invokeMethod(functionId, request.getInputDataList());
-        response.setInvocationId(request.getInvocationId()).addAllOutputData(outputBindings);
+        final String invocationId = request.getInvocationId();
+        List<ParameterBinding> outputBindings = this.broker.invokeMethod(functionId, invocationId, request.getInputDataList());
+        response.setInvocationId(invocationId).addAllOutputData(outputBindings);
         return "Function \"" + functionId + "\" executed";
     }
 

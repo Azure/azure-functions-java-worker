@@ -1,58 +1,72 @@
 package com.microsoft.azure.webjobs.script.binding;
 
-import java.net.URI;
+import java.net.*;
+import java.util.*;
 
 import com.google.gson.*;
 import com.google.protobuf.*;
 
-import com.microsoft.azure.serverless.functions.HttpRequestMessage;
+import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-abstract class RpcInputData<T> extends InputData {
-    RpcInputData(String name, T value) { super(name, new Value(value)); }
+abstract class RpcInputData<T> extends InputData<T> {
+    RpcInputData(String name, T value) { super(name, new Value<>(value)); }
 
-    @SuppressWarnings("unchecked")
-    T getActualValue() { return (T)this.getValue().getActual(); }
-
-    static RpcInputData parse(ParameterBinding parameter) {
-        switch (parameter.getData().getDataCase()) {
-            case STRING: return new RpcStringInputData(parameter.getName(), parameter.getData().getString());
-            case JSON:   return new RpcJsonInputData(parameter.getName(), parameter.getData().getJson());
-            case BYTES:  return new RpcBytesInputData(parameter.getName(), parameter.getData().getBytes());
-            case HTTP:   return new RpcHttpInputData(parameter.getName(), parameter.getData().getHttp());
+    static RpcInputData parse(ParameterBinding parameter) { return parse(parameter.getName(), parameter.getData()); }
+    static RpcInputData parse(TypedData data) { return parse(null, data); }
+    private static RpcInputData parse(String name, TypedData data) {
+        switch (data.getDataCase()) {
+            case STRING: return new RpcStringInputData(name, data.getString());
+            case JSON:   return new RpcJsonInputData(name, data.getJson());
+            case BYTES:  return new RpcBytesInputData(name, data.getBytes());
+            case HTTP:   return new RpcHttpInputData(name, data.getHttp());
         }
-        throw new UnsupportedOperationException("Input data type \"" + parameter.getData().getDataCase() + "\" is not supported");
-    }
-
-    private static class RpcStringInputData extends RpcInputData<String> {
-        RpcStringInputData(String name, String value) { super(name, value); }
-    }
-
-    private static class RpcJsonInputData extends RpcInputData<JsonElement> {
-        RpcJsonInputData(String name, String jsonString) { super(name, new JsonParser().parse(jsonString)); }
+        throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
     }
 }
 
-class RpcHttpInputData extends RpcInputData<RpcHttp> {
-    RpcHttpInputData(String name, RpcHttp value) {
+class RpcStringInputData extends RpcInputData<String> {
+    RpcStringInputData(String name, String value) {
         super(name, value);
-        super.registerAssignment(HttpRequestMessage.class, this::toHttpRequestMessage);
+        this.setOrElseConversion(target -> Optional.of(new Gson().fromJson(this.getActualValue(), target)));
     }
+}
 
-    private Value toHttpRequestMessage() {
-        return new Value(new HttpRequestMessage.Builder()
-            .setMethod(this.getActualValue().getMethod())
-            .setUri(URI.create(this.getActualValue().getUrl()))
-            .setBody(this.getActualValue().getBody().toString())
-            .putAllHeaders(this.getActualValue().getHeadersMap())
-            .putAllQueryParameters(this.getActualValue().getQueryMap())
-            .build());
+class RpcJsonInputData extends RpcInputData<JsonElement> {
+    RpcJsonInputData(String name, String jsonString) {
+        super(name, new JsonParser().parse(jsonString));
+        this.setOrElseAssignment(target -> Optional.of(new Gson().fromJson(this.getActualValue(), target)));
     }
 }
 
 class RpcBytesInputData extends RpcInputData<ByteString> {
     RpcBytesInputData(String name, ByteString value) {
         super(name, value);
-        super.registerAssignment(byte[].class, () -> new Value(this.getActualValue().toByteArray()));
+        this.registerAssignment(byte[].class, () -> this.getActualValue().toByteArray());
     }
+}
+
+class RpcHttpInputData extends RpcInputData<RpcHttp> {
+    RpcHttpInputData(String name, RpcHttp value) {
+        super(name, value);
+        this.registerAssignment(HttpRequestMessage.class, this::toHttpRequestMessage);
+        if (value.hasBody()) {
+            this.body = parse(value.getBody());
+            this.setOrElseConversion(target -> this.body.convertTo(target).map(Value::getActual));
+        }
+    }
+
+    private HttpRequestMessage toHttpRequestMessage() {
+        // TODO Stringly-typed body
+        Optional<String> bodyValue = this.body != null ? this.body.convertTo(String.class).map(v -> v.getActual().toString()) : Optional.empty();
+        return new HttpRequestMessage.Builder()
+            .setMethod(this.getActualValue().getMethod())
+            .setUri(URI.create(this.getActualValue().getUrl()))
+            .setBody(bodyValue.orElse(null))
+            .putAllHeaders(this.getActualValue().getHeadersMap())
+            .putAllQueryParameters(this.getActualValue().getQueryMap())
+            .build();
+    }
+
+    private RpcInputData<?> body;
 }
