@@ -18,12 +18,20 @@ public final class InputDataStore {
     public <T> void addSource(T value) { this.addSource(new InputData<>(new BindingData.Value<>(value))); }
     private void addSource(InputData data) { this.inputs.add(data); }
 
+    public Optional<BindingData.Value<?>> tryLookupByName(String name, Class<?> target) {
+        if (name == null || name.isEmpty() || target == null) { return Optional.empty(); }
+        try { return Utility.single(this.inputs, in -> in.lookupByName(name, target)); }
+        catch (Exception ex) { return Optional.empty(); }
+    }
+
     public Optional<BindingData.Value<?>> tryAssignAs(Class<?> target) {
+        if (target == null) { return Optional.empty(); }
         try { return Utility.single(this.inputs, in -> in.assignTo(target)); }
         catch (Exception ex) { return Optional.empty(); }
     }
 
     public Optional<BindingData.Value<?>> tryConvertTo(Class<?> target) {
+        if (target == null) { return Optional.empty(); }
         try { return Utility.single(this.inputs, in -> in.convertTo(target)); }
         catch (Exception ex) { return Optional.empty(); }
     }

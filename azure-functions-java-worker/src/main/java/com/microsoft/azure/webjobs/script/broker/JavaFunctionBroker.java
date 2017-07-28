@@ -28,19 +28,24 @@ public class JavaFunctionBroker {
 
         // TODO: Consider trigger metadata here
         InputDataStore inputs = new InputDataStore(parameters);
-        inputs.addSource(this.createExecutionContext(invocationId));
-        OutputDataStore outputs = new OutputDataStore();
-        executor.execute(inputs, outputs);
+        inputs.addSource(new JavaExecutionContext(invocationId));
+        OutputDataStore outputs = executor.execute(inputs);
         return outputs.toParameterBindings();
     }
 
-    private ExecutionContext createExecutionContext(String invocationId) {
-        Logger executionLogger = Logger.getAnonymousLogger();
-        return new ExecutionContext.Builder()
-                .setInvocationId(invocationId)
-                .setLogger(executionLogger)
-                .build();
+    private Map<String, JavaMethodExecutor> methods = new HashMap<>();
+}
+
+class JavaExecutionContext implements ExecutionContext {
+    JavaExecutionContext(String invocationId) {
+        assert invocationId != null && !invocationId.isEmpty();
+        this.invocationId = invocationId;
+        this.logger = Logger.getAnonymousLogger();
     }
 
-    private Map<String, JavaMethodExecutor> methods = new HashMap<>();
+    public String getInvocationId() { return this.invocationId; }
+    public Logger getLogger() { return this.logger; }
+
+    private String invocationId;
+    private Logger logger;
 }

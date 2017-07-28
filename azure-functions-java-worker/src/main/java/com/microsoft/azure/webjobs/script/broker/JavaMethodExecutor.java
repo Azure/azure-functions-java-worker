@@ -16,10 +16,10 @@ class JavaMethodExecutor {
         this.retrieveCandidates();
     }
 
-    void execute(InputDataStore inputs, OutputDataStore outputs) throws Exception {
-        this.overloadResolver.resolve(inputs, outputs)
+    OutputDataStore execute(InputDataStore inputs) throws Exception {
+        return this.overloadResolver.resolve(inputs)
             .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
-            .invoke(() -> this.containingClass.newInstance(), outputs);
+            .invoke(() -> this.containingClass.newInstance());
     }
 
     @PostConstruct

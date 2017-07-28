@@ -7,14 +7,15 @@ import com.google.gson.*;
 import com.google.protobuf.*;
 
 import com.microsoft.azure.serverless.functions.*;
+import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 abstract class RpcInputData<T> extends InputData<T> {
     RpcInputData(String name, T value) { super(name, new Value<>(value)); }
 
-    static RpcInputData parse(ParameterBinding parameter) { return parse(parameter.getName(), parameter.getData()); }
-    static RpcInputData parse(TypedData data) { return parse(null, data); }
-    private static RpcInputData parse(String name, TypedData data) {
+    static RpcInputData<?> parse(ParameterBinding parameter) { return parse(parameter.getName(), parameter.getData()); }
+    static RpcInputData<?> parse(TypedData data) { return parse(null, data); }
+    private static RpcInputData<?> parse(String name, TypedData data) {
         switch (data.getDataCase()) {
             case STRING: return new RpcStringInputData(name, data.getString());
             case JSON:   return new RpcJsonInputData(name, data.getJson());
@@ -28,14 +29,14 @@ abstract class RpcInputData<T> extends InputData<T> {
 class RpcStringInputData extends RpcInputData<String> {
     RpcStringInputData(String name, String value) {
         super(name, value);
-        this.setOrElseConversion(target -> Optional.of(new Gson().fromJson(this.getActualValue(), target)));
+        this.setOrElseConversion(target -> Optional.of(new Value<>(new Gson().fromJson(this.getActualValue(), target))));
     }
 }
 
 class RpcJsonInputData extends RpcInputData<JsonElement> {
     RpcJsonInputData(String name, String jsonString) {
         super(name, new JsonParser().parse(jsonString));
-        this.setOrElseAssignment(target -> Optional.of(new Gson().fromJson(this.getActualValue(), target)));
+        this.setOrElseAssignment(target -> Optional.of(new Value<>(new Gson().fromJson(this.getActualValue(), target))));
     }
 }
 
@@ -50,14 +51,23 @@ class RpcHttpInputData extends RpcInputData<RpcHttp> {
     RpcHttpInputData(String name, RpcHttp value) {
         super(name, value);
         this.registerAssignment(HttpRequestMessage.class, this::toHttpRequestMessage);
-        if (value.hasBody()) {
-            this.body = parse(value.getBody());
-            this.setOrElseConversion(target -> this.body.convertTo(target).map(Value::getActual));
-        }
+        this.body = (value.hasBody() ? parse(value.getBody()) : new NullInputData());
+        this.setOrElseConversion(target -> this.body.convertTo(target));
+        this.fieldMaps.add(value.getHeadersMap());
+        this.fieldMaps.add(value.getQueryMap());
+        this.fieldMaps.add(value.getParamsMap());
+    }
+
+    @Override
+    Optional<InputData<?>> lookupSingleChildByName(String name) {
+        return Utility.single(this.fieldMaps, map -> {
+            String value = map.get(name);
+            return (value != null ? Optional.of(new RpcStringInputData(name, value)) : Optional.empty());
+        });
     }
 
     private HttpRequestMessage toHttpRequestMessage() {
-        // TODO Stringly-typed body
+        // TODO Strongly-typed body
         Optional<String> bodyValue = this.body != null ? this.body.convertTo(String.class).map(v -> v.getActual().toString()) : Optional.empty();
         return new HttpRequestMessage.Builder()
             .setMethod(this.getActualValue().getMethod())
@@ -68,5 +78,6 @@ class RpcHttpInputData extends RpcInputData<RpcHttp> {
             .build();
     }
 
-    private RpcInputData<?> body;
+    private InputData<?> body;
+    private List<Map<String, String>> fieldMaps = new ArrayList<>();
 }

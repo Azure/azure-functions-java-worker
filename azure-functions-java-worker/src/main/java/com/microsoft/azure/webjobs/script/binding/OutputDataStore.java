@@ -2,6 +2,7 @@ package com.microsoft.azure.webjobs.script.binding;
 
 import java.util.*;
 
+import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
@@ -15,11 +16,11 @@ public final class OutputDataStore {
     }
 
     public Optional<BindingData.Value<?>> tryGenerateReturn(Object retValue) {
-        return this.addOutput(() -> RpcOutputData.parse(retValue));
+        return this.addOutput(() -> RpcOutputData.parse("$return", retValue));
     }
 
-    public Optional<BindingData.Value<?>> tryGenerate(String name, Class<?> target) {
-        return this.addOutput(() -> RpcOutputData.parse(name, target));
+    public Optional<BindingData.Value<?>> tryGenerateParameter(String name, Class<?> target) {
+        return this.addOutput(() -> new NondeterministicOutputData(name, (OutputParameter<?>)target.newInstance()));
     }
 
     private Optional<BindingData.Value<?>> addOutput(OutputDataSupplier dataSupplier) {
@@ -33,7 +34,7 @@ public final class OutputDataStore {
     }
 
     @FunctionalInterface
-    private interface OutputDataSupplier { RpcOutputData get() throws Exception; }
+    private interface OutputDataSupplier { OutputData get() throws Exception; }
 
     private List<OutputData> outputs = new ArrayList<>();
 }

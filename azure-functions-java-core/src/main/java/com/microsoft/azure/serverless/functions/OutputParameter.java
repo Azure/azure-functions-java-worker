@@ -1,6 +1,6 @@
 package com.microsoft.azure.serverless.functions;
 
-public class OutputParameter<T> {
+public final class OutputParameter<T> {
     public OutputParameter() {
     }
 

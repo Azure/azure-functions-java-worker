@@ -6,63 +6,56 @@ import com.google.gson.*;
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-abstract class RpcOutputData extends OutputData {
-    RpcOutputData(Object retValue) { super(retValue); }
-    RpcOutputData(String name, Class<?> target) throws InstantiationException, IllegalAccessException { super(name, target); }
+abstract class RpcOutputData<T> extends DeterministicOutputData<T> {
+    RpcOutputData(String name, T value) { super(name, value); }
 
-    static RpcOutputData parse(Object retValue) {
-        ReturnSupplier supplier = RETDATA_SUPPLIERS.get(retValue.getClass());
-        if (supplier != null) { return supplier.get(retValue); }
-        return new RpcPojoData(retValue);
+    static DeterministicOutputData<?> parse(Object value) {
+        return parse(null, value);
     }
 
-    static RpcOutputData parse(String name, Class<?> target) throws Exception {
-        OutputSupplier supplier = OUTDATA_SUPPLIERS.get(target);
-        if (supplier != null) { return supplier.get(name, target); }
-        return new RpcPojoData(name, target);
+    static DeterministicOutputData<?> parse(String name, Object value) {
+        if (value == null) { return new NullOutputData(name); }
+        OutputDataSupplier supplier = OUTPUT_DATA_SUPPLIERS.get(value.getClass());
+        if (supplier != null) { return supplier.get(name, value); }
+        return new RpcPojoData(name, value);
     }
 
     @FunctionalInterface
-    private interface OutputSupplier { RpcOutputData get(String name, Class<?> type) throws Exception; }
+    private interface OutputDataSupplier { RpcOutputData<?> get(String name, Object value); }
 
-    @FunctionalInterface
-    private interface ReturnSupplier { RpcOutputData get(Object ret); }
-
-    private static final Map<Class<?>, ReturnSupplier> RETDATA_SUPPLIERS = new HashMap<Class<?>, ReturnSupplier>(){{
-        put(String.class, RpcStringOutputData::new);
-        put(HttpResponseMessage.class, RpcHttpOutputData::new);
-    }};
-    private static final Map<Class<?>, OutputSupplier> OUTDATA_SUPPLIERS = new HashMap<Class<?>, OutputSupplier>(){{
-        put(String.class, RpcStringOutputData::new);
-        put(HttpResponseMessage.class, RpcHttpOutputData::new);
+    private static final Map<Class<?>, OutputDataSupplier> OUTPUT_DATA_SUPPLIERS = new HashMap<Class<?>, OutputDataSupplier>() {{
+        put(String.class, (n, v) -> new RpcStringOutputData(n, (String)v));
+        put(Byte.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
+        put(Short.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
+        put(Integer.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
+        put(Long.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
+        put(Float.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
+        put(Double.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
+        put(HttpResponseMessage.class, (n, v) -> new RpcHttpOutputData(n, (HttpResponseMessage)v));
     }};
 }
 
-class RpcStringOutputData extends RpcOutputData {
-    RpcStringOutputData(Object retValue) { super(retValue); }
-    RpcStringOutputData(String name, Class<?> target) throws InstantiationException, IllegalAccessException { super(name, target); }
+class RpcStringOutputData extends RpcOutputData<String> {
+    RpcStringOutputData(String name, String value) { super(name, value); }
 
     @Override
-    void buildTypedData(TypedData.Builder data) { data.setString(this.getActualValue().getValue().toString()); }
+    void buildTypedData(TypedData.Builder data) { data.setString(this.getActualValue()); }
 }
 
-class RpcPojoData extends RpcOutputData {
-    RpcPojoData(Object retValue) { super(retValue); }
-    RpcPojoData(String name, Class<?> target) throws InstantiationException, IllegalAccessException { super(name, target); }
+class RpcPojoData extends RpcOutputData<Object> {
+    RpcPojoData(String name, Object value) { super(name, value); }
 
     @Override
-    void buildTypedData(TypedData.Builder data) { data.setJson(new Gson().toJson(this.getActualValue().getValue())); }
+    void buildTypedData(TypedData.Builder data) { data.setJson(new Gson().toJson(this.getActualValue())); }
 }
 
-class RpcHttpOutputData extends RpcOutputData {
-    RpcHttpOutputData(Object retValue) { super(retValue); }
-    RpcHttpOutputData(String name, Class<?> target) throws InstantiationException, IllegalAccessException { super(name, target); }
+class RpcHttpOutputData extends RpcOutputData<HttpResponseMessage> {
+    RpcHttpOutputData(String name, HttpResponseMessage value) { super(name, value); }
 
     @Override
     void buildTypedData(TypedData.Builder data) {
-        HttpResponseMessage response = (HttpResponseMessage) this.getActualValue().getValue();
         TypedData.Builder bodyBuilder = TypedData.newBuilder();
-        parse(response.getBody()).buildTypedData(bodyBuilder);
-        data.setHttp(RpcHttp.newBuilder().setStatusCode(response.getStatus().toString()).setBody(bodyBuilder));
+        parse(this.getActualValue().getBody()).buildTypedData(bodyBuilder);
+        data.setHttp(RpcHttp.newBuilder().setStatusCode(this.getActualValue().getStatus().toString()).setBody(bodyBuilder));
     }
 }
