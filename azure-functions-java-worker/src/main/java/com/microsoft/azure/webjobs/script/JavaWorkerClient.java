@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
+import java.util.logging.*;
 import javax.annotation.*;
 
 import io.grpc.*;
@@ -13,7 +14,7 @@ import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.handler.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
-class JavaWorkerClient implements Closeable {
+class JavaWorkerClient implements AutoCloseable {
     JavaWorkerClient(Application app) {
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
         this.addHandlers();
@@ -33,6 +34,7 @@ class JavaWorkerClient implements Closeable {
 
     @Override
     public void close() throws IOException {
+        HostLoggingListener.releaseInstance();
         this.channel.shutdown();
         try {
             this.channel.awaitTermination(15, TimeUnit.SECONDS);
@@ -41,9 +43,10 @@ class JavaWorkerClient implements Closeable {
         }
     }
 
-    private class StreamingMessagePeer implements StreamObserver<StreamingMessage> {
+    class StreamingMessagePeer implements StreamObserver<StreamingMessage> {
         StreamingMessagePeer(String requestId) {
             this.send(requestId, new StartStreamHandler());
+            HostLoggingListener.newInstance(this);
         }
 
         void await() throws InterruptedException {
@@ -53,6 +56,10 @@ class JavaWorkerClient implements Closeable {
             }
         }
 
+        void log(LogRecord record, String invocationId) {
+            this.send("", new RpcLogHandler(record, invocationId));
+        }
+
         @Override
         public void onNext(StreamingMessage message) {
             MessageHandler<?, ?> handler = JavaWorkerClient.this.handlerSuppliers.get(message.getContentCase()).get();
@@ -60,10 +67,16 @@ class JavaWorkerClient implements Closeable {
         }
 
         @Override
-        public void onCompleted() { this.latch.countDown(); }
+        public void onCompleted() {
+            HostLoggingListener.releaseInstance();
+            this.latch.countDown();
+        }
 
         @Override
-        public void onError(Throwable t) { this.error = t; this.onCompleted(); }
+        public void onError(Throwable t) {
+            this.error = t;
+            this.onCompleted();
+        }
 
         private void send(String requestId, MessageHandler<?, ?> marshaller) {
             StreamingMessage.Builder messageBuilder = StreamingMessage.newBuilder().setRequestId(requestId);

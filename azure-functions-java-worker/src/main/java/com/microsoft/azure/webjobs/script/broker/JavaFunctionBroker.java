@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.logging.*;
 
 import com.microsoft.azure.serverless.functions.*;
+import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
@@ -12,7 +13,7 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  * A broker between JAR methods and the function RPC. It can load methods using reflection, and invoke them at runtime.
  */
 public class JavaFunctionBroker {
-    public JavaFunctionBroker() {}
+    public JavaFunctionBroker() { }
 
     public void loadMethod(String id, String jarPath, String methodName)
             throws ClassNotFoundException, MalformedURLException, IllegalAccessException {
@@ -41,6 +42,7 @@ class JavaExecutionContext implements ExecutionContext {
         assert invocationId != null && !invocationId.isEmpty();
         this.invocationId = invocationId;
         this.logger = Logger.getAnonymousLogger();
+        HostLoggingListener.getInstance().ifPresent(this.logger::addHandler);
     }
 
     public String getInvocationId() { return this.invocationId; }

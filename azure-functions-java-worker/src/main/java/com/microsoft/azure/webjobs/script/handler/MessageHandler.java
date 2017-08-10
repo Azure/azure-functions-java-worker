@@ -1,6 +1,7 @@
 package com.microsoft.azure.webjobs.script.handler;
 
 import java.util.function.*;
+import java.util.logging.Level;
 
 import com.google.protobuf.*;
 import com.microsoft.azure.webjobs.script.*;
@@ -37,8 +38,7 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
             statusMessage = ex.getMessage();
-            Application.LOGGER.warning(statusMessage);
-            Application.LOGGER.warning(Application.stackTraceToString(ex));
+            Application.LOGGER.log(Level.WARNING, statusMessage, ex);
         }
         if (this.responseStatusMarshaller != null) {
             StatusResult result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage).build();

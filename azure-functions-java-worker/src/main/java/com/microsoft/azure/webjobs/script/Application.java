@@ -19,7 +19,6 @@ public final class Application {
     public int getPort() { return this.port; }
     public String getRequestId() { return this.requestId; }
 
-
     private void printUsage() {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("Application", this.OPTIONS, true);
@@ -97,7 +96,7 @@ public final class Application {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
                 client.listen(app.getRequestId());
             } catch (Exception ex) {
-                LOGGER.severe(stackTraceToString(ex));
+                LOGGER.log(LEVEL_CRITICAL, "Unexpected Exception causes system to exit", ex);
                 System.exit(-1);
             }
         }
@@ -108,6 +107,7 @@ public final class Application {
     }
 
     public static String stackTraceToString(Throwable t) {
+        if (t == null) { return null; }
         try (StringWriter writer = new StringWriter();
              PrintWriter printer = new PrintWriter(writer)) {
             t.printStackTrace(printer);
@@ -120,4 +120,10 @@ public final class Application {
 
     // Get an anonymous logger so that the client code won't pollute it through the LogManager
     public static final Logger LOGGER = Logger.getAnonymousLogger();
+    public static final Level LEVEL_CRITICAL = new LevelCritical();
+    private static class LevelCritical extends Level {
+        LevelCritical() {
+            super("CRITICAL", Level.SEVERE.intValue() + 1000);
+        }
+    }
 }
