@@ -17,12 +17,30 @@ abstract class RpcInputData<T> extends InputData<T> {
     static RpcInputData<?> parse(TypedData data) { return parse(null, data); }
     private static RpcInputData<?> parse(String name, TypedData data) {
         switch (data.getDataCase()) {
+            case INT:    return new RpcIntegerInputData(name, data.getInt());
+            case DOUBLE: return new RpcRealNumberInputData(name, data.getDouble());
             case STRING: return new RpcStringInputData(name, data.getString());
-            case JSON:   return new RpcJsonInputData(name, data.getJson());
+            case JSON:   return new RpcPojoInputData(name, data.getJson());
             case BYTES:  return new RpcBytesInputData(name, data.getBytes());
             case HTTP:   return new RpcHttpInputData(name, data.getHttp());
         }
         throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
+    }
+}
+
+class RpcIntegerInputData extends RpcInputData<Long> {
+    RpcIntegerInputData(String name, Long value) {
+        super(name, value);
+        this.registerAssignment(int.class, () -> this.getActualValue().intValue());
+        this.registerAssignment(short.class, () -> this.getActualValue().shortValue());
+        this.registerAssignment(byte.class, () -> this.getActualValue().byteValue());
+    }
+}
+
+class RpcRealNumberInputData extends RpcInputData<Double> {
+    RpcRealNumberInputData(String name, Double value) {
+        super(name, value);
+        this.registerAssignment(float.class, () -> this.getActualValue().floatValue());
     }
 }
 
@@ -33,8 +51,8 @@ class RpcStringInputData extends RpcInputData<String> {
     }
 }
 
-class RpcJsonInputData extends RpcInputData<JsonElement> {
-    RpcJsonInputData(String name, String jsonString) {
+class RpcPojoInputData extends RpcInputData<JsonElement> {
+    RpcPojoInputData(String name, String jsonString) {
         super(name, new JsonParser().parse(jsonString));
         this.setOrElseAssignment(target -> Optional.of(new Value<>(new Gson().fromJson(this.getActualValue(), target))));
     }
@@ -47,7 +65,7 @@ class RpcBytesInputData extends RpcInputData<ByteString> {
     }
 }
 
-class RpcHttpInputData extends RpcInputData<RpcHttp> {
+class RpcHttpInputData extends RpcInputData<RpcHttp> implements HttpRequestMessage {
     RpcHttpInputData(String name, RpcHttp value) {
         super(name, value);
         this.registerAssignment(HttpRequestMessage.class, this::toHttpRequestMessage);
@@ -67,17 +85,31 @@ class RpcHttpInputData extends RpcInputData<RpcHttp> {
     }
 
     private HttpRequestMessage toHttpRequestMessage() {
-        // TODO Strongly-typed body
-        Optional<String> bodyValue = this.body != null ? this.body.convertTo(String.class).map(v -> v.getActual().toString()) : Optional.empty();
-        return new HttpRequestMessage.Builder()
-            .setMethod(this.getActualValue().getMethod())
-            .setUri(URI.create(this.getActualValue().getUrl()))
-            .setBody(bodyValue.orElse(null))
-            .putAllHeaders(this.getActualValue().getHeadersMap())
-            .putAllQueryParameters(this.getActualValue().getQueryMap())
-            .build();
+        this.uri = URI.create(this.getActualValue().getUrl());
+        return this;
     }
 
+    @Override
+    public URI getUri() { return this.uri; }
+    @Override
+    public String getMethod() { return this.getActualValue().getMethod(); }
+    @Override
+    public Map<String, String> getHeaders() { return this.getActualValue().getHeadersMap(); }
+    @Override
+    public Map<String, String> getQueryParameters() { return this.getActualValue().getQueryMap(); }
+    @Override
+    public Object getBody() {
+        if (this.body instanceof RpcBytesInputData) {
+            return ((RpcBytesInputData)this.body).getActualValue().toByteArray();
+        } else if (this.body instanceof RpcPojoInputData) {
+            return ((RpcPojoInputData)this.body).getActualValue().getAsString();
+        } else if (this.body instanceof RpcHttpInputData) {
+            return ((RpcHttpInputData)this.body).getBody();
+        }
+        return this.body.getActualValue();
+    }
+
+    private URI uri;
     private InputData<?> body;
     private List<Map<String, String>> fieldMaps = new ArrayList<>();
 }

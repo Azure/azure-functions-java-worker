@@ -24,15 +24,31 @@ abstract class RpcOutputData<T> extends DeterministicOutputData<T> {
     private interface OutputDataSupplier { RpcOutputData<?> get(String name, Object value); }
 
     private static final Map<Class<?>, OutputDataSupplier> OUTPUT_DATA_SUPPLIERS = new HashMap<Class<?>, OutputDataSupplier>() {{
+        put(Byte.class, (n, v) -> new RpcIntegerOutputData(n, ((Byte)v).longValue()));
+        put(Short.class, (n, v) -> new RpcIntegerOutputData(n, ((Short)v).longValue()));
+        put(Integer.class, (n, v) -> new RpcIntegerOutputData(n, ((Integer)v).longValue()));
+        put(Long.class, (n, v) -> new RpcIntegerOutputData(n, (Long)v));
+
+        put(Float.class, (n, v) -> new RpcRealNumberOutputData(n, ((Float)v).doubleValue()));
+        put(Double.class, (n, v) -> new RpcRealNumberOutputData(n, (Double)v));
+
         put(String.class, (n, v) -> new RpcStringOutputData(n, (String)v));
-        put(Byte.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
-        put(Short.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
-        put(Integer.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
-        put(Long.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
-        put(Float.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
-        put(Double.class, (n, v) -> new RpcStringOutputData(n, v.toString()));
         put(HttpResponseMessage.class, (n, v) -> new RpcHttpOutputData(n, (HttpResponseMessage)v));
     }};
+}
+
+class RpcIntegerOutputData extends RpcOutputData<Long> {
+    RpcIntegerOutputData(String name, Long value) { super(name, value); }
+
+    @Override
+    void buildTypedData(TypedData.Builder data) { data.setInt(this.getActualValue()); }
+}
+
+class RpcRealNumberOutputData extends RpcOutputData<Double> {
+    RpcRealNumberOutputData(String name, Double value) { super(name, value); }
+
+    @Override
+    void buildTypedData(TypedData.Builder data) { data.setDouble(this.getActualValue()); }
 }
 
 class RpcStringOutputData extends RpcOutputData<String> {
