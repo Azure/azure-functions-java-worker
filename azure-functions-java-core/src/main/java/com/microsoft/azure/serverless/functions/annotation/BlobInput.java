@@ -14,12 +14,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface BlobInput {
-    enum FileAccess {
-        READ,
-        WRITE,
-        READ_WRITE
-    }
-
     String name();
 
     String path();

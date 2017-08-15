@@ -14,13 +14,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface ServiceBusTrigger {
-    enum AccessRights {
-        MANAGE,
-        SEND,
-        LISTEN,
-        MANAGE_NOTIFICATION_HUB
-    }
-
     String name();
 
     String queueName() default "";
