@@ -1,0 +1,41 @@
+﻿{
+  "scriptFile": "../functions-coffee-order.jar",
+  "entryPoint": "com.microsoft.serverless.coffeeorder.OrderManager.place",
+  "bindings": [
+    {
+      "type": "httpTrigger",
+      "name": "req",
+      "direction": "in",
+      "authLevel": "anonymous",
+      "methods": [ "post" ]
+    },
+    {
+      "type": "table",
+      "name": "inventory",
+      "direction": "in",
+      "tableName": "inventory",
+      "partitionKey": "Remaining",
+      "rowKey": "{coffee}",
+      "connection": "AzureWebJobsSampleStorage"
+    },
+    {
+      "type": "table",
+      "name": "order",
+      "direction": "out",
+      "tableName": "orders",
+      "connection": "AzureWebJobsSampleStorage"
+    },
+    {
+      "type": "table",
+      "name": "updatedInventory",
+      "direction": "out",
+      "tableName": "inventory",
+      "connection": "AzureWebJobsSampleStorage"
+    },
+    {
+      "type": "http",
+      "name": "$return",
+      "direction": "out"
+    }
+  ]
+}
