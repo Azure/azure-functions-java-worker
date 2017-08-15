@@ -13,10 +13,10 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.METHOD})
-public @interface QueueOutput {
+public @interface EventHubOutput {
     String name();
 
-    String queueName();
+    String eventHubName();
 
-    String connection() default "";
+    String connection();
 }

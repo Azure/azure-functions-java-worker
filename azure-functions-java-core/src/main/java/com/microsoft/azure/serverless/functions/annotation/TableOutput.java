@@ -13,10 +13,18 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.METHOD})
-public @interface QueueOutput {
+public @interface TableOutput {
     String name();
 
-    String queueName();
+    String tableName();
+
+    String partitionKey() default "";
+
+    String rowKey() default "";
+
+    String filter() default "";
+
+    int take() default 1;
 
     String connection() default "";
 }

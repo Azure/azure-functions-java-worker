@@ -12,11 +12,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
-public @interface QueueOutput {
+@Target(ElementType.PARAMETER)
+public @interface BlobInput {
+    enum FileAccess {
+        READ,
+        WRITE,
+        READ_WRITE
+    }
+
     String name();
 
-    String queueName();
+    String path();
+
+    FileAccess access() default FileAccess.READ;
 
     String connection() default "";
 }

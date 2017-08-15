@@ -18,5 +18,5 @@ public @interface QueueTrigger {
 
     String queueName();
 
-    String connection();
+    String connection() default "";
 }

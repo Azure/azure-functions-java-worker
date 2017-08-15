@@ -12,11 +12,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
-public @interface QueueOutput {
+@Target(ElementType.PARAMETER)
+public @interface EventHubTrigger {
     String name();
 
-    String queueName();
+    String eventHubName();
 
-    String connection() default "";
+    String consumerGroup() default "$Default";
+
+    String connection();
 }
