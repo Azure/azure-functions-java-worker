@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "iotHubName": {
+            "type": "string"
+        },
+        "iotHubSku": {
+            "type": "string",
+            "allowedValues": [
+                "F1",
+                "S1",
+                "S2"
+            ],
+            "defaultValue": "F1"
+        },
+        "iotHubCapacity": {
+            "type": "int",
+            "minValue": 1,
+            "defaultValue": 1
+        },
+        "iotHubExisted": {
+            "type": "string",
+            "allowedValues": [
+                "",
+                "existed-"
+            ],
+            "defaultValue": ""
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "iothubTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "parameters": {
+                    "iotHubName": {
+                        "value": "[parameters('iotHubName')]"
+                    },
+                    "iotHubSku": {
+                        "value": "[parameters('iotHubSku')]"
+                    },
+                    "iotHubCapacity": {
+                        "value": "[parameters('iotHubCapacity')]"
+                    }
+                },
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat('https://raw.githubusercontent.com/VSChina/azureiotdevkit_tools/master/arm-template/', parameters('iotHubExisted'), 'iothub.json#')]"
+                }
+            }
+        }
+    ]
+}

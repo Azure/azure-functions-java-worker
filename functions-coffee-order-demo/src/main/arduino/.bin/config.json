@@ -1,0 +1,10 @@
+{
+  "sketch": "../CoffeeMaker.ino",
+  "config": "deviceConnectionString",
+  "provision_iot_hub": true,
+  "provision_azure_function": false,
+  "tasks": {
+    "provision": ["subscription", "iothub", "armtemplatedeployment", "device"],
+    "deploy": []
+  }
+}
