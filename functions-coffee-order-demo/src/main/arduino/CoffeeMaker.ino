@@ -40,13 +40,17 @@ static void display_hint()
 
 static void display_detail()
 {
-    char buffer[LINE_MAX_LENGTH];
     Screen.print(0, "Order Detail    ", false);
+    Screen.print(1, "<-- X      ! -->", false);
+    char buffer[LINE_MAX_LENGTH];
+    snprintf(buffer, LINE_MAX_LENGTH, "%d %s               ", currentOrder.amount, currentOrder.name);
+    Screen.print(2, buffer, false);
+    Screen.print(3, "                ", false);
 }
 
 static void display_sending()
 {
-    Screen.print(3, (accepted ? "Accepting...    " : "Denying...      "), false);
+    Screen.print(3, (accepted ? "  Accepting...  " : "   Denying...   "), false);
 }
 
 static void display_retry()

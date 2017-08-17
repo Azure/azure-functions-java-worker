@@ -49,10 +49,10 @@ public class OrderManager {
      * @return The new created order ID if we have enough ingredients; otherwise report error.
      */
     public static HttpResponseMessage place(
-            OrderRequest request,
+            @Bind("req") OrderRequest request,
             @Bind("inventory") InventoryEntry coffee,
             @Bind("order") OutputParameter<OrderEntry> newOrder,
-            @Bind("updatedInventory") OutputParameter<InventoryEntry> updatedCoffee) {
+            @Bind("pending") OutputParameter<String> pendingOrderId) {
 
         if (coffee == null || coffee.getName() == null) {
             return new HttpResponseMessage(400, "Coffee name is required");
@@ -63,9 +63,8 @@ public class OrderManager {
         }
 
         OrderEntry order = new OrderEntry(coffee.getName(), request.getAmount());
-        coffee.decreseAmount(request.getAmount());
         newOrder.setValue(order);
-        updatedCoffee.setValue(coffee);
+        pendingOrderId.setValue(order.getId());
         return new HttpResponseMessage(201, order.getId());
     }
 

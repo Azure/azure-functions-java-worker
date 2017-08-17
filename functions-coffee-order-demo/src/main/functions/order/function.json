@@ -23,13 +23,14 @@
       "name": "order",
       "direction": "out",
       "tableName": "orders",
+      "partitionKey": "CustomerOrder",
       "connection": "AzureWebJobsSampleStorage"
     },
     {
-      "type": "table",
-      "name": "updatedInventory",
+      "type": "queue",
+      "name": "pending",
       "direction": "out",
-      "tableName": "inventory",
+      "queueName": "pendingorders",
       "connection": "AzureWebJobsSampleStorage"
     },
     {

@@ -88,7 +88,8 @@ const char *order_to_json(const order_t &order, bool accepted)
     static char jsonString[MESSAGE_MAX_LENGTH];
     StaticJsonBuffer<MESSAGE_MAX_LENGTH> jsonBuffer;
     JsonObject &root = jsonBuffer.createObject();
-    root["id"] = order.id;
+    root["orderId"] = order.id;
+    root["coffee"] = order.name;
     root["accepted"] = accepted;
     auto written = root.printTo(jsonString, MESSAGE_MAX_LENGTH);
     if (written == 0)
