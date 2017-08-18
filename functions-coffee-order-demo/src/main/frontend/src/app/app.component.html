@@ -3,6 +3,9 @@
   <h1 class="mat-display-1">Coffee Order &nbsp;&nbsp;&mdash;&nbsp;&nbsp; {{ title }}</h1>
 </nav>
 <div>
+  <div class="refreshing" *ngIf="refreshing">
+    <md-spinner></md-spinner>
+  </div>
   <div *ngIf="title === 'Menu'">
     <ul class="menu">
       <li *ngFor="let menu of menuitems">

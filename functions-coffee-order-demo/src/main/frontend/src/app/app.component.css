@@ -29,6 +29,22 @@ nav + div {
     max-width: 500px;
 }
 
+.refreshing {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: white;
+    z-index: 900;
+}
+
+.refreshing md-spinner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+
 ul.menu {
     margin: 0;
     padding: 0;

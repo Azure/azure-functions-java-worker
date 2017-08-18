@@ -41,7 +41,6 @@ class MenuItem {
 class Order {
   constructor(private _item: MenuItem, private _http: HttpClient) {
     this._stopRefresh = false;
-    /*
     if (this._item && this._item.selectedCups > 0 && this._item.name) {
       this._status = 'Placing order...';
       this._http.post('https://funccoffeemaker.azurewebsites.net/api/order', {
@@ -66,7 +65,6 @@ class Order {
       this._status = 'Invalid Order';
       this._statusClass = 'staterror';
     }
-    */
   }
 
   get item(): MenuItem { return this._item; }
@@ -128,7 +126,9 @@ class Order {
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  constructor(private _http: HttpClient) {}
+  constructor(private _http: HttpClient) {
+    this._refreshing = false;
+  }
 
   ngOnInit(): void {
     this.toMenuPage();
@@ -136,6 +136,7 @@ export class AppComponent implements OnInit {
 
   get title() { return this._title; }
   get order() { return this._order; }
+  get refreshing() { return this._refreshing; }
   get menuitems(): any[] { return this._menuitems; }
 
   toMenuPage(): void {
@@ -152,7 +153,9 @@ export class AppComponent implements OnInit {
 
   refresh(): void {
     this._menuitems = [];
+    this._refreshing = true;
     this._http.get('https://funccoffeemaker.azurewebsites.net/api/menu').subscribe((data: any[]) => {
+      this._refreshing = false;
       for (const item of data) {
         const menu = new MenuItem(item.name, item.remaining);
         this._menuitems.push(menu);
@@ -170,5 +173,6 @@ export class AppComponent implements OnInit {
 
   private _title: string;
   private _order: Order;
+  private _refreshing: boolean;
   private _menuitems: MenuItem[] = [];
 }
