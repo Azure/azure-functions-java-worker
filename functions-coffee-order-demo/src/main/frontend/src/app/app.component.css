@@ -1,0 +1,77 @@
+nav {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+    background: #1b5e20;
+    box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);
+}
+
+nav button {
+    position: absolute;
+    height: 100%;
+    min-width: 70px;
+    color: white;
+    padding: 10px;
+    line-height: normal;
+    vertical-align: middle;
+}
+
+nav h1 {
+    color: white;
+    font-weight: lighter;
+    margin: 35px 75px !important;
+}
+
+nav + div {
+    margin: 170px auto 0 auto;
+    max-width: 500px;
+}
+
+ul.menu {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+ul.menu > li {
+    margin: 45px 0;
+}
+
+ul.menu > li md-card-actions {
+    margin: 25px 0 10px 0;
+}
+
+ul.menu > li button {
+    background: #efefef;
+    margin-left: 25px;
+}
+
+md-select {
+    border: 1px solid transparent;
+}
+
+md-select.cuperror {
+    border: 1px dotted red;
+}
+
+.order-title {
+    margin: 20px 0;
+}
+
+.order-status {
+    font-weight: lighter;
+    margin: 20px 0 50px 0;
+}
+.order-detail {
+    margin-bottom: 25px;
+}
+
+.order-status.staterror {
+    color: #e53935;
+}
+
+.order-status.statgood {
+    color: #2e7d32;
+}

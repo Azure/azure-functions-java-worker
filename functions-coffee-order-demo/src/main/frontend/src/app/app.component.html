@@ -1,0 +1,35 @@
+<nav>
+  <button md-button (click)="toMenuPage()" *ngIf="title !== 'Menu'"><i class="material-icons">&#xE314;</i></button>
+  <h1 class="mat-display-1">Coffee Order &nbsp;&nbsp;&mdash;&nbsp;&nbsp; {{ title }}</h1>
+</nav>
+<div>
+  <div *ngIf="title === 'Menu'">
+    <ul class="menu">
+      <li *ngFor="let menu of menuitems">
+        <md-card>
+          <md-card-title-group>
+            <md-card-title>{{ menu.name }}</md-card-title>
+            <md-card-subtitle>{{ menu.remaining }} Remaining</md-card-subtitle>
+            <img md-card-lg-image src='assets/coffee.png' />
+          </md-card-title-group>
+          <md-card-actions align="start">
+            <md-select placeholder="Cups" [(ngModel)]="menu.selectedCups" [disabled]="!menu.canTakeOrder" [ngClass]="menu.selectCupClass">
+              <md-option *ngFor="let number of menu.cups" [value]="number">
+                {{ number }}
+              </md-option>
+            </md-select>
+            <button md-button [disabled]="!menu.canTakeOrder" (click)="placeOrder(menu)">Order</button>
+          </md-card-actions>
+        </md-card>
+      </li>
+    </ul>
+  </div>
+  <div *ngIf="title === 'My Order'">
+    <md-card *ngIf="order">
+      <h1 class="mat-display-1 order-title">Order Status</h1>
+      <h2 class="mat-display-1 order-status" [ngClass]="order.statusClass">{{ order.status }}</h2>
+      <h1 class="mat-title">Order Details</h1>
+      <h2 class="mat-subheading-2 order-detail">{{ order.item.selectedCups }} cups of {{ order.item.name }}</h2>
+    </md-card>
+  </div>
+</div>
