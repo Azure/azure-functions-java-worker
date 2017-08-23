@@ -12,19 +12,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface TableInput {
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+public @interface ServiceBusQueueOutput {
     String name();
 
-    String tableName();
+    String queueName();
 
-    String partitionKey() default "";
+    String connection();
 
-    String rowKey() default "";
-
-    String filter() default "";
-
-    String take() default "";
-
-    String connection() default "";
+    AccessRights access() default AccessRights.MANAGE;
 }
