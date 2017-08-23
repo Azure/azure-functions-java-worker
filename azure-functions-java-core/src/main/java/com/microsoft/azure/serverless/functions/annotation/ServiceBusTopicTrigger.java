@@ -13,14 +13,12 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface ServiceBusTrigger {
+public @interface ServiceBusTopicTrigger {
     String name();
 
-    String queueName() default "";
+    String topicName();
 
-    String topicName() default "";
-
-    String subscriptionName() default "";
+    String subscriptionName();
 
     String connection();
 

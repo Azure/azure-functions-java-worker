@@ -18,7 +18,5 @@ public @interface BlobInput {
 
     String path();
 
-    FileAccess access() default FileAccess.READ;
-
     String connection() default "";
 }

@@ -18,7 +18,5 @@ public @interface BlobOutput {
 
     String path();
 
-    FileAccess access() default FileAccess.READ_WRITE;
-
     String connection() default "";
 }

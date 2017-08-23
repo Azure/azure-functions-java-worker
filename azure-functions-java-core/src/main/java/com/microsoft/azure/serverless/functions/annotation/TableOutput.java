@@ -22,9 +22,5 @@ public @interface TableOutput {
 
     String rowKey() default "";
 
-    String filter() default "";
-
-    int take() default 1;
-
     String connection() default "";
 }

@@ -8,7 +8,5 @@ package com.microsoft.azure.serverless.functions.annotation;
 
 public enum AccessRights {
     MANAGE,
-    SEND,
-    LISTEN,
-    MANAGE_NOTIFICATION_HUB
+    LISTEN
 }

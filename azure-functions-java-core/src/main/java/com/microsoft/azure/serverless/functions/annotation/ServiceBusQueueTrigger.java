@@ -13,8 +13,12 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+public @interface ServiceBusQueueTrigger {
     String name();
 
-    String schedule();
+    String queueName();
+
+    String connection();
+
+    AccessRights access() default AccessRights.MANAGE;
 }
