@@ -8,8 +8,6 @@ package com.microsoft.azure.serverless.functions.annotation;
 
 public enum AuthorizationLevel {
     ANONYMOUS,
-    USER,
     FUNCTION,
-    SYSTEM,
     ADMIN
 }
