@@ -17,6 +17,7 @@ public final class Application {
 
     public String getHost() { return this.host; }
     public int getPort() { return this.port; }
+    public String getWorkerId() { return this.workerId; }
     public String getRequestId() { return this.requestId; }
 
     private void printUsage() {
@@ -33,6 +34,7 @@ public final class Application {
             CommandLine commands = parser.parse(this.OPTIONS, args);
             this.host = this.parseHost(commands.getOptionValue("h"));
             this.port = this.parsePort(commands.getOptionValue("p"));
+            this.workerId = this.parseWorkerId(commands.getOptionValue("w"));
             this.requestId = this.parseRequestId(commands.getOptionValue("q"));
             this.commandParseSucceeded = true;
         } catch (ParseException ex) {
@@ -58,10 +60,12 @@ public final class Application {
 
     private String parseRequestId(String input) { return input; }
 
+    private String parseWorkerId(String input) { return input; }
+
     private boolean commandParseSucceeded = false;
     private String host;
     private int port;
-    private String requestId;
+    private String workerId, requestId;
 
     private final Options OPTIONS = new Options()
             .addOption(Option.builder("h")
@@ -76,6 +80,13 @@ public final class Application {
                     .hasArg()
                     .argName("PortNumber")
                     .desc("The port number which the webjobs host is listening to")
+                    .required()
+                    .build())
+            .addOption(Option.builder("w")
+                    .longOpt("workerId")
+                    .hasArg()
+                    .argName("WorkerId")
+                    .desc("The ID of this running worker of throughout communication session")
                     .required()
                     .build())
             .addOption(Option.builder("q")
@@ -94,7 +105,7 @@ public final class Application {
             System.exit(1);
         } else {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
-                client.listen(app.getRequestId());
+                client.listen(app.getWorkerId(), app.getRequestId());
             } catch (Exception ex) {
                 LOGGER.log(LEVEL_CRITICAL, "Unexpected Exception causes system to exit", ex);
                 System.exit(-1);
@@ -103,7 +114,8 @@ public final class Application {
     }
 
     public static String version() {
-        return Application.class.getPackage().getImplementationVersion();
+        String jarVersion = Application.class.getPackage().getImplementationVersion();
+        return jarVersion != null ? jarVersion : "Unknown";
     }
 
     public static String stackTraceToString(Throwable t) {

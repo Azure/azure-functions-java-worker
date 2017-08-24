@@ -23,6 +23,18 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         try {
             HostLoggingListener.getInstance().ifPresent(h -> h.pushInvocation(invocationId));
             List<ParameterBinding> outputBindings = this.broker.invokeMethod(functionId, invocationId, request.getInputDataList());
+
+            // TODO: Simplify OutputData Stuffs (using the new binding information when loading a function)
+            // TODO: Treat return value more elegant
+            int retValueIndex = 0;
+            for (; retValueIndex < outputBindings.size(); retValueIndex++)
+                if (outputBindings.get(retValueIndex).getName().equals("$return"))
+                    break;
+            if (retValueIndex < outputBindings.size()) {
+                response.setReturnValue(outputBindings.get(retValueIndex).getData());
+                outputBindings.remove(retValueIndex);
+            }
+
             response.setInvocationId(invocationId).addAllOutputData(outputBindings);
             return "Function \"" + functionId + "\" executed";
         } finally {

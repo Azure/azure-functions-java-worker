@@ -28,8 +28,8 @@ class JavaWorkerClient implements AutoCloseable {
         this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
     }
 
-    void listen(String requestId) throws InterruptedException {
-        new StreamingMessagePeer(requestId).await();
+    void listen(String workerId, String requestId) throws InterruptedException {
+        new StreamingMessagePeer(workerId, requestId).await();
     }
 
     @Override
@@ -44,8 +44,8 @@ class JavaWorkerClient implements AutoCloseable {
     }
 
     class StreamingMessagePeer implements StreamObserver<StreamingMessage> {
-        StreamingMessagePeer(String requestId) {
-            this.send(requestId, new StartStreamHandler());
+        StreamingMessagePeer(String workerId, String requestId) {
+            this.send(requestId, new StartStreamHandler(workerId));
             HostLoggingListener.newInstance(this);
         }
 
