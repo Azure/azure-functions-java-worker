@@ -25,7 +25,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Version Management
 
-Out version strategy just follows the maven package version convention: `<major>.<minor>.<hotfix>-<prerelease>`, where:
+Our version strategy just follows the maven package version convention: `<major>.<minor>.<hotfix>-<prerelease>`, where:
 
 * `<major>`: Increasing when incompatible breaking changes happened
 * `<minor>`: Increasing when new features added

@@ -69,7 +69,7 @@ abstract class EntityTable<U, V extends TableServiceEntity> {
     abstract void mapItemToEntity(U item, V entity);
 
     private CloudTable table;
-    private static final String CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=funccoffeemaker;AccountKey=xAPzVNkT45eFD8q7surtTMlHb+R3qPCZAfeoHVSZ7jOMqyft+swduT/XI064oO68JdQ79TxMK8Dv6Y/RZaE/uQ==";
+    private static final String CONNECTION_STRING = System.getenv("AzureWebJobsSampleStorage");
 }
 
 class InventoryTable extends EntityTable<InventoryEntry, InventoryTableEntity> {
@@ -131,7 +131,7 @@ class CoffeeMachine implements AutoCloseable {
 
     private ServiceClient client = null;
 
-    private static final String CONNECTION_STRING = "HostName=funccoffeemaker.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=qehYAmgSR38V57ai0IDUQQWGIxIubGbMAwrE19JUtVw=";
+    private static final String CONNECTION_STRING = System.getenv("AzureWebJobsSampleIoTHub");
     private static final String DEVICE_ID = "AZ3166";
     private static final IotHubServiceClientProtocol MESSAGE_PROTOCOL = IotHubServiceClientProtocol.AMQPS;
 }
