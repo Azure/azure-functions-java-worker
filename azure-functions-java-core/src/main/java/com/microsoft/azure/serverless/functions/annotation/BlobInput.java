@@ -13,8 +13,10 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+public @interface BlobInput {
     String name();
 
-    String schedule();
+    String path();
+
+    String connection() default "";
 }

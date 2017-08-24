@@ -12,9 +12,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+public @interface EventHubOutput {
     String name();
 
-    String schedule();
+    String eventHubName();
+
+    String connection();
 }

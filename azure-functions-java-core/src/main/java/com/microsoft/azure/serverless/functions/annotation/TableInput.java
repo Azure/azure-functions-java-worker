@@ -13,8 +13,18 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+public @interface TableInput {
     String name();
 
-    String schedule();
+    String tableName();
+
+    String partitionKey() default "";
+
+    String rowKey() default "";
+
+    String filter() default "";
+
+    String take() default "";
+
+    String connection() default "";
 }

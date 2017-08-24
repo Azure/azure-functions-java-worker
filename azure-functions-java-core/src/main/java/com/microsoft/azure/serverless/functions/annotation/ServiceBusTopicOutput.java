@@ -12,9 +12,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+public @interface ServiceBusTopicOutput {
     String name();
 
-    String schedule();
+    String topicName();
+
+    String subscriptionName();
+
+    String connection();
+
+    AccessRights access() default AccessRights.MANAGE;
 }

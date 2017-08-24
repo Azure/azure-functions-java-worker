@@ -14,14 +14,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface HttpTrigger {
-    enum AuthorizationLevel {
-        ANONYMOUS,
-        USER,
-        FUNCTION,
-        SYSTEM,
-        ADMIN
-    }
-
     String name();
 
     String route() default "";

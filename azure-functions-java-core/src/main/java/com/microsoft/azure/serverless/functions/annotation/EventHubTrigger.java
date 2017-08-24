@@ -13,8 +13,12 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface TimerTrigger {
+public @interface EventHubTrigger {
     String name();
 
-    String schedule();
+    String eventHubName();
+
+    String consumerGroup() default "$Default";
+
+    String connection();
 }

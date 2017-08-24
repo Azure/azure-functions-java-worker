@@ -18,5 +18,5 @@ public @interface QueueOutput {
 
     String queueName();
 
-    String connection();
+    String connection() default "";
 }
