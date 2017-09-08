@@ -45,8 +45,7 @@ class JavaExecutionContext implements ExecutionContext {
     JavaExecutionContext(String invocationId) {
         assert invocationId != null && !invocationId.isEmpty();
         this.invocationId = invocationId;
-        this.logger = Logger.getAnonymousLogger();
-        HostLoggingListener.getInstance().ifPresent(this.logger::addHandler);
+        this.logger = WorkerLogManager.getInvocationLogger(invocationId);
     }
 
     public String getInvocationId() { return this.invocationId; }

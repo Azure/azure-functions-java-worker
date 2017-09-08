@@ -39,11 +39,11 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
         try {
             this.response = this.responseSupplier.get();
             statusMessage = this.execute(this.request, this.response);
-            Application.LOGGER.info(statusMessage);
+            this.getLogger().info(statusMessage);
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
             statusMessage = ex.getMessage();
-            Application.LOGGER.log(Level.WARNING, statusMessage, ex);
+            this.getLogger().log(Level.WARNING, statusMessage, ex);
         }
         if (this.responseStatusMarshaller != null) {
             StatusResult result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage).build();
@@ -52,6 +52,7 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
     }
 
     public void registerTask(Future<?> task) { }
+    Logger getLogger() { return WorkerLogManager.getHostLogger(); }
     abstract String execute(TRequest request, TResponse response) throws Exception;
 
     private TRequest request = null;

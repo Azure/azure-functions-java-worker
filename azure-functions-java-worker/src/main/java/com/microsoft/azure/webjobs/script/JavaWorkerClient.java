@@ -2,6 +2,7 @@ package com.microsoft.azure.webjobs.script;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.logging.*;
 import javax.annotation.*;
@@ -19,7 +20,9 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  */
 class JavaWorkerClient implements AutoCloseable {
     JavaWorkerClient(Application app) {
+        WorkerLogManager.initialize(this, app.logToConsole());
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
+        this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
         this.addHandlers();
     }
@@ -33,37 +36,40 @@ class JavaWorkerClient implements AutoCloseable {
     }
 
     void listen(String workerId, String requestId) throws Exception {
-        try (StreamingMessagePeer peer = new StreamingMessagePeer(workerId, requestId)) {
+        try (StreamingMessagePeer peer = new StreamingMessagePeer()) {
+            this.peer.set(peer);
+            peer.send(requestId, new StartStreamHandler(workerId));
             peer.getListeningTask().get();
+        } finally {
+            this.peer.set(null);
+        }
+    }
+
+    void logToHost(LogRecord record, String invocationId) {
+        StreamingMessagePeer peer = this.peer.get();
+        if (peer != null) {
+            peer.send(null, new RpcLogHandler(record, invocationId));
         }
     }
 
     @Override
     public void close() throws Exception {
-        HostLoggingListener.releaseInstance();
         this.channel.shutdownNow();
         this.channel.awaitTermination(15, TimeUnit.SECONDS);
     }
 
     private class StreamingMessagePeer implements StreamObserver<StreamingMessage>, AutoCloseable {
-        StreamingMessagePeer(String workerId, String requestId) {
+        StreamingMessagePeer() {
             this.task = new CompletableFuture<>();
             this.threadpool = Executors.newWorkStealingPool();
             this.observer = FunctionRpcGrpc.newStub(JavaWorkerClient.this.channel).eventStream(this);
-            this.send(requestId, new StartStreamHandler(workerId));
-            HostLoggingListener.newInstance(this);
         }
 
         @Override
-        public void close() throws Exception {
+        public synchronized void close() throws Exception {
             this.threadpool.shutdown();
             this.threadpool.awaitTermination(15, TimeUnit.SECONDS);
-            HostLoggingListener.releaseInstance();
             this.observer.onCompleted();
-        }
-
-        void log(LogRecord record, String invocationId) {
-            this.send(null, new RpcLogHandler(record, invocationId));
         }
 
         /**
@@ -100,6 +106,7 @@ class JavaWorkerClient implements AutoCloseable {
         private StreamObserver<StreamingMessage> observer;
     }
 
-    private ManagedChannel channel;
-    private Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
+    private final ManagedChannel channel;
+    private final AtomicReference<StreamingMessagePeer> peer;
+    private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
 }

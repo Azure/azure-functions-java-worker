@@ -1,5 +1,6 @@
 package com.microsoft.azure.webjobs.script;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
@@ -57,5 +58,17 @@ public class Utility {
             }
         }
         return dupMax ? Optional.empty() : Optional.of(max);
+    }
+
+    public static String stackTraceToString(Throwable t) {
+        if (t == null) { return null; }
+        try (StringWriter writer = new StringWriter();
+             PrintWriter printer = new PrintWriter(writer)) {
+            t.printStackTrace(printer);
+            return writer.toString();
+        } catch (IOException nestedException) {
+            nestedException.printStackTrace();
+            return t.toString();
+        }
     }
 }
