@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.logging.*;
 
 public class HostLoggingListener extends Handler {
-    private HostLoggingListener(JavaWorkerClient.StreamingMessagePeer peer) {
+    private HostLoggingListener(Object peer) {
         assert instance == null;
         this.closed = false;
         this.peer = peer;
@@ -18,7 +18,7 @@ public class HostLoggingListener extends Handler {
         this.closed = true;
     }
 
-    static void newInstance(JavaWorkerClient.StreamingMessagePeer peer) {
+    static void newInstance(Object peer) {
         assert instance == null;
         instance = new HostLoggingListener(peer);
     }
@@ -50,7 +50,7 @@ public class HostLoggingListener extends Handler {
             try {
                 // Prevent unbounded recursive calls
                 Application.LOGGER.removeHandler(this);
-                this.peer.log(record, this.invocationSessions.empty() ? null : this.invocationSessions.peek());
+                // this.peer.log(record, this.invocationSessions.empty() ? null : this.invocationSessions.peek());
                 Application.LOGGER.addHandler(this);
             } catch (Exception ex) {
                 this.close();
@@ -63,7 +63,7 @@ public class HostLoggingListener extends Handler {
     public void flush() { }
 
     private boolean closed;
-    private JavaWorkerClient.StreamingMessagePeer peer;
+    private Object peer;
     private Stack<String> invocationSessions;
     private static HostLoggingListener instance = null;
 }

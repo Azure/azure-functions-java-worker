@@ -9,6 +9,10 @@ interface InstanceSupplier {
     Object get() throws Exception;
 }
 
+/**
+ * Used to run the actual method with specific arguments using reflection.
+ * Thread-Safety: Single thread.
+ */
 class JavaMethodInvokeInfo {
     private JavaMethodInvokeInfo() {}
 

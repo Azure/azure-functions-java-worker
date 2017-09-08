@@ -7,6 +7,10 @@ import javax.annotation.*;
 
 import com.microsoft.azure.webjobs.script.binding.*;
 
+/**
+ * Used to executor of arbitrary Java method in any JAR using reflection.
+ * Thread-Safety: Multiple thread.
+ */
 class JavaMethodExecutor {
     JavaMethodExecutor(String jar, String fullMethodName)
             throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
@@ -47,9 +51,9 @@ class JavaMethodExecutor {
         }
     }
 
-    private String jarPath;
+    private final String jarPath;
     private String fullClassName;
     private String methodName;
     private Class<?> containingClass;
-    private OverloadResolver overloadResolver;
+    private final OverloadResolver overloadResolver;
 }

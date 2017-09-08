@@ -2,6 +2,7 @@ package com.microsoft.azure.webjobs.script.broker;
 
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.logging.*;
 
 import com.microsoft.azure.serverless.functions.*;
@@ -11,9 +12,12 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
  * A broker between JAR methods and the function RPC. It can load methods using reflection, and invoke them at runtime.
+ * Thread-Safety: Multiple thread.
  */
 public class JavaFunctionBroker {
-    public JavaFunctionBroker() { }
+    public JavaFunctionBroker() {
+        this.methods = new ConcurrentHashMap<>();
+    }
 
     public void loadMethod(String id, String jarPath, String methodName)
             throws ClassNotFoundException, MalformedURLException, IllegalAccessException {
@@ -34,7 +38,7 @@ public class JavaFunctionBroker {
         return outputs.toParameterBindings();
     }
 
-    private Map<String, JavaMethodExecutor> methods = new HashMap<>();
+    private final Map<String, JavaMethodExecutor> methods;
 }
 
 class JavaExecutionContext implements ExecutionContext {

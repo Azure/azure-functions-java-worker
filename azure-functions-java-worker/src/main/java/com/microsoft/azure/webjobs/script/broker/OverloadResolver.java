@@ -10,6 +10,9 @@ import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.binding.*;
 
 /**
+ * Resolve a Java method overload using reflection.
+ * Thread-Safety: Multiple thread.
+ *
  * m(String)
  * m(String, ExecutionContext)
  * m(String, String)
@@ -29,11 +32,11 @@ class OverloadResolver {
         this.candidates = new ArrayList<>();
     }
 
-    void addCandidate(Method method) {
+    synchronized void addCandidate(Method method) {
         this.candidates.add(new MethodBindInfo(method));
     }
 
-    Optional<JavaMethodInvokeInfo> resolve(InputDataStore inputs) {
+    synchronized Optional<JavaMethodInvokeInfo> resolve(InputDataStore inputs) {
         return Utility.singleMax(Utility.mapOptional(this.candidates, m -> this.resolve(m, inputs)),
             Comparator.comparingInt(InvokeInfoBuilder::getNamedParamCount)
                     .thenComparingInt(InvokeInfoBuilder::getAssignedCount)
@@ -77,8 +80,8 @@ class OverloadResolver {
             this.entry = m;
             this.params = Utility.map(this.entry.getParameters(), ParamBindInfo.class, ParamBindInfo::new);
         }
-        private Method entry;
-        private ParamBindInfo[] params;
+        private final Method entry;
+        private final ParamBindInfo[] params;
     }
 
     private final class ParamBindInfo {
@@ -87,9 +90,9 @@ class OverloadResolver {
             this.name = (bindInfo != null ? bindInfo.value() : null);
             this.type = param.getType();
         }
-        private String name;
-        private Class<?> type;
+        private final String name;
+        private final Class<?> type;
     }
 
-    private List<MethodBindInfo> candidates;
+    private final List<MethodBindInfo> candidates;
 }
