@@ -19,6 +19,7 @@ public final class Application {
     public int getPort() { return this.port; }
     public String getWorkerId() { return this.workerId; }
     public String getRequestId() { return this.requestId; }
+    public boolean logToConsole() { return this.logToConsole; }
 
     private void printUsage() {
         HelpFormatter formatter = new HelpFormatter();
@@ -36,9 +37,10 @@ public final class Application {
             this.port = this.parsePort(commands.getOptionValue("p"));
             this.workerId = this.parseWorkerId(commands.getOptionValue("w"));
             this.requestId = this.parseRequestId(commands.getOptionValue("q"));
+            this.logToConsole = commands.hasOption("l");
             this.commandParseSucceeded = true;
         } catch (ParseException ex) {
-            LOGGER.severe(ex.toString());
+            WorkerLogManager.getSystemLogger().severe(ex.toString());
             this.commandParseSucceeded = false;
         }
     }
@@ -66,6 +68,7 @@ public final class Application {
     private String host;
     private int port;
     private String workerId, requestId;
+    private boolean logToConsole;
 
     private final Options OPTIONS = new Options()
             .addOption(Option.builder("h")
@@ -95,11 +98,16 @@ public final class Application {
                     .argName("RequestId")
                     .desc("The request ID of this communication session")
                     .required()
+                    .build())
+            .addOption(Option.builder("l")
+                    .longOpt("consoleLog")
+                    .desc("Duplicate all host logs to console")
                     .build());
 
 
     public static void main(String[] args) throws IOException {
         Application app = new Application(args);
+
         if (!app.isCommandlineValid()) {
             app.printUsage();
             System.exit(1);
@@ -107,7 +115,7 @@ public final class Application {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
                 client.listen(app.getWorkerId(), app.getRequestId());
             } catch (Exception ex) {
-                LOGGER.log(LEVEL_CRITICAL, "Unexpected Exception causes system to exit", ex);
+                WorkerLogManager.getSystemLogger().log(Level.SEVERE, "Unexpected Exception causes system to exit", ex);
                 System.exit(-1);
             }
         }
@@ -116,26 +124,5 @@ public final class Application {
     public static String version() {
         String jarVersion = Application.class.getPackage().getImplementationVersion();
         return jarVersion != null ? jarVersion : "Unknown";
-    }
-
-    public static String stackTraceToString(Throwable t) {
-        if (t == null) { return null; }
-        try (StringWriter writer = new StringWriter();
-             PrintWriter printer = new PrintWriter(writer)) {
-            t.printStackTrace(printer);
-            return writer.toString();
-        } catch (IOException nestedException) {
-            nestedException.printStackTrace();
-            return t.toString();
-        }
-    }
-
-    // Get an anonymous logger so that the client code won't pollute it through the LogManager
-    public static final Logger LOGGER = Logger.getAnonymousLogger();
-    public static final Level LEVEL_CRITICAL = new LevelCritical();
-    private static class LevelCritical extends Level {
-        LevelCritical() {
-            super("CRITICAL", Level.SEVERE.intValue() + 1000);
-        }
     }
 }

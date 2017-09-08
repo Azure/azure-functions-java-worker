@@ -1,12 +1,19 @@
 package com.microsoft.azure.webjobs.script.handler;
 
+import java.util.concurrent.*;
 import java.util.function.*;
-import java.util.logging.Level;
+import java.util.logging.*;
 
 import com.google.protobuf.*;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
+/**
+ * Generic base class for all message handlers. It does the input marshaling, business logic as well as the output marshaling.
+ * Thread-Safety: Single thread.
+ * @param <TRequest> The request Grpc message type of the message.
+ * @param <TResponse> The response Grpc message type of the message.
+ */
 public abstract class MessageHandler<TRequest extends Message, TResponse extends Message.Builder> {
     MessageHandler(Function<StreamingMessage, TRequest> requestMarshaller,
                    Supplier<TResponse> responseSupplier,
@@ -18,43 +25,42 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
         this.responseMarshaller = responseMarshaller;
     }
 
-    public MessageHandler<TRequest, TResponse> setRequest(StreamingMessage message) {
+    public void setRequest(StreamingMessage message) {
         this.request = this.requestMarshaller.apply(message);
-        return this;
     }
 
-    public StreamingMessage.Builder marshalResponse(StreamingMessage.Builder message) {
+    public void marshalResponse(StreamingMessage.Builder message) {
         this.responseMarshaller.accept(message, this.response);
-        return message;
     }
 
-    public MessageHandler<TRequest, TResponse> handle() {
+    public void handle() {
         StatusResult.Status status = StatusResult.Status.Success;
         String statusMessage;
         try {
             this.response = this.responseSupplier.get();
             statusMessage = this.execute(this.request, this.response);
-            Application.LOGGER.info(statusMessage);
+            this.getLogger().info(statusMessage);
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
             statusMessage = ex.getMessage();
-            Application.LOGGER.log(Level.WARNING, statusMessage, ex);
+            this.getLogger().log(Level.WARNING, statusMessage, ex);
         }
         if (this.responseStatusMarshaller != null) {
             StatusResult result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage).build();
             this.responseStatusMarshaller.accept(this.response, result);
         }
-        return this;
     }
 
+    public void registerTask(Future<?> task) { }
+    Logger getLogger() { return WorkerLogManager.getHostLogger(); }
     abstract String execute(TRequest request, TResponse response) throws Exception;
 
     private TRequest request = null;
     private TResponse response = null;
-    private Function<StreamingMessage, TRequest> requestMarshaller;
-    private Supplier<TResponse> responseSupplier;
-    private BiConsumer<TResponse, StatusResult> responseStatusMarshaller;
-    private BiConsumer<StreamingMessage.Builder, TResponse> responseMarshaller;
+    private final Function<StreamingMessage, TRequest> requestMarshaller;
+    private final Supplier<TResponse> responseSupplier;
+    private final BiConsumer<TResponse, StatusResult> responseStatusMarshaller;
+    private final BiConsumer<StreamingMessage.Builder, TResponse> responseMarshaller;
 }
 
 abstract class OutboundMessageHandler<T extends Message.Builder> extends MessageHandler<Message, T> {

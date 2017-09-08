@@ -11,6 +11,9 @@ public class RpcLogHandler extends OutboundMessageHandler<RpcLog.Builder> {
         super(() -> generateRpcLog(record, invocationId), StreamingMessage.Builder::setRpcLog);
     }
 
+    @Override
+    Logger getLogger() { return WorkerLogManager.getEmptyLogger(); }
+
     private static RpcLog.Builder generateRpcLog(LogRecord record, String invocationId) {
         RpcLog.Builder log = RpcLog.newBuilder();
         doIfNotNull(log::setInvocationId, invocationId);
@@ -28,27 +31,24 @@ public class RpcLogHandler extends OutboundMessageHandler<RpcLog.Builder> {
     }
 
     private static RpcLog.Level mapLogLevel(Level level) {
-        if (Level.FINEST.equals(level) || Level.FINER.equals(level)) {
+        if (level.intValue() <= Level.FINE.intValue()) {
             return RpcLog.Level.Trace;
-        } else if (Level.FINE.equals(level) || Level.CONFIG.equals(level)) {
+        } else if (level.intValue() < Level.INFO.intValue()) {
             return RpcLog.Level.Debug;
-        } else if (Level.INFO.equals(level)) {
+        } else if (level.intValue() < Level.WARNING.intValue()) {
             return RpcLog.Level.Information;
-        } else if (Level.WARNING.equals(level)) {
+        } else if (level.intValue() < Level.SEVERE.intValue()) {
             return RpcLog.Level.Warning;
-        } else if (Level.SEVERE.equals(level)) {
+        } else {
             return RpcLog.Level.Error;
-        } else if (Application.LEVEL_CRITICAL.equals(level)) {
-            return RpcLog.Level.Critical;
         }
-        return null;
     }
 
     private static RpcException.Builder mapException(Throwable t) {
         if (t == null) { return null; }
         RpcException.Builder exception = RpcException.newBuilder();
         doIfNotNull(exception::setMessage, t.getMessage());
-        doIfNotNull(exception::setStackTrace, Application.stackTraceToString(t));
+        doIfNotNull(exception::setStackTrace, Utility.stackTraceToString(t));
         return exception;
     }
 }

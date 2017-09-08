@@ -1,8 +1,8 @@
 package com.microsoft.azure.webjobs.script;
 
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.logging.*;
 import javax.annotation.*;
@@ -14,9 +14,16 @@ import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.handler.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
+/**
+ * Grpc client talks with the Azure Functions Runtime Host. It will dispatch to different message handlers according to the inbound message type.
+ * Thread-Safety: Single thread.
+ */
 class JavaWorkerClient implements AutoCloseable {
     JavaWorkerClient(Application app) {
+        WorkerLogManager.initialize(this, app.logToConsole());
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
+        this.peer = new AtomicReference<>(null);
+        this.handlerSuppliers = new HashMap<>();
         this.addHandlers();
     }
 
@@ -28,66 +35,78 @@ class JavaWorkerClient implements AutoCloseable {
         this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
     }
 
-    void listen(String workerId, String requestId) throws InterruptedException {
-        new StreamingMessagePeer(workerId, requestId).await();
+    void listen(String workerId, String requestId) throws Exception {
+        try (StreamingMessagePeer peer = new StreamingMessagePeer()) {
+            this.peer.set(peer);
+            peer.send(requestId, new StartStreamHandler(workerId));
+            peer.getListeningTask().get();
+        } finally {
+            this.peer.set(null);
+        }
+    }
+
+    void logToHost(LogRecord record, String invocationId) {
+        StreamingMessagePeer peer = this.peer.get();
+        if (peer != null) {
+            peer.send(null, new RpcLogHandler(record, invocationId));
+        }
     }
 
     @Override
-    public void close() throws IOException {
-        HostLoggingListener.releaseInstance();
-        this.channel.shutdown();
-        try {
-            this.channel.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+    public void close() throws Exception {
+        this.channel.shutdownNow();
+        this.channel.awaitTermination(15, TimeUnit.SECONDS);
     }
 
-    class StreamingMessagePeer implements StreamObserver<StreamingMessage> {
-        StreamingMessagePeer(String workerId, String requestId) {
-            this.send(requestId, new StartStreamHandler(workerId));
-            HostLoggingListener.newInstance(this);
+    private class StreamingMessagePeer implements StreamObserver<StreamingMessage>, AutoCloseable {
+        StreamingMessagePeer() {
+            this.task = new CompletableFuture<>();
+            this.threadpool = Executors.newWorkStealingPool();
+            this.observer = FunctionRpcGrpc.newStub(JavaWorkerClient.this.channel).eventStream(this);
         }
 
-        void await() throws InterruptedException {
-            this.latch.await();
-            if (this.error != null) {
-                throw new RuntimeException(this.error);
-            }
+        @Override
+        public synchronized void close() throws Exception {
+            this.threadpool.shutdown();
+            this.threadpool.awaitTermination(15, TimeUnit.SECONDS);
+            this.observer.onCompleted();
         }
 
-        void log(LogRecord record, String invocationId) {
-            this.send("", new RpcLogHandler(record, invocationId));
-        }
-
+        /**
+         * Handles the request. Grpc will not accept the next request until you exit this method.
+         * @param message The incoming Grpc generic message.
+         */
         @Override
         public void onNext(StreamingMessage message) {
             MessageHandler<?, ?> handler = JavaWorkerClient.this.handlerSuppliers.get(message.getContentCase()).get();
-            this.send(message.getRequestId(), handler.setRequest(message).handle());
+            handler.setRequest(message);
+            handler.registerTask(this.threadpool.submit(() -> {
+                handler.handle();
+                this.send(message.getRequestId(), handler);
+            }));
         }
 
         @Override
-        public void onCompleted() {
-            HostLoggingListener.releaseInstance();
-            this.latch.countDown();
-        }
+        public void onCompleted() { this.task.complete(null); }
 
         @Override
-        public void onError(Throwable t) {
-            this.error = t;
-            this.onCompleted();
+        public void onError(Throwable t) { this.task.completeExceptionally(t); }
+
+        private CompletableFuture<Void> getListeningTask() { return this.task; }
+
+        private synchronized void send(String requestId, MessageHandler<?, ?> marshaller) {
+            StreamingMessage.Builder messageBuilder = StreamingMessage.newBuilder();
+            if (requestId != null) { messageBuilder.setRequestId(requestId); }
+            marshaller.marshalResponse(messageBuilder);
+            this.observer.onNext(messageBuilder.build());
         }
 
-        private void send(String requestId, MessageHandler<?, ?> marshaller) {
-            StreamingMessage.Builder messageBuilder = StreamingMessage.newBuilder().setRequestId(requestId);
-            this.observer.onNext(marshaller.marshalResponse(messageBuilder).build());
-        }
-
-        private Throwable error = null;
-        private CountDownLatch latch = new CountDownLatch(1);
-        private StreamObserver<StreamingMessage> observer = FunctionRpcGrpc.newStub(JavaWorkerClient.this.channel).eventStream(this);
+        private CompletableFuture<Void> task;
+        private ExecutorService threadpool;
+        private StreamObserver<StreamingMessage> observer;
     }
 
-    private ManagedChannel channel;
-    private HashMap<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers = new HashMap<>();
+    private final ManagedChannel channel;
+    private final AtomicReference<StreamingMessagePeer> peer;
+    private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
 }
