@@ -15,12 +15,12 @@ public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadReque
     @Override
     String execute(FunctionLoadRequest request, FunctionLoadResponse.Builder response) throws Exception {
         final String functionId = request.getFunctionId();
+        response.setFunctionId(functionId);
         final String script = request.getMetadata().getScriptFile();
         final String entryPoint = request.getMetadata().getEntryPoint();
         this.broker.loadMethod(functionId, script, entryPoint);
-        response.setFunctionId(functionId);
         return functionId + " - \"" + script + "\"::\"" + entryPoint + "\" loaded";
     }
 
-    private JavaFunctionBroker broker;
+    private final JavaFunctionBroker broker;
 }

@@ -16,10 +16,10 @@ public final class Application {
     }
 
     public String getHost() { return this.host; }
-    public int getPort() { return this.port; }
-    public String getWorkerId() { return this.workerId; }
-    public String getRequestId() { return this.requestId; }
-    public boolean logToConsole() { return this.logToConsole; }
+    int getPort() { return this.port; }
+    private String getWorkerId() { return this.workerId; }
+    private String getRequestId() { return this.requestId; }
+    boolean logToConsole() { return this.logToConsole; }
 
     private void printUsage() {
         HelpFormatter formatter = new HelpFormatter();
@@ -71,43 +71,34 @@ public final class Application {
     private boolean logToConsole;
 
     private final Options OPTIONS = new Options()
-            .addOption(Option.builder("h")
-                    .longOpt("host")
-                    .hasArg()
-                    .argName("HostName")
-                    .desc("The address of the machine that the webjobs host is running on")
+            .addOption(Option.builder("h").longOpt("host")
+                    .hasArg().argName("HostName")
+                    .desc("The address of the machine that the Azure Functions host is running on")
                     .required()
                     .build())
-            .addOption(Option.builder("p")
-                    .longOpt("port")
-                    .hasArg()
-                    .argName("PortNumber")
-                    .desc("The port number which the webjobs host is listening to")
+            .addOption(Option.builder("p").longOpt("port")
+                    .hasArg().argName("PortNumber")
+                    .desc("The port number which the Azure Functions host is listening to")
                     .required()
                     .build())
-            .addOption(Option.builder("w")
-                    .longOpt("workerId")
-                    .hasArg()
-                    .argName("WorkerId")
-                    .desc("The ID of this running worker of throughout communication session")
+            .addOption(Option.builder("w").longOpt("workerId")
+                    .hasArg().argName("WorkerId")
+                    .desc("The ID of this running worker throughout communication session")
                     .required()
                     .build())
-            .addOption(Option.builder("q")
-                    .longOpt("requestId")
-                    .hasArg()
-                    .argName("RequestId")
-                    .desc("The request ID of this communication session")
+            .addOption(Option.builder("q").longOpt("requestId")
+                    .hasArg().argName("RequestId")
+                    .desc("The startup request ID of this communication session")
                     .required()
                     .build())
-            .addOption(Option.builder("l")
-                    .longOpt("consoleLog")
-                    .desc("Duplicate all host logs to console")
+            .addOption(Option.builder("l").longOpt("consoleLog")
+                    .desc("Whether to duplicate all host logs to console as well")
                     .build());
 
 
     public static void main(String[] args) throws IOException {
+        System.out.println("Microsoft Azure Functions Java Runtime [build " + version() + "]");
         Application app = new Application(args);
-
         if (!app.isCommandlineValid()) {
             app.printUsage();
             System.exit(1);
@@ -123,6 +114,6 @@ public final class Application {
 
     public static String version() {
         String jarVersion = Application.class.getPackage().getImplementationVersion();
-        return jarVersion != null ? jarVersion : "Unknown";
+        return jarVersion != null && !jarVersion.isEmpty() ? jarVersion : "Unknown";
     }
 }

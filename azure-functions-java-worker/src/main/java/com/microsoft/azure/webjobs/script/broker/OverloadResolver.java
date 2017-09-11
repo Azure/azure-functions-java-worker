@@ -12,20 +12,6 @@ import com.microsoft.azure.webjobs.script.binding.*;
 /**
  * Resolve a Java method overload using reflection.
  * Thread-Safety: Multiple thread.
- *
- * m(String)
- * m(String, ExecutionContext)
- * m(String, String)
- * m(POJO)
- * m(POJO, String)
- * m(POJO, String, String)
- * m(POJO, ExecutionContext)
- * m(POJO, String, ExecutionContext)
- * m(POJO, String, String, ExecutionContext)
- * m(HttpRequestMessage)
- * m(HttpRequestMessage, ExecutionContext)
- * m(HttpRequestMessage, String, ExecutionContext)
- * m(HttpRequestMessage, String, String, ExecutionContext)
  */
 class OverloadResolver {
     OverloadResolver() {
