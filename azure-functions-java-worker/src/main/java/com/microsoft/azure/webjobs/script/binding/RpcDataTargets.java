@@ -14,8 +14,6 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage 
     }
 
     @Override
-    public void setValue(Object value) { throw new UnsupportedOperationException(); }
-    @Override
     public int getStatus() { return this.status; }
     @Override
     public void setStatus(int status) { this.status = status; }
@@ -53,6 +51,8 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (value != null) {
             dataBuilder.setString(value.toString());
+        } else {
+            throw new ClassCastException();
         }
         return dataBuilder;
     }
@@ -68,6 +68,8 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
                 dataBuilder.setInt((Short) value);
             } else if (value instanceof Byte) {
                 dataBuilder.setInt((Byte) value);
+            } else {
+                throw new ClassCastException();
             }
         }
         return dataBuilder;
@@ -80,6 +82,8 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
                 dataBuilder.setDouble((Double) value);
             } else if (value instanceof Float) {
                 dataBuilder.setDouble((Float) value);
+            } else {
+                throw new ClassCastException();
             }
         }
         return dataBuilder;
@@ -90,7 +94,19 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
         if (value != null) {
             if (value instanceof byte[]) {
                 dataBuilder.setBytes(ByteString.copyFrom((byte[]) value));
+            } else {
+                throw new ClassCastException();
             }
+        }
+        return dataBuilder;
+    }
+
+    private static TypedData.Builder toJsonData(Object value) {
+        TypedData.Builder dataBuilder = TypedData.newBuilder();
+        if (value != null) {
+            dataBuilder.setJson(new Gson().toJson(value));
+        } else {
+            throw new ClassCastException();
         }
         return dataBuilder;
     }
@@ -113,7 +129,7 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, byte[].class, RpcUnspecifiedDataTarget::toByteArrayData);
         UNSPECIFIED_TARGET_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (val, type) -> {
             try {
-                return new Gson().toJson(val);
+                return toJsonData(val);
             } catch (Exception ex) {
                 return toStringData(val);
             }

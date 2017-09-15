@@ -7,6 +7,14 @@ import com.google.protobuf.*;
 import com.microsoft.azure.webjobs.script.binding.BindingData.*;
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
 
+final class RpcEmptyDataSource extends DataSource<Object> {
+    RpcEmptyDataSource(String name) { super(name, null, EMPTY_DATA_OPERATIONS); }
+
+    private static final DataOperations<Object> EMPTY_DATA_OPERATIONS = new DataOperations<>();
+    static {
+    }
+}
+
 final class RpcIntegerDataSource extends DataSource<Long> {
     RpcIntegerDataSource(String name, long value) { super(name, value, LONG_DATA_OPERATIONS); }
 
@@ -36,8 +44,13 @@ final class RpcRealNumberDataSource extends DataSource<Double> {
 final class RpcStringDataSource extends DataSource<String> {
     RpcStringDataSource(String name, String value) { super(name, value, STRING_DATA_OPERATIONS); }
 
-    private static Object convertToJson(MatchingLevel level, String s, Type target) {
-        return new RpcJsonDataSource(null, s).computeByType(level, target);
+    private static Object convertToJson(boolean isStrict, String s, Type target) {
+        DataSource<?> jsonSource = new RpcJsonDataSource(null, s);
+        if (isStrict) {
+            return jsonSource.computeByType(TYPE_ASSIGNMENT, target).orElseThrow(ClassCastException::new).getValue();
+        } else {
+            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getValue();
+        }
     }
 
     private static final DataOperations<String> STRING_DATA_OPERATIONS = new DataOperations<>();
@@ -55,8 +68,8 @@ final class RpcStringDataSource extends DataSource<String> {
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Double.class, Double::parseDouble);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, float.class, Float::parseFloat);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Float.class, Float::parseFloat);
-        STRING_DATA_OPERATIONS.addGuardOperation(TYPE_STRICT_CONVERSION, (v, t) -> convertToJson(TYPE_STRICT_CONVERSION, v, t));
-        STRING_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) -> convertToJson(TYPE_RELAXED_CONVERSION, v, t));
+        STRING_DATA_OPERATIONS.addGuardOperation(TYPE_STRICT_CONVERSION, (v, t) -> convertToJson(true, v, t));
+        STRING_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) -> convertToJson(false, v, t));
     }
 }
 

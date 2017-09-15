@@ -1,0 +1,18 @@
+﻿{
+    "scriptFile": "../../../../target/azure-functions-java-sample-1.0-SNAPSHOT.jar",
+    "entryPoint": "com.microsoft.serverless.Miscellany.echo",
+    "bindings": [
+        {
+            "type": "httpTrigger",
+            "name": "req",
+            "direction": "in",
+            "authLevel": "anonymous",
+            "methods": [ "get", "post" ]
+        },
+        {
+            "type": "http",
+            "name": "$return",
+            "direction": "out"
+        }
+    ]
+}

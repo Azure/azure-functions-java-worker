@@ -37,7 +37,7 @@ class OverloadResolver {
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             Utility.forEach(method.params, param -> {
                 Optional<BindingData> argument;
-                if (OutputParameter.class.isAssignableFrom(param.type)) {
+                if (OutputBinding.class.isAssignableFrom(param.type)) {
                     argument = dataStore.getOrAddDataTarget(param.name, param.type);
                 } else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
@@ -73,8 +73,7 @@ class OverloadResolver {
 
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
-            Bind bindInfo = param.getAnnotation(Bind.class);
-            this.name = (bindInfo != null ? bindInfo.value() : null);
+            this.name = CoreTypeResolver.getBindingName(param);
             this.type = param.getType();
         }
         private final String name;

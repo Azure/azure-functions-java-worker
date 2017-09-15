@@ -36,9 +36,18 @@ abstract class DataSource<T> {
 
     Optional<BindingData> computeByType(MatchingLevel level, Type target) {
         try {
-            Optional<BindingData> binding = this.operations.getOperation(level, target).map(op -> new BindingData(op.apply(this.value), level));
+            Optional<BindingData> binding;
+            try {
+                binding = this.operations.getOperation(level, target).map(op -> new BindingData(op.apply(this.value), level));
+            } catch (Exception ex) {
+                binding = Optional.empty();
+            }
             if (!binding.isPresent()) {
-                binding = this.operations.getGuardOperation(level).map(op -> new BindingData(op.apply(this.value, target), level));
+                try {
+                    binding = this.operations.getGuardOperation(level).map(op -> new BindingData(op.apply(this.value, target), level));
+                } catch (Exception ex) {
+                    binding = Optional.empty();
+                }
             }
             return binding;
         } catch (Exception ex) {
@@ -46,16 +55,16 @@ abstract class DataSource<T> {
         }
     }
 
-    private Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
+    Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
         return Optional.ofNullable(level == BINDING_NAME && this.name != null && this.name.equals(name) ? this : null);
     }
 
-    private Optional<BindingData> computeByType(Type target) {
-        Optional<BindingData> data = this.computeByType(TYPE_ASSIGNMENT, target);
-        if (data.isPresent()) { return data; }
-        data = this.computeByType(TYPE_STRICT_CONVERSION, target);
-        if (data.isPresent()) { return data; }
-        return this.computeByType(TYPE_RELAXED_CONVERSION, target);
+    Optional<BindingData> computeByType(Type target) {
+        for (MatchingLevel level : Arrays.asList(TYPE_ASSIGNMENT, TYPE_STRICT_CONVERSION, TYPE_RELAXED_CONVERSION)) {
+            Optional<BindingData> data = this.computeByType(level, target);
+            if (data.isPresent()) { return data; }
+        }
+        return Optional.empty();
     }
 
     private final String name;
@@ -68,7 +77,7 @@ abstract class DataSource<T> {
  * Data operation template: Object (source) -> TypedData.Builder.
  * Thread-safety: Single thread.
  */
-abstract class DataTarget implements OutputParameter {
+abstract class DataTarget implements OutputBinding {
     DataTarget(DataOperations<Object> operations) {
         this.operations = operations;
     }
@@ -78,18 +87,31 @@ abstract class DataTarget implements OutputParameter {
     }
 
     private Optional<TypedData> computeFromValueByLevels(MatchingLevel... levels) {
-        Type source = this.getValue().getClass();
-        for (MatchingLevel level : levels) {
-            Optional<?> dataBuilder = this.operations.getOperation(level, source).map(op -> op.apply(this.getValue()));
-            if (!dataBuilder.isPresent()) {
-                dataBuilder = this.operations.getGuardOperation(level).map(op -> op.apply(this.getValue(), source));
+        try {
+            Type source = this.getValue().getClass();
+            for (MatchingLevel level : levels) {
+                Optional<?> dataBuilder;
+                try {
+                    dataBuilder = this.operations.getOperation(level, source).map(op -> op.apply(this.getValue()));
+                } catch (Exception ex) {
+                    dataBuilder = Optional.empty();
+                }
+                if (!dataBuilder.isPresent()) {
+                    try {
+                        dataBuilder = this.operations.getGuardOperation(level).map(op -> op.apply(this.getValue(), source));
+                    } catch (Exception ex) {
+                        dataBuilder = Optional.empty();
+                    }
+                }
+                if (dataBuilder.isPresent()) {
+                    assert dataBuilder.get() instanceof TypedData.Builder;
+                    return Optional.of(((TypedData.Builder) dataBuilder.get()).build());
+                }
             }
-            if (dataBuilder.isPresent()) {
-                assert dataBuilder.get() instanceof TypedData.Builder;
-                return Optional.of(((TypedData.Builder)dataBuilder.get()).build());
-            }
+            return Optional.empty();
+        } catch (Exception ex) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override

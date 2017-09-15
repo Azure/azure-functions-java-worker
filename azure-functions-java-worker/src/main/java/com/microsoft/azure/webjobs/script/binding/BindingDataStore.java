@@ -40,7 +40,7 @@ public final class BindingDataStore {
     }
 
     public void addExecutionContextSource(String invocationId) {
-        this.sources.add(new ExecutionContextDataSource(this, invocationId));
+        this.sources.add(new ExecutionContextDataSource(invocationId));
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
@@ -67,6 +67,7 @@ public final class BindingDataStore {
             case BYTES:  return new RpcByteArrayDataSource(name, data.getBytes());
             case JSON:   return new RpcJsonDataSource(name, data.getJson());
             case HTTP:   return new RpcHttpRequestDataSource(name, data.getHttp());
+            case DATA_NOT_SET: return new RpcEmptyDataSource(name);
             default:     throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
         }
     }
@@ -113,8 +114,13 @@ public final class BindingDataStore {
     }
 
     private boolean isDataTargetValid(String name, Type target) {
-        if (!CoreTypeResolver.isValidOutputType(target)) { return false; }
-        if (CoreTypeResolver.isHttpResponse(target) && !this.isDefinitionBindingType(name, HTTP)) { return false; }
+        if (!name.equals(RETURN_NAME)) {
+            if (!CoreTypeResolver.isValidOutputType(target)) { return false; }
+            target = CoreTypeResolver.getOutputParameterArgument(target);
+        }
+        if (CoreTypeResolver.isHttpResponse(target) && !this.isDefinitionBindingType(name, HTTP)) {
+            return false;
+        }
         return true;
     }
 

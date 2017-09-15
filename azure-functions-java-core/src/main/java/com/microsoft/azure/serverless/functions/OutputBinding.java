@@ -1,6 +1,6 @@
 package com.microsoft.azure.serverless.functions;
 
-public interface OutputParameter<T> {
+public interface OutputBinding<T> {
     T getValue();
     void setValue(T value);
 }

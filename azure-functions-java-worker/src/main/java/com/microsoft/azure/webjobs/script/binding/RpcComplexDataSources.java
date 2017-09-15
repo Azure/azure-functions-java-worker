@@ -8,14 +8,13 @@ import com.google.gson.*;
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
+import com.microsoft.azure.webjobs.script.binding.BindingData.*;
 
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
-import static com.microsoft.azure.webjobs.script.binding.BindingDefinition.BindingType.*;
 
 final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
-    ExecutionContextDataSource(BindingDataStore store, String invocationId) {
+    ExecutionContextDataSource(String invocationId) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
-        this.store = store;
         this.invocationId = invocationId;
         this.logger = WorkerLogManager.getInvocationLogger(invocationId);
         this.setValue(this);
@@ -27,25 +26,6 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
     @Override
     public Logger getLogger() { return this.logger; }
 
-    @Override
-    public HttpResponseMessage getResponse() {
-        try {
-            return this.store.getTheOnlyDefinitionOfType(HTTP).map(def -> this.getResponse(def.getName())).orElse(null);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    @Override
-    public HttpResponseMessage getResponse(String name) {
-        try {
-            return this.store.getOrAddDataTarget(name, HttpResponseMessage.class).map(d -> (HttpResponseMessage) d.getValue()).orElse(null);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    private BindingDataStore store;
     private final String invocationId;
     private final Logger logger;
 
@@ -67,27 +47,49 @@ final class RpcJsonDataSource extends DataSource<String> {
     }
 }
 
-final class RpcHttpRequestDataSource extends DataSource<RpcHttp> implements HttpRequestMessage {
+final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource> implements HttpRequestMessage {
     RpcHttpRequestDataSource(String name, RpcHttp value) {
-        super(name, value, HTTP_DATA_OPERATIONS);
-        this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.getValue().getBody());
+        super(name, null, HTTP_DATA_OPERATIONS);
+        this.httpPayload = value;
+        this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.httpPayload.getBody());
+        this.fields = Arrays.asList(this.httpPayload.getHeadersMap(), this.httpPayload.getQueryMap(), this.httpPayload.getParamsMap());
+        this.setValue(this);
     }
 
     @Override
-    public URI getUri() { return URI.create(this.getValue().getUrl()); }
+    Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
+        if (level == METADATA_NAME) {
+            List<DataSource<?>> values = Utility.take(this.fields, 2, map ->
+                    Optional.ofNullable(map.get(name)).map(v -> new RpcStringDataSource(name, v)));
+            if (values.size() == 1) { return Optional.of(values.get(0)); }
+        }
+        return super.lookupName(level, name);
+    }
+
     @Override
-    public String getMethod() { return this.getValue().getMethod(); }
+    public URI getUri() { return URI.create(this.httpPayload.getUrl()); }
     @Override
-    public Map<String, String> getHeaders() { return this.getValue().getHeadersMap(); }
+    public String getMethod() { return this.httpPayload.getMethod(); }
     @Override
-    public Map<String, String> getQueryParameters() { return this.getValue().getQueryMap(); }
+    public Map<String, String> getHeaders() { return this.httpPayload.getHeadersMap(); }
+    @Override
+    public Map<String, String> getQueryParameters() { return this.httpPayload.getQueryMap(); }
     @Override
     public Object getBody() { return this.bodyDataSource.getValue(); }
 
-    private final DataSource<?> bodyDataSource;
+    @Override
+    public HttpResponseMessage createResponse() {
+        return new RpcHttpDataTarget();
+    }
 
-    private static final DataOperations<RpcHttp> HTTP_DATA_OPERATIONS = new DataOperations<>();
+    private final RpcHttp httpPayload;
+    private final DataSource<?> bodyDataSource;
+    private final List<Map<String, String>> fields;
+
+    private static final DataOperations<RpcHttpRequestDataSource> HTTP_DATA_OPERATIONS = new DataOperations<>();
     static {
         HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
+        HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) ->
+                v.bodyDataSource.computeByType(t).orElseThrow(ClassCastException::new).getValue());
     }
 }
