@@ -29,14 +29,13 @@ public class Utility {
         return result;
     }
 
-    public static <TSource, TResult> Optional<TResult> single(Iterable<TSource> source, Function<TSource, Optional<TResult>> convert) {
-        int count = 0;
-        Optional<TResult> result = Optional.empty();
+    public static <TSource, TResult> List<TResult> take(Iterable<TSource> source, int max, Function<TSource, Optional<TResult>> convert) {
+        List<TResult> result = new ArrayList<>();
         for (TSource item : source) {
             Optional<TResult> convertedItem = convert.apply(item);
             if (convertedItem.isPresent()) {
-                result = convertedItem;
-                if (++count >= 2) { return Optional.empty(); }
+                result.add(convertedItem.get());
+                if (result.size() >= max) { break; }
             }
         }
         return result;

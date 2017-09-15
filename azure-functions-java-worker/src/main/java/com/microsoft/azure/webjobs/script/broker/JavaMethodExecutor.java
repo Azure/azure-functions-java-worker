@@ -3,27 +3,36 @@ package com.microsoft.azure.webjobs.script.broker;
 import java.lang.reflect.*;
 import java.net.*;
 import java.nio.file.*;
+import java.util.*;
 import javax.annotation.*;
 
 import com.microsoft.azure.webjobs.script.binding.*;
+import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
  * Used to executor of arbitrary Java method in any JAR using reflection.
  * Thread-Safety: Multiple thread.
  */
 class JavaMethodExecutor {
-    JavaMethodExecutor(String jar, String fullMethodName)
+    JavaMethodExecutor(String jar, String fullMethodName, Map<String, BindingInfo> bindingInfos)
             throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
         this.jarPath = jar;
         this.overloadResolver = new OverloadResolver();
         this.splitFullMethodName(fullMethodName);
         this.retrieveCandidates();
+        this.bindingDefinitions = new HashMap<>();
+        for (Map.Entry<String, BindingInfo> entry : bindingInfos.entrySet()) {
+            this.bindingDefinitions.put(entry.getKey(), new BindingDefinition(entry.getKey(), entry.getValue()));
+        }
     }
 
-    OutputDataStore execute(InputDataStore inputs) throws Exception {
-        return this.overloadResolver.resolve(inputs)
+    Map<String, BindingDefinition> getBindingDefinitions() { return this.bindingDefinitions; }
+
+    void execute(BindingDataStore dataStore) throws Exception {
+        Object retValue = this.overloadResolver.resolve(dataStore)
             .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
             .invoke(() -> this.containingClass.newInstance());
+        dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
     }
 
     @PostConstruct
@@ -56,4 +65,5 @@ class JavaMethodExecutor {
     private String methodName;
     private Class<?> containingClass;
     private final OverloadResolver overloadResolver;
+    private final Map<String, BindingDefinition> bindingDefinitions;
 }

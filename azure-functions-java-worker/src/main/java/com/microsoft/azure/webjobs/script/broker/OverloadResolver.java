@@ -22,31 +22,35 @@ class OverloadResolver {
         this.candidates.add(new MethodBindInfo(method));
     }
 
-    synchronized Optional<JavaMethodInvokeInfo> resolve(InputDataStore inputs) {
-        return Utility.singleMax(Utility.mapOptional(this.candidates, m -> this.resolve(m, inputs)),
-            Comparator.comparingInt(InvokeInfoBuilder::getNamedParamCount)
-                    .thenComparingInt(InvokeInfoBuilder::getAssignedCount)
-                    .thenComparingInt(InvokeInfoBuilder::getConvertedCount)
+    synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
+        return Utility.singleMax(Utility.mapOptional(this.candidates, m -> this.resolve(m, dataStore)),
+            Comparator.<InvokeInfoBuilder>comparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.BINDING_NAME.getIndex()])
+                    .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.METADATA_NAME.getIndex()])
+                    .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_ASSIGNMENT.getIndex()])
+                    .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_STRICT_CONVERSION.getIndex()])
+                    .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_RELAXED_CONVERSION.getIndex()])
         ).map(InvokeInfoBuilder::build);
     }
 
-    private Optional<InvokeInfoBuilder> resolve(MethodBindInfo method, InputDataStore inputs) {
+    private Optional<InvokeInfoBuilder> resolve(MethodBindInfo method, BindingDataStore dataStore) {
         try {
-            final OutputDataStore outputs = new OutputDataStore();
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             Utility.forEach(method.params, param -> {
-                Optional<BindingData.Value<?>> argument;
+                Optional<BindingData> argument;
                 if (OutputParameter.class.isAssignableFrom(param.type)) {
-                    argument = outputs.tryGenerateParameter(param.name, param.type);
+                    argument = dataStore.getOrAddDataTarget(param.name, param.type);
                 } else if (param.name != null && !param.name.isEmpty()) {
-                    argument = inputs.tryLookupByName(param.name, param.type).map(v -> { invokeInfo.namedParamCount++; return v; });
+                    argument = dataStore.getDataByName(param.name, param.type);
                 } else {
-                    argument = inputs.tryAssignAs(param.type).map(v -> { invokeInfo.assignedCount++; return v; });
-                    if (!argument.isPresent()) { argument = inputs.tryConvertTo(param.type).map(v -> { invokeInfo.convertedCount++; return v; }); }
+                    argument = dataStore.getDataByType(param.type);
                 }
-                invokeInfo.appendArgument(argument.orElseThrow(WrongMethodTypeException::new).getActual());
+                BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
+                invokeInfo.matchingLevelCount[actualArg.getLevel().getIndex()]++;
+                invokeInfo.appendArgument(actualArg.getValue());
             });
-            invokeInfo.setOutputs(outputs);
+            if (!method.entry.getReturnType().equals(void.class) && !method.entry.getReturnType().equals(Void.class)) {
+                dataStore.getOrAddDataTarget(BindingDataStore.RETURN_NAME, method.entry.getReturnType());
+            }
             return Optional.of(invokeInfo);
         } catch (Exception ex) {
             return Optional.empty();
@@ -55,10 +59,7 @@ class OverloadResolver {
 
     private final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
         InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.entry); }
-        int getNamedParamCount() { return this.namedParamCount; }
-        int getAssignedCount() { return this.assignedCount; }
-        int getConvertedCount() { return this.convertedCount; }
-        private int namedParamCount = 0, assignedCount = 0, convertedCount = 0;
+        private final int[] matchingLevelCount = new int[BindingData.MatchingLevel.count()];
     }
 
     private final class MethodBindInfo {

@@ -1,25 +1,36 @@
 package com.microsoft.azure.webjobs.script.binding;
 
-public abstract class BindingData<T> {
-    BindingData(String name, Value<T> value) {
-        this.name = name;
+/**
+ * Provides the information such as the matching level of the actual value retrieved/converted from BindingDataStore.
+ */
+public final class BindingData {
+    BindingData(Object value, MatchingLevel level) {
         this.value = value;
+        this.level = level;
     }
 
-    public String getName() { return this.name; }
-    public Value<T> getValue() { return this.value; }
-    public T getActualValue() { return this.value.getActual(); }
-    protected void setValue(Value<T> value) { this.value = value; }
-
-    private String name;
-    private Value<T> value;
+    public Object getValue() { return this.value; }
+    public MatchingLevel getLevel() { return level; }
+    void setLevel(MatchingLevel level) { this.level = level; }
 
     /**
-     * The wrapper of the object value so that the 'null' could be put in an Optional&lt;T&gt;.
+     * Represents how this value is retrieved. Higher index value means higher priority in the overload resolution algorithm.
      */
-    public static class Value<T> {
-        Value(T actual) { this.actual = actual; }
-        public T getActual() { return this.actual; }
-        private T actual;
+    public enum MatchingLevel {
+        BINDING_NAME(0),
+        METADATA_NAME(1),
+        TYPE_ASSIGNMENT(2),
+        TYPE_STRICT_CONVERSION(3),
+        TYPE_RELAXED_CONVERSION(4);
+        public static int count() { return 5; }
+
+        MatchingLevel(int index) {
+            this.index = index;
+        }
+        public int getIndex() { return index; }
+        private int index;
     }
+
+    private final Object value;
+    private MatchingLevel level;
 }
