@@ -9,4 +9,6 @@ public interface HttpRequestMessage {
     Map<String, String> getHeaders();
     Map<String, String> getQueryParameters();
     Object getBody();
+
+    HttpResponseMessage createResponse();
 }

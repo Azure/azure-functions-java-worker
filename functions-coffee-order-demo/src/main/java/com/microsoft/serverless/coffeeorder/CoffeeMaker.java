@@ -27,9 +27,9 @@ public class CoffeeMaker {
     /**
      * Update order status as well as the inventory data when a coffee is made.
      */
-    public static void onResponse(@Bind("response") CoffeeMachineResponse response,
-                                  @Bind("order") OrderEntry order,
-                                  @Bind("inventory") InventoryEntry inventory) {
+    public static void onResponse(@BindingName("response") CoffeeMachineResponse response,
+                                  @BindingName("order") OrderEntry order,
+                                  @BindingName("inventory") InventoryEntry inventory) {
 
         try  {
             order.setStatus(response.isAccepted() ? OrderStatus.Making : OrderStatus.Cancelled);

@@ -42,3 +42,19 @@ Our version strategy just follows the maven package version convention: `<major>
 6. New features are added to `1.1-SNAPSHOT`.
 
 Every time you release a non-development version (like `1.0.0-ALPHA` or `1.0.1`), you also need to update the tag in your git repository.
+
+# Advanced Java Concepts
+
+## Reflection for Type
+
+Primitives have two different type definitions, for example: `int.class` (which is identical to `Integer.TYPE`) is not `Integer.class`.
+
+All Java types are represented by `Type` interface, which may be one of the following implementations:
+* `Class<?>`: normal class type like `String`
+* `ParameterizedType`: generic class type like `List<Integer>`
+* `WildcardType`: generic argument contains question mark like `? extends Number`
+* `TypeVariable<?>`: generic argument like `T`
+* `GenericArrayType`: generic array like `T[]`
+
+For the generic type behaviors (including compile-time validation and runtime type erasure) in Java, please refer to *[Generics in the Java Programming Language
+](https://www.cs.rice.edu/~cork/312/Readings/GenericsTutorial.pdf)*.
