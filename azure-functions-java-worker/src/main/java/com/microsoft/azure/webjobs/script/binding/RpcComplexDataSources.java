@@ -30,6 +30,9 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
     private final Logger logger;
 
     private static final DataOperations<ExecutionContext> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
+    static {
+        EXECONTEXT_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
+    }
 }
 
 final class RpcTriggerMetadataDataSource extends DataSource<Map<String, TypedData>> {
