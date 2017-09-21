@@ -10,5 +10,5 @@ public interface HttpRequestMessage {
     Map<String, String> getQueryParameters();
     Object getBody();
 
-    HttpResponseMessage createResponse();
+    HttpResponseMessage createResponse(int status, Object body);
 }

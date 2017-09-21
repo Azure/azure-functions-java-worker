@@ -82,8 +82,11 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
     public Object getBody() { return this.bodyDataSource.getValue(); }
 
     @Override
-    public HttpResponseMessage createResponse() {
-        return new RpcHttpDataTarget();
+    public HttpResponseMessage createResponse(int status, Object body) {
+        HttpResponseMessage response = new RpcHttpDataTarget();
+        response.setStatus(status);
+        response.setBody(body);
+        return response;
     }
 
     private final RpcHttp httpPayload;
