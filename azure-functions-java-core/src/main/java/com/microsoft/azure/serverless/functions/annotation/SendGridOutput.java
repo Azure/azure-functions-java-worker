@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface SendGridOutput {
     String name();
 
+    String dataType() default "";
+
     String apiKey();
 
     String to();

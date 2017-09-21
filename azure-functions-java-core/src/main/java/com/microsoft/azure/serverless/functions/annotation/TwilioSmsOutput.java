@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface TwilioSmsOutput {
     String name();
 
+    String dataType() default "";
+
     String accountSid();
 
     String authToken();

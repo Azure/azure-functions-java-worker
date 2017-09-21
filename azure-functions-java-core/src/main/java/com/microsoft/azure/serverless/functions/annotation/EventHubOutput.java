@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface EventHubOutput {
     String name();
 
+    String dataType() default "";
+
     String eventHubName();
 
     String connection();

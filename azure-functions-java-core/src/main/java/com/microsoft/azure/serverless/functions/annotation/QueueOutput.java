@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface QueueOutput {
     String name();
 
+    String dataType() default "";
+
     String queueName();
 
     String connection() default "";

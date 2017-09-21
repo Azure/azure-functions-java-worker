@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface EventHubTrigger {
     String name();
 
+    String dataType() default "";
+
     String eventHubName();
 
     String consumerGroup() default "$Default";

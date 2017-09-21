@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface NotificationHubOutput {
     String name();
 
+    String dataType() default "";
+
     String tagExpression() default "";
 
     String hubName();

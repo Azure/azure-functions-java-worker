@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface ServiceBusQueueOutput {
     String name();
 
+    String dataType() default "";
+
     String queueName();
 
     String connection();

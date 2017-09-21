@@ -15,4 +15,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface HttpOutput {
     String name();
+
+    String dataType() default "";
 }

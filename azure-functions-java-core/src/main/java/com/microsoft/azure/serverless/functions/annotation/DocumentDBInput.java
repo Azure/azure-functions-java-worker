@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface DocumentDBInput {
     String name();
 
+    String dataType() default "";
+
     String databaseName();
 
     String collectionName();

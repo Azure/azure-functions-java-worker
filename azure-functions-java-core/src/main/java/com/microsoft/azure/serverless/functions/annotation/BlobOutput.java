@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface BlobOutput {
     String name();
 
+    String dataType() default "";
+
     String path();
 
     String connection() default "";

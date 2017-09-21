@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface ServiceBusTopicOutput {
     String name();
 
+    String dataType() default "";
+
     String topicName();
 
     String subscriptionName();
