@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface MobileTableOutput {
     String name();
 
+    String dataType() default "";
+
     String tableName();
 
     String connection();

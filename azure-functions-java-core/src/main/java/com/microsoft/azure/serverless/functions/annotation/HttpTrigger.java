@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface HttpTrigger {
     String name();
 
+    String dataType() default "";
+
     String route() default "";
 
     String[] methods() default {};

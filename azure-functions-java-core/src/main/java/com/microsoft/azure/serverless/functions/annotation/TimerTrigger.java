@@ -16,5 +16,7 @@ import java.lang.annotation.Target;
 public @interface TimerTrigger {
     String name();
 
+    String dataType() default "";
+
     String schedule();
 }

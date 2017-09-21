@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface MobileTableInput {
     String name();
 
+    String dataType() default "";
+
     String tableName();
 
     String id();

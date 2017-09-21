@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface ApiHubFileInput {
     String name();
 
+    String dataType() default "";
+
     String path();
 
     String connection();

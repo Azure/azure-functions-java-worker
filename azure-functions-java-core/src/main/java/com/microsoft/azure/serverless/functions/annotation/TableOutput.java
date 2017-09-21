@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 public @interface TableOutput {
     String name();
 
+    String dataType() default "";
+
     String tableName();
 
     String partitionKey() default "";
