@@ -47,6 +47,7 @@ final class RpcJsonDataSource extends DataSource<String> {
     private static final DataOperations<String> JSON_DATA_OPERATIONS = new DataOperations<>();
     static {
         JSON_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (s, t) -> new Gson().fromJson(s, t));
+        JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String.class, s -> s);
     }
 }
 

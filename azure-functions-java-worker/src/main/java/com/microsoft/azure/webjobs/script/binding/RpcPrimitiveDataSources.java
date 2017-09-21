@@ -27,6 +27,7 @@ final class RpcIntegerDataSource extends DataSource<Long> {
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Short.class, Long::shortValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, byte.class, Long::byteValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Byte.class, Long::byteValue);
+        LONG_DATA_OPERATIONS.addOperation(TYPE_RELAXED_CONVERSION, String.class, Object::toString);
     }
 }
 
@@ -38,6 +39,7 @@ final class RpcRealNumberDataSource extends DataSource<Double> {
         REALNUMBER_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, float.class, Double::floatValue);
         REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Float.class, Double::floatValue);
+        REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_RELAXED_CONVERSION, String.class, Object::toString);
     }
 }
 
