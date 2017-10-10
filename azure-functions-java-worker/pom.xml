@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-functions-java-worker</artifactId>
@@ -7,7 +6,8 @@
   <packaging>jar</packaging>
 
   <name>Microsoft Azure Functions Java Runtime</name>
-  <url>https://github.com/Azure/azure-function-java-host</url>
+  <description>This package contains the Java runtime environment for Microsoft Azure functions host.</description>
+  <url>https://azure.microsoft.com/en-us/services/functions</url>
   <organization>
     <name>Microsoft Azure</name>
     <url>https://azure.microsoft.com</url>
@@ -16,6 +16,29 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:https://github.com/Azure/azure-functions-java-worker</connection>
+    <developerConnection>scm:git:git@github.com:Azure/azure-functions-java-worker</developerConnection>
+    <url>https://github.com/Azure/azure-functions-java-worker</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <developers>
+    <developer>
+      <id>junyi</id>
+      <name>Junyi Yi</name>
+      <email>junyi@microsoft.com</email>
+    </developer>
+  </developers>
 
   <dependencies>
     <dependency>
