@@ -4,6 +4,7 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.*;
 
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import org.apache.commons.lang3.reflect.*;
 
@@ -46,11 +47,16 @@ final class RpcTriggerMetadataDataSource extends DataSource<Map<String, TypedDat
 final class RpcJsonDataSource extends DataSource<String> {
     RpcJsonDataSource(String name, String value) { super(name, value, JSON_DATA_OPERATIONS); }
 
-    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper STRICT_JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
     private static final DataOperations<String, Object> JSON_DATA_OPERATIONS = new DataOperations<>();
     static {
-        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (s, t) -> JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
+        RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
+
+        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (s, t) -> STRICT_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
         JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String.class, s -> s);
+        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (s, t) -> RELAXED_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
     }
 }
 

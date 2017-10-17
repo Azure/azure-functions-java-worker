@@ -1,5 +1,6 @@
 package com.microsoft.azure.webjobs.script.binding;
 
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import com.google.protobuf.*;
 
@@ -105,16 +106,24 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
     private static TypedData.Builder toJsonData(Object value) throws Exception {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (value != null) {
-            dataBuilder.setJson(JSON_MAPPER.writeValueAsString(value));
+            try {
+                dataBuilder.setJson(STRICT_JSON_MAPPER.writeValueAsString(value));
+            } catch (Exception ex) {
+                dataBuilder.setJson(RELAXED_JSON_MAPPER.writeValueAsString(value));
+            }
         } else {
             throw new ClassCastException();
         }
         return dataBuilder;
     }
 
-    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper STRICT_JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
     private static final DataOperations<Object, TypedData.Builder> UNSPECIFIED_TARGET_OPERATIONS = new DataOperations<>();
     static {
+        RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
+
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, String.class, RpcUnspecifiedDataTarget::toStringData);
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, long.class, RpcUnspecifiedDataTarget::toIntData);
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Long.class, RpcUnspecifiedDataTarget::toIntData);
