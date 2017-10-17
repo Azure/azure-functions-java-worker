@@ -4,7 +4,10 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.*;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.*;
+import org.apache.commons.lang3.reflect.*;
+
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
@@ -29,7 +32,7 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
     private final String invocationId;
     private final Logger logger;
 
-    private static final DataOperations<ExecutionContext> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
         EXECONTEXT_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
     }
@@ -38,16 +41,22 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 final class RpcTriggerMetadataDataSource extends DataSource<Map<String, TypedData>> {
     RpcTriggerMetadataDataSource(Map<String, TypedData> metadata) { super(null, metadata, TRIGGER_METADATA_OPERATIONS); }
 
-    private static final DataOperations<Map<String, TypedData>> TRIGGER_METADATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<Map<String, TypedData>, Object> TRIGGER_METADATA_OPERATIONS = new DataOperations<>();
 }
 
 final class RpcJsonDataSource extends DataSource<String> {
     RpcJsonDataSource(String name, String value) { super(name, value, JSON_DATA_OPERATIONS); }
 
-    private static final DataOperations<String> JSON_DATA_OPERATIONS = new DataOperations<>();
+    private static final ObjectMapper STRICT_JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
+    private static final DataOperations<String, Object> JSON_DATA_OPERATIONS = new DataOperations<>();
     static {
-        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (s, t) -> new Gson().fromJson(s, t));
+        RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
+
+        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (s, t) -> STRICT_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
         JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String.class, s -> s);
+        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (s, t) -> RELAXED_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
     }
 }
 
@@ -93,7 +102,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
     private final DataSource<?> bodyDataSource;
     private final List<Map<String, String>> fields;
 
-    private static final DataOperations<RpcHttpRequestDataSource> HTTP_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<RpcHttpRequestDataSource, Object> HTTP_DATA_OPERATIONS = new DataOperations<>();
     static {
         HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) ->
