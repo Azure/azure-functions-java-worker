@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import com.google.protobuf.*;
+import org.apache.commons.lang3.*;
 
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
 
@@ -92,6 +93,7 @@ final class RpcByteArrayDataSource extends DataSource<byte[]> {
     private static final DataOperations<byte[], Object> BYTE_ARRAY_DATA_OPERATIONS = new DataOperations<>();
     static {
         BYTE_ARRAY_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
+        BYTE_ARRAY_DATA_OPERATIONS.addOperation(TYPE_ASSIGNMENT, Byte[].class, ArrayUtils::toObject);
         BYTE_ARRAY_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
     }
 }
