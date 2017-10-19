@@ -34,6 +34,7 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
+        EXECONTEXT_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
         EXECONTEXT_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
     }
 }
@@ -54,8 +55,11 @@ final class RpcJsonDataSource extends DataSource<String> {
         RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
 
+        JSON_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
         JSON_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (s, t) -> STRICT_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
+        JSON_DATA_OPERATIONS.supportGenerics(TYPE_STRICT_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String.class, s -> s);
+        JSON_DATA_OPERATIONS.supportGenerics(TYPE_RELAXED_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         JSON_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (s, t) -> RELAXED_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
     }
 }
@@ -106,6 +110,6 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
     static {
         HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) ->
-                v.bodyDataSource.computeByType(t).orElseThrow(ClassCastException::new).getValue());
+                v.bodyDataSource.computeByType(t).orElseThrow(ClassCastException::new).getNullSafeValue());
     }
 }

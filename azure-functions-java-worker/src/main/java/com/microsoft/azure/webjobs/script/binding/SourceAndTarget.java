@@ -5,7 +5,6 @@ import java.util.*;
 
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.binding.BindingData.*;
-import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
@@ -87,66 +86,4 @@ abstract class DataTarget implements OutputBinding {
 
     private Object value;
     private final DataOperations<Object, TypedData.Builder> operations;
-}
-
-@FunctionalInterface
-interface CheckedFunction<T, R> {
-    R apply(T t) throws Exception;
-
-    default R tryApply(T t) {
-        try { return this.apply(t); }
-        catch (Exception ex) { return null; }
-    }
-}
-
-@FunctionalInterface
-interface CheckedBiFunction<T, U, R> {
-    R apply(T t, U u) throws Exception;
-
-    default R tryApply(T t, U u) {
-        try { return this.apply(t, u); }
-        catch (Exception ex) { return null; }
-    }
-}
-
-/**
- * Helper class to define data conversion operations.
- * Thread-safety: Single thread.
- * @param <T> Type of the source data.
- * @param <R> Type of the target data.
- */
-final class DataOperations<T, R> {
-    DataOperations() {
-        this.operations = new HashMap<>();
-        this.guardOperations = new HashMap<>();
-    }
-
-    void addOperation(MatchingLevel level, Type target, CheckedFunction<T, R> operation) {
-        this.operations.computeIfAbsent(level, l -> new HashMap<>()).put(target, operation);
-    }
-
-    void addGuardOperation(MatchingLevel level, CheckedBiFunction<T, Type, R> operation) {
-        this.guardOperations.put(level, operation);
-    }
-
-    Optional<R> apply(T sourceValue, MatchingLevel level, Type targetType) {
-        Optional<R> resultValue = Optional.ofNullable(this.operations.get(level))
-            .map(opMap -> opMap.get(targetType))
-            .map(op -> op.tryApply(sourceValue));
-        if (!resultValue.isPresent()) {
-            resultValue = Optional.ofNullable(this.guardOperations.get(level))
-                .map(op -> op.tryApply(sourceValue, targetType));
-        }
-        return resultValue;
-    }
-
-    static Object generalAssignment(Object value, Type target) {
-        if (value == null || CoreTypeResolver.getRuntimeClass(target).isAssignableFrom(value.getClass())) {
-            return value;
-        }
-        throw new ClassCastException();
-    }
-
-    private final Map<MatchingLevel, Map<Type, CheckedFunction<T, R>>> operations;
-    private final Map<MatchingLevel, CheckedBiFunction<T, Type, R>> guardOperations;
 }

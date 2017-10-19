@@ -5,9 +5,9 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.microsoft.azure.serverless.functions.*;
-import com.microsoft.azure.serverless.functions.annotation.*;
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.binding.*;
+import org.apache.commons.lang3.reflect.*;
 
 /**
  * Resolve a Java method overload using reflection.
@@ -37,7 +37,7 @@ class OverloadResolver {
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             Utility.forEach(method.params, param -> {
                 Optional<BindingData> argument;
-                if (OutputBinding.class.isAssignableFrom(param.type)) {
+                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
                     argument = dataStore.getOrAddDataTarget(param.name, param.type);
                 } else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
@@ -74,10 +74,10 @@ class OverloadResolver {
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
             this.name = CoreTypeResolver.getBindingName(param);
-            this.type = param.getType();
+            this.type = param.getParameterizedType();
         }
         private final String name;
-        private final Class<?> type;
+        private final Type type;
     }
 
     private final List<MethodBindInfo> candidates;
