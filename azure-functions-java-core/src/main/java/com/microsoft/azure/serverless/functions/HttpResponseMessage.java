@@ -1,8 +1,8 @@
 package com.microsoft.azure.serverless.functions;
 
-public interface HttpResponseMessage {
+public interface HttpResponseMessage<T> {
     int getStatus();
     void setStatus(int status);
     Object getBody();
-    void setBody(Object body);
+    void setBody(T body);
 }

@@ -1,8 +1,10 @@
 package com.microsoft.azure.webjobs.script.binding;
 
 import java.lang.reflect.Type;
+import java.util.*;
 
 import com.google.protobuf.*;
+import org.apache.commons.lang3.*;
 
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
 
@@ -11,6 +13,8 @@ final class RpcEmptyDataSource extends DataSource<Object> {
 
     private static final DataOperations<Object, Object> EMPTY_DATA_OPERATIONS = new DataOperations<>();
     static {
+        EMPTY_DATA_OPERATIONS.addOperation(TYPE_ASSIGNMENT, Optional.class, v -> Optional.empty());
+        EMPTY_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, DataOperations::generalAssignment);
     }
 }
 
@@ -48,9 +52,9 @@ final class RpcStringDataSource extends DataSource<String> {
     private static Object convertToJson(boolean isStrict, String s, Type target) {
         DataSource<?> jsonSource = new RpcJsonDataSource(null, s);
         if (isStrict) {
-            return jsonSource.computeByType(TYPE_ASSIGNMENT, target).orElseThrow(ClassCastException::new).getValue();
+            return jsonSource.computeByType(TYPE_ASSIGNMENT, target).orElseThrow(ClassCastException::new).getNullSafeValue();
         } else {
-            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getValue();
+            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getNullSafeValue();
         }
     }
 
@@ -79,6 +83,7 @@ final class RpcByteArrayDataSource extends DataSource<byte[]> {
 
     private static final DataOperations<byte[], Object> BYTE_ARRAY_DATA_OPERATIONS = new DataOperations<>();
     static {
+        BYTE_ARRAY_DATA_OPERATIONS.addOperation(TYPE_ASSIGNMENT, Byte[].class, ArrayUtils::toObject);
         BYTE_ARRAY_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
     }
 }

@@ -1,5 +1,7 @@
 package com.microsoft.azure.webjobs.script.binding;
 
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.net.*;
 import java.util.*;
 import java.util.logging.*;
@@ -60,7 +62,7 @@ final class RpcJsonDataSource extends DataSource<String> {
     }
 }
 
-final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource> implements HttpRequestMessage {
+final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource> {
     RpcHttpRequestDataSource(String name, RpcHttp value) {
         super(name, null, HTTP_DATA_OPERATIONS);
         this.httpPayload = value;
@@ -74,28 +76,40 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         if (level == METADATA_NAME) {
             List<DataSource<?>> values = Utility.take(this.fields, 2, map ->
                     Optional.ofNullable(map.get(name)).map(v -> new RpcStringDataSource(name, v)));
-            if (values.size() == 1) { return Optional.of(values.get(0)); }
+            if (values.size() == 1) {
+                return Optional.of(values.get(0));
+            }
         }
         return super.lookupName(level, name);
     }
 
-    @Override
-    public URI getUri() { return URI.create(this.httpPayload.getUrl()); }
-    @Override
-    public String getMethod() { return this.httpPayload.getMethod(); }
-    @Override
-    public Map<String, String> getHeaders() { return this.httpPayload.getHeadersMap(); }
-    @Override
-    public Map<String, String> getQueryParameters() { return this.httpPayload.getQueryMap(); }
-    @Override
-    public Object getBody() { return this.bodyDataSource.getValue(); }
+    private static class HttpRequestMessageImpl implements HttpRequestMessage {
+        private HttpRequestMessageImpl(RpcHttpRequestDataSource parentDataSource, Object body) {
+            this.parentDataSource = parentDataSource;
+            this.body = body;
+        }
 
-    @Override
-    public HttpResponseMessage createResponse(int status, Object body) {
-        HttpResponseMessage response = new RpcHttpDataTarget();
-        response.setStatus(status);
-        response.setBody(body);
-        return response;
+        @Override
+        public URI getUri() { return URI.create(this.parentDataSource.httpPayload.getUrl()); }
+        @Override
+        public String getMethod() { return this.parentDataSource.httpPayload.getMethod(); }
+        @Override
+        public Map<String, String> getHeaders() { return this.parentDataSource.httpPayload.getHeadersMap(); }
+        @Override
+        public Map<String, String> getQueryParameters() { return this.parentDataSource.httpPayload.getQueryMap(); }
+        @Override
+        public Object getBody() { return this.body; }
+
+        @Override
+        public HttpResponseMessage createResponse(int status, Object body) {
+            RpcHttpDataTarget response = new RpcHttpDataTarget();
+            response.setStatus(status);
+            response.setBody(body);
+            return response;
+        }
+
+        private RpcHttpRequestDataSource parentDataSource;
+        private Object body;
     }
 
     private final RpcHttp httpPayload;
@@ -104,8 +118,16 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
 
     private static final DataOperations<RpcHttpRequestDataSource, Object> HTTP_DATA_OPERATIONS = new DataOperations<>();
     static {
-        HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
+        HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (v, t) -> {
+            if (HttpRequestMessage.class.equals(TypeUtils.getRawType(t, null))) {
+                Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(t, HttpRequestMessage.class);
+                Type actualType = typeArgs.size() > 0 ? typeArgs.values().iterator().next() : Object.class;
+                BindingData bodyData = v.bodyDataSource.computeByType(actualType).orElseThrow(ClassCastException::new);
+                return new HttpRequestMessageImpl(v, bodyData.getValue());
+            }
+            throw new ClassCastException();
+        });
         HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) ->
-                v.bodyDataSource.computeByType(t).orElseThrow(ClassCastException::new).getValue());
+                v.bodyDataSource.computeByType(t).orElseThrow(ClassCastException::new).getNullSafeValue());
     }
 }

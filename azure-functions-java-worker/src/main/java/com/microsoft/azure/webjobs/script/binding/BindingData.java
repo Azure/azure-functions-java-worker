@@ -1,5 +1,7 @@
 package com.microsoft.azure.webjobs.script.binding;
 
+import org.apache.commons.lang3.*;
+
 /**
  * Provides the information such as the matching level of the actual value retrieved/converted from BindingDataStore.
  */
@@ -9,7 +11,8 @@ public final class BindingData {
         this.level = level;
     }
 
-    public Object getValue() { return this.value; }
+    Object getNullSafeValue() { return this.value; }
+    public Object getValue() { return this.getNullSafeValue() == ObjectUtils.NULL ? null : this.getNullSafeValue(); }
     public MatchingLevel getLevel() { return level; }
     void setLevel(MatchingLevel level) { this.level = level; }
 
