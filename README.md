@@ -3,7 +3,10 @@
 ## Prerequisites
 
 * JDK 8
-* TBD
+* Maven
+* JAVA_HOME environment variable
+* Node
+* NPM Azure Functions CLI
 
 ## Programming Model
 
@@ -17,7 +20,6 @@ Here is an example for a simple Azure function written in Java:
 
 ```Java
 package com.example;
-
 public class MyClass {
     public static String echo(String in) {
         return "Hello, " + in + ".";
@@ -174,7 +176,7 @@ and define the output binding in `function.json`:
 
 ## Binary Data
 
-Binary data is represented as `byte[]` in your Azure functions code. Let's say you have a binary file in blob, you need to reference it  as a `blob` input binding in `function.json` (the trick here is `dataType` is defined as `binary`, and `dataType` is available for all kinds of bindings/triggers):
+Binary data is represented as `byte[]` or `Byte[]` in your Azure functions code. Let's say you have a binary file in blob, you need to reference it  as a `blob` input binding in `function.json` (the trick here is `dataType` is defined as `binary`, and `dataType` is available for all kinds of bindings/triggers):
 
 ```json
 {
@@ -208,8 +210,11 @@ Binary data is represented as `byte[]` in your Azure functions code. Let's say y
 And use it in your function code simply as (or if you have too many parameters, you can also use `@BindingName("content") byte[] content` to reference it):
 
 ```java
-// Class definition and imports are omitted here
-public static String echoLength(byte[] content) {
+package com.example;
+public class MyClass {
+    public static String echoLength(byte[] content) {
+        return "" + content.length;
+    }
 }
 ```
 
@@ -239,9 +244,9 @@ public class MyClass {
 
 Sometimes a function need to take a more detailed control of the input and output, and that's why we also provide some specialized types in the `azure-functions-java-core` package for you to manipulate:
 
-| Specialized Type      |       Target        | Typical Usage                  |
-| --------------------- | :-----------------: | ------------------------------ |
-| `HttpRequestMessage`  |    HTTP Trigger     | Get method, headers or queries |
-| `HttpResponseMessage` | HTTP Output Binding | Return status other than 200   |
+| Specialized Type         |       Target        | Typical Usage                  |
+| ------------------------ | :-----------------: | ------------------------------ |
+| `HttpRequestMessage<T>`  |    HTTP Trigger     | Get method, headers or queries |
+| `HttpResponseMessage<T>` | HTTP Output Binding | Return status other than 200   |
 
 > [NOTE] You can also use `@BindingName` annotation to get HTTP headers and queries. For example, `@BindingName("name") String query` will try to iterate the HTTP request headers and queries and pass that value to the method; `query` will be `"test"` if the request URL is `http://example.org/api/echo?name=test`.
