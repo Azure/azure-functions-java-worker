@@ -40,17 +40,6 @@ class DataOperations<T, R> {
         this.guardOperations = new HashMap<>();
     }
 
-    void supportGenerics(MatchingLevel level, Class<?> targetType, CheckedFunction<R, R> wrapper) {
-        this.addOperation(level, targetType, (src, type) -> {
-            Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(type, targetType);
-            if (typeArgs.size() == 1) {
-                Type actualType = typeArgs.values().iterator().next();
-                return this.apply(src, level, actualType).map(wrapper::tryApply).orElseThrow(ClassCastException::new);
-            }
-            throw new ClassCastException();
-        });
-    }
-
     void addOperation(MatchingLevel level, Type targetType, CheckedFunction<T, R> operation) {
         this.addOperation(level, targetType, (src, type) -> operation.apply(src));
     }
@@ -81,12 +70,6 @@ class DataOperations<T, R> {
             return value;
         }
         throw new ClassCastException();
-    }
-
-    static <T> Optional<T> nullSafeOptional(T value) {
-        if (value == null || value == ObjectUtils.NULL)
-            return Optional.empty();
-        return Optional.of(value);
     }
 
     private final Map<MatchingLevel, Map<Type, CheckedBiFunction<T, Type, R>>> operations;

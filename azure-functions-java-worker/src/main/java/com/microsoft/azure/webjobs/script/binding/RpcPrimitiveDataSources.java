@@ -23,16 +23,13 @@ final class RpcIntegerDataSource extends DataSource<Long> {
 
     private static final DataOperations<Long, Object> LONG_DATA_OPERATIONS = new DataOperations<>();
     static {
-        LONG_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
         LONG_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
-        LONG_DATA_OPERATIONS.supportGenerics(TYPE_STRICT_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, int.class, Long::intValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Integer.class, Long::intValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, short.class, Long::shortValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Short.class, Long::shortValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, byte.class, Long::byteValue);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Byte.class, Long::byteValue);
-        LONG_DATA_OPERATIONS.supportGenerics(TYPE_RELAXED_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         LONG_DATA_OPERATIONS.addOperation(TYPE_RELAXED_CONVERSION, String.class, Object::toString);
     }
 }
@@ -42,12 +39,9 @@ final class RpcRealNumberDataSource extends DataSource<Double> {
 
     private static final DataOperations<Double, Object> REALNUMBER_DATA_OPERATIONS = new DataOperations<>();
     static {
-        REALNUMBER_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
         REALNUMBER_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
-        REALNUMBER_DATA_OPERATIONS.supportGenerics(TYPE_STRICT_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, float.class, Double::floatValue);
         REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Float.class, Double::floatValue);
-        REALNUMBER_DATA_OPERATIONS.supportGenerics(TYPE_RELAXED_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_RELAXED_CONVERSION, String.class, Object::toString);
     }
 }
@@ -66,7 +60,6 @@ final class RpcStringDataSource extends DataSource<String> {
 
     private static final DataOperations<String, Object> STRING_DATA_OPERATIONS = new DataOperations<>();
     static {
-        STRING_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
         STRING_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, long.class, Long::parseLong);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Long.class, Long::parseLong);
@@ -80,9 +73,7 @@ final class RpcStringDataSource extends DataSource<String> {
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Double.class, Double::parseDouble);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, float.class, Float::parseFloat);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Float.class, Float::parseFloat);
-        STRING_DATA_OPERATIONS.supportGenerics(TYPE_STRICT_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         STRING_DATA_OPERATIONS.addGuardOperation(TYPE_STRICT_CONVERSION, (v, t) -> convertToJson(true, v, t));
-        STRING_DATA_OPERATIONS.supportGenerics(TYPE_RELAXED_CONVERSION, Optional.class, DataOperations::nullSafeOptional);
         STRING_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) -> convertToJson(false, v, t));
     }
 }
@@ -92,7 +83,6 @@ final class RpcByteArrayDataSource extends DataSource<byte[]> {
 
     private static final DataOperations<byte[], Object> BYTE_ARRAY_DATA_OPERATIONS = new DataOperations<>();
     static {
-        BYTE_ARRAY_DATA_OPERATIONS.supportGenerics(TYPE_ASSIGNMENT, Optional.class, DataOperations::nullSafeOptional);
         BYTE_ARRAY_DATA_OPERATIONS.addOperation(TYPE_ASSIGNMENT, Byte[].class, ArrayUtils::toObject);
         BYTE_ARRAY_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
     }
