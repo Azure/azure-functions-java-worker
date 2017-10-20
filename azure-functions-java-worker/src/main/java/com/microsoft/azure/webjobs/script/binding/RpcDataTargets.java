@@ -1,16 +1,20 @@
 package com.microsoft.azure.webjobs.script.binding;
 
+import java.util.*;
+
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import com.google.protobuf.*;
 
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
+
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
 
 final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage {
     RpcHttpDataTarget() {
         super(HTTP_TARGET_OPERATIONS);
+        this.headers = new HashMap<>();
         this.status = 200;
         super.setValue(this);
     }
@@ -20,17 +24,23 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage 
     @Override
     public void setStatus(int status) { this.status = status; }
     @Override
+    public void addHeader(String key, String value) { this.headers.put(key, value); }
+    @Override
+    public String getHeader(String key) { return this.headers.get(key); }
+    @Override
     public Object getBody() { return this.body; }
     @Override
     public void setBody(Object body) { this.body = body; }
 
     private int status;
     private Object body;
+    private Map<String, String> headers;
 
-    private static TypedData.Builder toHttpData(HttpResponseMessage response) {
+    private static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
             RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(response.getStatus() + "");
+            response.headers.forEach(httpBuilder::putHeaders);
             RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
             bodyTarget.setValue(response.getBody());
             bodyTarget.computeFromValue().ifPresent(httpBuilder::setBody);
@@ -41,8 +51,8 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage 
 
     private static final DataOperations<Object, TypedData.Builder> HTTP_TARGET_OPERATIONS = new DataOperations<>();
     static {
-        HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, HttpResponseMessage.class, v -> toHttpData((HttpResponseMessage) v));
-        HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, RpcHttpDataTarget.class, v -> toHttpData((HttpResponseMessage) v));
+        HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, HttpResponseMessage.class, v -> toHttpData((RpcHttpDataTarget) v));
+        HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, RpcHttpDataTarget.class, v -> toHttpData((RpcHttpDataTarget) v));
     }
 }
 

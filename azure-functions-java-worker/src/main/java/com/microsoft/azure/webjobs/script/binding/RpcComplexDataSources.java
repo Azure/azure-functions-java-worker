@@ -1,7 +1,6 @@
 package com.microsoft.azure.webjobs.script.binding;
 
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.logging.*;
