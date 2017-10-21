@@ -25,11 +25,15 @@ class OverloadResolver {
     synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
         return Utility.singleMax(Utility.mapOptional(this.candidates, m -> this.resolve(m, dataStore)),
             Comparator.<InvokeInfoBuilder>comparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.BINDING_NAME.getIndex()])
+                    .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TRIGGER_METADATA_NAME.getIndex()])
                     .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.METADATA_NAME.getIndex()])
                     .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_ASSIGNMENT.getIndex()])
                     .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_STRICT_CONVERSION.getIndex()])
                     .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_RELAXED_CONVERSION.getIndex()])
-        ).map(InvokeInfoBuilder::build);
+        ).map(invoke -> {
+            dataStore.promoteDataTargets(invoke.outputsId);
+            return invoke.build();
+        });
     }
 
     private Optional<InvokeInfoBuilder> resolve(MethodBindInfo method, BindingDataStore dataStore) {
@@ -38,7 +42,7 @@ class OverloadResolver {
             Utility.forEach(method.params, param -> {
                 Optional<BindingData> argument;
                 if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
-                    argument = dataStore.getOrAddDataTarget(param.name, param.type);
+                    argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type);
                 } else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
                 } else {
@@ -49,7 +53,7 @@ class OverloadResolver {
                 invokeInfo.appendArgument(actualArg.getValue());
             });
             if (!method.entry.getReturnType().equals(void.class) && !method.entry.getReturnType().equals(Void.class)) {
-                dataStore.getOrAddDataTarget(BindingDataStore.RETURN_NAME, method.entry.getReturnType());
+                dataStore.getOrAddDataTarget(invokeInfo.outputsId, BindingDataStore.RETURN_NAME, method.entry.getReturnType());
             }
             return Optional.of(invokeInfo);
         } catch (Exception ex) {
@@ -59,6 +63,7 @@ class OverloadResolver {
 
     private final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
         InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.entry); }
+        private final UUID outputsId = UUID.randomUUID();
         private final int[] matchingLevelCount = new int[BindingData.MatchingLevel.count()];
     }
 

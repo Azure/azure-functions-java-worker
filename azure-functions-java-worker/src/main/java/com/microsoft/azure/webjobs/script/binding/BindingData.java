@@ -21,11 +21,12 @@ public final class BindingData {
      */
     public enum MatchingLevel {
         BINDING_NAME(0),
-        METADATA_NAME(1),
-        TYPE_ASSIGNMENT(2),
-        TYPE_STRICT_CONVERSION(3),
-        TYPE_RELAXED_CONVERSION(4);
-        public static int count() { return 5; }
+        TRIGGER_METADATA_NAME(1),
+        METADATA_NAME(2),
+        TYPE_ASSIGNMENT(3),
+        TYPE_STRICT_CONVERSION(4),
+        TYPE_RELAXED_CONVERSION(5);
+        public static int count() { return 6; }
 
         MatchingLevel(int index) {
             this.index = index;

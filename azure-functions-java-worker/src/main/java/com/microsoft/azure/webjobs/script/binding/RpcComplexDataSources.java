@@ -40,7 +40,17 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 }
 
 final class RpcTriggerMetadataDataSource extends DataSource<Map<String, TypedData>> {
-    RpcTriggerMetadataDataSource(Map<String, TypedData> metadata) { super(null, metadata, TRIGGER_METADATA_OPERATIONS); }
+    RpcTriggerMetadataDataSource(Map<String, TypedData> metadata) {
+        super(null, metadata, TRIGGER_METADATA_OPERATIONS);
+    }
+
+    @Override
+    Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
+        if (level == TRIGGER_METADATA_NAME) {
+            return Optional.ofNullable(this.getValue().get(name)).map(v -> BindingDataStore.rpcSourceFromTypedData(name, v));
+        }
+        return super.lookupName(level, name);
+    }
 
     private static final DataOperations<Map<String, TypedData>, Object> TRIGGER_METADATA_OPERATIONS = new DataOperations<>();
 }
