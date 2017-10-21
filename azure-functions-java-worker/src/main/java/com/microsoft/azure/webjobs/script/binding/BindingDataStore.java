@@ -24,6 +24,7 @@ public final class BindingDataStore {
     public BindingDataStore() {
         this.sources = new ArrayList<>();
         this.targets = new HashMap<>();
+        this.promotedTargets = null;
     }
 
     ///////////////////////// region Input Binding Data
@@ -44,7 +45,7 @@ public final class BindingDataStore {
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
-        return this.getDataByLevels((s, l) -> s.computeByName(l, name, target), BINDING_NAME, METADATA_NAME);
+        return this.getDataByLevels((s, l) -> s.computeByName(l, name, target), BINDING_NAME, TRIGGER_METADATA_NAME, METADATA_NAME);
     }
 
     public Optional<BindingData> getDataByType(Type target) {
@@ -82,7 +83,7 @@ public final class BindingDataStore {
 
     public List<ParameterBinding> getOutputParameterBindings(boolean excludeReturn) {
         List<ParameterBinding> bindings = new ArrayList<>();
-        for (Map.Entry<String, DataTarget> entry : this.targets.entrySet()) {
+        for (Map.Entry<String, DataTarget> entry : this.getTarget(this.promotedTargets).entrySet()) {
             if (!excludeReturn || !entry.getKey().equals(RETURN_NAME)) {
                 entry.getValue().computeFromValue().ifPresent(data ->
                     bindings.add(ParameterBinding.newBuilder().setName(entry.getKey()).setData(data).build())
@@ -93,24 +94,30 @@ public final class BindingDataStore {
     }
 
     public Optional<TypedData> getDataTargetTypedValue(String name) {
-        DataTarget output = this.targets.get(name);
-        if (output == null) { return Optional.empty(); }
-        return output.computeFromValue();
+        return Optional.ofNullable(this.getTarget(this.promotedTargets).get(name)).map(o -> o.computeFromValue().orElse(null));
     }
 
-    public Optional<BindingData> getOrAddDataTarget(String name, Type target) {
+    public Optional<BindingData> getOrAddDataTarget(UUID outputId, String name, Type target) {
         DataTarget output = null;
         if (this.isDataTargetValid(name, target)) {
-            output = this.targets.get(name);
+            output = this.getTarget(outputId).get(name);
             if (output == null && this.isDefinitionOutput(name)) {
-                this.targets.put(name, output = rpcDataTargetFromType(target));
+                this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
             }
         }
         return Optional.ofNullable(output).map(out -> new BindingData(out, BINDING_NAME));
     }
 
     public void setDataTargetValue(String name, Object value) {
-        Optional.ofNullable(this.targets.get(name)).ifPresent(out -> out.setValue(value));
+        Optional.ofNullable(this.getTarget(this.promotedTargets).get(name)).ifPresent(out -> out.setValue(value));
+    }
+
+    public void promoteDataTargets(UUID outputId) {
+        this.promotedTargets = outputId;
+    }
+
+    private Map<String, DataTarget> getTarget(UUID outputId) {
+        return this.targets.computeIfAbsent(outputId, m -> new HashMap<>());
     }
 
     private boolean isDataTargetValid(String name, Type target) {
@@ -160,7 +167,8 @@ public final class BindingDataStore {
     ///////////////////////// endregion Binding Definitions
 
     private final List<DataSource<?>> sources;
-    private final Map<String, DataTarget> targets;
+    private UUID promotedTargets;
+    private final Map<UUID, Map<String, DataTarget>> targets;
     private Map<String, BindingDefinition> definitions;
     public static final String RETURN_NAME = "$return";
 }
