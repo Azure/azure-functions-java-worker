@@ -41,7 +41,9 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
         try {
             this.response = this.responseSupplier.get();
             statusMessage = this.execute(this.request, this.response);
-            this.getLogger().info(statusMessage);
+            if (statusMessage != null) {
+                this.getLogger().info(statusMessage);
+            }
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
             statusMessage = ex.getMessage();

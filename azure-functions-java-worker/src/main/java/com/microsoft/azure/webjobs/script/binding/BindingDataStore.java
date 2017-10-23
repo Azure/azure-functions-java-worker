@@ -40,8 +40,8 @@ public final class BindingDataStore {
         this.sources.add(new RpcTriggerMetadataDataSource(metadata));
     }
 
-    public void addExecutionContextSource(String invocationId) {
-        this.sources.add(new ExecutionContextDataSource(invocationId));
+    public void addExecutionContextSource(String invocationId, String funcname) {
+        this.sources.add(new ExecutionContextDataSource(invocationId, funcname));
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {

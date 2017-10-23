@@ -18,8 +18,11 @@ public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadReque
         response.setFunctionId(functionId);
         final String script = request.getMetadata().getScriptFile();
         final String entryPoint = request.getMetadata().getEntryPoint();
-        this.broker.loadMethod(functionId, script, entryPoint, request.getMetadata().getBindingsMap());
-        return functionId + " - \"" + script + "\"::\"" + entryPoint + "\" loaded";
+        final String functionName = request.getMetadata().getName();
+        this.broker.loadMethod(functionId, functionName, script, entryPoint, request.getMetadata().getBindingsMap());
+
+        return String.format("\"%s\" loaded (ID: %s, Reflection: \"%s\"::\"%s\")",
+                functionName, functionId, script, entryPoint);
     }
 
     private final JavaFunctionBroker broker;

@@ -22,6 +22,10 @@ class OverloadResolver {
         this.candidates.add(new MethodBindInfo(method));
     }
 
+    synchronized boolean hasCandidates() {
+        return !this.candidates.isEmpty();
+    }
+
     synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
         return Utility.singleMax(Utility.mapOptional(this.candidates, m -> this.resolve(m, dataStore)),
             Comparator.<InvokeInfoBuilder>comparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.BINDING_NAME.getIndex()])

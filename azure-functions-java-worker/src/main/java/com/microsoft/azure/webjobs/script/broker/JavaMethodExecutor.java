@@ -7,6 +7,8 @@ import java.util.*;
 
 import org.apache.commons.lang3.*;
 
+import com.microsoft.azure.serverless.functions.annotation.*;
+
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
@@ -15,8 +17,8 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  * Thread-Safety: Multiple thread.
  */
 class JavaMethodExecutor {
-    JavaMethodExecutor(String jar, String fullMethodName, Map<String, BindingInfo> bindingInfos)
-            throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
+    JavaMethodExecutor(String funcname, String jar, String fullMethodName, Map<String, BindingInfo> bindingInfos)
+            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException {
         String jarPath = StringUtils.trim(jar);
         if (StringUtils.isBlank(jarPath)) {
             throw new IllegalArgumentException("\"" + jar + "\" is not a qualified JAR file name");
@@ -33,9 +35,14 @@ class JavaMethodExecutor {
         this.containingClass = Class.forName(fullClassName, true, jarLoader);
         this.overloadResolver = new OverloadResolver();
         for (Method method : this.containingClass.getMethods()) {
-            if (method.getName().equals(methodName)) {
+            FunctionName annotatedName = method.getAnnotation(FunctionName.class);
+            if (method.getName().equals(methodName) && (annotatedName == null || annotatedName.value().equals(funcname))) {
                 this.overloadResolver.addCandidate(method);
             }
+        }
+
+        if (!this.overloadResolver.hasCandidates()) {
+            throw new NoSuchMethodException("There are no methods named \"" + methodName + "\" in class \"" + fullClassName + "\"");
         }
 
         this.bindingDefinitions = new HashMap<>();
