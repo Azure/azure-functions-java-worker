@@ -3,10 +3,7 @@ package com.microsoft.azure.webjobs.script.broker;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
 
-import com.microsoft.azure.serverless.functions.*;
-import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -21,11 +18,11 @@ public class JavaFunctionBroker {
     }
 
     public void loadMethod(String id, String funcname, String jarPath, String methodName, Map<String, BindingInfo> bindings)
-            throws ClassNotFoundException, MalformedURLException, IllegalAccessException {
+            throws ClassNotFoundException, MalformedURLException, NoSuchMethodException {
         if (id == null || jarPath == null || methodName == null) {
             throw new NullPointerException("id, jarPath, methodName should not be null");
         }
-        JavaMethodExecutor executor = new JavaMethodExecutor(jarPath, methodName, bindings);
+        JavaMethodExecutor executor = new JavaMethodExecutor(funcname, jarPath, methodName, bindings);
         this.methods.put(id, new ImmutablePair<>(funcname, executor));
     }
 
