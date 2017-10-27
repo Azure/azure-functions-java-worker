@@ -3,6 +3,8 @@ package com.microsoft.azure.webjobs.script.broker;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.apache.commons.lang3.exception.*;
+
 interface InstanceSupplier {
     Object get() throws Exception;
 }
@@ -16,7 +18,26 @@ class JavaMethodInvokeInfo {
 
     Object invoke(InstanceSupplier instanceSupplier) throws Exception {
         Object instance = Modifier.isStatic(this.m.getModifiers()) ? null : instanceSupplier.get();
-        return this.m.invoke(instance, this.args);
+        try {
+            return this.m.invoke(instance, this.args);
+        } catch (InvocationTargetException ex) {
+            if (ex.getCause() == null) {
+                return ExceptionUtils.rethrow(ex);
+            }
+            Throwable userModeEx = ex.getCause();
+            StackTraceElement[] parentStackTraces = ex.getStackTrace();
+            StackTraceElement[] userStackTraces = userModeEx.getStackTrace();
+            int lastUserModeStackFrame = userStackTraces.length - 1;
+            if (lastUserModeStackFrame > parentStackTraces.length - 1) {
+                for (int parentFrame = parentStackTraces.length - 1; parentFrame >= 0; parentFrame--, lastUserModeStackFrame--) {
+                    if (!parentStackTraces[parentFrame].equals(userStackTraces[lastUserModeStackFrame])) {
+                        break;
+                    }
+                }
+            }
+            userModeEx.setStackTrace(Arrays.copyOf(userStackTraces, lastUserModeStackFrame + 1));
+            return ExceptionUtils.rethrow(userModeEx);
+        }
     }
 
     private Method m;
