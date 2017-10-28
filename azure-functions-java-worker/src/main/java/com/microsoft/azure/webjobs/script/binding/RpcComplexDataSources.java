@@ -4,6 +4,7 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.logging.*;
+import java.util.stream.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
@@ -88,8 +89,12 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
     @Override
     Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
         if (level == METADATA_NAME) {
-            List<DataSource<?>> values = Utility.take(this.fields, 2, map ->
-                    Optional.ofNullable(map.get(name)).map(v -> new RpcStringDataSource(name, v)));
+            List<DataSource<?>> values = this.fields.stream()
+                .map(f -> f.get(name))
+                .filter(Objects::nonNull)
+                .limit(2)
+                .map(v -> new RpcStringDataSource(name, v))
+                .collect(Collectors.toList());
             if (values.size() == 1) {
                 return Optional.of(values.get(0));
             }

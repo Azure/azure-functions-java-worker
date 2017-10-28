@@ -3,14 +3,12 @@ package com.microsoft.azure.webjobs.script.binding;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
-import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.binding.BindingData.*;
 import com.microsoft.azure.webjobs.script.binding.BindingDefinition.*;
-import com.microsoft.azure.webjobs.script.broker.CoreTypeResolver;
+import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
-
-import javax.rmi.CORBA.Util;
 
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
 import static com.microsoft.azure.webjobs.script.binding.BindingDefinition.BindingType.*;
@@ -54,7 +52,9 @@ public final class BindingDataStore {
 
     private Optional<BindingData> getDataByLevels(BiFunction<DataSource<?>, MatchingLevel, Optional<BindingData>> worker, MatchingLevel... levels) {
         for (MatchingLevel level : levels) {
-            List<BindingData> data = Utility.take(this.sources, 2, src -> worker.apply(src, level));
+            List<BindingData> data = this.sources.stream()
+                .flatMap(src -> worker.apply(src, level).map(Stream::of).orElseGet(Stream::empty))
+                .limit(2).collect(Collectors.toList());
             if (data.size() > 0) { return Optional.ofNullable(data.size() == 1 ? data.get(0) : null); }
         }
         return Optional.empty();
@@ -152,12 +152,6 @@ public final class BindingDataStore {
 
     private boolean isDefinitionOutput(String name) {
         return this.getDefinition(name).map(BindingDefinition::isOutput).orElse(false);
-    }
-
-    Optional<BindingDefinition> getTheOnlyDefinitionOfType(BindingType type) {
-        List<BindingDefinition> matched = Utility.take(this.definitions.values(), 2, def ->
-                Optional.ofNullable(def.getBindingType() == type ? def : null));
-        return Optional.ofNullable(matched.size() == 1 ? matched.get(0) : null);
     }
 
     private Optional<BindingDefinition> getDefinition(String name) {

@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.logging.*;
 
 import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.exception.*;
 
 public class WorkerLogManager {
     public static Logger getEmptyLogger() { return INSTANCE.emptyLogger; }
@@ -72,7 +73,7 @@ class SystemLoggerListener extends Handler {
                     ClassUtils.getShortClassName(record.getSourceClassName()), record.getSourceMethodName(),
                     record.getMessage()));
             if (record.getThrown() != null) {
-                output.println(String.format("%s", Utility.stackTraceToString(record.getThrown())));
+                output.println(String.format("%s", ExceptionUtils.getStackTrace(record.getThrown())));
             }
         }
     }
