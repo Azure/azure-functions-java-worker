@@ -162,7 +162,7 @@ Sometimes a function need to take a more detailed control of the input and outpu
 
 Metadata comes from different sources, like HTTP headers, HTTP queries, and [trigger metadata](https://docs.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings#trigger-metadata-properties). You can use `@BindingName` annotation together with the metadata name to get the value.
 
-For example, the `queryValue` in the following code snippet will be `"test"` if the requested URL is `http://{example.host}/api/echo?name=test`.
+For example, the `queryValue` in the following code snippet will be `"test"` if the requested URL is `http://{example.host}/api/metadata?name=test`.
 
 ```Java
 package com.example;
