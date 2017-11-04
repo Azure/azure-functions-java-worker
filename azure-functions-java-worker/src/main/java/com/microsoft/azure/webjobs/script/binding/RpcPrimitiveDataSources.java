@@ -1,24 +1,27 @@
 package com.microsoft.azure.webjobs.script.binding;
 
 import java.lang.reflect.Type;
+import java.util.*;
 
 import com.google.protobuf.*;
+import org.apache.commons.lang3.*;
 
-import com.microsoft.azure.webjobs.script.binding.BindingData.*;
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
 
 final class RpcEmptyDataSource extends DataSource<Object> {
     RpcEmptyDataSource(String name) { super(name, null, EMPTY_DATA_OPERATIONS); }
 
-    private static final DataOperations<Object> EMPTY_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<Object, Object> EMPTY_DATA_OPERATIONS = new DataOperations<>();
     static {
+        EMPTY_DATA_OPERATIONS.addOperation(TYPE_ASSIGNMENT, Optional.class, v -> Optional.empty());
+        EMPTY_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, DataOperations::generalAssignment);
     }
 }
 
 final class RpcIntegerDataSource extends DataSource<Long> {
     RpcIntegerDataSource(String name, long value) { super(name, value, LONG_DATA_OPERATIONS); }
 
-    private static final DataOperations<Long> LONG_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<Long, Object> LONG_DATA_OPERATIONS = new DataOperations<>();
     static {
         LONG_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         LONG_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, int.class, Long::intValue);
@@ -34,7 +37,7 @@ final class RpcIntegerDataSource extends DataSource<Long> {
 final class RpcRealNumberDataSource extends DataSource<Double> {
     RpcRealNumberDataSource(String name, double value) { super(name, value, REALNUMBER_DATA_OPERATIONS); }
 
-    private static final DataOperations<Double> REALNUMBER_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<Double, Object> REALNUMBER_DATA_OPERATIONS = new DataOperations<>();
     static {
         REALNUMBER_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         REALNUMBER_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, float.class, Double::floatValue);
@@ -49,13 +52,13 @@ final class RpcStringDataSource extends DataSource<String> {
     private static Object convertToJson(boolean isStrict, String s, Type target) {
         DataSource<?> jsonSource = new RpcJsonDataSource(null, s);
         if (isStrict) {
-            return jsonSource.computeByType(TYPE_ASSIGNMENT, target).orElseThrow(ClassCastException::new).getValue();
+            return jsonSource.computeByType(TYPE_ASSIGNMENT, target).orElseThrow(ClassCastException::new).getNullSafeValue();
         } else {
-            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getValue();
+            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getNullSafeValue();
         }
     }
 
-    private static final DataOperations<String> STRING_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<String, Object> STRING_DATA_OPERATIONS = new DataOperations<>();
     static {
         STRING_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, long.class, Long::parseLong);
@@ -78,8 +81,9 @@ final class RpcStringDataSource extends DataSource<String> {
 final class RpcByteArrayDataSource extends DataSource<byte[]> {
     RpcByteArrayDataSource(String name, ByteString value) { super(name, value.toByteArray(), BYTE_ARRAY_DATA_OPERATIONS); }
 
-    private static final DataOperations<byte[]> BYTE_ARRAY_DATA_OPERATIONS = new DataOperations<>();
+    private static final DataOperations<byte[], Object> BYTE_ARRAY_DATA_OPERATIONS = new DataOperations<>();
     static {
+        BYTE_ARRAY_DATA_OPERATIONS.addOperation(TYPE_ASSIGNMENT, Byte[].class, ArrayUtils::toObject);
         BYTE_ARRAY_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
     }
 }

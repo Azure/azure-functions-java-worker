@@ -4,7 +4,10 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.nio.file.*;
 import java.util.*;
-import javax.annotation.*;
+
+import org.apache.commons.lang3.*;
+
+import com.microsoft.azure.serverless.functions.annotation.*;
 
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
@@ -14,12 +17,34 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  * Thread-Safety: Multiple thread.
  */
 class JavaMethodExecutor {
-    JavaMethodExecutor(String jar, String fullMethodName, Map<String, BindingInfo> bindingInfos)
-            throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
-        this.jarPath = jar;
+    JavaMethodExecutor(String funcname, String jar, String fullMethodName, Map<String, BindingInfo> bindingInfos)
+            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException {
+        String jarPath = StringUtils.trim(jar);
+        if (StringUtils.isBlank(jarPath)) {
+            throw new IllegalArgumentException("\"" + jar + "\" is not a qualified JAR file name");
+        }
+        URL jarUrl = Paths.get(jarPath).toUri().toURL();
+        URLClassLoader jarLoader = new URLClassLoader(new URL[] { jarUrl });
+
+        String fullClassName = StringUtils.trim(StringUtils.substringBeforeLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
+        String methodName = StringUtils.trim(StringUtils.substringAfterLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
+        if (StringUtils.isAnyBlank(fullClassName, methodName)) {
+            throw new IllegalArgumentException("\"" + fullMethodName + "\" is not a qualified full Java method name");
+        }
+
+        this.containingClass = Class.forName(fullClassName, true, jarLoader);
         this.overloadResolver = new OverloadResolver();
-        this.splitFullMethodName(fullMethodName);
-        this.retrieveCandidates();
+        for (Method method : this.containingClass.getMethods()) {
+            FunctionName annotatedName = method.getAnnotation(FunctionName.class);
+            if (method.getName().equals(methodName) && (annotatedName == null || annotatedName.value().equals(funcname))) {
+                this.overloadResolver.addCandidate(method);
+            }
+        }
+
+        if (!this.overloadResolver.hasCandidates()) {
+            throw new NoSuchMethodException("There are no methods named \"" + methodName + "\" in class \"" + fullClassName + "\"");
+        }
+
         this.bindingDefinitions = new HashMap<>();
         for (Map.Entry<String, BindingInfo> entry : bindingInfos.entrySet()) {
             this.bindingDefinitions.put(entry.getKey(), new BindingDefinition(entry.getKey(), entry.getValue()));
@@ -35,34 +60,6 @@ class JavaMethodExecutor {
         dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
     }
 
-    @PostConstruct
-    private void splitFullMethodName(String fullMethodName) {
-        int lastPeriodIndex = fullMethodName.lastIndexOf('.');
-        if (lastPeriodIndex < 0) {
-            throw new IllegalArgumentException("\"" + fullMethodName + "\" is not a qualified method name");
-        }
-        this.fullClassName = fullMethodName.substring(0, lastPeriodIndex);
-        this.methodName = fullMethodName.substring(lastPeriodIndex + 1);
-        if (this.fullClassName.isEmpty() || this.methodName.isEmpty()) {
-            throw new IllegalArgumentException("\"" + fullMethodName + "\" is not a qualified method name");
-        }
-    }
-
-    @PostConstruct
-    private void retrieveCandidates() throws MalformedURLException, ClassNotFoundException, IllegalAccessException {
-        URL jarUrl = Paths.get(this.jarPath).toUri().toURL();
-        URLClassLoader classLoader = new URLClassLoader(new URL[] { jarUrl });
-        this.containingClass = Class.forName(this.fullClassName, true, classLoader);
-        for (Method method : this.containingClass.getMethods()) {
-            if (method.getName().equals(this.methodName)) {
-                this.overloadResolver.addCandidate(method);
-            }
-        }
-    }
-
-    private final String jarPath;
-    private String fullClassName;
-    private String methodName;
     private Class<?> containingClass;
     private final OverloadResolver overloadResolver;
     private final Map<String, BindingDefinition> bindingDefinitions;

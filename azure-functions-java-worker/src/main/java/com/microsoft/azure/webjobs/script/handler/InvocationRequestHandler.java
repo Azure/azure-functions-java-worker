@@ -1,7 +1,7 @@
 package com.microsoft.azure.webjobs.script.handler;
 
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.broker.*;
@@ -33,7 +33,8 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         this.broker.invokeMethod(functionId, request, outputBindings).ifPresent(response::setReturnValue);
         response.addAllOutputData(outputBindings);
 
-        return "Function \"" + functionId + "\" executed";
+        return String.format("Function \"%s\" (ID: %s) invoked by Java Worker",
+                this.broker.getMethodName(functionId).orElse("UNKNOWN"), functionId);
     }
 
     private JavaFunctionBroker broker;

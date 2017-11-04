@@ -2,11 +2,12 @@ package com.microsoft.azure.webjobs.script.binding;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.*;
+
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.reflect.*;
 
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.webjobs.script.binding.BindingData.*;
-import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLevel.*;
@@ -17,7 +18,7 @@ import static com.microsoft.azure.webjobs.script.binding.BindingData.MatchingLev
  * Thread-safety: Single thread.
  */
 abstract class DataSource<T> {
-    DataSource(String name, T value, DataOperations<T> operations) {
+    DataSource(String name, T value, DataOperations<T, Object> operations) {
         this.name = name;
         this.value = value;
         this.operations = operations;
@@ -28,31 +29,32 @@ abstract class DataSource<T> {
 
     Optional<BindingData> computeByName(MatchingLevel level, String name, Type target) {
         Optional<DataSource<?>> source = this.lookupName(level, name);
-        if (!source.isPresent()) { return Optional.empty(); }
+        if (!source.isPresent()) {
+            if (target.equals(Optional.class)) {
+                return Optional.of(new BindingData(Optional.empty(), level));
+            }
+            return Optional.empty();
+        }
         Optional<BindingData> data = source.get().computeByType(target);
         data.ifPresent(d -> d.setLevel(level));
         return data;
     }
 
     Optional<BindingData> computeByType(MatchingLevel level, Type target) {
-        try {
-            Optional<BindingData> binding;
-            try {
-                binding = this.operations.getOperation(level, target).map(op -> new BindingData(op.apply(this.value), level));
-            } catch (Exception ex) {
-                binding = Optional.empty();
-            }
-            if (!binding.isPresent()) {
-                try {
-                    binding = this.operations.getGuardOperation(level).map(op -> new BindingData(op.apply(this.value, target), level));
-                } catch (Exception ex) {
-                    binding = Optional.empty();
-                }
-            }
-            return binding;
-        } catch (Exception ex) {
-            return Optional.empty();
+        boolean isTargetOptional = Optional.class.equals(TypeUtils.getRawType(target, null));
+        if (isTargetOptional) {
+            Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(target, Optional.class);
+            target = typeArgs.size() > 0 ? typeArgs.values().iterator().next() : Object.class;
         }
+        return this.operations.apply(this.value, level, target).map(obj -> {
+            if (isTargetOptional) {
+                if (obj == ObjectUtils.NULL) {
+                    obj = null;
+                }
+                obj = Optional.ofNullable(obj);
+            }
+            return new BindingData(obj, level);
+        });
     }
 
     Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
@@ -69,7 +71,7 @@ abstract class DataSource<T> {
 
     private final String name;
     private T value;
-    private final DataOperations<T> operations;
+    private final DataOperations<T, Object> operations;
 }
 
 /**
@@ -78,7 +80,7 @@ abstract class DataSource<T> {
  * Thread-safety: Single thread.
  */
 abstract class DataTarget implements OutputBinding {
-    DataTarget(DataOperations<Object> operations) {
+    DataTarget(DataOperations<Object, TypedData.Builder> operations) {
         this.operations = operations;
     }
 
@@ -87,31 +89,14 @@ abstract class DataTarget implements OutputBinding {
     }
 
     private Optional<TypedData> computeFromValueByLevels(MatchingLevel... levels) {
-        try {
-            Type source = this.getValue().getClass();
-            for (MatchingLevel level : levels) {
-                Optional<?> dataBuilder;
-                try {
-                    dataBuilder = this.operations.getOperation(level, source).map(op -> op.apply(this.getValue()));
-                } catch (Exception ex) {
-                    dataBuilder = Optional.empty();
-                }
-                if (!dataBuilder.isPresent()) {
-                    try {
-                        dataBuilder = this.operations.getGuardOperation(level).map(op -> op.apply(this.getValue(), source));
-                    } catch (Exception ex) {
-                        dataBuilder = Optional.empty();
-                    }
-                }
-                if (dataBuilder.isPresent()) {
-                    assert dataBuilder.get() instanceof TypedData.Builder;
-                    return Optional.of(((TypedData.Builder) dataBuilder.get()).build());
-                }
-            }
-            return Optional.empty();
-        } catch (Exception ex) {
-            return Optional.empty();
+        if (this.value == null) {
+            return Optional.of(TypedData.newBuilder().setJson("null").build());
         }
+        for (MatchingLevel level : levels) {
+            Optional<TypedData> data = this.operations.apply(this.value, level, this.value.getClass()).map(TypedData.Builder::build);
+            if (data.isPresent()) { return data; }
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -121,45 +106,5 @@ abstract class DataTarget implements OutputBinding {
     public void setValue(Object value) { this.value = value; }
 
     private Object value;
-    private final DataOperations<Object> operations;
-}
-
-/**
- * Helper class to define data conversion operations.
- * Thread-safety: Single thread.
- * @param <T> Type of the source data.
- */
-final class DataOperations<T> {
-    DataOperations() {
-        this.operations = new HashMap<>();
-        this.guardOperations = new HashMap<>();
-    }
-
-    void addOperation(MatchingLevel level, Type target, Function<T, ?> operation) {
-        this.operations.computeIfAbsent(level, l -> new HashMap<>()).put(target, operation);
-    }
-
-    void addGuardOperation(MatchingLevel level, BiFunction<T, Type, ?> operation) {
-        this.guardOperations.put(level, operation);
-    }
-
-    Optional<Function<T, ?>> getOperation(MatchingLevel level, Type target) {
-        Map<Type, Function<T, ?>> targetTypeMap = this.operations.get(level);
-        if (targetTypeMap == null) { return Optional.empty(); }
-        return Optional.ofNullable(targetTypeMap.get(target));
-    }
-
-    Optional<BiFunction<T, Type, ?>> getGuardOperation(MatchingLevel level) {
-        return Optional.ofNullable(this.guardOperations.get(level));
-    }
-
-    static Object generalAssignment(Object value, Type target) {
-        if (value == null || CoreTypeResolver.getRuntimeClass(target).isAssignableFrom(value.getClass())) {
-            return value;
-        }
-        throw new ClassCastException();
-    }
-
-    private final Map<MatchingLevel, Map<Type, Function<T, ?>>> operations;
-    private final Map<MatchingLevel, BiFunction<T, Type, ?>> guardOperations;
+    private final DataOperations<Object, TypedData.Builder> operations;
 }

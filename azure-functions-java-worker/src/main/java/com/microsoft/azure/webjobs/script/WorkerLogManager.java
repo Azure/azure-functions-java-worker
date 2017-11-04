@@ -3,6 +3,9 @@ package com.microsoft.azure.webjobs.script;
 import java.io.*;
 import java.util.logging.*;
 
+import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.exception.*;
+
 public class WorkerLogManager {
     public static Logger getEmptyLogger() { return INSTANCE.emptyLogger; }
     public static Logger getSystemLogger() { return INSTANCE.systemLogger; }
@@ -66,9 +69,11 @@ class SystemLoggerListener extends Handler {
         if (record != null && record.getLevel() != null) {
             PrintStream output = (record.getLevel().intValue() <= Level.INFO.intValue() ? System.out : System.err);
             output.println(String.format("[%s] {%s.%s}: %s",
-                    record.getLevel(), record.getSourceClassName(), record.getSourceMethodName(), record.getMessage()));
+                    record.getLevel(),
+                    ClassUtils.getShortClassName(record.getSourceClassName()), record.getSourceMethodName(),
+                    record.getMessage()));
             if (record.getThrown() != null) {
-                output.println(String.format("%s", Utility.stackTraceToString(record.getThrown())));
+                output.println(String.format("%s", ExceptionUtils.getStackTrace(record.getThrown())));
             }
         }
     }

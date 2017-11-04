@@ -1,8 +1,9 @@
 package com.microsoft.azure.webjobs.script.handler;
 
 import java.util.*;
-import java.util.function.*;
 import java.util.logging.*;
+
+import org.apache.commons.lang3.exception.*;
 
 import com.microsoft.azure.webjobs.script.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
@@ -43,7 +44,7 @@ public class RpcLogHandler extends OutboundMessageHandler<RpcLog.Builder> {
         if (t == null) { return null; }
         RpcException.Builder exception = RpcException.newBuilder();
         Optional.ofNullable(t.getMessage()).ifPresent(exception::setMessage);
-        Optional.ofNullable(Utility.stackTraceToString(t)).ifPresent(exception::setStackTrace);
+        exception.setStackTrace(ExceptionUtils.getStackTrace(t));
         return exception;
     }
 }
