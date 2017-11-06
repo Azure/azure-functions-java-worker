@@ -22,6 +22,8 @@ install:
 
 build_script:
   - mvn clean install -DskipTests
+  - ps: mkdir .pkg
+  - ps: Get-ChildItem -Path .\azure-functions-java-worker\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName .\.pkg\azure-functions-java-worker.jar }
   - ps: nuget pack ./tools/AzureFunctionsJavaWorker.nuspec -Properties versionsuffix=$env:APPVEYOR_BUILD_NUMBER
 
 artifacts:
