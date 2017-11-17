@@ -31,6 +31,39 @@ public class MyClass {
 }
 ```
 
+### Including 3rd Party Libraries
+
+Azure Functions only accept one single JAR file. Therefore you are required to package all your dependencies into one single JAR. A simple approach is to add the following plugin into your `pom.xml`:
+
+```xml
+<plugin>
+  <artifactId>maven-shade-plugin</artifactId>
+  <version>3.1.0</version>
+  <executions>
+    <execution>
+      <phase>package</phase>
+      <goals>
+        <goal>shade</goal>
+      </goals>
+      <configuration>
+        <filters>
+          <filter>
+            <artifact>*:*</artifact>
+            <excludes>
+              <exclude>META-INF/*.SF</exclude>
+              <exclude>META-INF/*.DSA</exclude>
+              <exclude>META-INF/*.RSA</exclude>
+            </excludes>
+          </filter>
+        </filters>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
+
+Sometimes you also need to care about the static constructors used in some libraries (for example, database drivers). You need to call [`Class.forName()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#forName-java.lang.String-) method to invoke the corresponding static constructor (for example `Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");`).
+
 ## General Data Types
 
 You are free to use all the data types in Java for the input and output data, including native types; customized POJO types and specialized Azure types defined in `azure-functions-java-core` package. And Azure Functions runtime will try its best to convert the actual input value to the type you need (for example, a `String` input will be treated as a JSON string and be parsed to a POJO type defined in your code).
