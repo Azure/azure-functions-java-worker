@@ -6,10 +6,14 @@ import java.nio.file.*;
 import java.util.*;
 
 import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.microsoft.azure.serverless.functions.annotation.*;
 
 import com.microsoft.azure.webjobs.script.binding.*;
+import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
+import com.microsoft.azure.webjobs.script.reflect.FunctionDescriptor;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
@@ -17,32 +21,25 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  * Thread-Safety: Multiple thread.
  */
 class JavaMethodExecutor {
-    JavaMethodExecutor(String funcname, String jar, String fullMethodName, Map<String, BindingInfo> bindingInfos)
-            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException {
-        String jarPath = StringUtils.trim(jar);
-        if (StringUtils.isBlank(jarPath)) {
-            throw new IllegalArgumentException("\"" + jar + "\" is not a qualified JAR file name");
-        }
-        URL jarUrl = Paths.get(jarPath).toUri().toURL();
-        URLClassLoader jarLoader = new URLClassLoader(new URL[] { jarUrl });
+    JavaMethodExecutor(FunctionDescriptor function, String fullMethodName, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException 
+    {
+    		MethodInfo methodInfo = new MethodInfo(fullMethodName);
+    		methodInfo.verifyMethodToBeExecuted();
 
-        String fullClassName = StringUtils.trim(StringUtils.substringBeforeLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
-        String methodName = StringUtils.trim(StringUtils.substringAfterLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
-        if (StringUtils.isAnyBlank(fullClassName, methodName)) {
-            throw new IllegalArgumentException("\"" + fullMethodName + "\" is not a qualified full Java method name");
-        }
-
-        this.containingClass = Class.forName(fullClassName, true, jarLoader);
+        this.containingClass = getContainingClass(methodInfo.fullClassName, classLoaderProvider);
         this.overloadResolver = new OverloadResolver();
+        
         for (Method method : this.containingClass.getMethods()) {
             FunctionName annotatedName = method.getAnnotation(FunctionName.class);
-            if (method.getName().equals(methodName) && (annotatedName == null || annotatedName.value().equals(funcname))) {
+            
+            if (method.getName().equals(methodInfo.name) && (annotatedName == null || annotatedName.value().equals(function.getName()))) {
                 this.overloadResolver.addCandidate(method);
             }
         }
 
         if (!this.overloadResolver.hasCandidates()) {
-            throw new NoSuchMethodException("There are no methods named \"" + methodName + "\" in class \"" + fullClassName + "\"");
+            throw new NoSuchMethodException("There are no methods named \"" + methodInfo.name + "\" in class \"" + methodInfo.fullClassName + "\"");
         }
 
         this.bindingDefinitions = new HashMap<>();
@@ -59,8 +56,34 @@ class JavaMethodExecutor {
             .invoke(() -> this.containingClass.newInstance());
         dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
     }
+    
+    Class<?> getContainingClass(String className, ClassLoaderProvider classLoaderProvider) throws ClassNotFoundException {
+        ClassLoader classLoader = classLoaderProvider.getClassLoader();
+        return Class.forName(className, true, classLoader);
+    }
 
     private Class<?> containingClass;
     private final OverloadResolver overloadResolver;
     private final Map<String, BindingDefinition> bindingDefinitions;
+    
+    /*
+     * "struct" to track the info on the function method
+     */
+    private final class MethodInfo {
+    		public String fullClassName;
+    		public String fullName;
+    		public String name;
+    		
+    		public MethodInfo(String fullMethodName) {
+    			this.fullName = fullMethodName;
+    			this.fullClassName = StringUtils.trim(StringUtils.substringBeforeLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
+    			this.name = StringUtils.trim(StringUtils.substringAfterLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
+    		}
+    		
+    	    void verifyMethodToBeExecuted() {
+    	        if (StringUtils.isAnyBlank(fullClassName, this.name)) {
+    	            throw new IllegalArgumentException("\"" + this.fullName + "\" is not a qualified full Java method name");
+    	        }
+    	    }
+    }
 }
