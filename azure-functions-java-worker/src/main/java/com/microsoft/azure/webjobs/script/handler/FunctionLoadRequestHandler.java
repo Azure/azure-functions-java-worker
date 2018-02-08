@@ -21,13 +21,14 @@ public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadReque
         final RpcFunctionMetadata metadata = request.getMetadata();
         final FunctionDescriptor function = createFunctionDescriptor(request.getFunctionId(), metadata);
         
+      
         final String methodName = metadata.getEntryPoint();
         final Map<String, BindingInfo> bindings = metadata.getBindingsMap();
 
         response.setFunctionId(function.getId());
         this.broker.loadMethod(function, methodName, bindings);
 
-        return String.format("\"%s\" loaded (ID: %s, Reflection: \"%s\"::\"%s\")", function.getName(), function.getId(), methodName);
+        return String.format("\"%s\" loaded (ID: %s, Reflection: \"%s\"::\"%s\")", function.getName(), function.getId(), function.getJarPath(), methodName);
     }
     
     FunctionDescriptor createFunctionDescriptor(String functionId, RpcFunctionMetadata metadata) {

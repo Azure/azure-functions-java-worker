@@ -9,7 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Logger;
 
+import com.microsoft.azure.webjobs.script.WorkerLogManager;
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
 import com.microsoft.azure.webjobs.script.reflect.FunctionDescriptor;
@@ -26,16 +28,16 @@ public class JavaFunctionBroker {
         this.classLoaderProvider = classLoaderProvider;
     }
 
-    public void loadMethod(FunctionDescriptor function, String methodName, Map<String, BindingInfo> bindings)
-            throws ClassNotFoundException, NoSuchMethodException, IOException {
-    	
+    public void loadMethod(FunctionDescriptor function, String methodName, Map<String, BindingInfo> bindings) 
+    		throws ClassNotFoundException, NoSuchMethodException, IOException 
+    {
         if (methodName == null) {
             throw new NullPointerException("methodName should not be null");
         }
         
         addSearchPathsToClassLoader(function);
-        
         JavaMethodExecutor executor = new JavaMethodExecutor(function, methodName, bindings, classLoaderProvider);
+        
         this.methods.put(function.getId(), new ImmutablePair<>(function.getName(), executor));
     }
 
@@ -59,26 +61,17 @@ public class JavaFunctionBroker {
         return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
     }
     
-    void addSearchPathsToClassLoader(FunctionDescriptor function) throws IOException {
-    		String jarPath = function.getJarPath();
-    		
-    		//look for /lib folder
-    		File jarFile = new File(jarPath);
-    		File jarParent = jarFile.getAbsoluteFile().getParentFile();
-    		
-    		if (jarParent.isDirectory()) {
-    			File[] directories = jarParent.listFiles(new FileFilter() {
-    			    @Override
-    			    public boolean accept(File file) {
-    			        return file.isDirectory() && file.getName().endsWith("lib");
-    			    }
-    			});
-    			
-    			if (directories.length > 0) {
-    				classLoaderProvider.addSearchPath(directories[0].getAbsolutePath());
-    			}
-    		}
-    		classLoaderProvider.addSearchPath(jarPath);
+    private void addSearchPathsToClassLoader(FunctionDescriptor function) throws IOException {
+    		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
+    		classLoaderProvider.addUrl(jarUrl);
+    		function.getLibDirectory().ifPresent(d -> registerWithClassLoaderProvider(d));
+    }
+    
+    private void registerWithClassLoaderProvider(File libDirectory) {
+    		try {
+			classLoaderProvider.addDirectory(libDirectory);
+		} catch (Exception e) {
+		}
     }
 
     private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;

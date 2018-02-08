@@ -43,11 +43,12 @@ class JavaMethodExecutor {
         }
 
         this.bindingDefinitions = new HashMap<>();
+        
         for (Map.Entry<String, BindingInfo> entry : bindingInfos.entrySet()) {
             this.bindingDefinitions.put(entry.getKey(), new BindingDefinition(entry.getKey(), entry.getValue()));
         }
     }
-
+    
     Map<String, BindingDefinition> getBindingDefinitions() { return this.bindingDefinitions; }
 
     void execute(BindingDataStore dataStore) throws Exception {
@@ -69,7 +70,7 @@ class JavaMethodExecutor {
     /*
      * "struct" to track the info on the function method
      */
-    private final class MethodInfo {
+    private class MethodInfo {
     		public String fullClassName;
     		public String fullName;
     		public String name;
