@@ -13,8 +13,8 @@ import java.util.logging.Logger;
 
 import com.microsoft.azure.webjobs.script.WorkerLogManager;
 import com.microsoft.azure.webjobs.script.binding.*;
+import com.microsoft.azure.webjobs.script.description.FunctionMethodDescriptor;
 import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
-import com.microsoft.azure.webjobs.script.reflect.FunctionDescriptor;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -28,17 +28,15 @@ public class JavaFunctionBroker {
         this.classLoaderProvider = classLoaderProvider;
     }
 
-    public void loadMethod(FunctionDescriptor function, String methodName, Map<String, BindingInfo> bindings) 
+    public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings) 
     		throws ClassNotFoundException, NoSuchMethodException, IOException 
     {
-        if (methodName == null) {
-            throw new NullPointerException("methodName should not be null");
-        }
+        descriptor.validate();
         
-        addSearchPathsToClassLoader(function);
-        JavaMethodExecutor executor = new JavaMethodExecutor(function, methodName, bindings, classLoaderProvider);
+        addSearchPathsToClassLoader(descriptor);
+        JavaMethodExecutor executor = new JavaMethodExecutor(descriptor, bindings, classLoaderProvider);
         
-        this.methods.put(function.getId(), new ImmutablePair<>(function.getName(), executor));
+        this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
     }
 
     public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs) throws Exception {
@@ -61,7 +59,7 @@ public class JavaFunctionBroker {
         return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
     }
     
-    private void addSearchPathsToClassLoader(FunctionDescriptor function) throws IOException {
+    private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
     		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
     		classLoaderProvider.addUrl(jarUrl);
     		function.getLibDirectory().ifPresent(d -> registerWithClassLoaderProvider(d));

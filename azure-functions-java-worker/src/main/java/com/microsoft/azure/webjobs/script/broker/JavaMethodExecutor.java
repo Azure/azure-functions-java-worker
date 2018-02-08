@@ -2,18 +2,13 @@ package com.microsoft.azure.webjobs.script.broker;
 
 import java.lang.reflect.*;
 import java.net.*;
-import java.nio.file.*;
 import java.util.*;
-
-import org.apache.commons.lang3.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.microsoft.azure.serverless.functions.annotation.*;
 
 import com.microsoft.azure.webjobs.script.binding.*;
+import com.microsoft.azure.webjobs.script.description.FunctionMethodDescriptor;
 import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
-import com.microsoft.azure.webjobs.script.reflect.FunctionDescriptor;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
@@ -21,25 +16,24 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  * Thread-Safety: Multiple thread.
  */
 class JavaMethodExecutor {
-    JavaMethodExecutor(FunctionDescriptor function, String fullMethodName, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+    JavaMethodExecutor(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException 
     {
-    		MethodInfo methodInfo = new MethodInfo(fullMethodName);
-    		methodInfo.verifyMethodToBeExecuted();
+    		descriptor.validateMethodInfo();
 
-        this.containingClass = getContainingClass(methodInfo.fullClassName, classLoaderProvider);
+        this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
         this.overloadResolver = new OverloadResolver();
         
         for (Method method : this.containingClass.getMethods()) {
             FunctionName annotatedName = method.getAnnotation(FunctionName.class);
             
-            if (method.getName().equals(methodInfo.name) && (annotatedName == null || annotatedName.value().equals(function.getName()))) {
+            if (method.getName().equals(descriptor.getName()) && (annotatedName == null || annotatedName.value().equals(descriptor.getName()))) {
                 this.overloadResolver.addCandidate(method);
             }
         }
 
         if (!this.overloadResolver.hasCandidates()) {
-            throw new NoSuchMethodException("There are no methods named \"" + methodInfo.name + "\" in class \"" + methodInfo.fullClassName + "\"");
+            throw new NoSuchMethodException("There are no methods named \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
         }
 
         this.bindingDefinitions = new HashMap<>();
@@ -66,25 +60,4 @@ class JavaMethodExecutor {
     private Class<?> containingClass;
     private final OverloadResolver overloadResolver;
     private final Map<String, BindingDefinition> bindingDefinitions;
-    
-    /*
-     * "struct" to track the info on the function method
-     */
-    private class MethodInfo {
-    		public String fullClassName;
-    		public String fullName;
-    		public String name;
-    		
-    		public MethodInfo(String fullMethodName) {
-    			this.fullName = fullMethodName;
-    			this.fullClassName = StringUtils.trim(StringUtils.substringBeforeLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
-    			this.name = StringUtils.trim(StringUtils.substringAfterLast(fullMethodName, ClassUtils.PACKAGE_SEPARATOR));
-    		}
-    		
-    	    void verifyMethodToBeExecuted() {
-    	        if (StringUtils.isAnyBlank(fullClassName, this.name)) {
-    	            throw new IllegalArgumentException("\"" + this.fullName + "\" is not a qualified full Java method name");
-    	        }
-    	    }
-    }
 }
