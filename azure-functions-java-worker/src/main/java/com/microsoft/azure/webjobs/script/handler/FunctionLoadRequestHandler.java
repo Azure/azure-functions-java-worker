@@ -30,7 +30,7 @@ public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadReque
         		descriptor.getName(), 
         		descriptor.getId(), 
         		descriptor.getJarPath(), 
-        		descriptor.getFullName());
+        		descriptor.getFullMethodName());
     }
     
     FunctionMethodDescriptor createFunctionDescriptor(String functionId, RpcFunctionMetadata metadata) {

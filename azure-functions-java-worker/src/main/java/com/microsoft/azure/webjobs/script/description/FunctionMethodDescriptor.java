@@ -6,16 +6,16 @@ import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class FunctionMethodDescriptor {
-	public FunctionMethodDescriptor(String id, String name, String fullName, String jarPath) {
+	public FunctionMethodDescriptor(String id, String name, String fullMethodName, String jarPath) {
 		this.id = id;
 		this.name = name;
-		this.fullName = fullName;
-		this.methodInfo = new MethodInfo(fullName);
+		this.fullMethodName = fullMethodName;
+		this.methodInfo = new MethodInfo(fullMethodName);
 		this.jarPath = StringUtils.trim(jarPath);
 	}
 	
 	/**
-	 * 
+	 * gets the function method id
 	 */
 	public String getId() { return id; }
 	
@@ -25,9 +25,14 @@ public class FunctionMethodDescriptor {
 	public String getName() { return name; }
 	
 	/**
+	 * Gets the method name
+	 */
+	public String getMethodName() { return this.methodInfo.name; }
+	
+	/**
 	 * Gets the full name of the function method
 	 */
-	public String getFullName() { return fullName; }
+	public String getFullMethodName() { return fullMethodName; }
 	
 	/**
 	 * Gets the full path of the jar file as a string
@@ -116,7 +121,7 @@ public class FunctionMethodDescriptor {
 	}
 	
 	void guardAgainstNullFullName() {
-		if (fullName == null) {
+		if (fullMethodName == null) {
 	        throw new NullPointerException("fullName cannot not be null.");
 		}
 	}
@@ -144,7 +149,7 @@ public class FunctionMethodDescriptor {
 	private final String id;
 	private final String jarPath;
 	private final String name;
-	private final String fullName;
+	private final String fullMethodName;
 	
 	/*
      * "struct" to track the info on the function method

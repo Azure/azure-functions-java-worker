@@ -5,7 +5,6 @@ import java.net.*;
 import java.util.*;
 
 import com.microsoft.azure.serverless.functions.annotation.*;
-
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.description.FunctionMethodDescriptor;
 import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
@@ -27,7 +26,7 @@ class JavaMethodExecutor {
         for (Method method : this.containingClass.getMethods()) {
             FunctionName annotatedName = method.getAnnotation(FunctionName.class);
             
-            if (method.getName().equals(descriptor.getName()) && (annotatedName == null || annotatedName.value().equals(descriptor.getName()))) {
+            if (method.getName().equals(descriptor.getMethodName()) && (annotatedName == null || annotatedName.value().equals(descriptor.getName()))) {
                 this.overloadResolver.addCandidate(method);
             }
         }
