@@ -1,17 +1,10 @@
 package com.microsoft.azure.webjobs.script.broker;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Logger;
-
-import com.microsoft.azure.webjobs.script.WorkerLogManager;
 import com.microsoft.azure.webjobs.script.binding.*;
 import com.microsoft.azure.webjobs.script.description.FunctionMethodDescriptor;
 import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;

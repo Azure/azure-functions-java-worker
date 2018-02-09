@@ -1,18 +1,10 @@
 package com.microsoft.azure.webjobs.script.reflect;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
-
-import com.microsoft.azure.webjobs.script.WorkerLogManager;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Kevin Hillinger
@@ -95,8 +87,6 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
         }
         
     }
-	
-	Logger logger = WorkerLogManager.getHostLogger();
 	
 	private static final String systemClassLoaderAddUrlMethodName = "addURL";
 	private static final Class<?>[] parameters = new Class[] { URL.class };

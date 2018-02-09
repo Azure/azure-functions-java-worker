@@ -1,12 +1,7 @@
 package com.microsoft.azure.webjobs.script.description;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Paths;
+import java.io.*;
 import java.util.Optional;
-
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 
