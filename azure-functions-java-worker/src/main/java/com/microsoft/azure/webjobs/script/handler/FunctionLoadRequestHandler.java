@@ -27,14 +27,14 @@ public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadReque
         this.broker.loadMethod(descriptor, bindings);
 
         return String.format("\"%s\" loaded (ID: %s, Reflection: \"%s\"::\"%s\")", 
-        		descriptor.getName(), 
-        		descriptor.getId(), 
-        		descriptor.getJarPath(), 
-        		descriptor.getFullMethodName());
+            descriptor.getName(), 
+            descriptor.getId(), 
+            descriptor.getJarPath(), 
+            descriptor.getFullMethodName());
     }
     
     FunctionMethodDescriptor createFunctionDescriptor(String functionId, RpcFunctionMetadata metadata) {
-		return new FunctionMethodDescriptor(functionId, metadata.getName(), metadata.getEntryPoint(), metadata.getScriptFile());  	
+        return new FunctionMethodDescriptor(functionId, metadata.getName(), metadata.getEntryPoint(), metadata.getScriptFile());      
     }
 
     private final JavaFunctionBroker broker;

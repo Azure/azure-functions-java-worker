@@ -18,7 +18,7 @@ class JavaMethodExecutor {
     JavaMethodExecutor(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException 
     {
-    		descriptor.validateMethodInfo();
+        descriptor.validateMethodInfo();
 
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
         this.overloadResolver = new OverloadResolver();

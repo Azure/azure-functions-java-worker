@@ -21,8 +21,8 @@ public class JavaFunctionBroker {
         this.classLoaderProvider = classLoaderProvider;
     }
 
-    public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings) 
-    		throws ClassNotFoundException, NoSuchMethodException, IOException 
+    public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
+            throws ClassNotFoundException, NoSuchMethodException, IOException 
     {
         descriptor.validate();
         
@@ -53,18 +53,19 @@ public class JavaFunctionBroker {
     }
     
     private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
-    		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
-    		classLoaderProvider.addUrl(jarUrl);
-    		function.getLibDirectory().ifPresent(d -> registerWithClassLoaderProvider(d));
-    }
-    
-    private void registerWithClassLoaderProvider(File libDirectory) {
-    		try {
-			classLoaderProvider.addDirectory(libDirectory);
-		} catch (Exception e) {
-		}
+        URL jarUrl = new File(function.getJarPath()).toURI().toURL();
+        classLoaderProvider.addUrl(jarUrl);
+        function.getLibDirectory().ifPresent(d -> registerWithClassLoaderProvider(d));
     }
 
+    private void registerWithClassLoaderProvider(File libDirectory) {
+            try {
+                classLoaderProvider.addDirectory(libDirectory);
+            }
+            catch (Exception e) {
+        }
+    }
+    
     private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
     private final ClassLoaderProvider classLoaderProvider;
 }

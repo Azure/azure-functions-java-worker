@@ -12,16 +12,15 @@ import io.grpc.stub.*;
 
 import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.handler.*;
-import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
-import com.microsoft.azure.webjobs.script.reflect.DefaultClassLoaderProvider;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
+import com.microsoft.azure.webjobs.script.reflect.DefaultClassLoaderProvider;
 
 /**
  * Grpc client talks with the Azure Functions Runtime Host. It will dispatch to different message handlers according to the inbound message type.
  * Thread-Safety: Single thread.
  */
 class JavaWorkerClient implements AutoCloseable {
-	JavaWorkerClient(Application app) {
+    JavaWorkerClient(Application app) {
         WorkerLogManager.initialize(this, app.logToConsole());
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
         this.peer = new AtomicReference<>(null);
@@ -114,5 +113,5 @@ class JavaWorkerClient implements AutoCloseable {
     private final ManagedChannel channel;
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
-    private DefaultClassLoaderProvider classPathProvider;
+    private final DefaultClassLoaderProvider classPathProvider;
 }
