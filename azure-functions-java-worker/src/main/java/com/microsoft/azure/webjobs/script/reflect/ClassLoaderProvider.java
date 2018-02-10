@@ -1,8 +1,7 @@
 package com.microsoft.azure.webjobs.script.reflect;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 
 public interface ClassLoaderProvider {
     

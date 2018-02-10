@@ -1,9 +1,9 @@
 package com.microsoft.azure.webjobs.script.handler;
 
-import java.util.Map;
+import java.util.*;
 
 import com.microsoft.azure.webjobs.script.broker.*;
-import com.microsoft.azure.webjobs.script.description.FunctionMethodDescriptor;
+import com.microsoft.azure.webjobs.script.description.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadRequest, FunctionLoadResponse.Builder> {

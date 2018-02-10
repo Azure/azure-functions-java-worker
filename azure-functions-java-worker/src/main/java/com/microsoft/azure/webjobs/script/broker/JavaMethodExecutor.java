@@ -6,8 +6,8 @@ import java.util.*;
 
 import com.microsoft.azure.serverless.functions.annotation.*;
 import com.microsoft.azure.webjobs.script.binding.*;
-import com.microsoft.azure.webjobs.script.description.FunctionMethodDescriptor;
-import com.microsoft.azure.webjobs.script.reflect.ClassLoaderProvider;
+import com.microsoft.azure.webjobs.script.description.*;
+import com.microsoft.azure.webjobs.script.reflect.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**

@@ -1,9 +1,9 @@
 package com.microsoft.azure.webjobs.script.description;
 
 import java.io.*;
-import java.util.Optional;
-import org.apache.commons.lang3.ClassUtils;
-import org.apache.commons.lang3.StringUtils;
+import java.util.*;
+
+import org.apache.commons.lang3.*;
 
 public class FunctionMethodDescriptor {
     public FunctionMethodDescriptor(String id, String name, String fullMethodName, String jarPath) {

@@ -3,7 +3,7 @@ package com.microsoft.azure.webjobs.script.binding;
 import java.lang.reflect.*;
 import java.util.*;
 
-import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.reflect.*;
 
 import com.microsoft.azure.serverless.functions.*;

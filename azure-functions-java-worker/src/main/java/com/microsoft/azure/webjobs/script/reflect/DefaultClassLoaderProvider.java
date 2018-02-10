@@ -1,7 +1,7 @@
 package com.microsoft.azure.webjobs.script.reflect;
 
 import java.io.*;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
