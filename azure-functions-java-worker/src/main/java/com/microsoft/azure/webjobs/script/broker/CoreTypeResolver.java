@@ -6,12 +6,12 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.*;
+import org.apache.commons.lang3.*;
+
 import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.serverless.functions.annotation.*;
-
-import com.google.common.reflect.ClassPath;
-import com.google.common.reflect.ClassPath.ClassInfo;
-import org.apache.commons.lang3.*;
 
 public class CoreTypeResolver {
     private static boolean isOutputParameter(Type target) {

@@ -1,29 +1,36 @@
 package com.microsoft.azure.webjobs.script.broker;
 
+import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.commons.lang3.tuple.*;
+
 import com.microsoft.azure.webjobs.script.binding.*;
+import com.microsoft.azure.webjobs.script.description.*;
+import com.microsoft.azure.webjobs.script.reflect.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  * A broker between JAR methods and the function RPC. It can load methods using reflection, and invoke them at runtime.
  * Thread-Safety: Multiple thread.
  */
 public class JavaFunctionBroker {
-    public JavaFunctionBroker() {
+    public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
         this.methods = new ConcurrentHashMap<>();
+        this.classLoaderProvider = classLoaderProvider;
     }
 
-    public void loadMethod(String id, String funcname, String jarPath, String methodName, Map<String, BindingInfo> bindings)
-            throws ClassNotFoundException, MalformedURLException, NoSuchMethodException {
-        if (id == null || jarPath == null || methodName == null) {
-            throw new NullPointerException("id, jarPath, methodName should not be null");
-        }
-        JavaMethodExecutor executor = new JavaMethodExecutor(funcname, jarPath, methodName, bindings);
-        this.methods.put(id, new ImmutablePair<>(funcname, executor));
+    public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
+            throws ClassNotFoundException, NoSuchMethodException, IOException 
+    {
+        descriptor.validate();
+        
+        addSearchPathsToClassLoader(descriptor);
+        JavaMethodExecutor executor = new JavaMethodExecutor(descriptor, bindings, classLoaderProvider);
+        
+        this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
     }
 
     public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs) throws Exception {
@@ -45,6 +52,21 @@ public class JavaFunctionBroker {
     public Optional<String> getMethodName(String id) {
         return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
     }
+    
+    private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
+        URL jarUrl = new File(function.getJarPath()).toURI().toURL();
+        classLoaderProvider.addUrl(jarUrl);
+        function.getLibDirectory().ifPresent(d -> registerWithClassLoaderProvider(d));
+    }
 
+    private void registerWithClassLoaderProvider(File libDirectory) {
+            try {
+                classLoaderProvider.addDirectory(libDirectory);
+            }
+            catch (Exception e) {
+        }
+    }
+    
     private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
+    private final ClassLoaderProvider classLoaderProvider;
 }

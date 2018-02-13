@@ -3,10 +3,11 @@ package com.microsoft.azure.webjobs.script.binding;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.microsoft.azure.webjobs.script.binding.BindingData.*;
-import com.microsoft.azure.webjobs.script.broker.*;
 import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.reflect.*;
+
+import com.microsoft.azure.webjobs.script.binding.BindingData.*;
+import com.microsoft.azure.webjobs.script.broker.*;
 
 @FunctionalInterface
 interface CheckedFunction<T, R> {

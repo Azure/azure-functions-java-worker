@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-functions-java-worker</artifactId>
-  <version>1.0.0-beta-2</version>
+  <version>1.0.0-beta-3</version>
   <packaging>jar</packaging>
 
   <name>Microsoft Azure Functions Java Runtime</name>

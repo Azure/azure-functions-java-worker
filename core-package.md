@@ -9,7 +9,7 @@ Use this package by including the following snippet in your `pom.xml`.
 <dependency>
     <groupId>com.microsoft.azure.serverless</groupId>
     <artifactId>azure-function-java-core</artifactId>
-    <version>1.0.0-beta-1</version>
+    <version>1.0.0-beta-2</version>
 </dependency>
 ```
 

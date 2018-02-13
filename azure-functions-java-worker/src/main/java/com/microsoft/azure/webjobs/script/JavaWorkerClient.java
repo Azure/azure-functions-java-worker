@@ -12,6 +12,7 @@ import io.grpc.stub.*;
 
 import com.microsoft.azure.webjobs.script.broker.*;
 import com.microsoft.azure.webjobs.script.handler.*;
+import com.microsoft.azure.webjobs.script.reflect.*;
 import com.microsoft.azure.webjobs.script.rpc.messages.*;
 
 /**
@@ -24,12 +25,15 @@ class JavaWorkerClient implements AutoCloseable {
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
+        this.classPathProvider = new DefaultClassLoaderProvider();
+        
         this.addHandlers();
     }
 
     @PostConstruct
     private void addHandlers() {
-        JavaFunctionBroker broker = new JavaFunctionBroker();
+        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
+        
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, WorkerInitRequestHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
@@ -109,4 +113,5 @@ class JavaWorkerClient implements AutoCloseable {
     private final ManagedChannel channel;
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
+    private final DefaultClassLoaderProvider classPathProvider;
 }
