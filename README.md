@@ -73,7 +73,7 @@ Sometimes you also need to care about the static constructors used in some libra
 #### 2. Dependencies in the lib/ folder
 All dependencies that are placed in the `lib` directory will be added to the system class loader at runtime. Add the following plugin definition to your `pom.xml`:
 
-```
+```xml
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-dependency-plugin</artifactId>
