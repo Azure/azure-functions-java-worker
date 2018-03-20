@@ -24,7 +24,8 @@ import java.lang.annotation.Target;
  * <pre>
  * {@literal @}FunctionName("redirect")
  *  public HttpResponseMessage&lt;String&gt; redirectFunction(
- *    {@literal @}HttpTrigger(name = "req", methods = {"get"}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage&lt;Optional&lt;String&gt;&gt; request) {
+ *    {@literal @}HttpTrigger(name = "req",
+ *                            methods = {"get"}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage&lt;Optional&lt;String&gt;&gt; request) {
  *     ....
  *  }</pre>
  *

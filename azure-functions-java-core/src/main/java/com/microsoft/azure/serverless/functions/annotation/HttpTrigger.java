@@ -13,13 +13,25 @@ import java.lang.annotation.Target;
 
 /**
  * <p>The HttpTrigger annotation is applied to Azure functions that will be triggered by a call to the HTTP endpoint that
- * the function is located at. The HttpTrigger annotation should be applied to a method parameter of type
- * {@link com.microsoft.azure.serverless.functions.HttpRequestMessage}. For example:</p>
+ * the function is located at. The HttpTrigger annotation should be applied to a method parameter of one of the following
+ * types:</p>
+ *
+ * <ul>
+ *     <li>{@link com.microsoft.azure.serverless.functions.HttpRequestMessage HttpRequestMessage&lt;T&gt;}</li>
+ *     <li>int</li>
+ *     <li>String</li>
+ *     <li>Optional&lt;String&gt;</li>
+ *     <li>Any POJO type</li>
+ * </ul>
+ *
+ * <p>For example:</p>
  *
  * <pre>
  * {@literal @}FunctionName("hello")
  *  public HttpResponseMessage&lt;String&gt; helloFunction(
- *    {@literal @}HttpTrigger(name = "req", methods = {"get"}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage&lt;Optional&lt;String&gt;&gt; request) {
+ *    {@literal @}HttpTrigger(name = "req",
+ *                  methods = {"get"},
+ *                  authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage&lt;Optional&lt;String&gt;&gt; request) {
  *     ....
  *  }</pre>
  *
@@ -35,6 +47,10 @@ import java.lang.annotation.Target;
  * to this argument. In this annotation you'll note that it has been given a name, as well as told what type of requests
  * it supports (in this case, only HTTP GET requests), and that the {@link AuthorizationLevel} is anonymous, allowing
  * access to anyone who can call the endpoint.</p>
+ *
+ * <p>The {@code HttpTrigger} can be further customised by providing a custom {@link #route()}, which allows for custom
+ * endpoints to be specified, and for these endpoints to be parameterized with arguments being bound to arguments
+ * provided to the function at runtime.</p>
  *
  * @see com.microsoft.azure.serverless.functions.HttpRequestMessage
  * @see com.microsoft.azure.serverless.functions.HttpResponseMessage
@@ -57,11 +73,29 @@ public @interface HttpTrigger {
      * Azure Function.</p>
      *
      * <p>By default when you create a function for an HTTP trigger, or WebHook, the function is addressable with a
-     * route of the form {@code http://<yourapp>.azurewebsites.net/api/<funcname>}. You can customize this route using
+     * route of the form {@code http://&lt;yourapp&gt;.azurewebsites.net/api/&lt;funcname&gt;}. You can customize this route using
      * this route property. For example, a route of {@code "products/{category:alpha}/{id:int}"} would mean that the
      * function is now addressable with the following route instead of the original route:
-     * {@code http://<yourapp>.azurewebsites.net/api/products/electronics/357}, which allows the function code to support
-     * two parameters in the address: category and id.</p>
+     * {@code http://&lt;yourapp&gt;.azurewebsites.net/api/products/electronics/357}, which allows the function code to support
+     * two parameters in the address: category and id. By specifying the route in this way, developers can then
+     * add the additional route arguments as arguments into the function by using the {@link BindingName} annotation.
+     * For example:</p>
+     *
+     * <pre>
+     * {@literal @}FunctionName("routeTest")
+     *  public HttpResponseMessage&lt;String&gt; routeTest(
+     *      {@literal @}HttpTrigger(name = "req",
+     *                    methods = {"get"},
+     *                    authLevel = AuthorizationLevel.ANONYMOUS,
+     *                    route = "products/{category:alpha}/{id:int}") HttpRequestMessage&lt;Optional&lt;String&gt;&gt; request,
+     *      {@literal @}BindingName("category") String category,
+     *      {@literal @}BindingName("id") int id,
+     *       final ExecutionContext context) {
+     *           ....
+     *           context.getLogger().info("We have " + category + " with id " + id);
+     *           ....
+     *  }
+     * </pre>
      *
      * <p>For more details on the route syntax, refer to the
      * <a href="https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#constraints">
@@ -80,8 +114,8 @@ public @interface HttpTrigger {
     String[] methods() default {};
 
     /**
-     * Determines what keys, if any, need to be present on the request in order to invoke the function. The authorization
-     * level can be one of the following values:
+     * <p>Determines what keys, if any, need to be present on the request in order to invoke the function. The authorization
+     * level can be one of the following values:</p>
      *
      * <ul>
      *     <li><strong>anonymous</strong>: No API key is required.</li>
@@ -97,8 +131,8 @@ public @interface HttpTrigger {
     AuthorizationLevel authLevel() default AuthorizationLevel.FUNCTION;
 
     /**
-     * Configures the HTTP trigger to act as a webhook receiver for the specified provider. Don't set the methods
-     * property if you set this property. The webhook type can be one of the following values:
+     * <p>Configures the HTTP trigger to act as a webhook receiver for the specified provider. Don't set the methods
+     * property if you set this property. The webhook type can be one of the following values:</p>
      *
      * <ul>
      *     <li><strong>genericJson</strong>: A general-purpose webhook endpoint without logic for a specific provider.
