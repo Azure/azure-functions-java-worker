@@ -22,8 +22,8 @@ public interface HttpRequestMessage<T> {
     URI getUri();
 
     /**
-     * Returns the name of the method called.
-     * @return the name of the method called.
+     * Returns the HTTP method name, such as "GET" and "POST".
+     * @return the HTTP method name, such as "GET" and "POST".
      */
     String getMethod();
 
