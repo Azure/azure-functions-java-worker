@@ -18,9 +18,8 @@ import java.lang.annotation.Target;
  *
  * <ul>
  *     <li>{@link com.microsoft.azure.serverless.functions.HttpRequestMessage HttpRequestMessage&lt;T&gt;}</li>
- *     <li>int</li>
- *     <li>String</li>
- *     <li>Optional&lt;String&gt;</li>
+ *     <li>Any native Java types such as int, String, byte[]</li>
+ *     <li>Nullable values using Optional&lt;T&gt;</li>
  *     <li>Any POJO type</li>
  * </ul>
  *
