@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface DocumentDBInput {
+public @interface CosmosDBInput {
     String name();
 
     String dataType() default "";
@@ -30,5 +30,5 @@ public @interface DocumentDBInput {
 
     String sqlQuery() default "";
 
-    String connection();
+    String connectionStringSetting();
 }
