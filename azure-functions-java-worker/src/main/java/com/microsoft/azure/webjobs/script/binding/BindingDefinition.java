@@ -29,7 +29,7 @@ public final class BindingDefinition {
                 case "notificationHub": return NOTIFICATIONHUB;
                 case "manualTrigger": return MANUAL;
                 case "mobileTable": return MOBILETABLE;
-                case "cosmosDB": return COSMOSDB;
+                case "cosmosDB": case "cosmosDBTrigger": return COSMOSDB;
                 case "twilioSms": return TWILIOSMS;
                 case "sendGrid": return SENDGRID;
                 default: return UNKNOWN;
