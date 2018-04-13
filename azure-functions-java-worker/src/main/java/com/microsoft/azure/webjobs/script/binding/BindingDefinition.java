@@ -15,7 +15,7 @@ public final class BindingDefinition {
     boolean isOutput() { return this.direction == BindingInfo.Direction.out || this.direction == BindingInfo.Direction.inout; }
 
     enum BindingType {
-        TIMER, HTTP, QUEUE, TABLE, BLOB, SERVICEBUS, EVENTHUB, NOTIFICATIONHUB, MANUAL, MOBILETABLE, COSMOSDB, TWILIOSMS, SENDGRID, UNKNOWN;
+        TIMER, HTTP, QUEUE, TABLE, BLOB, SERVICEBUS, EVENTHUB, NOTIFICATIONHUB, MANUAL, MOBILETABLE, COSMOSDB, TWILIOSMS, SENDGRID, EVENTGRID, UNKNOWN;
 
         private static BindingType parse(String type) {
             switch (type) {
@@ -32,6 +32,7 @@ public final class BindingDefinition {
                 case "cosmosDB": case "cosmosDBTrigger": return COSMOSDB;
                 case "twilioSms": return TWILIOSMS;
                 case "sendGrid": return SENDGRID;
+                case "eventGridTrigger": return EVENTGRID;
                 default: return UNKNOWN;
             }
         }
