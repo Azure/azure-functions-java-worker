@@ -46,6 +46,15 @@ public interface HttpRequestMessage<T> {
     T getBody();
 
     /**
+     * Generates a {@link HttpResponseMessage} instance containing the given HTTP status code and no response body.
+     * Additional headers may be added by calling appropriate methods on {@link HttpResponseMessage}.
+     *
+     * @param status The HTTP status code to return to the caller of the function.
+     * @return An {@link HttpResponseMessage} instance containing the provided status and empty body.
+     */
+    HttpResponseMessage<Object> createResponse(int status);
+
+    /**
      * Generates a {@link HttpResponseMessage} instance containing the given HTTP status code and response body.
      * Additional headers may be added by calling appropriate methods on {@link HttpResponseMessage}.
      *
