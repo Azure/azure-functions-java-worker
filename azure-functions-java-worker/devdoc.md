@@ -72,6 +72,14 @@ dotnet ./src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.0/Microsoft.Azure.WebJ
 
 > Note: Remember to remove `"AzureWebJobsScriptRoot"` environment variable after you have finished debugging, because it will also influence the `func` CLI tool.
 
+## Generate JavaDoc
+
+Simply using the following command to do so (if there are dependency errors, run `mvn clean install` beforehand):
+
+```sh
+mvn javadoc:javadoc
+```
+
 # Coding Convention
 
 ## Version Management
