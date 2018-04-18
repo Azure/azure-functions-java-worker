@@ -4,7 +4,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.microsoft.azure.serverless.functions.OutputBinding;
-import com.microsoft.azure.webjobs.script.categories.*;
+import com.microsoft.azure.webjobs.script.test.categories.*;
 import org.junit.*;
 import org.junit.experimental.categories.*;
 
