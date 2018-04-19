@@ -10,16 +10,19 @@ import org.apache.commons.cli.*;
  * The entry point of the Java Language Worker. Every component could get the command line options from this singleton
  * Application instance, and typically that instance will be passed to your components as constructor arguments.
  */
-public final class Application {
+public final class Application implements IApplication {
     private Application(String[] args) {
         this.parseCommandLine(args);
     }
 
+    @Override
     public String getHost() { return this.host; }
-    int getPort() { return this.port; }
+    @Override
+    public int getPort() { return this.port; }
+    @Override
+    public boolean logToConsole() { return this.logToConsole; }
     private String getWorkerId() { return this.workerId; }
     private String getRequestId() { return this.requestId; }
-    boolean logToConsole() { return this.logToConsole; }
 
     private void printUsage() {
         HelpFormatter formatter = new HelpFormatter();
@@ -96,7 +99,7 @@ public final class Application {
                     .build());
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         System.out.println("Microsoft Azure Functions Java Runtime [build " + version() + "]");
         Application app = new Application(args);
         if (!app.isCommandlineValid()) {
@@ -104,7 +107,7 @@ public final class Application {
             System.exit(1);
         } else {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
-                client.listen(app.getWorkerId(), app.getRequestId());
+                client.listen(app.getWorkerId(), app.getRequestId()).get();
             } catch (Exception ex) {
                 WorkerLogManager.getSystemLogger().log(Level.SEVERE, "Unexpected Exception causes system to exit", ex);
                 System.exit(-1);
