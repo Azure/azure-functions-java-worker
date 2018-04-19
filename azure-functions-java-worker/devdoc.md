@@ -21,6 +21,65 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 * Set the JRE libraries to JRE 1.8
 * "Ignore optional compiler problems" in "Java Build Path" for "target/generated-sources/\*\*/\*.java"
 
+# Development Cycle
+
+## Build
+
+This is a maven based project, thus you can use any command line tools or IDEs which support maven to build it. Here we will use command line as the example (you could configure your own development environment accordingly).
+
+To build the project, you just need to run one command from the root folder of this project:
+
+```sh
+mvn clean package
+```
+
+And the binary will be built to `"./azure-functions-java-worker/target/azure-functions-java-worker-<version>.jar"`.
+
+If you have updated the core interface (azure-functions-java-core), a `mvn clean install` is required for your test functions app to reference the latest core package.
+
+## Debug
+
+The Java worker alone is not enough to establish the functions app, we also need the support from [Azure Functions Host](https://github.com/Azure/azure-functions-host). You may either use a published host CLI or use the in-development host. But both of the methods require you to attach to the java process if you want a step-by-step debugging experience.
+
+### Published Host
+
+You can install the latest Azure functions CLI tool by:
+
+```sh
+npm install -g azure-functions-core-tools@core
+```
+
+By default, the binaries are located in `"<Home Folder>/.azurefunctions/bin"`. Copy the `"<Azure Functions Java Worker Root>/azure-functions-java-worker/target/azure-functions-java-worker-<version>.jar"` to `"<Home Folder>/.azurefunctions/bin/workers/java/azure-functions-java-worker.jar"`. And start it normally using:
+
+```sh
+func start
+```
+
+### Latest Host
+
+A developer may also use the latest host code by cloning the git repository [Azure Functions Host](https://github.com/Azure/azure-functions-host). Now you need to navigate to the root folder of the host project and build it through:
+
+```sh
+dotnet restore WebJobs.Script.sln
+dotnet build WebJobs.Script.sln
+```
+
+After the build succeeded, set the environment variable `"AzureWebJobsScriptRoot"` to the root folder path (the folder which contains the `host.json`) of your test functions app; and copy the `"<Azure Functions Java Worker Root>/azure-functions-java-worker/target/azure-functions-java-worker-<version>.jar"` to `"<Azure Functions Host Root>/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.0/workers/java/azure-functions-java-worker.jar"`. Now it's time to start the host:
+
+```sh
+dotnet ./src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.0/Microsoft.Azure.WebJobs.Script.WebHost.dll
+```
+
+> Note: Remember to remove `"AzureWebJobsScriptRoot"` environment variable after you have finished debugging, because it will also influence the `func` CLI tool.
+
+## Generate JavaDoc
+
+Simply using the following command to do so (if there are dependency errors, run `mvn clean install` beforehand):
+
+```sh
+mvn javadoc:javadoc
+```
+
 # Coding Convention
 
 ## Version Management
