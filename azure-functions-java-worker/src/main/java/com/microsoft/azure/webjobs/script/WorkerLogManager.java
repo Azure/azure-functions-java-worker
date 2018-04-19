@@ -13,6 +13,7 @@ public class WorkerLogManager {
     public static Logger getInvocationLogger(String invocationId) { return INSTANCE.getInvocationLoggerImpl(invocationId); }
 
     static void initialize(JavaWorkerClient client, boolean logToConsole) { INSTANCE.initializeImpl(client, logToConsole); }
+    static void deinitialize() { INSTANCE.deinitializempl(); }
 
     private WorkerLogManager() {
         this.client = null;
@@ -28,6 +29,13 @@ public class WorkerLogManager {
         this.client = client;
         this.logToConsole = logToConsole;
         addHostClientHandlers(this.hostLogger, null);
+    }
+
+    private void deinitializempl() {
+        assert this.client != null;
+        clearHandlers(this.hostLogger);
+        this.logToConsole = false;
+        this.client = null;
     }
 
     private Logger getInvocationLoggerImpl(String invocationId) {

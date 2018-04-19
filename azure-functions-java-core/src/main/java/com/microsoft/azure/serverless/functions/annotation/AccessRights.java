@@ -6,6 +6,10 @@
 
 package com.microsoft.azure.serverless.functions.annotation;
 
+/**
+ *
+ * @since 1.0.0
+ */
 public enum AccessRights {
     MANAGE,
     LISTEN

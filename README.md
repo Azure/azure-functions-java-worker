@@ -33,47 +33,19 @@ public class MyClass {
 
 ### Including 3rd Party Libraries
 
-Azure Functions supports the following for referencing dependencies:
+Azure Functions supports the use of 3rd party libraries. This is achieved by extending your build script to copy all dependencies to a lib folder in the function's root directory, which will then be deployed as part of your functions application. All dependencies that are placed in the `lib` directory will be added to the system class loader at runtime. 
 
-1. Creating a single JAR file.
-2. Copying all dependencies to a lib folder in the function's root directory
+Adding the following to your Maven `pom.xml` will copy all your dependencies to the Function App's `lib` directory. There are two changes required - configuring a property, and configuring the `maven-dependency-plugin`. 
 
-#### 1. Single JAR
-only accept one single JAR file. Therefore you are required to package all your dependencies into one single JAR. A simple approach is to add the following plugin into your `pom.xml`:
-
+In the properties section of your `pom.xml` file, you need to set the `functionLib` property as such:
 ```xml
-<plugin>
-  <artifactId>maven-shade-plugin</artifactId>
-  <version>3.1.0</version>
-  <executions>
-    <execution>
-      <phase>package</phase>
-      <goals>
-        <goal>shade</goal>
-      </goals>
-      <configuration>
-        <filters>
-          <filter>
-            <artifact>*:*</artifact>
-            <excludes>
-              <exclude>META-INF/*.SF</exclude>
-              <exclude>META-INF/*.DSA</exclude>
-              <exclude>META-INF/*.RSA</exclude>
-            </excludes>
-          </filter>
-        </filters>
-      </configuration>
-    </execution>
-  </executions>
-</plugin>
+<properties>
+    <functionLib>${project.build.directory}/azure-functions/${functionAppName}/lib</functionLib>
+</properties>
 ```
 
-Sometimes you also need to care about the static constructors used in some libraries (for example, database drivers). You need to call [`Class.forName()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#forName-java.lang.String-) method to invoke the corresponding static constructor (for example `Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");`).
-
-#### 2. Dependencies in the lib/ folder
-All dependencies that are placed in the `lib` directory will be added to the system class loader at runtime. Add the following plugin definition to your `pom.xml`:
-
-```
+In the plugins section of your `pom.xml` file, you need to configure the `maven-dependency-plugin` as such:
+```xml
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-dependency-plugin</artifactId>
@@ -95,7 +67,8 @@ All dependencies that are placed in the `lib` directory will be added to the sys
   </executions>
 </plugin>
 ```
-This will copy all your dependencies to the Function App's `lib` directory. Be sure to package and deploy the lib as part of the Function App.
+
+Finally, be sure to package and deploy the lib as part of the Function App.
 
 ## General Data Types
 

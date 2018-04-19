@@ -19,8 +19,8 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
  * Grpc client talks with the Azure Functions Runtime Host. It will dispatch to different message handlers according to the inbound message type.
  * Thread-Safety: Single thread.
  */
-class JavaWorkerClient implements AutoCloseable {
-    JavaWorkerClient(Application app) {
+public class JavaWorkerClient implements AutoCloseable {
+    public JavaWorkerClient(IApplication app) {
         WorkerLogManager.initialize(this, app.logToConsole());
         this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
         this.peer = new AtomicReference<>(null);
@@ -39,14 +39,10 @@ class JavaWorkerClient implements AutoCloseable {
         this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
     }
 
-    void listen(String workerId, String requestId) throws Exception {
-        try (StreamingMessagePeer peer = new StreamingMessagePeer()) {
-            this.peer.set(peer);
-            peer.send(requestId, new StartStreamHandler(workerId));
-            peer.getListeningTask().get();
-        } finally {
-            this.peer.set(null);
-        }
+    public Future<Void> listen(String workerId, String requestId) {
+        this.peer.set(new StreamingMessagePeer());
+        this.peer.get().send(requestId, new StartStreamHandler(workerId));
+        return this.peer.get().getListeningTask();
     }
 
     void logToHost(LogRecord record, String invocationId) {
@@ -58,8 +54,11 @@ class JavaWorkerClient implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        this.peer.get().close();
+        this.peer.set(null);
         this.channel.shutdownNow();
         this.channel.awaitTermination(15, TimeUnit.SECONDS);
+        WorkerLogManager.deinitialize();
     }
 
     private class StreamingMessagePeer implements StreamObserver<StreamingMessage>, AutoCloseable {
