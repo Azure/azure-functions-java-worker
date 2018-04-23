@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class BindingTest {
     private static Set<Class<?>> annotations;
-    private static final Logger logger = Logger.getLogger(BindingTest.class.getName());
 
     @Test
     public void every_binding_annotation_should_have_name_method() {
