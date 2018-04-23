@@ -13,7 +13,7 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE})
-public @interface FunctionParameterBinding {
+public @interface Binding {
     /**
      * Returns the type of binding annotation
      * @return the type of binding annotation

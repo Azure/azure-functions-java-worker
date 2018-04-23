@@ -55,6 +55,7 @@ import java.lang.annotation.Target;
  * @see com.microsoft.azure.serverless.functions.HttpResponseMessage
  * @since 1.0.0
  */
+@Binding(BindingType.TRIGGER)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface HttpTrigger {

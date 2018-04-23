@@ -26,6 +26,7 @@ import java.lang.annotation.Target;
  *
  * @since 1.0.0
  */
+@Binding(BindingType.TRIGGER)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface TimerTrigger {
