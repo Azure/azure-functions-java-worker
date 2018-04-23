@@ -1,19 +1,19 @@
 package com.microsoft.azure.serverless.functions.annotation;
 
-import org.junit.jupiter.api.*;
-import org.reflections.Reflections;
-
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.logging.Logger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.*;
+import org.reflections.Reflections;
+
+import static junit.framework.TestCase.*;
 
 /**
  * Unit tests that enforce annotation contracts and conventions for Functions
  */
 public class BindingTest {
     private static Set<Class<?>> annotations;
+
 
     @Test
     public void every_binding_annotation_should_have_name_method() {
@@ -77,8 +77,8 @@ public class BindingTest {
             });
     }
 
-    @BeforeAll
-    private static void findAllFunctionParameterBindingsInCore() {
+    @Before
+    public void findAllFunctionParameterBindingsInCore() {
         annotations = new Reflections(BindingTest.class.getPackage().getName())
                 .getTypesAnnotatedWith(Binding.class);
     }
