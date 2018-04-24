@@ -15,7 +15,6 @@ import java.lang.annotation.Target;
  *
  * @since 1.0.0
  */
-@Binding(BindingType.OUTPUT)
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface TwilioSmsOutput {

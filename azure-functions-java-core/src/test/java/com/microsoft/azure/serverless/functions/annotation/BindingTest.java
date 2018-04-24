@@ -1,7 +1,9 @@
 package com.microsoft.azure.serverless.functions.annotation;
 
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.*;
 import org.reflections.Reflections;
@@ -13,7 +15,7 @@ import static junit.framework.TestCase.*;
  */
 public class BindingTest {
     private static Set<Class<?>> annotations;
-
+    private static String[] bindingAnnotationSuffix = new String[] { "Input", "Output", "Trigger" };
 
     @Test
     public void every_binding_annotation_should_have_name_method() {
@@ -35,52 +37,17 @@ public class BindingTest {
         }
     }
 
-    @Test
-    public void every_TRIGGER_binding_annotation_should_have_Trigger_suffix() {
-        final String expectedSuffix = "Trigger";
-        final BindingType expectedBindingType = BindingType.TRIGGER;
-
-        annotations.stream().filter(t -> t.getAnnotation(Binding.class).value() == expectedBindingType)
-                .forEach(annotation -> {
-                    String name = annotation.getSimpleName();
-                    String actualSuffix = name.substring(name.length() - expectedSuffix.length(), name.length());
-
-                    assertEquals(expectedSuffix, actualSuffix);
-                });
-    }
-
-    @Test
-    public void every_OUTPUT_binding_annotation_should_have_Output_suffix() {
-        final String expectedSuffix = "Output";
-        final BindingType expectedBindingType = BindingType.OUTPUT;
-
-        annotations.stream().filter(t -> t.getAnnotation(Binding.class).value() == expectedBindingType)
-                .forEach(annotation -> {
-                    String name = annotation.getSimpleName();
-                    String actualSuffix = name.substring(name.length() - expectedSuffix.length(), name.length());
-
-                    assertEquals(expectedSuffix, actualSuffix);
-                });
-    }
-
-    @Test
-    public void every_INPUT_binding_annotation_should_have_Input_suffix() {
-        final String expectedSuffix = "Input";
-        final BindingType expectedBindingType = BindingType.INPUT;
-
-        annotations.stream().filter(t -> t.getAnnotation(Binding.class).value() == expectedBindingType)
-            .forEach(annotation -> {
-                String name = annotation.getSimpleName();
-                String actualSuffix = name.substring(name.length() - expectedSuffix.length(), name.length());
-
-                assertEquals(expectedSuffix, actualSuffix);
-            });
-    }
-
+    /**
+     * find all annotation bindings based on annotation suffix conventions defined in bindingAnnotationSuffix array
+     */
     @Before
     public void findAllFunctionParameterBindingsInCore() {
         annotations = new Reflections(BindingTest.class.getPackage().getName())
-                .getTypesAnnotatedWith(Binding.class);
+                .getTypesAnnotatedWith(Target.class)
+                .stream()
+                .filter(t -> t.getSimpleName().endsWith(bindingAnnotationSuffix[0]) ||
+                             t.getSimpleName().endsWith(bindingAnnotationSuffix[1]) ||
+                             t.getSimpleName().endsWith(bindingAnnotationSuffix[2])).collect(Collectors.toSet());
     }
 
     private Optional<Method> findMethod(Class<?> type, String name) {
