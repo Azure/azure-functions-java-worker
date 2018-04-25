@@ -1,0 +1,18 @@
+{
+  "scriptFile": "../../azure-functions-java-worker-1.0.0-beta-4-tests.jar",
+  "entryPoint": "com.microsoft.azure.webjobs.script.integrationTest.Function.testClassByteArray",
+  "bindings": [
+    {
+      "type": "httpTrigger",
+      "name": "req",
+      "direction": "in",
+      "authLevel": "anonymous",
+      "methods": [ "post" ]
+    },
+    {
+      "type": "http",
+      "name": "$return",
+      "direction": "out"
+    }
+  ]
+}

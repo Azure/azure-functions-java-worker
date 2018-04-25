@@ -107,6 +107,18 @@
       <version>4.12</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.9.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -176,6 +188,126 @@
               </filters>
             </configuration>
           </execution>
+        </executions>
+      </plugin>
+
+      <!-- integration test setup -->
+        <plugin>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>3.0.2</version>
+            <executions>
+                <execution>
+                    <id>copy-func-settings</id>
+                    <phase>pre-integration-test</phase>
+                    <goals>
+                        <goal>copy-resources</goal>
+                    </goals>
+                    <configuration>
+                        <overwrite>true</overwrite>
+                        <outputDirectory>${project.build.directory}/integration-tests</outputDirectory>
+                        <resources>
+                            <resource>
+                                <directory>${project.basedir}/src/it/resources</directory>
+                                <includes>
+                                    <include>host.json</include>
+                                    <include>local.settings.json</include>
+                                    <include>**/*</include>
+                                </includes>
+                            </resource>
+                        </resources>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.0.2</version>
+            <executions>
+                <execution>
+                    <id>it-copy-dependencies</id>
+                    <phase>pre-integration-test</phase>
+                    <goals>
+                        <goal>copy-dependencies</goal>
+                    </goals>
+                    <configuration>
+                        <outputDirectory>${project.build.directory}/integration-tests/lib</outputDirectory>
+                        <overWriteReleases>false</overWriteReleases>
+                        <overWriteSnapshots>false</overWriteSnapshots>
+                        <overWriteIfNewer>true</overWriteIfNewer>
+                        <includeScope>runtime</includeScope>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>com.bazaarvoice.maven.plugins</groupId>
+            <artifactId>process-exec-maven-plugin</artifactId>
+            <version>0.8</version>
+            <executions>
+                <!--Start process 1, function core tools -->
+                <execution>
+                    <id>Azure-Functions-Core-Tools</id>
+                    <phase>pre-integration-test</phase>
+                    <goals>
+                        <goal>start</goal>
+                    </goals>
+                    <configuration>
+                        <name>AzureFunctionCoreTools</name>
+                        <workingDir>${project.build.directory}/integration-tests</workingDir>
+                        <waitForInterrupt>false</waitForInterrupt>
+                        <waitAfterLaunch>5</waitAfterLaunch>
+                        <arguments>
+                            <argument>func</argument>
+                            <argument>start</argument>
+                        </arguments>
+                    </configuration>
+                </execution>
+                <!--Stop all processes in reverse order-->
+                <execution>
+                    <id>stop-all</id>
+                    <phase>post-integration-test</phase>
+                    <goals>
+                        <goal>stop-all</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+      <!-- direct failsafe to execute tests in src/it/java -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+            <execution>
+                <id>add-integration-test-source</id>
+                <phase>generate-test-sources</phase>
+                <goals>
+                    <goal>add-test-source</goal>
+                </goals>
+                <configuration>
+                    <sources>
+                        <source>src/it/java</source>
+                    </sources>
+                </configuration>
+            </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.21.0</version>
+        <executions>
+            <execution>
+                <id>integration-test</id>
+                <goals>
+                    <goal>integration-test</goal>
+                    <goal>verify</goal>
+                </goals>
+            </execution>
         </executions>
       </plugin>
       <plugin>
