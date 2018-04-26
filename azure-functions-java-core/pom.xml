@@ -11,6 +11,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>4.12</junit.version>
+    <mockito.version>2.11.0</mockito.version>
   </properties>
 
   <licenses>
@@ -42,6 +44,27 @@
   </developers>
 
   <dependencies>
+
+    <!-- test -->
+    <dependency>
+        <groupId>org.reflections</groupId>
+        <artifactId>reflections</artifactId>
+        <version>0.9.11</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+        <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -80,6 +103,20 @@
           </execution>
         </executions>
       </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.21.0</version>
+            <configuration>
+                <workingDirectory>${project.build.directory}</workingDirectory>
+                <systemProperties>
+                    <property>
+                        <name>testing-project-jar</name>
+                        <value>${project.artifactId}-${project.version}-tests.jar</value>
+                    </property>
+                </systemProperties>
+            </configuration>
+        </plugin>
     </plugins>
   </build>
   
