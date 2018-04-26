@@ -1,6 +1,6 @@
 {
-  "scriptFile": "../../azure-functions-java-worker-1.0.0-beta-4-tests.jar",
-  "entryPoint": "com.microsoft.azure.webjobs.script.test.functions.HttpBinary.primitiveByteArray",
+  "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
+  "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.HttpBinary.primitiveByteArray",
   "bindings": [
     {
       "type": "httpTrigger",

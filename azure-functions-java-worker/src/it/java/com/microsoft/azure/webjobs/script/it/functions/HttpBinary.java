@@ -1,4 +1,4 @@
-package com.microsoft.azure.webjobs.script.test.functions;
+package com.microsoft.azure.webjobs.script.it.functions;
 
 
 public class HttpBinary {

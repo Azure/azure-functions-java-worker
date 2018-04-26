@@ -1,4 +1,4 @@
-package com.microsoft.azure.webjobs.script.test;
+package com.microsoft.azure.webjobs.script.it;
 
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.*;
