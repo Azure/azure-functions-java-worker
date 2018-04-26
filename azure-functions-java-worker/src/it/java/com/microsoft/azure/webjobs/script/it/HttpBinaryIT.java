@@ -1,5 +1,6 @@
 package com.microsoft.azure.webjobs.script.it;
 
+import com.microsoft.azure.webjobs.script.it.utils.RequestSpecificationProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.*;
 import io.restassured.http.ContentType;
@@ -18,13 +19,11 @@ public class HttpBinaryIT {
     private static final byte[] contentBytes = content.getBytes();
 
     @BeforeClass
-    public static void initSpec(){
+    public static void initSpec() {
         spec = new RequestSpecBuilder()
-                .setBaseUri("http://localhost:7071")
+                .addRequestSpecification(RequestSpecificationProvider.getDefault())
                 .setContentType(ContentType.TEXT)
                 .setBody(Arrays.toString(contentBytes))
-                .addFilter(new ResponseLoggingFilter())//log request and response for better debugging. You can also only log if a requests fails.
-                .addFilter(new RequestLoggingFilter())
                 .build();
     }
 
@@ -33,7 +32,7 @@ public class HttpBinaryIT {
         String responseBody = given()
                 .spec(spec)
                 .when()
-                .post("/api/primitiveByteArray")
+                .post("/primitiveByteArray")
                 .then()
                 .assertThat().statusCode(200).and().extract().body().asString();
 
@@ -47,7 +46,7 @@ public class HttpBinaryIT {
         String responseBody = given()
                 .spec(spec)
                 .when()
-                .post("/api/classByteArray")
+                .post("/classByteArray")
                 .then()
                 .assertThat().statusCode(200).and().extract().body().asString();
 

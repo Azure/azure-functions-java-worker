@@ -9,13 +9,6 @@ import com.microsoft.azure.serverless.functions.OutputBinding;
 import com.microsoft.azure.serverless.functions.annotation.BindingName;
 
 public class Miscellany {
-    public static HttpResponseMessage echo(HttpRequestMessage request) {
-        return request.createResponse(202, request.getBody().toString());
-    }
-
-    public static String echo(@BindingName("name") String content) {
-        return "Hello " + content + "!";
-    }
 
     public static String heartbeat(ExecutionContext context) {
         context.getLogger().info("Java Timer Trigger Function Executed.");

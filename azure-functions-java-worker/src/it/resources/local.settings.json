@@ -1,8 +1,7 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
-    "AzureWebJobsSampleStorage": "UseDevelopmentStorage=true"
+    "AzureWebJobsStorage": "",
+    "AzureWebJobsDashboard": ""
   }
 }

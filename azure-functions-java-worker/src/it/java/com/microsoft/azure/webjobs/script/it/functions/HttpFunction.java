@@ -9,6 +9,14 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public class HttpFunction {
+    public static HttpResponseMessage echo(HttpRequestMessage request) {
+        return request.createResponse(202, request.getBody().toString());
+    }
+
+    public static String echo(@BindingName("name") String content) {
+        return "Hello " + content + "!";
+    }
+
     public static String handleSameName(@BindingName("req") HttpRequestMessage<String> request) {
         return request.getQueryParameters().get("req");
     }
@@ -52,6 +60,13 @@ public class HttpFunction {
     }
 
     public static class Point {
+
+        public Point() {}
+        public Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
         public int getX() { return this.x; }
         public int getY() { return this.y; }
         public void setX(int x) { this.x = x; }

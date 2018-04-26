@@ -1,13 +1,13 @@
 ﻿{
     "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
-    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.ContextFunction.testFunctionName",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.HttpFunction.echo",
     "bindings": [
         {
             "type": "httpTrigger",
             "name": "req",
             "direction": "in",
             "authLevel": "anonymous",
-            "methods": [ "get" ]
+            "methods": [ "get", "post" ]
         },
         {
             "type": "http",
