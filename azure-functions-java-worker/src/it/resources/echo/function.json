@@ -1,0 +1,18 @@
+﻿{
+    "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.Miscellany.echo",
+    "bindings": [
+        {
+            "type": "httpTrigger",
+            "name": "req",
+            "direction": "in",
+            "authLevel": "anonymous",
+            "methods": [ "get", "post" ]
+        },
+        {
+            "type": "http",
+            "name": "$return",
+            "direction": "out"
+        }
+    ]
+}

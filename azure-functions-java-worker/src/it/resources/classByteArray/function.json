@@ -1,6 +1,6 @@
 {
   "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
-  "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.HttpBinary.classByteArray",
+  "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.HttpBinaryFunction.classByteArray",
   "bindings": [
     {
       "type": "httpTrigger",
