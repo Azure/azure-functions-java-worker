@@ -1,4 +1,4 @@
-package com.microsoft.azure.webjobs.script.integrationTest;
+package com.microsoft.azure.webjobs.script.test;
 
 import org.junit.Test;
 

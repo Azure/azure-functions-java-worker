@@ -15,6 +15,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.integrationTestDirectory>${project.build.directory}/integration-tests</project.build.integrationTestDirectory>
   </properties>
 
   <licenses>
@@ -193,6 +194,22 @@
 
       <!-- integration test setup -->
         <plugin>
+            <artifactId>maven-clean-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+                <filesets>
+                    <fileset>
+                        <directory>${project.build.integrationTestDirectory}</directory>
+                        <includes>
+                            <include>**/*</include>
+                        </includes>
+                        <followSymlinks>false</followSymlinks>
+                    </fileset>
+                </filesets>
+            </configuration>
+        </plugin>
+
+        <plugin>
             <artifactId>maven-resources-plugin</artifactId>
             <version>3.0.2</version>
             <executions>
@@ -204,7 +221,7 @@
                     </goals>
                     <configuration>
                         <overwrite>true</overwrite>
-                        <outputDirectory>${project.build.directory}/integration-tests</outputDirectory>
+                        <outputDirectory>${project.build.integrationTestDirectory}</outputDirectory>
                         <resources>
                             <resource>
                                 <directory>${project.basedir}/src/it/resources</directory>
@@ -232,7 +249,7 @@
                         <goal>copy-dependencies</goal>
                     </goals>
                     <configuration>
-                        <outputDirectory>${project.build.directory}/integration-tests/lib</outputDirectory>
+                        <outputDirectory>${project.build.integrationTestDirectory}/lib</outputDirectory>
                         <overWriteReleases>false</overWriteReleases>
                         <overWriteSnapshots>false</overWriteSnapshots>
                         <overWriteIfNewer>true</overWriteIfNewer>

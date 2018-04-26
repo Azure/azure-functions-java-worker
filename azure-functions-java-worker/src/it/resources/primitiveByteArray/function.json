@@ -1,13 +1,13 @@
 {
   "scriptFile": "../../azure-functions-java-worker-1.0.0-beta-4-tests.jar",
-  "entryPoint": "com.microsoft.azure.webjobs.script.integrationTest.Function.hello",
+  "entryPoint": "com.microsoft.azure.webjobs.script.test.functions.HttpBinary.primitiveByteArray",
   "bindings": [
     {
       "type": "httpTrigger",
       "name": "req",
       "direction": "in",
       "authLevel": "anonymous",
-      "methods": [ "get" ]
+      "methods": [ "post" ]
     },
     {
       "type": "http",
