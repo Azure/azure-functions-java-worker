@@ -66,6 +66,8 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
     public String getHost() { return "localhost"; }
     @Override
     public int getPort() { return 55005; }
+    @Override
+    public Integer getMaxMessageSize() { return null; }
 
     private JavaWorkerClient client;
     private HostGrpcImplementation grpcHost;

@@ -1,6 +1,5 @@
 package com.microsoft.azure.webjobs.script;
 
-import java.io.*;
 import java.util.logging.*;
 import javax.annotation.*;
 
@@ -21,6 +20,8 @@ public final class Application implements IApplication {
     public int getPort() { return this.port; }
     @Override
     public boolean logToConsole() { return this.logToConsole; }
+    @Override
+    public Integer getMaxMessageSize() { return this.maxMessageSize; }
     private String getWorkerId() { return this.workerId; }
     private String getRequestId() { return this.requestId; }
 
@@ -41,6 +42,9 @@ public final class Application implements IApplication {
             this.workerId = this.parseWorkerId(commands.getOptionValue("w"));
             this.requestId = this.parseRequestId(commands.getOptionValue("q"));
             this.logToConsole = commands.hasOption("l");
+            if (commands.hasOption("m")) {
+                this.maxMessageSize = this.parseMaxMessageSize(commands.getOptionValue("m"));
+            }
             this.commandParseSucceeded = true;
         } catch (ParseException ex) {
             WorkerLogManager.getSystemLogger().severe(ex.toString());
@@ -67,11 +71,20 @@ public final class Application implements IApplication {
 
     private String parseWorkerId(String input) { return input; }
 
+    private Integer parseMaxMessageSize(String input) {
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
     private boolean commandParseSucceeded = false;
     private String host;
     private int port;
     private String workerId, requestId;
     private boolean logToConsole;
+    private Integer maxMessageSize = null;
 
     private final Options OPTIONS = new Options()
             .addOption(Option.builder("h").longOpt("host")
@@ -96,6 +109,10 @@ public final class Application implements IApplication {
                     .build())
             .addOption(Option.builder("l").longOpt("consoleLog")
                     .desc("Whether to duplicate all host logs to console as well")
+                    .build())
+            .addOption(Option.builder("m").longOpt("grpcMaxMessageLength")
+                    .hasArg().argName("MessageSizeInBytes")
+                    .desc("The maximum message size could be used by GRPC protocol")
                     .build());
 
 
