@@ -22,7 +22,11 @@ import com.microsoft.azure.webjobs.script.rpc.messages.*;
 public class JavaWorkerClient implements AutoCloseable {
     public JavaWorkerClient(IApplication app) {
         WorkerLogManager.initialize(this, app.logToConsole());
-        this.channel = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true).build();
+        ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true);
+        if (app.getMaxMessageSize() != null) {
+            chanBuilder.maxInboundMessageSize(app.getMaxMessageSize());
+        }
+        this.channel = chanBuilder.build();
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
         this.classPathProvider = new DefaultClassLoaderProvider();
