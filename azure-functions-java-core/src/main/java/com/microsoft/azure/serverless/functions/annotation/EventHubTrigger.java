@@ -12,6 +12,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>The following example shows an event hub trigger which logs the message:</p>
+ *
+ * <pre>{@literal @}FunctionName("ehprocessor")
+ * public void eventHubProcessor(
+ *    {@literal @}EventHubTrigger(name = "msg",
+ *                      eventHubName = "myeventhubname",
+ *                      connection = "myconnvarname") String message,
+ *     final ExecutionContext context
+ * ) {
+ *     context.getLogger().info(message);
+ * }</pre>
  *
  * @since 1.0.0
  */
