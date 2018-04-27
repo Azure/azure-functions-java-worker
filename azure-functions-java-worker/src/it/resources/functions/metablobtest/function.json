@@ -7,7 +7,7 @@
             "name": "blob",
             "direction": "in",
             "dataType": "binary",
-            "path": "input/{blobname}.{blobextension}",
+            "path": "functions/{blobname}.{blobextension}",
             "connection": "AzureWebJobsStorage"
         }
     ]

@@ -14,6 +14,7 @@
   </organization>
 
   <properties>
+    <maven.build.timestamp.format>yyyyMMdd-HHmmssmm</maven.build.timestamp.format>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.integrationTestDirectory>${project.build.directory}/integration-tests</project.build.integrationTestDirectory>
   </properties>
@@ -45,7 +46,7 @@
         <profile>
             <id>integration-test</id>
             <properties>
-                <local.settings.storage.connectionString>[enter azure storage account connection string before running integration tests]</local.settings.storage.connectionString>
+                <blobStorageAccount>[add storage account connection string for integration test run]</blobStorageAccount>
             </properties>
         </profile>
     </profiles>
@@ -127,6 +128,12 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <version>3.9.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure-storage</artifactId>
+      <version>5.0.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -53,4 +53,33 @@ public class OverloadIT {
                 .assertThat().statusCode(200)
                 .and().body(equalTo(expected));
     }
+
+    @Test
+    public void overload_method_with_param() {
+        final String expected = "This is correct method for HttpBinding resolution";
+
+        given().spec(spec)
+                .queryParam("req", "value doesn't matter")
+                .when()
+                .get("/overloadBindingName")
+                .then()
+                .assertThat().statusCode(200)
+                .and().body(equalTo(expected));
+    }
+
+    /**
+     * This is confirming that the other overloaded method DOES NOT get called.
+     * The expected result should be the same as the test overload_method_with_param.
+     */
+    @Test
+    public void overload_method_without_param() {
+        final String expected = "This is correct method for HttpBinding resolution";
+
+        given().spec(spec)
+                .when()
+                .get("/overloadBindingName")
+                .then()
+                .assertThat().statusCode(200)
+                .and().body(equalTo(expected));
+    }
 }

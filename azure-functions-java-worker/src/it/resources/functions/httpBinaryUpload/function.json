@@ -1,0 +1,26 @@
+﻿{
+    "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.HttpBinaryFunction.upload",
+    "bindings": [
+        {
+            "type": "httpTrigger",
+            "name": "req",
+            "direction": "in",
+            "authLevel": "anonymous",
+            "methods": [ "post" ]
+        },
+        {
+            "type": "blob",
+            "name": "output",
+            "direction": "out",
+            "dataType": "binary",
+            "path": "functions/data-${maven.build.timestamp}.txt",
+            "connection": "AzureWebJobsSampleStorage"
+        },
+        {
+            "type": "http",
+            "name": "$return",
+            "direction": "out"
+        }
+    ]
+}

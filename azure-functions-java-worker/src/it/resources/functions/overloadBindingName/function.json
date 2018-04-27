@@ -1,13 +1,13 @@
 ﻿{
     "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
-    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.OptionalFunction.testBodyOptional",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.OverloadFunction.bindingName",
     "bindings": [
         {
             "type": "httpTrigger",
             "name": "req",
             "direction": "in",
             "authLevel": "anonymous",
-            "methods": [ "get", "post" ]
+            "methods": [ "get" ]
         },
         {
             "type": "http",

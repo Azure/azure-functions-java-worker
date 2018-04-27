@@ -1,21 +1,13 @@
 ﻿{
     "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
-    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.Miscellany.upload",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.HttpFunction.optionalBody",
     "bindings": [
         {
             "type": "httpTrigger",
             "name": "req",
             "direction": "in",
             "authLevel": "anonymous",
-            "methods": [ "post" ]
-        },
-        {
-            "type": "blob",
-            "name": "output",
-            "direction": "out",
-            "dataType": "binary",
-            "path": "functions/output.bin",
-            "connection": "AzureWebJobsSampleStorage"
+            "methods": [ "get", "post" ]
         },
         {
             "type": "http",

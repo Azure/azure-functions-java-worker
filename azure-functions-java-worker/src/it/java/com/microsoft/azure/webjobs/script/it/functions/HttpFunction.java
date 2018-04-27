@@ -56,4 +56,17 @@ public class HttpFunction {
         response.addHeader("test-header", "test response header value");
         return response;
     }
+
+    public static String optionalBody(Optional<String> httpBody) {
+        return httpBody
+                .map(content -> "Nice! The optional content is \"" + content + "\"")
+                .orElse("There is no optional content");
+    }
+
+    public static String nullBody(String httpBody) {
+        if (httpBody != null) {
+            return "Nice! The http body string is \"" + httpBody + "\"";
+        }
+        return "HttpFunction body string is null";
+    }
 }

@@ -169,4 +169,52 @@ public class HttpIT {
                 .and().header("test-header", equalTo("test response header value"))
                 .and().body(equalTo("Check header value"));
     }
+
+    @Test
+    public void http_post_optional_body_as_null() {
+        given().spec(spec)
+                .when()
+                .get("/httpOptionalBody")
+                .then()
+                .assertThat().statusCode(200)
+                .and().body(equalTo("There is no optional content"));
+    }
+
+    @Test
+    public void http_post_optional_body_with_value() {
+        final String value = "";
+        final String expected = "There is no optional content";
+
+        given().spec(spec)
+                .when()
+                .body(value)
+                .get("/httpOptionalBody")
+                .then()
+                .assertThat().statusCode(200)
+                .and().body(equalTo(expected));
+    }
+
+    @Test
+    public void http_post_null_body_to_non_optional_String() {
+        given().spec(spec)
+                .when()
+                .post("/httpNullBody")
+                .then()
+                .assertThat().statusCode(200)
+                .and().body(equalTo("HttpFunction body string is null"));
+    }
+
+    @Test
+    public void http_post_non_null_body_to_verify_null_is_handled() {
+        final String value = "verify non-null body";
+        final String expected = "Nice! The http body string is \"" + value + "\"";
+
+        given().spec(spec)
+                .when()
+                .body(value)
+                .post("/httpNullBody")
+                .then()
+                .assertThat().statusCode(200)
+                .and().body(equalTo(expected));
+    }
 }

@@ -21,11 +21,11 @@ public class OverloadFunction {
         return "Overload " + obj.number;
     }
 
-    public static String testHttpBindingName(@HttpTrigger(name = "req") Optional<String> request) {
+    public static String bindingName(@HttpTrigger(name = "req") Optional<String> request) {
         return "This is correct method for HttpBinding resolution";
     }
 
-    public static String testHttpBindingName(HttpRequestMessage<Optional<String>> request) {
+    public static String bindingName(HttpRequestMessage<Optional<String>> request) {
         return "This method should not be called";
     }
 }
