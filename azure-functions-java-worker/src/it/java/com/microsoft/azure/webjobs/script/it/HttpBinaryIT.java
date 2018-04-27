@@ -1,24 +1,18 @@
 package com.microsoft.azure.webjobs.script.it;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.*;
+import com.microsoft.azure.storage.blob.*;
 import com.microsoft.azure.webjobs.script.it.utils.RequestSpecificationProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
 import org.junit.*;
-
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
-import java.util.Arrays;
-import java.util.Properties;
+import java.util.*;
 
 import static io.restassured.RestAssured.*;
 import static org.assertj.core.api.Assertions.*;

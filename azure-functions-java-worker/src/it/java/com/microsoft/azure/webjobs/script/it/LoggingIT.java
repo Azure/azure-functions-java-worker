@@ -4,11 +4,6 @@ import com.microsoft.azure.webjobs.script.it.utils.RequestSpecificationProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.extractProperty;
-import static org.assertj.core.api.Assertions.filter;
-import static org.assertj.core.util.Arrays.array;
-import static org.assertj.core.util.Lists.newArrayList;
 
 import org.junit.*;
 
