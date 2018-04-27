@@ -1,0 +1,14 @@
+﻿{
+    "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.TriggerMetaFunction.handleBlobMetadata",
+    "bindings": [
+        {
+            "type": "blobTrigger",
+            "name": "blob",
+            "direction": "in",
+            "dataType": "binary",
+            "path": "functions/{blobname}.{blobextension}",
+            "connection": "AzureWebJobsStorage"
+        }
+    ]
+}

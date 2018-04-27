@@ -1,0 +1,8 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "${blobStorageAccount}",
+    "AzureWebJobsDashboard": "${blobStorageAccount}",
+    "AzureWebJobsSampleStorage": "${blobStorageAccount}"
+  }
+}

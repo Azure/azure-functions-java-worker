@@ -99,7 +99,7 @@ message StatusResult {
 }
 
 // TODO: investigate grpc heartbeat - don't limit to grpc implemention
-// Message is empty by design - Will add more fields in future if needed
+// Message is empty by design - Will functions.add more fields in future if needed
 message WorkerHeartbeat {}
 
 // Warning before killing the process after grace_period
