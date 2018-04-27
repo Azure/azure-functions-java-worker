@@ -1,6 +1,6 @@
 package com.microsoft.azure.webjobs.script.it;
 
-import com.microsoft.azure.webjobs.script.it.functions.HttpFunction;
+import com.microsoft.azure.webjobs.script.it.functions.dto.Point;
 import com.microsoft.azure.webjobs.script.it.utils.RequestSpecificationProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
@@ -105,16 +105,16 @@ public class HttpIT {
 
     @Test
     public void http_handle_pojo() {
-        HttpFunction.Point value = new HttpFunction.Point(55, 66);
-        HttpFunction.Point expected = new HttpFunction.Point(value.getX() + 333, value.getY() + 333);
+        Point value = new Point(55, 66);
+        Point expected = new Point(value.getX() + 333, value.getY() + 333);
 
-        HttpFunction.Point actual = given().spec(spec)
+        Point actual = given().spec(spec)
                 .body(value)
                 .when()
                 .post("/httpHandlePojo")
                 .then()
                 .statusCode(283)
-                .extract().body().as(HttpFunction.Point.class);
+                .extract().body().as(Point.class);
 
         assertThat(actual.getX()).isEqualTo(expected.getX());
         assertThat(actual.getY()).isEqualTo(expected.getY());
@@ -122,22 +122,22 @@ public class HttpIT {
 
     @Test
     public void http_handle_pojo_array() {
-        HttpFunction.Point[] value = new HttpFunction.Point[] {
-                new HttpFunction.Point(77, 88),
-                new HttpFunction.Point(99, 100)
+        Point[] value = new Point[] {
+                new Point(77, 88),
+                new Point(99, 100)
         };
 
-        HttpFunction.Point[] expected = Arrays.stream(value).map(p ->
-                new HttpFunction.Point(p.getX() + 444, p.getY() + 444)
-            ).toArray(HttpFunction.Point[]::new);
+        Point[] expected = Arrays.stream(value).map(p ->
+                new Point(p.getX() + 444, p.getY() + 444)
+            ).toArray(Point[]::new);
 
-        HttpFunction.Point[] actual = given().spec(spec)
+        Point[] actual = given().spec(spec)
                 .body(value)
                 .when()
                 .post("/httpHandlePojoArray")
                 .then()
                 .statusCode(284)
-                .extract().body().as(HttpFunction.Point[].class);
+                .extract().body().as(Point[].class);
 
         assertThat(extractProperty("x").from(actual)).contains(expected[0].getX(), expected[1].getX());
         assertThat(extractProperty("y").from(actual)).contains(expected[0].getY(), expected[1].getY());

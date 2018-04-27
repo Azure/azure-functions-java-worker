@@ -6,8 +6,6 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import org.junit.*;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -25,11 +23,12 @@ public class ContextIT {
 
     @Test
     public void context_function_name() {
-        final String expected = "contextFunctionName";
+        final String functionName = "contextFunctionName";
+        final String expected = functionName;
 
         given().spec(spec)
                 .when()
-                .get("/" + expected)
+                .get("/" + functionName)
                 .then()
                 .assertThat().statusCode(200)
                 .and().body(equalTo(expected));

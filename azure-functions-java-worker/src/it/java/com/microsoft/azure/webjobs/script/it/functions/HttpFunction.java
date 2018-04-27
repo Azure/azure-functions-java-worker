@@ -1,12 +1,10 @@
 package com.microsoft.azure.webjobs.script.it.functions;
 
-import com.microsoft.azure.serverless.functions.ExecutionContext;
-import com.microsoft.azure.serverless.functions.HttpRequestMessage;
-import com.microsoft.azure.serverless.functions.HttpResponseMessage;
+import com.microsoft.azure.serverless.functions.*;
 import com.microsoft.azure.serverless.functions.annotation.BindingName;
+import com.microsoft.azure.webjobs.script.it.functions.dto.Point;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
 
 public class HttpFunction {
     public static HttpResponseMessage echo(HttpRequestMessage request) {
@@ -57,22 +55,5 @@ public class HttpFunction {
         HttpResponseMessage<String> response = request.createResponse(286, "Check header value");
         response.addHeader("test-header", "test response header value");
         return response;
-    }
-
-    public static class Point {
-
-        public Point() {}
-        public Point(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public int getX() { return this.x; }
-        public int getY() { return this.y; }
-        public void setX(int x) { this.x = x; }
-        public void setY(int y) { this.y = y; }
-
-        private int x;
-        private int y;
     }
 }

@@ -2,7 +2,6 @@ package com.microsoft.azure.webjobs.script.it;
 
 import com.microsoft.azure.webjobs.script.it.utils.RequestSpecificationProvider;
 import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.*;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 

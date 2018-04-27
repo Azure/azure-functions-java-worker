@@ -1,0 +1,8 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "${local.settings.storage.connectionString}",
+    "AzureWebJobsDashboard": "${local.settings.storage.connectionString}",
+    "AzureWebJobsSampleStorage": "${local.settings.storage.connectionString}"
+  }
+}

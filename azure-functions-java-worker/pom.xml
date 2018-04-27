@@ -41,6 +41,15 @@
     </developer>
   </developers>
 
+    <profiles>
+        <profile>
+            <id>integration-test</id>
+            <properties>
+                <local.settings.storage.connectionString>[enter azure storage account connection string before running integration tests]</local.settings.storage.connectionString>
+            </properties>
+        </profile>
+    </profiles>
+
   <dependencies>
     <dependency>
       <groupId>com.microsoft.azure</groupId>
@@ -258,12 +267,13 @@
                     <outputDirectory>${project.build.integrationTestDirectory}</outputDirectory>
                     <resources>
                         <resource>
-                            <directory>${project.build.testOutputDirectory}</directory>
+                            <directory>${project.build.testOutputDirectory}/functions</directory>
                             <includes>
                                 <include>host.json</include>
                                 <include>local.settings.json</include>
                                 <include>**/function.json</include>
                             </includes>
+                            <filtering>true</filtering>
                         </resource>
                     </resources>
                 </configuration>
@@ -329,7 +339,7 @@
     </plugin>
 
       <!-- direct failsafe to execute tests in src/it/java -->
-      <plugin>
+    <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.0.0</version>
@@ -347,7 +357,7 @@
                 </configuration>
             </execution>
         </executions>
-      </plugin>
+    </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -376,6 +386,7 @@
               <value>${project.artifactId}-${project.version}-tests.jar</value>
             </property>
           </systemProperties>
+
         </configuration>
       </plugin>
 

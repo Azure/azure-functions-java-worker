@@ -1,6 +1,6 @@
 ﻿{
     "scriptFile": "../../${project.artifactId}-${project.version}-tests.jar",
-    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.OverloadFunction.testExcludeFuncName",
+    "entryPoint": "com.microsoft.azure.webjobs.script.it.functions.OverloadFunction.method",
     "bindings": [
         {
             "type": "httpTrigger",
