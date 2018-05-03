@@ -12,6 +12,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>The following example shows a service bus topic trigger which logs the message:</p>
+ *
+ * <pre>{@literal @}FunctionName("sbprocessor")
+ * public void serviceBusProcess(
+ *    {@literal @}ServiceBusTopicTrigger(name = "msg",
+ *                             topicName = "mytopicname",
+ *                             subscriptionName = "mysubname",
+ *                             connection = "myconnvarname") String message,
+ *     final ExecutionContext context
+ * ) {
+ *     context.getLogger().info(message);
+ * }</pre>
  *
  * @since 1.0.0
  */
