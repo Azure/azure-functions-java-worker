@@ -33,42 +33,7 @@ public class MyClass {
 
 ### Including 3rd Party Libraries
 
-Azure Functions supports the use of 3rd party libraries. This is achieved by extending your build script to copy all dependencies to a lib folder in the function's root directory, which will then be deployed as part of your functions application. All dependencies that are placed in the `lib` directory will be added to the system class loader at runtime. 
-
-Adding the following to your Maven `pom.xml` will copy all your dependencies to the Function App's `lib` directory. There are two changes required - configuring a property, and configuring the `maven-dependency-plugin`. 
-
-In the properties section of your `pom.xml` file, you need to set the `functionLib` property as such:
-```xml
-<properties>
-    <functionLib>${project.build.directory}/azure-functions/${functionAppName}/lib</functionLib>
-</properties>
-```
-
-In the plugins section of your `pom.xml` file, you need to configure the `maven-dependency-plugin` as such:
-```xml
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-dependency-plugin</artifactId>
-  <version>3.0.2</version>
-  <executions>
-    <execution>
-      <id>copy-dependencies</id>
-      <phase>prepare-package</phase>
-      <goals>
-        <goal>copy-dependencies</goal>
-      </goals>
-      <configuration>
-        <outputDirectory>${project.build.directory}/azure-functions/${functionAppName}/lib</outputDirectory>
-        <overWriteReleases>false</overWriteReleases>
-        <overWriteSnapshots>false</overWriteSnapshots>
-        <overWriteIfNewer>true</overWriteIfNewer>
-      </configuration>
-    </execution>
-  </executions>
-</plugin>
-```
-
-Finally, be sure to package and deploy the lib as part of the Function App.
+Azure Functions supports the use of 3rd party libraries. By default, all dependencies specified in your project pom.xml file will be automatically bundled during the `mvn package` step. For libraries that are not specified as dependencies in the pom.xml file, you may place them in a `lib` directory in the function's root directory. These will then be deployed as part of your functions application. All dependencies that are placed in the `lib` directory will be added to the system class loader at runtime. 
 
 ## General Data Types
 
