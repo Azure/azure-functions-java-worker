@@ -12,6 +12,8 @@
 
 Your Azure function should be a stateless method to process input and produce output. Although you are allowed to write instance methods, your function must not depend on any instance fields of the class. You need to make sure all the function methods are `public` accessible.
 
+You can put multiple functions in one single project (or specifically speaking, one single jar). We strongly recommend you **not to** put your functions in separate jars (or `pom.xml`).
+
 Typically an Azure function is invoked because of one trigger. Your function needs to process that trigger (sometimes with additional inputs) and gives one or more output values.
 
 All the input and output bindings can be defined in `function.json` (not recommended), or in the Java method by using annotations (recommended). All the types and annotations used in this document are included in the `azure-functions-java-core` package.
