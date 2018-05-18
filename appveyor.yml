@@ -29,7 +29,5 @@ build_script:
 artifacts:
   - path: '*.nupkg'
   - path: 'azure-functions-java-worker/target/**.jar'
-  - path: 'azure-functions-java-core/target/**.jar'
-
 cache:
   - C:\maven\
