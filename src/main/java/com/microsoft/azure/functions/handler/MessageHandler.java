@@ -6,6 +6,7 @@ import java.util.logging.*;
 
 import com.google.protobuf.*;
 import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.exception.*;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -38,6 +39,7 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
     public void handle() {
         StatusResult.Status status = StatusResult.Status.Success;
         String statusMessage;
+        RpcException rpcException = null;
         try {
             this.response = this.responseSupplier.get();
             statusMessage = this.execute(this.request, this.response);
@@ -47,11 +49,15 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
             statusMessage = ex.getMessage();
+            rpcException = RpcException.newBuilder().setMessage(ex.getMessage()).setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
             this.getLogger().log(Level.WARNING, statusMessage, ex);
         }
         if (this.responseStatusMarshaller != null) {
-            StatusResult result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage).build();
-            this.responseStatusMarshaller.accept(this.response, result);
+            StatusResult.Builder result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage);
+            if (rpcException != null) {
+                result = result.setException(rpcException);
+            }
+            this.responseStatusMarshaller.accept(this.response, result.build());
         }
     }
 
