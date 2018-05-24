@@ -121,6 +121,7 @@
           <protocArtifact>com.google.protobuf:protoc:3.4.0:exe:${os.detected.classifier}</protocArtifact>
           <pluginId>grpc-java</pluginId>
           <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.6.1:exe:${os.detected.classifier}</pluginArtifact>
+          <protoSourceRoot>${basedir}/src/main/azure-functions-language-worker-protobuf/src/proto</protoSourceRoot>
         </configuration>
         <executions>
           <execution>
