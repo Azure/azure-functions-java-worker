@@ -152,7 +152,7 @@
             <configuration>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.microsoft.azure.functions.Application</mainClass>
+                  <mainClass>com.microsoft.azure.functions.worker.Application</mainClass>
                   <manifestEntries>
                     <Implementation-Title>${project.name}</Implementation-Title>
                     <Implementation-Version>${project.version}</Implementation-Version>
