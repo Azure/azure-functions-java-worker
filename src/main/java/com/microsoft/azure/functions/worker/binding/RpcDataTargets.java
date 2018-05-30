@@ -22,15 +22,15 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage 
     @Override
     public int getStatus() { return this.status; }
     @Override
-    public void setStatus(int status) { this.status = status; }
+    public HttpResponseMessage setStatus(int status) { this.status = status; return this; }
     @Override
-    public void addHeader(String key, String value) { this.headers.put(key, value); }
+    public HttpResponseMessage addHeader(String key, String value) { this.headers.put(key, value); return this; }
     @Override
     public String getHeader(String key) { return this.headers.get(key); }
     @Override
     public Object getBody() { return this.body; }
     @Override
-    public void setBody(Object body) { this.body = body; }
+    public HttpResponseMessage setBody(Object body) { this.body = body; return this; }
 
     private int status;
     private Object body;

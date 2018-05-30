@@ -114,6 +114,8 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         @Override
         public String getMethod() { return this.parentDataSource.httpPayload.getMethod(); }
         @Override
+        public HttpMethod getHttpMethod() { return HttpMethod.value(this.parentDataSource.httpPayload.getMethod()); }
+        @Override
         public Map<String, String> getHeaders() { return this.parentDataSource.httpPayload.getHeadersMap(); }
         @Override
         public Map<String, String> getQueryParameters() { return this.parentDataSource.httpPayload.getQueryMap(); }
