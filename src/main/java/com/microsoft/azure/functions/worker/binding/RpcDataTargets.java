@@ -11,35 +11,29 @@ import com.microsoft.azure.functions.rpc.messages.*;
 
 import static com.microsoft.azure.functions.worker.binding.BindingData.MatchingLevel.*;
 
-final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage {
+final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage, HttpResponseMessage.Builder {
     RpcHttpDataTarget() {
         super(HTTP_TARGET_OPERATIONS);
         this.headers = new HashMap<>();
-        this.status = 200;
+        this.status = HttpStatus.valueOf(200);
         super.setValue(this);
     }
 
     @Override
-    public int getStatus() { return this.status; }
-    @Override
-    public HttpResponseMessage setStatus(int status) { this.status = status; return this; }
-    @Override
-    public HttpResponseMessage addHeader(String key, String value) { this.headers.put(key, value); return this; }
+    public HttpStatus getStatus() { return this.status; }
     @Override
     public String getHeader(String key) { return this.headers.get(key); }
     @Override
     public Object getBody() { return this.body; }
-    @Override
-    public HttpResponseMessage setBody(Object body) { this.body = body; return this; }
 
-    private int status;
+    private HttpStatus status;
     private Object body;
     private Map<String, String> headers;
 
     private static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
-            RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(response.getStatus() + "");
+            RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(response.getStatus().value() + "");
             response.headers.forEach(httpBuilder::putHeaders);
             RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
             bodyTarget.setValue(response.getBody());
@@ -54,6 +48,29 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage 
         HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, HttpResponseMessage.class, v -> toHttpData((RpcHttpDataTarget) v));
         HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, RpcHttpDataTarget.class, v -> toHttpData((RpcHttpDataTarget) v));
     }
+
+	@Override
+	public Builder status(HttpStatus status) {
+        this.status = status;
+		return this;
+	}
+
+	@Override
+	public Builder header(String key, String value) {
+        this.headers.put(key, value);
+		return this;
+	}
+
+	@Override
+	public Builder body(Object body) {
+        this.body = body;
+		return this;
+	}
+
+	@Override
+	public HttpResponseMessage create() {
+		return this;
+	}
 }
 
 final class RpcUnspecifiedDataTarget extends DataTarget {

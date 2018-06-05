@@ -112,8 +112,6 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         @Override
         public URI getUri() { return URI.create(this.parentDataSource.httpPayload.getUrl()); }
         @Override
-        public String getMethod() { return this.parentDataSource.httpPayload.getMethod(); }
-        @Override
         public HttpMethod getHttpMethod() { return HttpMethod.value(this.parentDataSource.httpPayload.getMethod()); }
         @Override
         public Map<String, String> getHeaders() { return this.parentDataSource.httpPayload.getHeadersMap(); }
@@ -123,16 +121,8 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         public Object getBody() { return this.body; }
 
         @Override
-        public HttpResponseMessage createResponse(int status) {
-            return createResponse(status, null);
-        }
-
-        @Override
-        public HttpResponseMessage createResponse(int status, Object body) {
-            RpcHttpDataTarget response = new RpcHttpDataTarget();
-            response.setStatus(status);
-            response.setBody(body);
-            return response;
+        public HttpResponseMessage.Builder<Object> createResponseBuilder(HttpStatus status) {
+            return new RpcHttpDataTarget().status(status);
         }
 
         private RpcHttpRequestDataSource parentDataSource;
