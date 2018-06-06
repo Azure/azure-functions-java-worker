@@ -68,7 +68,7 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
 	}
 
 	@Override
-	public HttpResponseMessage create() {
+	public HttpResponseMessage build() {
 		return this;
 	}
 }
