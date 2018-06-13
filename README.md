@@ -42,6 +42,23 @@ And the binary will be built to `"./azure-functions-java-worker/target/azure-fun
 
 If you have updated the core interface (azure-functions-java-core), a `mvn clean install` is required for your test functions app to reference the latest core package.
 
+## Updating Dependencies and Plugins
+* Update dependencies
+```
+mvn versions:use-latest-versions
+```
+* Update plugins
+```
+mvn versions:display-plugin-updates
+
+```
+For each of the plugin that displayed, update pom.xml
+
+* Update version
+
+```
+mvn release:update-versions
+```
 ## Debug
 
 The Java worker alone is not enough to establish the functions app, we also need the support from [Azure Functions Host](https://github.com/Azure/azure-functions-host). You may either use a published host CLI or use the in-development host. But both of the methods require you to attach to the java process if you want a step-by-step debugging experience.
