@@ -17,7 +17,6 @@ import com.microsoft.azure.functions.worker.binding.BindingData.*;
 
 import static com.microsoft.azure.functions.worker.binding.BindingData.MatchingLevel.*;
 
-
 final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
     ExecutionContextDataSource(String invocationId, String funcname) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
@@ -121,7 +120,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         public Object getBody() { return this.body; }
 
         @Override
-        public HttpResponseMessage.Builder<Object> createResponseBuilder(HttpStatus status) {
+        public HttpResponseMessage.Builder createResponseBuilder(HttpStatus status) {
             return new RpcHttpDataTarget().status(status);
         }
 
