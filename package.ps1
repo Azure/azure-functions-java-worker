@@ -3,6 +3,8 @@ param (
 )
 
 Write-Host "buildNumber: " $buildNumber
+Get-Command mvn
+Get-Command nuget
 mvn clean install -DskipTests
 remove-item pkg -Recurse -ErrorAction Ignore
 mkdir pkg
