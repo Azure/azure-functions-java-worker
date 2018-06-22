@@ -34,7 +34,7 @@ build_script:
       .\package.ps1 -buildNumber $buildNumber
 
 artifacts:
-  - path: '*.nupkg'
-  - path: 'azure-functions-java-worker/target/**.jar'
+- path: 'pkg/*.nupkg'
+
 cache:
   - C:\maven\
