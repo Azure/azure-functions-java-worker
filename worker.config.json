@@ -4,6 +4,6 @@
         "Extension":".jar",
         "DefaultExecutablePath":"java",
         "DefaultWorkerPath":"azure-functions-java-worker.jar",
-		"Arguments" : ["-jar"]
+        "Arguments" : ["-jar"]
     }
 }
