@@ -50,7 +50,7 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
             status = StatusResult.Status.Failure;
             statusMessage = ex.getMessage();
             rpcException = RpcException.newBuilder().setMessage(ex.getMessage()).setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
-            this.getLogger().log(Level.WARNING, statusMessage, ex);
+            this.getLogger().log(Level.SEVERE, statusMessage, ex);
         }
         if (this.responseStatusMarshaller != null) {
             StatusResult.Builder result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage);

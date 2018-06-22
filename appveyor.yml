@@ -21,9 +21,6 @@ install:
   - ps: Get-Command nuget
 
 build_script:
-  - mvn clean install -DskipTests
-  - ps: mkdir .pkg
-  - ps: Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName .\.pkg\azure-functions-java-worker.jar }
   - ps: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
@@ -34,7 +31,7 @@ build_script:
        $buildNumber = "-$env:APPVEYOR_BUILD_NUMBER"
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
-      nuget pack ./tools/AzureFunctionsJavaWorker.nuspec -Properties versionsuffix=$buildNumber
+      .\package.ps1 -buildNumber $buildNumber
 
 artifacts:
   - path: '*.nupkg'
