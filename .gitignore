@@ -261,4 +261,4 @@ target/
 dependency-reduced-pom.xml
 /functions-coffee-order-demo/src/main/functions/functions-coffee-order.jar
 /functions-coffee-order-demo/src/main/arduino/.build/
-.pkg/
+pkg/
