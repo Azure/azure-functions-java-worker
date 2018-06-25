@@ -14,8 +14,8 @@ To produce the build results locally, be sure you have Java, Maven, and NuGet in
 
 ```powershell
 mvn clean install -DskipTests
-mkdir .pkg
-Get-ChildItem -Path .\azure-functions-java-worker\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName .\.pkg\azure-functions-java-worker.jar }
+mkdir pkg
+Get-ChildItem -Path .\azure-functions-java-worker\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName .\pkg\azure-functions-java-worker.jar }
 nuget pack ./tools/AzureFunctionsJavaWorker.nuspec -Properties versionsuffix=LOCAL
 ```
 
