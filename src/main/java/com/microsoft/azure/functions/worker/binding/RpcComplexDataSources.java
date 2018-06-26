@@ -17,7 +17,6 @@ import com.microsoft.azure.functions.worker.binding.BindingData.*;
 
 import static com.microsoft.azure.functions.worker.binding.BindingData.MatchingLevel.*;
 
-
 final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
     ExecutionContextDataSource(String invocationId, String funcname) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
@@ -112,7 +111,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         @Override
         public URI getUri() { return URI.create(this.parentDataSource.httpPayload.getUrl()); }
         @Override
-        public String getMethod() { return this.parentDataSource.httpPayload.getMethod(); }
+        public HttpMethod getHttpMethod() { return HttpMethod.value(this.parentDataSource.httpPayload.getMethod()); }
         @Override
         public Map<String, String> getHeaders() { return this.parentDataSource.httpPayload.getHeadersMap(); }
         @Override
@@ -121,16 +120,8 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         public Object getBody() { return this.body; }
 
         @Override
-        public HttpResponseMessage createResponse(int status) {
-            return createResponse(status, null);
-        }
-
-        @Override
-        public HttpResponseMessage createResponse(int status, Object body) {
-            RpcHttpDataTarget response = new RpcHttpDataTarget();
-            response.setStatus(status);
-            response.setBody(body);
-            return response;
+        public HttpResponseMessage.Builder createResponseBuilder(HttpStatus status) {
+            return new RpcHttpDataTarget().status(status);
         }
 
         private RpcHttpRequestDataSource parentDataSource;
