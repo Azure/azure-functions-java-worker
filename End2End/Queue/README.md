@@ -13,4 +13,4 @@
 - Add a messge in `myqueue` and the function will get triggered.
 
 ### Queue Output
-- Copy the `queueOut` url from log, then use postman send a POST request to this url, the function will get triggered.
+- Copy the `queueOutput` url from log, then use postman send a POST request to this url, the function will get triggered.

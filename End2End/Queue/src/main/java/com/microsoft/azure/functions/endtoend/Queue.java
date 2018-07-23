@@ -14,7 +14,7 @@ public class Queue {
         context.getLogger().info("Java Queue trigger function processed a message: "+message);
     }
 
-    public static String queueOut(
+    public static String queueOutput(
         HttpRequestMessage<String> request, 
         ExecutionContext context
     ) {
