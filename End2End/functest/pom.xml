@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <azure.functions.maven.plugin.version>1.0.0-beta-3</azure.functions.maven.plugin.version>
+        <azure.functions.maven.plugin.version>1.0.0-beta-4</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>1.0.0-beta-5</azure.functions.java.library.version>
         <functionAppName>azure-functions-EndToEndTests</functionAppName>
         <functionAppRegion>westus</functionAppRegion>        
@@ -61,29 +61,36 @@
             </plugins>
         </pluginManagement>
 
-        <plugins>            
+        <plugins>
+            <plugin>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>azure-functions-maven-plugin</artifactId>
+                <configuration>
+                    <resourceGroup>${functionResourceGroup}</resourceGroup>
+                    <appName>${functionAppName}</appName>
+                    <region>${functionAppRegion}</region>
+                    <appSettings>
+                        <property>
+                            <name>FUNCTIONS_EXTENSION_VERSION</name>
+                            <value>beta</value>
+                        </property>
+                    </appSettings>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package-functions</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-resources-1</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <overwrite>true</overwrite>
-                            <outputDirectory>${stagingDirectory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>/src/main/functions</directory>
-                                </resource>
-                            </resources>
-                        </configuration>                        
-                    </execution>
-                    <execution>
-                        <id>copy-resources-2</id>
+                        <id>copy-resources</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy-resources</goal>
@@ -100,7 +107,7 @@
                                     </includes>
                                 </resource>
                             </resources>
-                        </configuration>                        
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

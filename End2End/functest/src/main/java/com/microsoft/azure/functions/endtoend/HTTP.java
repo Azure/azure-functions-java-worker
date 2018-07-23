@@ -1,17 +1,24 @@
 package com.microsoft.azure.functions.endtoend;
 
-import java.util.*;
+import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
+import java.util.*;
 
-public class HTTP {
-
-    public static HttpResponseMessage httpTrigger(
-        HttpRequestMessage<Optional<String>> request,  
-        ExecutionContext context        
+/**
+ * Azure Functions with HTTP trigger.
+ */
+public class Http {
+    /**
+     * This function will listen at HTTP endpoint "/api/HttpTrigger".
+     */
+    @FunctionName("HttpTrigger")
+    public HttpResponseMessage httpHandler(
+        @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+        final ExecutionContext context
     ) {
         context.getLogger().info("Java HTTP trigger processed a request.");
 
-        // Parse query parameter
+        // Parse query parameters
         String query = request.getQueryParameters().get("name");
         String name = request.getBody().orElse(query);
 
