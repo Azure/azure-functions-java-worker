@@ -5,5 +5,10 @@
         "DefaultExecutablePath":"java",
         "DefaultWorkerPath":"azure-functions-java-worker.jar",
         "Arguments" : ["-jar"]
-    }
+    },
+	"profiles": {
+		"AppServiceEnvironment": {
+			"DefaultExecutablePath": "../../zulu8.23.0.3-jdk8.0.144-win_x64/bin/java"
+		}
+	}
 }
