@@ -1,6 +1,6 @@
 ### Prerequisites
 - An [Azure Storage Account](https://docs.microsoft.com/en-us/azure/storage/common/storage-quickstart-create-account?tabs=portal)
-- [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) (Insert items to Blob Container)
+- [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/)
 - [Postman](https://www.getpostman.com/)
 
 ### Steps
