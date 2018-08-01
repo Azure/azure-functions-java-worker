@@ -13,10 +13,10 @@ This repo contains several Java Azure Functions samples for different events.
 ## Sample List and Test Status
 | Sample | Event | Binding | Test Status | - |
 | ------ | ---------- | ----------- | -------- | -- |
-| [HTTP](HTTP) | HTTP  | HttpTrigger | `pass` | [README](HTTP\README.md) |
-| [Timer](Timer) | Timer | TimerTrigger | `pass` | [README](Timer\README.md) |
+| [HTTP](HTTP) | HTTP  | HttpTrigger | `pass` | [README](HTTP/README.md) |
+| [Timer](Timer) | Timer | TimerTrigger | `pass` | [README](Timer/README.md) |
 | Blob | Storage Blob | BlobTrigger <br> BlobInput <br> BlobOutput | `-` <br> `-` <br> `-` | README |
-| [Queue](Queue) | Storage Queue | QueueTrigger <br> QueueOutput | `pass` <br> `pass` | [README](Queue\README.md) |
+| [Queue](Queue) | Storage Queue | QueueTrigger <br> QueueOutput | `pass` <br> `pass` | [README](Queue/README.md) |
 | Table | Storage Table | TableInput <br> Table Output| `-` <br> `-`| README |
 | CosmosDB | Cosmos DB | CosmosDBTrigger <br> CosmosDBInput <br> CosmosDBOutput| `-` <br> `-` <br> `-`| README |
 | ServiceBusQueue | Service Bus Queue | ServiceBusQueueTrigger <br> ServiceBusQueueOutput | `-` <br> `-` | README |
