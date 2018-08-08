@@ -1,7 +1,7 @@
 {
     "description": {
         "language": "java",
-        "extension": ".jar",
+        "extensions": [".jar"],
         "defaultExecutablePath": "java",
         "defaultWorkerPath": "azure-functions-java-worker.jar",
         "arguments": ["-jar"]
