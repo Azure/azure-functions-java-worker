@@ -117,7 +117,7 @@ public final class Application implements IApplication {
 
 
     public static void main(String[] args) {
-        System.out.println("Microsoft Azure Functions Java Runtime [build " + version() + "]");
+        WorkerLogManager.getSystemLogger().log(Level.INFO, "Azure Functions Java Worker  version [ " + version() + "]");
         Application app = new Application(args);
         if (!app.isCommandlineValid()) {
             app.printUsage();

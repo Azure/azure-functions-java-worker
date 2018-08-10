@@ -74,14 +74,16 @@ public class WorkerLogManager {
 class SystemLoggerListener extends Handler {
     @Override
     public void publish(LogRecord record) {
+        String LanguageWorkerConsoleLogKey = "LanguageWorkerConsoleLog";
         if (record != null && record.getLevel() != null) {
             PrintStream output = (record.getLevel().intValue() <= Level.INFO.intValue() ? System.out : System.err);
-            output.println(String.format("[%s] {%s.%s}: %s",
+            output.println(String.format("%s[%s] {%s.%s}: %s",
+                    LanguageWorkerConsoleLogKey,
                     record.getLevel(),
                     ClassUtils.getShortClassName(record.getSourceClassName()), record.getSourceMethodName(),
                     record.getMessage()));
             if (record.getThrown() != null) {
-                output.println(String.format("%s", ExceptionUtils.getStackTrace(record.getThrown())));
+                output.println(String.format("%s%s", LanguageWorkerConsoleLogKey, ExceptionUtils.getStackTrace(record.getThrown())));
             }
         }
     }
