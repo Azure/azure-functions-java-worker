@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.microsoft.azure.functions.endtoend</groupId>
-    <artifactId>azure-functions-EndToEndTests</artifactId>
+    <groupId>com.microsoft.azure.functions.tests.endtoend</groupId>
+    <artifactId>azure-functions-java-endtoendtests</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -17,7 +17,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <azure.functions.maven.plugin.version>1.0.0-beta-4</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>1.0.0-beta-5</azure.functions.java.library.version>
-        <functionAppName>azure-functions-EndToEndTests</functionAppName>
+        <functionAppName>azure-functions-java-endtoendtests</functionAppName>
         <functionAppRegion>westus</functionAppRegion>        
         <functionResourceGroup>java-functions-group</functionResourceGroup>
         <stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>

@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -6,7 +6,7 @@ import com.microsoft.azure.functions.*;
 /**
  * Azure Functions with Azure Storage Blob.
  */
-public class Blob {
+public class BlobTriggerTests {
     /**
      * This function will be invoked when a new or updated blob is detected at the specified path. The blob contents are provided as input to this function.
      */

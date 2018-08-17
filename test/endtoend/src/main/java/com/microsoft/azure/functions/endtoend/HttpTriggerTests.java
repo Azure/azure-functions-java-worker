@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * Azure Functions with HTTP trigger.
  */
-public class Http {
+public class HttpTriggerTests {
     /**
      * This function will listen at HTTP endpoint "/api/HttpTrigger".
      */

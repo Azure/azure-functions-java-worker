@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * Azure Functions with Azure Cosmos DB.
  */
-public class CosmosDB {
+public class CosmosDBTriggerTests {
      /**
      * This function will be invoked when there are inserts or updates in the specified database and collection.
      */
