@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * Azure Functions with Azure Storage table.
  */
-public class Table {     
+public class TableTests {     
     /**
      * This function will be invoked when a new queue message is received. 
      */

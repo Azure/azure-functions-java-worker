@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * Azure Functions with Azure Storage Queue.
  */
-public class Queue {
+public class QueueTriggerTests {
     /**
      * This function will be invoked when a new message is received at the specified path. The message contents are provided as input to this function.
      */

@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -6,7 +6,7 @@ import com.microsoft.azure.functions.*;
 /**
  * Azure Functions with Event Grid trigger.
  */
-public class EventGrid {
+public class EventGridTriggerTests {
     /**
      * This function will be invoked when an event is received from Event Grid.
      */

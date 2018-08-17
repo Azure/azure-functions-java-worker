@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoend;
+package com.microsoft.azure.functions.tests.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
@@ -7,7 +7,7 @@ import java.time.*;
 /**
  * Azure Functions with Timer trigger.
  */
-public class Timer {
+public class TimerTriggerTests {
     /**
      * This function will be invoked periodically according to the specified schedule.
      */
