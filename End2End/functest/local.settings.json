@@ -2,6 +2,9 @@
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "",
-    "AzureWebJobsDashboard": ""
+    "AzureServiceBus": "",
+    "AzureEventHub":"",
+    "AzureCosmosDB":"",
+    "FUNCTIONS_WORKER_RUNTIME": "java"
   }
 }
