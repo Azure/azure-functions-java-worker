@@ -13,7 +13,7 @@ public class ServiceBusTopicTriggerTests {
      */
     @FunctionName("ServiceBusTopicTrigger")
     public void serviceBusTopicTrigger(
-        @ServiceBusTopicTrigger(name = "message", topicName = "mysbtopic", subscriptionName="mysubs",connection = "AzureServiceBus") String message,
+        @ServiceBusTopicTrigger(name = "message", topicName = "%SBTopicName%", subscriptionName="%SBTopicSubName%",connection = "AzureWebJobsServiceBus") String message,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Service Bus Topic trigger function processed a message: " + message);
@@ -25,7 +25,7 @@ public class ServiceBusTopicTriggerTests {
     @FunctionName("ServiceBusTopicOutput")
     public void serviceBusTopicOutput(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-        @ServiceBusTopicOutput(name = "message", topicName = "mysbtopic", subscriptionName="mysubs",connection = "AzureServiceBus") OutputBinding<String> output,
+        @ServiceBusTopicOutput(name = "message", topicName = "%SBTopicName%", subscriptionName="%SBTopicSubName%",connection = "AzureWebJobsServiceBus") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         String message = request.getBody().orElse("default message");

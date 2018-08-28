@@ -15,10 +15,10 @@ public class CosmosDBTriggerTests {
     public void cosmosdbTrigger(
         @CosmosDBTrigger(
             name = "item",
-            databaseName = "db",
-            collectionName = "col",
-            leaseCollectionName="leasecol",
-            connectionStringSetting = "AzureCosmosDB",
+            databaseName = "%CosmosDBDatabaseName%",
+            collectionName = "%CosmosDBCollectionName%",
+            leaseCollectionName="leaseCollection",
+            connectionStringSetting = "AzureWebJobsCosmosDBConnectionString",
             createLeaseCollectionIfNotExists = true
         ) Object item,
         final ExecutionContext context
@@ -34,9 +34,9 @@ public class CosmosDBTriggerTests {
         @QueueTrigger(name = "message", queueName = "mydbqueue", connection = "AzureWebJobsStorage") String message,
         @CosmosDBInput(
             name = "item",
-            databaseName = "db",
-            collectionName = "col",
-            connectionStringSetting = "AzureCosmosDB",
+            databaseName = "%CosmosDBDatabaseName%",
+            collectionName = "%CosmosDBCollectionName%",
+            connectionStringSetting = "AzureWebJobsCosmosDBConnectionString",
             id = "{queueTrigger}"
         ) Object item,
         final ExecutionContext context
@@ -53,9 +53,9 @@ public class CosmosDBTriggerTests {
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
         @CosmosDBOutput(
             name = "item",
-            databaseName = "db",
-            collectionName = "col",
-            connectionStringSetting = "AzureCosmosDB"            
+            databaseName = "%CosmosDBDatabaseName%",
+            collectionName = "%CosmosDBCollectionName%",
+            connectionStringSetting = "AzureWebJobsCosmosDBConnectionString"            
         ) OutputBinding<Document> item,
         final ExecutionContext context
     ) {
