@@ -2,9 +2,15 @@
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "",
-    "AzureServiceBus": "",
-    "AzureEventHub":"",
-    "AzureCosmosDB":"",
+    "AzureWebJobsServiceBus": "",
+    "AzureWebJobsEventHubReceiver":"",
+    "AzureWebJobsEventHubSender":"",
+    "AzureWebJobsEventHubPath":"",
+    "CosmosDBDatabaseName":"ItemDb",
+    "CosmosDBCollectionName":"ItemCollection",
+    "SBTopicName":"",
+    "SBTopicSubName":"",
+    "AzureWebJobsCosmosDBConnectionString":"",
     "FUNCTIONS_WORKER_RUNTIME": "java"
   }
 }

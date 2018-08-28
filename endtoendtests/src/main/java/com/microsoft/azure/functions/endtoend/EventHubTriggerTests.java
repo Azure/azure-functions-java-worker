@@ -13,7 +13,7 @@ public class EventHubTriggerTests {
      */
     @FunctionName("EventHubTrigger")
     public void eventhubTrigger(
-        @EventHubTrigger(name = "message", eventHubName = "myhub", connection = "AzureEventHub") String message,
+        @EventHubTrigger(name = "message", eventHubName = "%AzureWebJobsEventHubPath%", connection = "AzureWebJobsEventHubSender") String message,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger function processed a message: " + message);
@@ -25,7 +25,7 @@ public class EventHubTriggerTests {
     @FunctionName("EventHubOutput")
     public void eventHubOutput(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-        @EventHubOutput(name = "output", eventHubName = "myhub", connection = "AzureEventHub") OutputBinding<String> output,
+        @EventHubOutput(name = "output", eventHubName = "%AzureWebJobsEventHubPath%", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         String message = request.getBody().orElse("default message");
