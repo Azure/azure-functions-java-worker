@@ -8,7 +8,7 @@
     },
     "profiles": {
         "appServiceEnvironment": {
-            "defaultExecutablePath": "../../functionsjdk8.0.172-win_x64/bin/java"
+            "defaultExecutablePath": "../../../FunctionsJava/zulu8.30.0.1-jdk8.0.172-win_x64/bin/java"
         }
     }
 }
