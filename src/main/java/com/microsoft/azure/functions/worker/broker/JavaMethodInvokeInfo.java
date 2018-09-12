@@ -20,23 +20,8 @@ class JavaMethodInvokeInfo {
         Object instance = Modifier.isStatic(this.m.getModifiers()) ? null : instanceSupplier.get();
         try {
             return this.m.invoke(instance, this.args);
-        } catch (InvocationTargetException ex) {
-            if (ex.getCause() == null) {
-                return ExceptionUtils.rethrow(ex);
-            }
-            Throwable userModeEx = ex.getCause();
-            StackTraceElement[] parentStackTraces = ex.getStackTrace();
-            StackTraceElement[] userStackTraces = userModeEx.getStackTrace();
-            int lastUserModeStackFrame = userStackTraces.length - 1;
-            if (lastUserModeStackFrame > parentStackTraces.length - 1) {
-                for (int parentFrame = parentStackTraces.length - 1; parentFrame >= 0; parentFrame--, lastUserModeStackFrame--) {
-                    if (!parentStackTraces[parentFrame].equals(userStackTraces[lastUserModeStackFrame])) {
-                        break;
-                    }
-                }
-            }
-            userModeEx.setStackTrace(Arrays.copyOf(userStackTraces, lastUserModeStackFrame + 1));
-            return ExceptionUtils.rethrow(userModeEx);
+        } catch (Exception ex) {
+            return ExceptionUtils.rethrow(ex);
         }
     }
 
