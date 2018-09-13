@@ -48,8 +48,8 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
             }
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
-            statusMessage = ex.getMessage();
-            rpcException = RpcException.newBuilder().setMessage(ex.getMessage()).setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
+            statusMessage = ExceptionUtils.getRootCauseMessage(ex);
+            rpcException = RpcException.newBuilder().setMessage(statusMessage).setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
             this.getLogger().log(Level.SEVERE, statusMessage, ex);
         }
         if (this.responseStatusMarshaller != null) {
