@@ -23,14 +23,14 @@ public class SimpleParamReturnTests extends FunctionsTestBase {
 
 	private static int intReturnValue = 124;
 	private static String stringReturnValue;
-	
-    @FunctionName("ReturnStringTest")
+    
+    @FunctionName("ReturnStringFunction")
     public String ReturnStringFunction() {
 		
 		return stringReturnValue;
 	}
 	
-    @FunctionName("ReturnIntTest")
+    @FunctionName("ReturnIntFunction")
 	public static int ReturnIntFunction() {
 		return intReturnValue;
 	}
