@@ -16,10 +16,6 @@ environment:
 
 install:
   - cmd: echo %JAVA_HOME%
-  - ps: Get-Command mvn
-  - cmd: mvn -v
-  - ps: Get-Command nuget
-
 build_script:
   - ps: |
       $buildNumber = 0      
