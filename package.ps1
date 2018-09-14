@@ -13,7 +13,7 @@ function StopOnFailedExecution {
 Write-Host "buildNumber: " $buildNumber
 Get-Command mvn
 Get-Command nuget
-mvn clean install -DskipTests
+mvn clean package
 StopOnFailedExecution
 remove-item pkg -Recurse -ErrorAction Ignore
 mkdir pkg
