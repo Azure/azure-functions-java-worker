@@ -124,9 +124,6 @@ public final class BindingDataStore {
             if (!CoreTypeResolver.isValidOutputType(target)) { return false; }
             target = CoreTypeResolver.getOutputParameterArgument(target);
         }
-        if (CoreTypeResolver.isHttpResponse(target)) {
-            return false;
-        }
         return true;
     }
 
