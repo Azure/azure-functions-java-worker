@@ -15,12 +15,8 @@ environment:
   DOTNET_VERSION: 2.1.402
   
   matrix:
-    - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-    - nodejs_version: "10.6.0"
-
-init:
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
+    - JAVA_HOME: C:\Program Files\Java\jdk1.8.0    
+    
 install:
   - ps: Get-Command mvn
   - cmd: mvn -v
@@ -94,5 +90,5 @@ test_script:
       .\run-tests.ps1
 
 on_finish:
-  - ps: Stop-Process -Id $proc.Kill()
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - ps: Stop-Process -Id $proc.Kill() -Erroraction Ignore
+  
