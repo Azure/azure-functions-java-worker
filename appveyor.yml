@@ -45,7 +45,7 @@ cache:
   - C:\maven\
   
 after_build:
-  - ps: >
+  - ps: |
       Write-Host "Deleting Functions Host Binaries if exists...."
       Remove-Item -Force ./Functions.Binaries.zip -ErrorAction Ignore
       Remove-Item -Recurse -Force ./Functions.Binaries -ErrorAction Ignore
