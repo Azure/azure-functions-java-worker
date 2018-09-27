@@ -13,7 +13,7 @@ public class ServiceBusQueueTriggerTests {
      */
     @FunctionName("ServiceBusQueueTrigger")
     public void serviceBusQueueTrigger(
-        @ServiceBusQueueTrigger(name = "message", queueName = "mysbqueue", connection = "AzureWebJobsServiceBus") String message,
+        @ServiceBusQueueTrigger(name = "message", queueName = "%SBQueueName%", connection = "AzureWebJobsServiceBus") String message,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Service Bus Queue trigger function processed a message: " + message);
@@ -25,7 +25,7 @@ public class ServiceBusQueueTriggerTests {
     @FunctionName("ServiceBusQueueOutput")
     public void serviceBusQueueOutput(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-        @ServiceBusQueueOutput(name = "output", queueName = "mysbqueue", connection = "AzureWebJobsServiceBus") OutputBinding<String> output,
+        @ServiceBusQueueOutput(name = "output", queueName = "%SBQueueName%", connection = "AzureWebJobsServiceBus") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         String message = request.getBody().orElse("default message");
