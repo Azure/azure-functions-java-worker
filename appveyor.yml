@@ -56,7 +56,7 @@ after_build:
       Write-Host "Downloading Functions Host...."
 
       $url = "https://ci.appveyor.com/api/buildjobs/5tki14blq24k9mgm/artifacts/Functions.Binaries.2.0.12118.no-runtime.zip"
-      $output = ".\Functions.Binaries.zip"
+      $output = "Functions.Binaries.zip"
       $start_time = Get-Date
 
       $wc = New-Object System.Net.WebClient
@@ -65,11 +65,11 @@ after_build:
       Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)"
 
       Write-Host "Extracting Functions Host...."
-      Expand-Archive ".\Functions.Binaries.zip" -DestinationPath ".\Functions.Binaries"
+      Expand-Archive "Functions.Binaries.zip" -DestinationPath ".\Functions.Binaries"
 
 
       Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
-      Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName "$.\Functions.Binaries\workers\java\azure-functions-java-worker.jar" }
+      Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Functions.Binaries\workers\java\azure-functions-java-worker.jar" }
 
 
       Write-Host "Staring Functions Host...."
