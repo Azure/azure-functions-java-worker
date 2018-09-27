@@ -11,7 +11,6 @@ import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 
 import static com.microsoft.azure.functions.worker.binding.BindingData.MatchingLevel.*;
-import static com.microsoft.azure.functions.worker.binding.BindingDefinition.BindingType.*;
 
 /**
  * A warehouse storing all binding related information including actual binding value as well as binding declaration info.
@@ -125,9 +124,6 @@ public final class BindingDataStore {
             if (!CoreTypeResolver.isValidOutputType(target)) { return false; }
             target = CoreTypeResolver.getOutputParameterArgument(target);
         }
-        if (CoreTypeResolver.isHttpResponse(target) && !this.isDefinitionBindingType(name, HTTP)) {
-            return false;
-        }
         return true;
     }
 
@@ -144,10 +140,6 @@ public final class BindingDataStore {
 
     public void setBindingDefinitions(Map<String, BindingDefinition> definitions) {
         this.definitions = definitions;
-    }
-
-    private boolean isDefinitionBindingType(String name, BindingType type) {
-        return this.getDefinition(name).map(def -> def.getBindingType() == type).orElse(false);
     }
 
     private boolean isDefinitionOutput(String name) {
