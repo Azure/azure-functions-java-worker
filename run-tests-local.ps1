@@ -71,7 +71,7 @@ foreach ($test in $tests){
 }
 
 Write-Host "Stopping Functions Host...."
-Stop-Process -Id $proc.Id --ErrorAction Ignore --Force
+Stop-Process -Id $proc.Id -ErrorAction Ignore -Force
 
 if (-not $success) { exit 1 }
 
