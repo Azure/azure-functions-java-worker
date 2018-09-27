@@ -29,6 +29,9 @@ install:
   
 build_script:
   - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
+  - cmd: cd c:\projects\azure-functions-java-worker\endtoendtests
+  - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
+  - cmd: cd c:\projects\azure-functions-java-worker
   - ps: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
