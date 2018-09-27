@@ -62,11 +62,11 @@ after_build:
       Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)"
 
       Write-Host "Extracting Functions Host...."
-      Expand-Archive "./Functions.Binaries.zip" -DestinationPath "./Functions.Binaries"
+      Expand-Archive "$PSScriptRoot/Functions.Binaries.zip" -DestinationPath "$PSScriptRoot/Functions.Binaries"
 
 
       Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
-      Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName "./Functions.Binaries/workers/java/azure-functions-java-worker.jar" }
+      Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName "$PSScriptRoot/Functions.Binaries/workers/java/azure-functions-java-worker.jar" }
 
 
       Write-Host "Staring Functions Host...."
