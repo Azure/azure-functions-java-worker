@@ -10,6 +10,7 @@
     "CosmosDBCollectionName":"ItemCollection",
     "SBTopicName":"",
     "SBTopicSubName":"",
+    "SBQueueName":"",
     "AzureWebJobsCosmosDBConnectionString":"",
     "FUNCTIONS_WORKER_RUNTIME": "java"
   }
