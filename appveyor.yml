@@ -10,6 +10,9 @@ branches:
     - dev
     - master
 
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_VERSION: 2.1.402
@@ -91,4 +94,4 @@ test_script:
 
 on_finish:
   - ps: Stop-Process -Id $proc.Id -Erroraction Ignore
-  
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
