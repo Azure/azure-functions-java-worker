@@ -40,12 +40,10 @@ public class CosmosDBTriggerTests {
 
         ArrayList inputItems = (ArrayList) inputItem;
         String objString = inputItems.get(0).toString();
-
         String[] arrOfStr = objString.split("=", 2);
         String[] arrOfStrWithId = arrOfStr[1].split(",", 2);
-
-        ObjectMapper mapper = new ObjectMapper();
         String docId = arrOfStrWithId[0];
+
         context.getLogger().info("Writing to CosmosDB output binding Document id: " + docId);
         outPutItem.setValue(new Document(docId, "testdescription"));
     }
