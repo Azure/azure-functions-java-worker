@@ -2,8 +2,6 @@ package com.microsoft.azure.functions.endtoendtests;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.*;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
