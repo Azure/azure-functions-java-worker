@@ -5,6 +5,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -33,6 +34,29 @@ namespace Azure.Functions.Java.Tests.E2E
             //Verify
             var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBindingQueueName);
             Assert.Equal(expectedQueueMessage, queueMessage);
+        }
+
+        [Fact]
+        public async Task CosmosDBTrigger_CosmosDBOutput_Succeeds()
+        {
+            string expectedDocId = Guid.NewGuid().ToString();
+            try
+            {
+                //Setup
+                await CosmosDBHelpers.CreateDocumentCollections();
+
+                //Trigger            
+                await CosmosDBHelpers.CreateDocument(expectedDocId);
+
+                //Read
+                var documentId = await CosmosDBHelpers.ReadDocument(expectedDocId);
+                Assert.Equal(expectedDocId, documentId);
+            }
+            finally
+            {
+                //Clean up
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId);
+            }
         }
 
         private async Task InvokeHttpTrigger(string functionName)
