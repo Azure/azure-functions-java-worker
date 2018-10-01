@@ -14,8 +14,8 @@ namespace Azure.Functions.Java.Tests.E2E
     public class EndToEndTests 
     {
         [Theory]
-        [InlineData("HttpTrigger", "?&name=Test", HttpStatusCode.OK, "")]
-        [InlineData("HttpTriggerThrows", "", HttpStatusCode.InternalServerError, "Test Exception")]
+        [InlineData("HttpTriggerJava", "?&name=Test", HttpStatusCode.OK, "")]
+        [InlineData("HttpTriggerJavaThrows", "", HttpStatusCode.InternalServerError, "Test Exception")]
         [InlineData("HttpTrigger", "", HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")]
         public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
         {

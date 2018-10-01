@@ -11,8 +11,8 @@ public class HttpTriggerTests {
     /**
      * This function will listen at HTTP endpoint "/api/HttpTrigger".
      */
-    @FunctionName("HttpTrigger")
-    public HttpResponseMessage httpTriggerHandler(
+    @FunctionName("HttpTriggerJava")
+    public HttpResponseMessage HttpTriggerJava(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
         final ExecutionContext context
     ) {
@@ -29,7 +29,7 @@ public class HttpTriggerTests {
         }
     }
 
-    @FunctionName("HttpTriggerThrows")
+    @FunctionName("HttpTriggerJavaThrows")
     public HttpResponseMessage HttpTriggerThrows(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
         final ExecutionContext context)  throws Exception{
