@@ -11,8 +11,8 @@ public class HttpTriggerTests {
     /**
      * This function will listen at HTTP endpoint "/api/HttpTrigger".
      */
-    @FunctionName("HttpTrigger")
-    public HttpResponseMessage httpHandler(
+    @FunctionName("HttpTriggerJava")
+    public HttpResponseMessage HttpTriggerJava(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
         final ExecutionContext context
     ) {
@@ -27,5 +27,13 @@ public class HttpTriggerTests {
         } else {
             return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
         }
+    }
+
+    @FunctionName("HttpTriggerJavaThrows")
+    public HttpResponseMessage HttpTriggerThrows(
+        @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+        final ExecutionContext context)  throws Exception{
+        context.getLogger().info("Java HTTP trigger processed a request.");
+        throw new Exception("Test Exception");
     }
 }

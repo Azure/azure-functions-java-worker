@@ -13,10 +13,30 @@ namespace Azure.Functions.Java.Tests.E2E
 {
     public class EndToEndTests 
     {
-        [Fact]
-        public async Task HttpTrigger_Succeeds()
+        [Theory]
+        [InlineData("HttpTriggerJava", "?&name=Test", HttpStatusCode.OK, "")]
+        [InlineData("HttpTriggerJavaThrows", "", HttpStatusCode.InternalServerError, "Test Exception")]
+        [InlineData("HttpTriggerJava", "", HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")]
+        public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
         {
-           await InvokeHttpTrigger("HttpTrigger");
+            // TODO: Get function key
+            //string functionKey = await _fixture.Host.GetFunctionSecretAsync($"{functionName}");
+            //string uri = $"api/{functionName}?code={functionKey}&name=Mathew";
+           
+            string uri = $"api/{functionName}{queryString}";
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+
+            var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(Constants.FunctionsHostUrl);
+            var response = await httpClient.SendAsync(request);
+            Assert.Equal(expectedStatusCode, response.StatusCode);
+
+            if (!string.IsNullOrEmpty(expectedErrorMessage))
+            {
+                string error = await response.Content.ReadAsStringAsync();
+                Assert.Contains(expectedErrorMessage, error);
+            }
         }
 
         [Fact]
@@ -59,20 +79,6 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-        private async Task InvokeHttpTrigger(string functionName)
-        {
-            // TODO: Get function key
-            //string functionKey = await _fixture.Host.GetFunctionSecretAsync($"{functionName}");
-            //string uri = $"api/{functionName}?code={functionKey}&name=Mathew";
-
-            string uri = $"api/{functionName}?&name=Mathew";
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
-
-            var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(Constants.FunctionsHostUrl);
-            var response = await httpClient.SendAsync(request);
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
+       
     }
 }
