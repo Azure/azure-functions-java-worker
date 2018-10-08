@@ -11,6 +11,8 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string StorageConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
         public static string OutputBindingQueueName = "test-output-java";
         public static string InputBindingQueueName = "test-input-java";
+        public static string OutputBindingQueueNamePOJO = "test-output-java-pojo";
+        public static string InputBindingQueueNamePOJO = "test-input-java-pojo";
         public static string TestQueueMessage = "Hello, World";
 
         public static string CosmosDBConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsCosmosDBConnectionString");

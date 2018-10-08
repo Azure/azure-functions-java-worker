@@ -20,4 +20,20 @@ public class QueueTriggerTests {
         context.getLogger().info("Java Queue trigger function processed a message: " + message);
         output.setValue(message);
     }
+
+    @FunctionName("QueueTriggerAndOutputPOJO")
+    public void queuetriggerandoutputPOJO(
+        @QueueTrigger(name = "message", queueName = "test-input-java-pojo", connection = "AzureWebJobsStorage") TestData message,
+        @QueueOutput(name = "output", queueName = "test-output-java-pojo", connection = "AzureWebJobsStorage") OutputBinding<TestData> output,
+        final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Queue trigger POJO function processed a message: " + message.id);
+        output.setValue(message);
+    }
+
+    public static class TestData {
+        private String id;
+    }
 }
+
+

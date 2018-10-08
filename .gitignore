@@ -264,3 +264,6 @@ dependency-reduced-pom.xml
 pkg/
 /Functions.Binaries.zip
 /Functions.Binaries/*
+/.metadata/
+
+/.recommenders/*
