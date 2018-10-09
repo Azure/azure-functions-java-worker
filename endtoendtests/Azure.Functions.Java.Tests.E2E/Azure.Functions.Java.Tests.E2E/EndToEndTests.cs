@@ -22,7 +22,12 @@ namespace Azure.Functions.Java.Tests.E2E
             // TODO: Get function key
             //string functionKey = await _fixture.Host.GetFunctionSecretAsync($"{functionName}");
             //string uri = $"api/{functionName}?code={functionKey}&name=Mathew";
-           
+
+            await InvokeHttpTrigger(functionName, queryString, expectedStatusCode, expectedErrorMessage);
+        }
+
+        private static async Task InvokeHttpTrigger(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedMessage)
+        {
             string uri = $"api/{functionName}{queryString}";
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
@@ -32,10 +37,10 @@ namespace Azure.Functions.Java.Tests.E2E
             var response = await httpClient.SendAsync(request);
             Assert.Equal(expectedStatusCode, response.StatusCode);
 
-            if (!string.IsNullOrEmpty(expectedErrorMessage))
+            if (!string.IsNullOrEmpty(expectedMessage))
             {
                 string error = await response.Content.ReadAsStringAsync();
-                Assert.Contains(expectedErrorMessage, error);
+                Assert.Contains(expectedMessage, error);
             }
         }
 
@@ -98,6 +103,67 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-       
+        [Fact]
+        public async Task CosmosDBInputId_Succeeds()
+        {
+            string expectedDocId = Guid.NewGuid().ToString();
+            try
+            {
+                //Setup
+                //Setup
+                TestDocument testDocument = new TestDocument()
+                {
+                    id = expectedDocId,
+                    name = "test"
+                };
+                await CosmosDBHelpers.CreateDocumentCollections();
+
+                //Trigger            
+                await CosmosDBHelpers.CreateDocument(testDocument);
+
+                // Trigger and verify
+                await InvokeHttpTrigger("CosmosDBInputId", $"?&docId={expectedDocId}", HttpStatusCode.OK, expectedDocId);
+            }
+            finally
+            {
+                //Clean up
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId);
+            }
+        }
+
+        [Fact]
+        public async Task CosmosDBInputSqlQuery_Succeeds()
+        {
+            string expectedDocId1 = Guid.NewGuid().ToString();
+            string expectedDocId2 = Guid.NewGuid().ToString();
+            string testName = "Joe";
+            try
+            {
+                //Setup
+                TestDocument testDocument1 = new TestDocument()
+                {
+                    id = expectedDocId1,
+                    name = testName
+                };
+
+                TestDocument testDocument2 = new TestDocument()
+                {
+                    id = expectedDocId2,
+                    name = testName
+                };
+                await CosmosDBHelpers.CreateDocumentCollections();
+                await CosmosDBHelpers.CreateDocument(testDocument1);
+                await CosmosDBHelpers.CreateDocument(testDocument2);
+
+                // Trigger and verify
+                await InvokeHttpTrigger("CosmosDBInputQuery", "?&name=Joe", HttpStatusCode.OK, "Joe");
+            }
+            finally
+            {
+                //Clean up
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId1);
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId2);
+            }
+        }
     }
 }

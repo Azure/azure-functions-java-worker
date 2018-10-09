@@ -11,6 +11,12 @@ using Newtonsoft.Json;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
+    public class TestDocument
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+    }
+
     public static class CosmosDBHelpers
     {
         private static DocumentClient _docDbClient;
@@ -36,7 +42,12 @@ namespace Azure.Functions.Java.Tests.E2E
             Document insertedDoc = await _docDbClient.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(Constants.DocDbDatabaseName, Constants.InputDocDbCollectionName), documentToTest);
         }
 
-        public async static Task<String> ReadDocument(string docId)
+        public async static Task CreateDocument(TestDocument testDocument)
+        {
+            Document insertedDoc = await _docDbClient.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(Constants.DocDbDatabaseName, Constants.InputItemsCollectionName), testDocument);
+        }
+
+        public async static Task<string> ReadDocument(string docId)
         {
             var docUri = UriFactory.CreateDocumentUri(Constants.DocDbDatabaseName, Constants.OutputDocDbCollectionName, docId);
             Document retrievedDocument = null;
@@ -58,6 +69,8 @@ namespace Azure.Functions.Java.Tests.E2E
         public async static Task DeleteTestDocuments(string docId)
         {
             var inputDocUri = UriFactory.CreateDocumentUri(Constants.DocDbDatabaseName, Constants.InputDocDbCollectionName, docId);
+            await DeleteDocument(inputDocUri);
+            inputDocUri = UriFactory.CreateDocumentUri(Constants.DocDbDatabaseName, Constants.InputItemsCollectionName, docId);
             await DeleteDocument(inputDocUri);
             var outputDocUri = UriFactory.CreateDocumentUri(Constants.DocDbDatabaseName, Constants.OutputDocDbCollectionName, docId);
             await DeleteDocument(outputDocUri);
@@ -81,6 +94,7 @@ namespace Azure.Functions.Java.Tests.E2E
             Uri dbUri = UriFactory.CreateDatabaseUri(db.Id);
 
             await CreateCollection(dbUri, Constants.InputDocDbCollectionName);
+            await CreateCollection(dbUri, Constants.InputItemsCollectionName);
             await CreateCollection(dbUri, Constants.OutputDocDbCollectionName);
             await CreateCollection(dbUri, Constants.DocDbLeaseCollectionName);
 

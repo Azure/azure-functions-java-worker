@@ -13,16 +13,62 @@ import java.util.*;
 public class CosmosDBTriggerTests {
 
     /**
-     * This function will be invoked when a message add to the queue. The message
-     * contents are provided as the input to this function.
+     * This function will be invoked when a message is posted to
+     * /api/CosmosDBInputId?docId={docId} contents are provided as the input to this
+     * function.
      */
-    @FunctionName("CosmosDBInput")
-    public void cosmosDBInput(
-            @QueueTrigger(name = "message", queueName = "mydbqueue", connection = "AzureWebJobsStorage") String message,
-            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "%CosmosDBCollectionName%", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", id = "{queueTrigger}") Object item,
+    @FunctionName("CosmosDBInputId")
+    public HttpResponseMessage CosmosDBInputId(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
+            HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", id = "{docId}") String item,
             final ExecutionContext context) {
-        context.getLogger().info("Java Queue Trigger post an id:" + message);
-        context.getLogger().info("Java Cosmos DB Input function processed a document: " + item.toString());
+        
+            context.getLogger().info("Java HTTP trigger processed a request."); 
+         
+            if (item!= null) {
+                return request.createResponseBuilder(HttpStatus.OK).body("Received Document with Id " + item).build();
+            } else {
+                return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body("Did not find expected item in ItemsCollectionIn").build();
+            }
+    }
+
+    @FunctionName("CosmosDBInputIdPOJO")
+    public HttpResponseMessage CosmosDBInputIdPOJO(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
+            HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", id = "{docId}") Document item,
+            final ExecutionContext context) {
+        
+            context.getLogger().info("Java HTTP trigger processed a request."); 
+         
+            if (item!= null) {
+                return request.createResponseBuilder(HttpStatus.OK).body("Received Document with Id " + item.id).build();
+            } else {
+                return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body("Did not find expected item in ItemsCollectionIn").build();
+            }
+    }
+
+    /**
+     * This function will be invoked when a message is posted to
+     * /api/CosmosDBInputQuery?name=joe Receives input with list of items matching
+     * the sqlQuery
+     */
+    @FunctionName("CosmosDBInputQuery")
+    public HttpResponseMessage CosmosDBInputQuery(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
+            HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") List<String> items,
+            final ExecutionContext context) {
+        context.getLogger().info("Java HTTP trigger processed a request.");
+
+        // Parse query parameters
+        String query = request.getQueryParameters().get("name");
+        String name = request.getBody().orElse(query);
+
+        if (items.size() >= 2) {
+            return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
+        } else {
+            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Did not find expected items in CosmosDB input list").build();
+        }
     }
 
     /**
