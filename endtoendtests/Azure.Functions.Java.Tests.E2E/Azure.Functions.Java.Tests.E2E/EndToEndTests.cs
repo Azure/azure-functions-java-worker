@@ -104,7 +104,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
-        public async Task CosmosDBInputId_POJO_Succeeds()
+        public async Task CosmosDBInputId_Succeeds()
         {
             string expectedDocId = Guid.NewGuid().ToString();
             try
