@@ -23,13 +23,9 @@ install:
   - ps: Get-Command nuget
   - cmd: echo %JAVA_HOME%
   - cmd: dotnet --info
-  - cmd: npm i -g azure-functions-core-tools
   
 build_script:
   - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
-  - cmd: cd c:\projects\azure-functions-java-worker\endtoendtests
-  - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
-  - cmd: cd c:\projects\azure-functions-java-worker
   - ps: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
@@ -50,14 +46,14 @@ cache:
   
 after_build:
   - ps: |
-      Write-Host "Deleting Functions Host Binaries if exists...."
-      Remove-Item -Force ./Functions.Binaries.zip -ErrorAction Ignore
-      Remove-Item -Recurse -Force ./Functions.Binaries -ErrorAction Ignore
+      Write-Host "Deleting Functions Core Tools if exists...."
+      Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
+      Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
 
       Write-Host "Downloading Functions Host...."
 
-      $url = "https://ci.appveyor.com/api/buildjobs/5tki14blq24k9mgm/artifacts/Functions.Binaries.2.0.12118.no-runtime.zip"
-      $output = "c:\projects\azure-functions-java-worker\Functions.Binaries.zip"
+      $url = "https://functionsclibuilds.blob.core.windows.net/builds/2/latest/Azure.Functions.Cli.win-x86.zip"
+      $output = "c:\projects\azure-functions-java-worker\Azure.Functions.Cli.zip"
       $start_time = Get-Date
 
       $wc = New-Object System.Net.WebClient
@@ -65,12 +61,12 @@ after_build:
 
       Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)"
 
-      Write-Host "Extracting Functions Host...."
-      Expand-Archive "c:\projects\azure-functions-java-worker\Functions.Binaries.zip" -DestinationPath "c:\projects\azure-functions-java-worker\Functions.Binaries"
+      Write-Host "Extracting Functions Core Tools...."
+      Expand-Archive "c:\projects\azure-functions-java-worker\Azure.Functions.Cli.zip" -DestinationPath "c:\projects\azure-functions-java-worker\Azure.Functions.Cli"
 
 
       Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
-      Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Functions.Binaries\workers\java\azure-functions-java-worker.jar" }
+      Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 
 
       Write-Host "Staring Functions Host...."
@@ -78,10 +74,15 @@ after_build:
       $Env:AzureWebJobsScriptRoot = "c:\projects\azure-functions-java-worker\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests"
       $Env:FUNCTIONS_WORKER_RUNTIME = "java"
       $Env:AZURE_FUNCTIONS_ENVIRONMENT = "development"
+      $Env:Path = $Env:Path+";c:\projects\azure-functions-java-worker\Azure.Functions.Cli"
+
+      cd -Path c:\projects\azure-functions-java-worker\endtoendtests
+      mvn clean package 
+      cd -Path c:\projects\azure-functions-java-worker
 
       Write-Host $Env:AzureWebJobsScriptRoot
 
-      $proc = start-process -filepath dotnet -ArgumentList "c:\projects\azure-functions-java-worker\Functions.Binaries\Microsoft.Azure.WebJobs.Script.WebHost.dll" -PassThru
+      $proc = start-process -filepath c:\projects\azure-functions-java-worker\Azure.Functions.Cli\func.exe -WorkingDirectory "c:\projects\azure-functions-java-worker\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
       # wait for host to start
       Start-Sleep -s 30
 

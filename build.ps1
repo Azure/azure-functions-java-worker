@@ -10,11 +10,6 @@ function StopOnFailedExecution {
 Write-Host "Building azure-function-java-worker"
 mvn clean package 
 StopOnFailedExecution
-Write-Host "Building azure-functions-java-endtoendtests"
-Push-Location -Path .\endtoendtests
-mvn clean package 
-StopOnFailedExecution
-Pop-Location
 
 Write-Host "Starting azure-functions-java-endtoendtests execution"
 .\run-tests-local.ps1
