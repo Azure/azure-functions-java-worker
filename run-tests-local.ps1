@@ -35,7 +35,7 @@ Remove-Item -Recurse -Force ./Functions.Binaries -ErrorAction Ignore
 
 Write-Host "Downloading Functions Host...."
 
-$url = "https://ci.appveyor.com/api/buildjobs/5tki14blq24k9mgm/artifacts/Functions.Binaries.2.0.12118.no-runtime.zip"
+$url = "https://ci.appveyor.com/api/buildjobs/onhbleqih3dsapp0/artifacts/Functions.Binaries.2.0.12136.no-runtime.zip"
 $output = "$PSScriptRoot\Functions.Binaries.zip"
 $start_time = Get-Date
 
