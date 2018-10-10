@@ -1,4 +1,3 @@
-
 function RunTest([string] $project, [string] $description,[bool] $skipBuild = $false, $filter = $null) {
     Write-Host "Running test: $description" -ForegroundColor DarkCyan
     Write-Host "-----------------------------------------------------------------------------" -ForegroundColor DarkCyan
@@ -29,38 +28,44 @@ $success = $true
 $testRunSucceeded = $true
 
 
-Write-Host "Deleting Functions Host Binaries if exists...."
-Remove-Item -Force ./Functions.Binaries.zip -ErrorAction Ignore
-Remove-Item -Recurse -Force ./Functions.Binaries -ErrorAction Ignore
+Write-Host "Deleting Functions Core Tools if exists...."
+Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
+Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
 
-Write-Host "Downloading Functions Host...."
+Write-Host "Downloading Functions Core Tools...."
 
-$url = "https://ci.appveyor.com/api/buildjobs/onhbleqih3dsapp0/artifacts/Functions.Binaries.2.0.12136.no-runtime.zip"
-$output = "$PSScriptRoot\Functions.Binaries.zip"
+$url = "https://functionsclibuilds.blob.core.windows.net/builds/2/latest/Azure.Functions.Cli.win-x86.zip"
+$output = "$PSScriptRoot\Azure.Functions.Cli.zip"
 $start_time = Get-Date
 
 $wc = New-Object System.Net.WebClient
 $wc.DownloadFile($url, $output)
 
-Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)"
-
-Write-Host "Extracting Functions Host...."
-Expand-Archive "$PSScriptRoot\Functions.Binaries.zip" -DestinationPath "$PSScriptRoot\Functions.Binaries"
+Write-Host "Extracting Functions Core Tools...."
+Expand-Archive "$PSScriptRoot\Azure.Functions.Cli.zip" -DestinationPath "$PSScriptRoot\Azure.Functions.Cli"
 
 
 Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
-Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Functions.Binaries\workers\java\azure-functions-java-worker.jar" }
+Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 
 
 Write-Host "Staring Functions Host...."
 
 $Env:AzureWebJobsScriptRoot = "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests"
-$Env:FUNCTIONS_WORKER_RUNTIME = "java"
 $Env:AZURE_FUNCTIONS_ENVIRONMENT = "development"
+$Env:Path = $Env:Path+";$PSScriptRoot\Azure.Functions.Cli"
 
-Write-Host $Env:AzureWebJobsScriptRoot
+$Env:Path = $Env:Path+";$PSScriptRoot\Azure.Functions.Cli"
 
-$proc = start-process -filepath dotnet -ArgumentList "$PSScriptRoot\Functions.Binaries\Microsoft.Azure.WebJobs.Script.WebHost.dll" -PassThru
+Write-Host "Building azure-functions-java-worker\endtoendtests...."
+
+Write-Host "Building azure-functions-java-endtoendtests"
+Push-Location -Path .\endtoendtests
+mvn clean package 
+StopOnFailedExecution
+Pop-Location
+
+$proc = start-process -filepath func.exe -WorkingDirectory "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
 # wait for host to start
 Start-Sleep -s 30
 

@@ -267,3 +267,5 @@ pkg/
 /.metadata/
 
 /.recommenders/*
+/Azure.Functions.Cli.zip
+/Azure.Functions.Cli/

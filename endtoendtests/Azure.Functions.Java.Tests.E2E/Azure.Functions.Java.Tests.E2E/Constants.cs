@@ -7,7 +7,7 @@ namespace Azure.Functions.Java.Tests.E2E
 {
     public static class Constants
     {
-        public static string FunctionsHostUrl = "http://localhost:5000";
+        public static string FunctionsHostUrl = "http://localhost:7071";
         public static string StorageConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
 
         //Queue tests
