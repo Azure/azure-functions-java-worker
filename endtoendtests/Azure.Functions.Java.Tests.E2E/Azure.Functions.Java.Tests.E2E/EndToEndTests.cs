@@ -130,6 +130,33 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
+        public async Task CosmosDBInputIdPOJO_Succeeds()
+        {
+            string expectedDocId = Guid.NewGuid().ToString();
+            try
+            {
+                //Setup
+                TestDocument testDocument = new TestDocument()
+                {
+                    id = expectedDocId,
+                    name = "test"
+                };
+                await CosmosDBHelpers.CreateDocumentCollections();
+
+                //Trigger            
+                await CosmosDBHelpers.CreateDocument(testDocument);
+
+                // Trigger and verify
+                await InvokeHttpTrigger("CosmosDBInputIdPOJO", $"?&docId={expectedDocId}", HttpStatusCode.OK, expectedDocId);
+            }
+            finally
+            {
+                //Clean up
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId);
+            }
+        }
+
+        [Fact]
         public async Task CosmosDBInputSqlQuery_Succeeds()
         {
             string expectedDocId1 = Guid.NewGuid().ToString();

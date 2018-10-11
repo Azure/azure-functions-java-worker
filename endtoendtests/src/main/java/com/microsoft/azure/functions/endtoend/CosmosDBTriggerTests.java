@@ -91,16 +91,14 @@ public class CosmosDBTriggerTests {
         String docId = arrOfStrWithId[0];
 
         context.getLogger().info("Writing to CosmosDB output binding Document id: " + docId);
-        outPutItem.setValue(new Document(docId, "testdescription"));
+        Document testDoc = new Document();
+        testDoc.id = docId;
+        testDoc.Description = "testdescription";
+        outPutItem.setValue(testDoc);
     }
 
     public static class Document {
         public String id;
         public String Description;
-
-        public Document(String id, String description) {
-            this.id = id;
-            this.Description = description;
-        }
     }
 }

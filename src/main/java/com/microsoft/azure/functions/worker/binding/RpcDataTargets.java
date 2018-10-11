@@ -133,18 +133,13 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
     private static TypedData.Builder toJsonData(Object value) throws Exception {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (value != null) {
-            try {
-                dataBuilder.setJson(STRICT_JSON_MAPPER.writeValueAsString(value));
-            } catch (Exception ex) {
-                dataBuilder.setJson(RELAXED_JSON_MAPPER.writeValueAsString(value));
-            }
+            dataBuilder.setJson(RELAXED_JSON_MAPPER.writeValueAsString(value));
         } else {
             throw new ClassCastException();
         }
         return dataBuilder;
     }
 
-    private static final ObjectMapper STRICT_JSON_MAPPER = new ObjectMapper();
     private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
     private static final DataOperations<Object, TypedData.Builder> UNSPECIFIED_TARGET_OPERATIONS = new DataOperations<>();
     static {
