@@ -1,7 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import java.lang.reflect.*;
-import java.util.logging.*;
 import java.util.*;
 
 import org.apache.commons.lang3.*;
@@ -18,7 +17,10 @@ interface CheckedFunction<T, R> {
 
     default R tryApply(T t) {
         try { return this.apply(t); }
-        catch (Exception ex) { return null; }
+        catch (Exception ex) { 
+            WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+            return null;
+        }
     }
 }
 
@@ -29,9 +31,8 @@ interface CheckedBiFunction<T, U, R> {
     default R tryApply(T t, U u) {
         try { return this.apply(t, u); }
         catch (Exception ex) { 
-            WorkerLogManager.getSystemLogger().severe(ExceptionUtils.getRootCauseMessage(ex));
+            WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
             return null;
-            //return ExceptionUtils.rethrow(ex);
         }
     }
 }

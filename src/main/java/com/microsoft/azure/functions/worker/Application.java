@@ -72,11 +72,7 @@ public final class Application implements IApplication {
     private String parseWorkerId(String input) { return input; }
 
     private Integer parseMaxMessageSize(String input) {
-        try {
-            return Integer.parseInt(input);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return Integer.parseInt(input);
     }
 
     private boolean commandParseSucceeded = false;

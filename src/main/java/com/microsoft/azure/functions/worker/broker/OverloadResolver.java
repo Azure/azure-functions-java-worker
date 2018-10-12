@@ -29,7 +29,12 @@ class OverloadResolver {
 
     synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
         Comparator<InvokeInfoBuilder> overloadComparator = Comparator
-                .<InvokeInfoBuilder>comparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.BINDING_NAME.getIndex()]);
+                .<InvokeInfoBuilder>comparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.BINDING_NAME.getIndex()])
+                .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TRIGGER_METADATA_NAME.getIndex()])
+                .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.METADATA_NAME.getIndex()])
+                .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_ASSIGNMENT.getIndex()])
+                .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_STRICT_CONVERSION.getIndex()])
+                .thenComparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.TYPE_RELAXED_CONVERSION.getIndex()]);
         List<InvokeInfoBuilder> possibleInvokes = this.candidates.stream()
             .map(m -> this.resolve(m, dataStore))
             .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))

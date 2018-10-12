@@ -66,8 +66,8 @@ final class RpcJsonDataSource extends DataSource<String> {
     RpcJsonDataSource(String name, String value) { super(name, value, JSON_DATA_OPERATIONS); }
 
     private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
-    
     private static final DataOperations<String, Object> JSON_DATA_OPERATIONS = new DataOperations<>();
+
     static {
         RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);

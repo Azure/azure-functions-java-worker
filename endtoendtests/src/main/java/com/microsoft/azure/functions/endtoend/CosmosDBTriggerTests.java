@@ -26,7 +26,7 @@ public class CosmosDBTriggerTests {
             context.getLogger().info("Java HTTP trigger processed a request."); 
          
             if (item!= null) {
-                return request.createResponseBuilder(HttpStatus.OK).body("Received Document with Id " + item).build();
+                return request.createResponseBuilder(HttpStatus.OK).body("Received Document" + item).build();
             } else {
                 return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body("Did not find expected item in ItemsCollectionIn").build();
             }
