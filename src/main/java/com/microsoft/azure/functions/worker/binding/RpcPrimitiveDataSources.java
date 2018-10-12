@@ -73,7 +73,6 @@ final class RpcStringDataSource extends DataSource<String> {
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Double.class, Double::parseDouble);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, float.class, Float::parseFloat);
         STRING_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, Float.class, Float::parseFloat);
-        STRING_DATA_OPERATIONS.addGuardOperation(TYPE_STRICT_CONVERSION, (v, t) -> convertToJson(false, v, t));
         STRING_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) -> convertToJson(false, v, t));
     }
 }
