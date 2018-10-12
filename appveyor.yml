@@ -77,7 +77,7 @@ after_build:
       $Env:Path = $Env:Path+";c:\projects\azure-functions-java-worker\Azure.Functions.Cli"
 
       cd -Path c:\projects\azure-functions-java-worker\endtoendtests
-      mvn clean package 
+      mvn clean package -q
       cd -Path c:\projects\azure-functions-java-worker
 
       Write-Host $Env:AzureWebJobsScriptRoot
