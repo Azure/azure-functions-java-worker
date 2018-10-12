@@ -18,7 +18,7 @@ interface CheckedFunction<T, R> {
     default R tryApply(T t) {
         try { return this.apply(t); }
         catch (Exception ex) { 
-            WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+            //WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
             return null;
         }
     }
@@ -31,7 +31,7 @@ interface CheckedBiFunction<T, U, R> {
     default R tryApply(T t, U u) {
         try { return this.apply(t, u); }
         catch (Exception ex) { 
-            WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+            //WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
             return null;
         }
     }
