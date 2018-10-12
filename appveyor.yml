@@ -68,10 +68,10 @@ after_build:
       Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
       Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 
- - cmd: cd -Path c:\projects\azure-functions-java-worker\endtoendtests      
- - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
- - cmd: cd -Path c:\projects\azure-functions-java-worker
- - ps: |
+  - cmd: cd -Path c:\projects\azure-functions-java-worker\endtoendtests      
+  - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
+  - cmd: cd -Path c:\projects\azure-functions-java-worker
+  - ps: |
      Write-Host "Staring Functions Host...."
      $Env:AzureWebJobsScriptRoot = "c:\projects\azure-functions-java-worker\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests"
      $Env:FUNCTIONS_WORKER_RUNTIME = "java"
