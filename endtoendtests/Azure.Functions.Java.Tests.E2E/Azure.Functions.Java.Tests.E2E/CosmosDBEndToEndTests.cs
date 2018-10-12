@@ -11,74 +11,8 @@ using Xunit;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
-    public class EndToEndTests 
+    public class CosmosDBEndToEndTests 
     {
-        [Theory]
-        [InlineData("HttpTriggerJava", "?&name=Test", HttpStatusCode.OK, "")]
-        [InlineData("HttpTriggerJavaMetadata", "?&name=Test", HttpStatusCode.OK, "Test")]
-        [InlineData("HttpTriggerJavaThrows", "", HttpStatusCode.InternalServerError, "")]
-        [InlineData("HttpTriggerJava", "", HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")]
-        public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
-        {
-            // TODO: Verify exception on 500 after https://github.com/Azure/azure-functions-host/issues/3589
-            
-            await InvokeHttpTrigger(functionName, queryString, expectedStatusCode, expectedErrorMessage);
-        }
-
-        private static async Task InvokeHttpTrigger(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedMessage)
-        {
-            string uri = $"api/{functionName}{queryString}";
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
-
-            var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(Constants.FunctionsHostUrl);
-            var response = await httpClient.SendAsync(request);
-            Assert.Equal(expectedStatusCode, response.StatusCode);
-
-            if (!string.IsNullOrEmpty(expectedMessage))
-            {
-                string actualMessage = await response.Content.ReadAsStringAsync();
-                Assert.Contains(expectedMessage, actualMessage);
-            }
-        }
-
-        [Fact]
-        public async Task QueueTrigger_QueueOutput_Succeeds()
-        {
-            string expectedQueueMessage = Guid.NewGuid().ToString();
-            //Clear queue
-            await StorageHelpers.ClearQueue(Constants.OutputBindingQueueName);
-            await StorageHelpers.ClearQueue(Constants.InputBindingQueueName);
-
-            //Set up and trigger            
-            await StorageHelpers.CreateQueue(Constants.OutputBindingQueueName);
-            await StorageHelpers.InsertIntoQueue(Constants.InputBindingQueueName, expectedQueueMessage);
-            
-            //Verify
-            var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBindingQueueName);
-            Assert.Equal(expectedQueueMessage, queueMessage);
-        }
-
-        [Fact]
-        public async Task QueueTrigger_QueueOutput_POJO_Succeeds()
-        {
-            string expectedQueueMessage = Guid.NewGuid().ToString();
-            //Clear queue
-            await StorageHelpers.ClearQueue(Constants.OutputBindingQueueNamePOJO);
-            await StorageHelpers.ClearQueue(Constants.InputBindingQueueNamePOJO);
-
-            //Set up and trigger            
-            await StorageHelpers.CreateQueue(Constants.OutputBindingQueueNamePOJO);
-            JObject testData = new JObject();
-            testData["id"] = expectedQueueMessage;
-            await StorageHelpers.InsertIntoQueue(Constants.InputBindingQueueNamePOJO, testData.ToString());
-
-            //Verify
-            var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBindingQueueNamePOJO);
-            Assert.Contains(expectedQueueMessage, queueMessage);
-        }
-
         [Fact]
         public async Task CosmosDBTrigger_CosmosDBOutput_Succeeds()
         {
@@ -121,7 +55,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await CosmosDBHelpers.CreateDocument(testDocument);
 
                 // Trigger and verify
-                await InvokeHttpTrigger("CosmosDBInputId", $"?&docId={expectedDocId}", HttpStatusCode.OK, expectedDocId);
+                Assert.True(await Utilities.InvokeHttpTrigger("CosmosDBInputId", $"?&docId={expectedDocId}", HttpStatusCode.OK, expectedDocId));
             }
             finally
             {
@@ -148,7 +82,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await CosmosDBHelpers.CreateDocument(testDocument);
 
                 // Trigger and verify
-                await InvokeHttpTrigger("CosmosDBInputIdPOJO", $"?&docId={expectedDocId}", HttpStatusCode.OK, expectedDocId);
+                Assert.True(await Utilities.InvokeHttpTrigger("CosmosDBInputIdPOJO", $"?&docId={expectedDocId}", HttpStatusCode.OK, expectedDocId));
             }
             finally
             {
@@ -182,7 +116,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await CosmosDBHelpers.CreateDocument(testDocument2);
 
                 // Trigger and verify
-                await InvokeHttpTrigger("CosmosDBInputQuery", "?&name=Joe", HttpStatusCode.OK, "Joe");
+                Assert.True(await Utilities.InvokeHttpTrigger("CosmosDBInputQuery", "?&name=Joe", HttpStatusCode.OK, "Joe"));
             }
             finally
             {

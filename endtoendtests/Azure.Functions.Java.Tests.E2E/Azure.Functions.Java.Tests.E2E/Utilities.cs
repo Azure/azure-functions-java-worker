@@ -4,6 +4,9 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
@@ -27,6 +30,28 @@ namespace Azure.Functions.Java.Tests.E2E
                     throw new ApplicationException(error);
                 }
             }
+        }
+
+        public static async Task<bool> InvokeHttpTrigger(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedMessage)
+        {
+            string uri = $"api/{functionName}{queryString}";
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+
+            var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(Constants.FunctionsHostUrl);
+            var response = await httpClient.SendAsync(request);
+            if(expectedStatusCode != response.StatusCode)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(expectedMessage))
+            {
+                string actualMessage = await response.Content.ReadAsStringAsync();
+                return expectedMessage.Contains(actualMessage);
+            }
+            return true;
         }
     }
 }

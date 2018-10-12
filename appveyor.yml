@@ -80,7 +80,8 @@ after_build:
       mvn clean package -q
       cd -Path c:\projects\azure-functions-java-worker
 
-      Write-Host $Env:AzureWebJobsScriptRoot
+      Write-Host "Copying EventHubs function.json as temporary workaround...."
+      Copy-Item ".\endtoendtests\function.json" "c:\projects\azure-functions-java-worker\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutput"
 
       $proc = start-process -filepath c:\projects\azure-functions-java-worker\Azure.Functions.Cli\func.exe -WorkingDirectory "c:\projects\azure-functions-java-worker\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
       # wait for host to start
