@@ -5,9 +5,11 @@ import java.util.*;
 
 import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.reflect.*;
+import org.apache.commons.lang3.exception.*;
 
 import com.microsoft.azure.functions.worker.binding.BindingData.*;
 import com.microsoft.azure.functions.worker.broker.*;
+import com.microsoft.azure.functions.worker.*;
 
 @FunctionalInterface
 interface CheckedFunction<T, R> {
@@ -15,7 +17,10 @@ interface CheckedFunction<T, R> {
 
     default R tryApply(T t) {
         try { return this.apply(t); }
-        catch (Exception ex) { return null; }
+        catch (Exception ex) { 
+            //WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+            return null;
+        }
     }
 }
 
@@ -25,7 +30,10 @@ interface CheckedBiFunction<T, U, R> {
 
     default R tryApply(T t, U u) {
         try { return this.apply(t, u); }
-        catch (Exception ex) { return null; }
+        catch (Exception ex) { 
+            //WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+            return null;
+        }
     }
 }
 
@@ -70,7 +78,7 @@ class DataOperations<T, R> {
         if (CoreTypeResolver.getRuntimeClass(target).isAssignableFrom(value.getClass())) {
             return value;
         }
-        throw new ClassCastException();
+        throw new ClassCastException("Cannot convert "+ value + "to type "+ target.getTypeName());
     }
 
     private final Map<MatchingLevel, Map<Type, CheckedBiFunction<T, Type, R>>> operations;

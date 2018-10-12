@@ -8,10 +8,12 @@ import java.util.function.*;
 
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.*;
+import org.apache.commons.lang3.exception.*;
 import org.apache.commons.lang3.*;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
+import com.microsoft.azure.functions.worker.*;
 
 public class CoreTypeResolver {
     private static boolean isOutputParameter(Type target) {
@@ -75,14 +77,17 @@ public class CoreTypeResolver {
                             try {
                                 return Optional.ofNullable((String) getNameMethod.invoke(p.getAnnotation(annotation)));
                             } catch (Exception ex) {
+                                // WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
                                 return Optional.empty();
                             }
                         });
                     }
                 } catch (NoSuchMethodException ex) {
+                    WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
                 }
             }
         } catch (IOException ex) {
+            WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
         }
     }
 }

@@ -6,6 +6,10 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.commons.lang3.exception.*;
+
+import com.microsoft.azure.functions.worker.*;
+
 /**
  * @author Kevin Hillinger
  * Default implementation of the class loader provider
@@ -47,7 +51,7 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
                 addUrl(file.toURI().toURL());
             }
         } catch (Exception e) {
-            //todo: log
+            WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(e));
         } 
     }
     

@@ -6,10 +6,12 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import org.apache.commons.lang3.tuple.*;
+import org.apache.commons.lang3.exception.*;
 
 import com.microsoft.azure.functions.worker.binding.*;
 import com.microsoft.azure.functions.worker.description.*;
 import com.microsoft.azure.functions.worker.reflect.*;
+import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 
 /**
@@ -64,6 +66,7 @@ public class JavaFunctionBroker {
                 classLoaderProvider.addDirectory(libDirectory);
             }
             catch (Exception e) {
+                WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(e));
         }
     }
     
