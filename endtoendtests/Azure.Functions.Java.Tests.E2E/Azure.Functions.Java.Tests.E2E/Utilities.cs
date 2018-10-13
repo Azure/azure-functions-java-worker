@@ -49,7 +49,7 @@ namespace Azure.Functions.Java.Tests.E2E
             if (!string.IsNullOrEmpty(expectedMessage))
             {
                 string actualMessage = await response.Content.ReadAsStringAsync();
-                return expectedMessage.Contains(actualMessage);
+                return actualMessage.Contains(expectedMessage);
             }
             return true;
         }

@@ -43,7 +43,6 @@ namespace Azure.Functions.Java.Tests.E2E
             try
             {
                 //Setup
-                //Setup
                 TestDocument testDocument = new TestDocument()
                 {
                     id = expectedDocId,
