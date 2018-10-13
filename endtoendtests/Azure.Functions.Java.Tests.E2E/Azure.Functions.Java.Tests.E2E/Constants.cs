@@ -26,5 +26,10 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string InputItemsCollectionName = "ItemsCollectionIn";
         public static string OutputItemsCollectionName = "ItemsCollectionOut";
         public static string LeaseItemsCollectionName = "Itemsleases";
+
+        // EventHubs
+        public static string OutputEventHubQueueName = "test-eventhuboutput-java";
+        public static string InputEventHubName = "test-input-java";
+        public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
     }
 }

@@ -36,4 +36,12 @@ public class HttpTriggerTests {
         context.getLogger().info("Java HTTP trigger processed a request.");
         throw new Exception("Test Exception");
     }
+
+    @FunctionName("HttpTriggerJavaMetadata")
+    public static String HttpTriggerJavaMetadata(
+        @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+        @BindingName("name") String queryValue
+    ) {
+        return queryValue;
+    }
 }

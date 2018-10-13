@@ -45,7 +45,7 @@ Write-Host "Extracting Functions Core Tools...."
 Expand-Archive "$PSScriptRoot\Azure.Functions.Cli.zip" -DestinationPath "$PSScriptRoot\Azure.Functions.Cli"
 
 
-Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
+Write-Host "Copying azure-functions-java-worker to  Functions CLI workers directory...."
 Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 
 
@@ -64,6 +64,9 @@ Push-Location -Path .\endtoendtests
 mvn clean package 
 StopOnFailedExecution
 Pop-Location
+
+Write-Host "Copying EventHubs function.json as temporary workaround...."
+Copy-Item "$PSScriptRoot\endtoendtests\function.json" "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutput"
 
 $proc = start-process -filepath func.exe -WorkingDirectory "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
 # wait for host to start
