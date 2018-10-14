@@ -1,7 +1,9 @@
-﻿using Microsoft.Azure.EventHubs;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using Microsoft.Azure.EventHubs;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,7 +35,7 @@ namespace Azure.Functions.Java.Tests.E2E
             await eventHubClient.SendAsync(events);
         }
 
-        public static async Task SendMessagesAsync(string eventId)
+        public static async Task SendMessagesAsync(string eventId, string evenHubName)
         {
             // write 3 events
             List<EventData> events = new List<EventData>();
@@ -47,7 +49,7 @@ namespace Azure.Functions.Java.Tests.E2E
             }
 
             EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(Constants.EventHubsConnectionStringSetting);
-            builder.EntityPath = Constants.InputCardinalityOneEventHubName;
+            builder.EntityPath = evenHubName;
             EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(builder.ToString());
             await eventHubClient.SendAsync(events);
         }

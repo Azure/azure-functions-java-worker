@@ -14,7 +14,7 @@ public class EventHubTriggerTests {
     @FunctionName("EventHubTriggerAndOutputJSON")
     public void EventHubTriggerAndOutputJSON(
         @EventHubTrigger(name = "messages", eventHubName = "test-inputjson-java", connection = "AzureWebJobsEventHubSender") List<String> messages,
-        @EventHubOutput(name = "output", eventHubName = "test-output-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
+        @EventHubOutput(name = "output", eventHubName = "test-outputjson-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received " + messages.size() +" messages");
@@ -34,7 +34,7 @@ public class EventHubTriggerTests {
     @FunctionName("EventHubTriggerCardinalityOne")
     public void EventHubTriggerCardinalityOne(
         @EventHubTrigger(name = "message", eventHubName = "test-inputOne-java", connection = "AzureWebJobsEventHubSender", dataType = "string") String message,
-        @EventHubOutput(name = "output", eventHubName = "test-output-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
+        @EventHubOutput(name = "output", eventHubName = "test-outputone-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received message" + message);
@@ -44,10 +44,30 @@ public class EventHubTriggerTests {
     /**
      * This function verifies the above functions
      */
+    @FunctionName("TestEventHubOutputJson")
+    public void TestEventHubOutputJson(
+        @EventHubTrigger(name = "message", eventHubName = "test-outputjson-java", connection = "AzureWebJobsEventHubSender") String message,
+        @QueueOutput(name = "output", queueName = "test-eventhuboutputjson-java", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+        final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Event Hub Output function processed a message: " + message);
+        output.setValue(message);
+    }
+
     @FunctionName("TestEventHubOutput")
     public void TestEventHubOutput(
         @EventHubTrigger(name = "message", eventHubName = "test-output-java", connection = "AzureWebJobsEventHubSender") String message,
         @QueueOutput(name = "output", queueName = "test-eventhuboutput-java", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+        final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Event Hub Output function processed a message: " + message);
+        output.setValue(message);
+    }
+
+    @FunctionName("TestEventHubOutputInputOne")
+    public void TestEventHubOutputInputOne(
+        @EventHubTrigger(name = "message", eventHubName = "test-outputone-java", connection = "AzureWebJobsEventHubSender") String message,
+        @QueueOutput(name = "output", queueName = "test-eventhuboutputone-java", connection = "AzureWebJobsStorage") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub Output function processed a message: " + message);
