@@ -66,8 +66,8 @@ StopOnFailedExecution
 Pop-Location
 
 Write-Host "Copying EventHubs function.json as temporary workaround...."
-Copy-Item "$PSScriptRoot\endtoendtests\functionInputString.json" "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutputJSON"
-Copy-Item "$PSScriptRoot\endtoendtests\functionInputJson.json" "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutputString"
+Copy-Item "$PSScriptRoot\endtoendtests\functionInputString.json" "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutputJSON\function.json"
+Copy-Item "$PSScriptRoot\endtoendtests\functionInputJson.json" "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutputString\function.json"
 
 $proc = start-process -filepath func.exe -WorkingDirectory "$PSScriptRoot\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
 # wait for host to start
