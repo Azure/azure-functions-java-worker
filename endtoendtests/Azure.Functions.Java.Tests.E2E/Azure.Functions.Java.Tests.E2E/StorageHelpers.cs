@@ -3,6 +3,7 @@
 
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Azure.Functions.Java.Tests.E2E
@@ -52,6 +53,24 @@ namespace Azure.Functions.Java.Tests.E2E
             });
             await queue.DeleteMessageAsync(retrievedMessage);
             return retrievedMessage.AsString;
+        }
+
+        public async static Task<IEnumerable<string>> ReadMessagesFromQueue(string queueName)
+        {
+            CloudQueue queue = _queueClient.GetQueueReference(queueName);
+            IEnumerable<CloudQueueMessage> retrievedMessages = null;
+            List<string> messages = new List<string>();
+            await Utilities.RetryAsync(async () =>
+            {
+                retrievedMessages = await queue.GetMessagesAsync(3);
+                return retrievedMessages != null;
+            });
+            foreach(CloudQueueMessage msg in retrievedMessages)
+            {
+                messages.Add(msg.AsString);
+                await queue.DeleteMessageAsync(msg);
+            }
+            return messages;
         }
     }
 }

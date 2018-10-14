@@ -1,20 +1,20 @@
 {
   "scriptFile" : "..\\azure-functions-java-endtoendtests-1.0-SNAPSHOT.jar",
-  "entryPoint" : "com.microsoft.azure.functions.endtoendtests.EventHubTriggerTests.EventHubTriggerAndOutput",
+  "entryPoint" : "com.microsoft.azure.functions.endtoendtests.EventHubTriggerTests.EventHubTriggerAndOutputJSON",
   "bindings" : [ {
     "type" : "eventHubTrigger",
     "name" : "messages",
     "direction" : "in",
+	"cardinality" : "many",
     "consumerGroup" : "$Default",
-	"cardinality": "many",
     "connection" : "AzureWebJobsEventHubSender",
-    "eventHubName" : "test-input-java"
+    "eventHubName" : "test-inputjson-java"
   }, {
     "type" : "eventHub",
     "name" : "output",
     "direction" : "out",
     "connection" : "AzureWebJobsEventHubSender",
-    "eventHubName" : "test-output-java"
+    "eventHubName" : "test-outputjson-java"
   } ],
   "disabled" : false
 }

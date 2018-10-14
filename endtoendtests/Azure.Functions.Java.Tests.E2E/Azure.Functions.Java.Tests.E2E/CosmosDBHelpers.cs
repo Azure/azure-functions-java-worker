@@ -2,12 +2,9 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Net;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Newtonsoft.Json;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
