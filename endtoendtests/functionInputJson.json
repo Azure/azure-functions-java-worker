@@ -5,8 +5,8 @@
     "type" : "eventHubTrigger",
     "name" : "messages",
     "direction" : "in",
-    "consumerGroup" : "$Default",
 	"cardinality" : "many",
+    "consumerGroup" : "$Default",
     "connection" : "AzureWebJobsEventHubSender",
     "eventHubName" : "test-inputjson-java"
   }, {
@@ -14,7 +14,7 @@
     "name" : "output",
     "direction" : "out",
     "connection" : "AzureWebJobsEventHubSender",
-    "eventHubName" : "test-output-java"
+    "eventHubName" : "test-outputjson-java"
   } ],
   "disabled" : false
 }

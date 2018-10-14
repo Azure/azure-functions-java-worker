@@ -6,8 +6,8 @@
     "name" : "messages",
     "direction" : "in",
     "dataType" : "string",
-	"cardinality" : "many",
     "consumerGroup" : "$Default",
+	"cardinality" : "many",
     "connection" : "AzureWebJobsEventHubSender",
     "eventHubName" : "test-input-java"
   }, {
