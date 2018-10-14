@@ -30,6 +30,8 @@ namespace Azure.Functions.Java.Tests.E2E
         // EventHubs
         public static string OutputEventHubQueueName = "test-eventhuboutput-java";
         public static string InputEventHubName = "test-input-java";
+        public static string InputJsonEventHubName = "test-inputjson-java";
+        public static string InputCardinalityOneEventHubName = "test-inputOne-java";
         public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
     }
 }

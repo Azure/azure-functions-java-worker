@@ -9,6 +9,8 @@ import java.util.stream.*;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.*;
+
 import org.apache.commons.lang3.reflect.*;
 
 import com.microsoft.azure.functions.*;
@@ -75,6 +77,7 @@ final class RpcJsonDataSource extends DataSource<String> {
         RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 
         JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String.class, s -> s);
+        JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String[].class, s -> RELAXED_JSON_MAPPER.readValue(s, String[].class));
         JSON_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (s, t) -> RELAXED_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
     }
 }
