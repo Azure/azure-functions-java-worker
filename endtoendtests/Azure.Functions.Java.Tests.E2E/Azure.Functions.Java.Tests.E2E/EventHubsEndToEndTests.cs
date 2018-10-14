@@ -20,7 +20,7 @@ namespace Azure.Functions.Java.Tests.E2E
             {
                 await SetupQueue(Constants.OutputJsonEventHubQueueName);
 
-                // Need to setup EventHubs: test-inputjson-java and test-output-java
+                // Need to setup EventHubs: test-inputjson-java and test-outputjson-java
                 await EventHubsHelpers.SendJSONMessagesAsync(expectedEventId);
 
                 //Verify
@@ -65,11 +65,11 @@ namespace Azure.Functions.Java.Tests.E2E
             {
                 await SetupQueue(Constants.OutputOneEventHubQueueName);
 
-                // Need to setup EventHubs: test-inputOne-java and test-output-java
+                // Need to setup EventHubs: test-inputOne-java and test-outputone-java
                 await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputCardinalityOneEventHubName);
 
                 //Verify
-                IEnumerable<string> queueMessages = await StorageHelpers.ReadMessagesFromQueue(Constants.OutputEventHubQueueName);
+                IEnumerable<string> queueMessages = await StorageHelpers.ReadMessagesFromQueue(Constants.OutputOneEventHubQueueName);
                 Assert.True(queueMessages.All(msg => msg.Contains(expectedEventId)));
             }
             finally
