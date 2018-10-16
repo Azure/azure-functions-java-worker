@@ -125,7 +125,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         public Object getBody() { return this.body; }
 
         @Override
-        public HttpResponseMessage.Builder createResponseBuilder(HttpStatus status) {
+        public HttpResponseMessage.Builder createResponseBuilder(HttpStatusType status) {
             return new RpcHttpDataTarget().status(status);
         }
 

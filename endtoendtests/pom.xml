@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.microsoft.azure.functions.endtoendtests</groupId>
@@ -16,12 +15,27 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <azure.functions.maven.plugin.version>1.0.0-beta-4</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>1.0.0-beta-5</azure.functions.java.library.version>
+        <azure.functions.java.library.version>1.0.0-beta-6-SNAPSHOT</azure.functions.java.library.version>
+        <azure.functions.java.library.stagingrepo>commicrosoftazure-2657</azure.functions.java.library.stagingrepo>
         <functionAppName>azure-functions-java-endtoendtests</functionAppName>
-        <functionAppRegion>westus</functionAppRegion>        
+        <functionAppRegion>westus</functionAppRegion>
         <functionResourceGroup>java-functions-group</functionResourceGroup>
         <stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>${azure.functions.java.library.stagingrepo}</id>
+            <name>${azure.functions.java.library.stagingrepo}</name>
+            <url>https://oss.sonatype.org/service/local/staging/repository/commicrosoftazure-2657/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>

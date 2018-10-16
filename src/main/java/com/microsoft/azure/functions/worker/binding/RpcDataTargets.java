@@ -20,25 +20,29 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     RpcHttpDataTarget() {
         super(HTTP_TARGET_OPERATIONS);
         this.headers = new HashMap<>();
-        this.status = HttpStatus.valueOf(200);
+        this.httpStatus = HttpStatus.OK;
+        this.httpStatusCode = HttpStatus.OK.value();
         super.setValue(this);
     }
-
+    
     @Override
-    public HttpStatus getStatus() { return this.status; }
+	public HttpStatusType getHttpStatus() {	return httpStatus; }
+    @Override    	  
+    public int getStatus() { return httpStatusCode; }
     @Override
     public String getHeader(String key) { return this.headers.get(key); }
     @Override
     public Object getBody() { return this.body; }
 
-    private HttpStatus status;
+    private int httpStatusCode;
+    private HttpStatusType httpStatus;
     private Object body;
     private Map<String, String> headers;
 
     private static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
-            RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(response.getStatus().value() + "");
+        	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatus()));
             response.headers.forEach(httpBuilder::putHeaders);
             RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
             bodyTarget.setValue(response.getBody());
@@ -54,11 +58,31 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
         HTTP_TARGET_OPERATIONS.addOperation(TYPE_ASSIGNMENT, RpcHttpDataTarget.class, v -> toHttpData((RpcHttpDataTarget) v));
     }
 
-	@Override
+	
 	public Builder status(HttpStatus status) {
-        this.status = status;
+		this.httpStatusCode = status.value();
+		this.httpStatus = status;
 		return this;
 	}
+	
+
+	@Override
+	public Builder status(HttpStatusType httpStatusType) {
+		this.httpStatusCode = httpStatusType.value();
+		this.httpStatus = httpStatusType;
+		return this;
+	}
+	
+	
+    public Builder status(int httpStatusCode) {
+        if (httpStatusCode < 100 || httpStatusCode > 599) {
+            throw new IllegalArgumentException("Invalid HTTP Status code class. Valid classes are in the range of 1xx, 2xx, 3xx, 4xx and 5xx.");
+        }
+        this.httpStatusCode = httpStatusCode;
+        this.httpStatus = HttpStatusType.custom(httpStatusCode);        
+        return this;
+    }
+
 
 	@Override
 	public Builder header(String key, String value) {
@@ -76,6 +100,9 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
 	public HttpResponseMessage build() {
 		return this;
 	}
+
+
+	
 }
 
 final class RpcUnspecifiedDataTarget extends DataTarget {
