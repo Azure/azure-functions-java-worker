@@ -14,9 +14,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <azure.functions.maven.plugin.version>1.0.0-beta-4</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>1.0.0-beta-6-SNAPSHOT</azure.functions.java.library.version>
-        <azure.functions.java.library.stagingrepo>commicrosoftazure-2657</azure.functions.java.library.stagingrepo>
+        <azure.functions.maven.plugin.version>1.0.0-beta-7</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>1.0.0-beta-6</azure.functions.java.library.version>
+        <azure.functions.java.library.stagingrepo>commicrosoftazure-2660</azure.functions.java.library.stagingrepo>
         <functionAppName>azure-functions-java-endtoendtests</functionAppName>
         <functionAppRegion>westus</functionAppRegion>
         <functionResourceGroup>java-functions-group</functionResourceGroup>
@@ -27,7 +27,7 @@
         <repository>
             <id>${azure.functions.java.library.stagingrepo}</id>
             <name>${azure.functions.java.library.stagingrepo}</name>
-            <url>https://oss.sonatype.org/service/local/staging/repository/commicrosoftazure-2657/</url>
+            <url>https://oss.sonatype.org/content/repositories/${azure.functions.java.library.stagingrepo}/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
