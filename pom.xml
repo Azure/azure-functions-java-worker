@@ -5,6 +5,11 @@
 	<artifactId>azure-functions-java-worker</artifactId>
 	<version>1.1.1-beta03</version>
 	<packaging>jar</packaging>
+	<parent>
+		<groupId>com.microsoft.maven</groupId>
+		<artifactId>java-8-parent</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+	</parent>
 
 	<name>Microsoft Azure Functions Java Runtime</name>
 	<description>This package contains the Java runtime environment for Microsoft Azure functions host.</description>
@@ -62,6 +67,19 @@
 		</developer>
 	</developers>
 
+	<repositories>
+		<repository>
+			<id>maven.snapshots</id>
+			<name>Maven Central Snapshot Repository</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>com.microsoft.azure.functions</groupId>
@@ -120,8 +138,7 @@
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<artifactId>junit</artifactId>			
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -175,12 +192,7 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
+				<artifactId>maven-compiler-plugin</artifactId>				
 			</plugin>
 			<plugin>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -219,16 +231,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.0</version>
-				<configuration>
-					<workingDirectory>${project.build.directory}</workingDirectory>
-					<systemProperties>
-						<property>
-							<name>testing-project-jar</name>
-							<value>${project.artifactId}-${project.version}-tests.jar</value>
-						</property>
-					</systemProperties>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
