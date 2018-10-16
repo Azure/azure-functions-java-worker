@@ -20,25 +20,25 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     RpcHttpDataTarget() {
         super(HTTP_TARGET_OPERATIONS);
         this.headers = new HashMap<>();
-        this.status = HttpStatus.valueOf(200);
+        this.httpStatus = HttpStatus.OK.value();
         super.setValue(this);
     }
 
     @Override
-    public HttpStatus getStatus() { return this.status; }
+    public int getHttpStatus() { return httpStatus; }
     @Override
     public String getHeader(String key) { return this.headers.get(key); }
     @Override
     public Object getBody() { return this.body; }
 
-    private HttpStatus status;
+    private int httpStatus;
     private Object body;
     private Map<String, String> headers;
 
     private static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
-            RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(response.getStatus().value() + "");
+            RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getHttpStatus()));
             response.headers.forEach(httpBuilder::putHeaders);
             RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
             bodyTarget.setValue(response.getBody());
@@ -56,9 +56,18 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
 
 	@Override
 	public Builder status(HttpStatus status) {
-        this.status = status;
+        this.httpStatus = status.value();
 		return this;
-	}
+    }
+    
+    @Override
+    public Builder status(int httpStatus) {
+        if (httpStatus < 100 || httpStatus > 599) {
+            throw new IllegalArgumentException("Invalid HTTP Status code class. Valid classes are in the range of 1xx, 2xx, 3xx, 4xx and 5xx.");
+        }
+        this.httpStatus = httpStatus;
+        return this;
+    }
 
 	@Override
 	public Builder header(String key, String value) {
