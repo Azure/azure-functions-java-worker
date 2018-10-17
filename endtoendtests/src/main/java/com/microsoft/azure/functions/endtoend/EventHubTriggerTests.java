@@ -13,7 +13,7 @@ public class EventHubTriggerTests {
      */
     @FunctionName("EventHubTriggerAndOutputJSON")
     public void EventHubTriggerAndOutputJSON(
-        @EventHubTrigger(name = "messages", eventHubName = "test-inputjson-java", connection = "AzureWebJobsEventHubSender") List<String> messages,
+        @EventHubTrigger(name = "messages", eventHubName = "test-inputjson-java", connection = "AzureWebJobsEventHubSender", cardinality = Cardinality.MANY) List<String> messages,
         @EventHubOutput(name = "output", eventHubName = "test-outputjson-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
@@ -23,7 +23,7 @@ public class EventHubTriggerTests {
 
     @FunctionName("EventHubTriggerAndOutputString")
     public void EventHubTriggerAndOutputString(
-        @EventHubTrigger(name = "messages", eventHubName = "test-input-java", connection = "AzureWebJobsEventHubSender", dataType = "string") String[] messages,
+        @EventHubTrigger(name = "messages", eventHubName = "test-input-java", connection = "AzureWebJobsEventHubSender", dataType = "string", cardinality = Cardinality.MANY) String[] messages,
         @EventHubOutput(name = "output", eventHubName = "test-output-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
