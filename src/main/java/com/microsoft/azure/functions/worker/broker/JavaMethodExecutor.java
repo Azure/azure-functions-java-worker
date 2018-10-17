@@ -14,8 +14,8 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Used to executor of arbitrary Java method in any JAR using reflection.
  * Thread-Safety: Multiple thread.
  */
-class JavaMethodExecutor {
-    JavaMethodExecutor(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+public class JavaMethodExecutor {
+    public JavaMethodExecutor(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException
     {
         descriptor.validateMethodInfo();
@@ -23,11 +23,9 @@ class JavaMethodExecutor {
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
         this.overloadResolver = new OverloadResolver();
 
-        for (Method method : this.containingClass.getMethods()) {
-            FunctionName annotatedName = method.getAnnotation(FunctionName.class);
-            
+        for (Method method : this.containingClass.getMethods()) {                     
             if (method.getName().equals(descriptor.getMethodName())) {
-                this.overloadResolver.addCandidate(method);
+                this.overloadResolver.addCandidate(method);                
             }
         }
 
@@ -47,6 +45,8 @@ class JavaMethodExecutor {
     }
     
     Map<String, BindingDefinition> getBindingDefinitions() { return this.bindingDefinitions; }
+    
+    public OverloadResolver getOverloadResolver() { return this.overloadResolver; }
 
     void execute(BindingDataStore dataStore) throws Exception {
         Object retValue = this.overloadResolver.resolve(dataStore)

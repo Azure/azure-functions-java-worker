@@ -14,7 +14,7 @@ import org.apache.commons.lang3.reflect.*;
  * Resolve a Java method overload using reflection.
  * Thread-Safety: Multiple thread.
  */
-class OverloadResolver {
+public class OverloadResolver {
     OverloadResolver() {
         this.candidates = new ArrayList<>();
     }
@@ -23,11 +23,11 @@ class OverloadResolver {
         this.candidates.add(new MethodBindInfo(method));
     }
 
-    synchronized boolean hasCandidates() {
+    public synchronized boolean hasCandidates() {
         return !this.candidates.isEmpty();
     }
 
-    synchronized boolean hasMultipleCandidates() {
+    public synchronized boolean hasMultipleCandidates() {
         return this.candidates.size() > 1;
     }
 

@@ -4,7 +4,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.microsoft.azure.functions.OutputBinding;
-import com.microsoft.azure.functions.worker.test.categories.*;
 import org.junit.*;
 import org.junit.experimental.categories.*;
 
@@ -13,8 +12,7 @@ import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.isVal
 import static org.junit.Assert.*;
 
 public class CoreTypeResolverTests {
-    @Test
-    @Category({UnitTesting.class, SmokeTesting.class, FunctionalTesting.class})
+    @Test    
     public void testIsValidOutputType() throws Exception {
         assertFalse(isValidOutputType(Integer.class));
         assertFalse(isValidOutputType(int.class));
@@ -29,8 +27,7 @@ public class CoreTypeResolverTests {
         assertFalse(isValidOutputType(returnTypeOf("outputExoutputInteger")));
     }
 
-    @Test
-    @Category({UnitTesting.class, SmokeTesting.class, FunctionalTesting.class})
+    @Test    
     public void testGetRuntimeClass() throws Exception {
         assertEquals(Integer.class, getRuntimeClass(Integer.class));
         assertEquals(Integer.TYPE, getRuntimeClass(int.class));
