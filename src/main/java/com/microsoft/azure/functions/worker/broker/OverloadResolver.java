@@ -27,6 +27,10 @@ class OverloadResolver {
         return !this.candidates.isEmpty();
     }
 
+    synchronized boolean hasMultipleCandidates() {
+        return this.candidates.size() > 1;
+    }
+
     synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
         Comparator<InvokeInfoBuilder> overloadComparator = Comparator
                 .<InvokeInfoBuilder>comparingInt(info -> info.matchingLevelCount[BindingData.MatchingLevel.BINDING_NAME.getIndex()])

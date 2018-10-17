@@ -16,23 +16,27 @@ import com.microsoft.azure.functions.rpc.messages.*;
  */
 class JavaMethodExecutor {
     JavaMethodExecutor(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
-            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException 
+            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException
     {
         descriptor.validateMethodInfo();
 
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
         this.overloadResolver = new OverloadResolver();
-        
+
         for (Method method : this.containingClass.getMethods()) {
             FunctionName annotatedName = method.getAnnotation(FunctionName.class);
             
-            if (method.getName().equals(descriptor.getMethodName()) && (annotatedName == null || annotatedName.value().equals(descriptor.getName()))) {
+            if (method.getName().equals(descriptor.getMethodName())) {
                 this.overloadResolver.addCandidate(method);
             }
         }
 
         if (!this.overloadResolver.hasCandidates()) {
             throw new NoSuchMethodException("There are no methods named \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
+        }
+
+        if (this.overloadResolver.hasMultipleCandidates()) {
+            throw new UnsupportedOperationException("Found more than one function with method name \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
         }
 
         this.bindingDefinitions = new HashMap<>();
