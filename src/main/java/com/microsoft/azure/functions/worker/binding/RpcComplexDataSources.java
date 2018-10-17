@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.*;
 import org.apache.commons.lang3.reflect.*;
 
 import com.microsoft.azure.functions.*;
+import com.microsoft.azure.functions.HttpResponseMessage.Builder;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.binding.BindingData.*;
@@ -128,9 +129,15 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         public HttpResponseMessage.Builder createResponseBuilder(HttpStatusType status) {
             return new RpcHttpDataTarget().status(status);
         }
+        
+        @Override
+		public Builder createResponseBuilder(HttpStatus status) {
+        	return new RpcHttpDataTarget().status(status);
+		}
 
         private RpcHttpRequestDataSource parentDataSource;
         private Object body;
+		
     }
 
     private final RpcHttp httpPayload;

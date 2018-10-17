@@ -16,7 +16,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<azure.functions.java.library.stagingrepo>commicrosoftazure-2662</azure.functions.java.library.stagingrepo>
+		<azure.functions.java.library.stagingrepo>commicrosoftazure-2663</azure.functions.java.library.stagingrepo>
 		<azure.functions.java.library.version>1.0.0-beta-6</azure.functions.java.library.version>
 	</properties>
 
