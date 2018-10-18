@@ -32,7 +32,7 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-        public static async Task<bool> InvokeHttpTrigger(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedMessage)
+        public static async Task<bool> InvokeHttpTrigger(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedMessage, int expectedCode = 0)
         {
             string uri = $"api/{functionName}{queryString}";
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -41,7 +41,7 @@ namespace Azure.Functions.Java.Tests.E2E
             var httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(Constants.FunctionsHostUrl);
             var response = await httpClient.SendAsync(request);
-            if(expectedStatusCode != response.StatusCode)
+            if (expectedStatusCode != response.StatusCode && expectedCode != (int)response.StatusCode)
             {
                 return false;
             }

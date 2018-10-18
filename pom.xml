@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure.functions</groupId>
 	<artifactId>azure-functions-java-worker</artifactId>
@@ -15,6 +16,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<azure.functions.java.library.stagingrepo>commicrosoftazure-2663</azure.functions.java.library.stagingrepo>
+		<azure.functions.java.library.version>1.0.0-beta-6</azure.functions.java.library.version>
 	</properties>
 
 	<licenses>
@@ -32,11 +35,30 @@
 		<tag>HEAD</tag>
 	</scm>
 
+	<repositories>
+		<repository>
+			<id>${azure.functions.java.library.stagingrepo}</id>
+			<name>${azure.functions.java.library.stagingrepo}</name>
+			<url>https://oss.sonatype.org/content/repositories/${azure.functions.java.library.stagingrepo}/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
 	<developers>
 		<developer>
 			<id>junyi</id>
 			<name>Junyi Yi</name>
 			<email>junyi@microsoft.com</email>
+		</developer>
+		<developer>
+			<id>pgopa</id>
+			<name>Pragna Gopa</name>
+			<email>pgopa@microsoft.com</email>
 		</developer>
 	</developers>
 
@@ -44,7 +66,7 @@
 		<dependency>
 			<groupId>com.microsoft.azure.functions</groupId>
 			<artifactId>azure-functions-java-library</artifactId>
-			<version>1.0.0-beta-5</version>
+			<version>${azure.functions.java.library.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.protobuf</groupId>
