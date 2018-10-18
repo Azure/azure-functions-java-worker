@@ -40,20 +40,6 @@
 		<tag>HEAD</tag>
 	</scm>
 
-	<repositories>
-		<repository>
-			<id>${azure.functions.java.library.stagingrepo}</id>
-			<name>${azure.functions.java.library.stagingrepo}</name>
-			<url>https://oss.sonatype.org/content/repositories/${azure.functions.java.library.stagingrepo}/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-
 	<developers>
 		<developer>
 			<id>junyi</id>
@@ -74,6 +60,17 @@
 			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
 			<releases>
 				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>${azure.functions.java.library.stagingrepo}</id>
+			<name>${azure.functions.java.library.stagingrepo}</name>
+			<url>https://oss.sonatype.org/content/repositories/${azure.functions.java.library.stagingrepo}/</url>
+			<releases>
+				<enabled>true</enabled>
 			</releases>
 			<snapshots>
 				<enabled>true</enabled>
