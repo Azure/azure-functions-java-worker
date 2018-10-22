@@ -16,7 +16,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <azure.functions.maven.plugin.version>1.0.0-beta-7</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>1.0.0-beta-6</azure.functions.java.library.version>
-        <azure.functions.java.library.stagingrepo>commicrosoftazure-2663</azure.functions.java.library.stagingrepo>
+        <azure.functions.java.library.stagingrepo>commicrosoftazure-2669</azure.functions.java.library.stagingrepo>
         <functionAppName>azure-functions-java-endtoendtests</functionAppName>
         <functionAppRegion>westus</functionAppRegion>
         <functionResourceGroup>java-functions-group</functionResourceGroup>
