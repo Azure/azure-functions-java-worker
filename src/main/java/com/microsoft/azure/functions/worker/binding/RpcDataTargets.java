@@ -26,9 +26,9 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     }
     
     @Override
-	public HttpStatusType getHttpStatus() {	return httpStatus; }
+	public HttpStatusType getStatus() {	return httpStatus; }
     @Override    	  
-    public int getStatus() { return httpStatusCode; }
+    public int getStatusCode() { return httpStatusCode; }
     @Override
     public String getHeader(String key) { return this.headers.get(key); }
     @Override
@@ -42,7 +42,7 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     private static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
-        	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatus()));
+        	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatusCode()));
             response.headers.forEach(httpBuilder::putHeaders);
             RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
             bodyTarget.setValue(response.getBody());
