@@ -121,5 +121,41 @@ namespace Azure.Functions.Java.Tests.E2E
                 await CosmosDBHelpers.DeleteTestDocuments(expectedDocId2);
             }
         }
+
+        [Fact]
+        public async Task CosmosDBInputSqlQuery_POJOArrayAndList_Succeeds()
+        {
+            string expectedDocId1 = Guid.NewGuid().ToString();
+            string expectedDocId2 = Guid.NewGuid().ToString();
+            string testName = "Joe";
+            try
+            {
+                //Setup
+                TestDocument testDocument1 = new TestDocument()
+                {
+                    id = expectedDocId1,
+                    name = testName
+                };
+
+                TestDocument testDocument2 = new TestDocument()
+                {
+                    id = expectedDocId2,
+                    name = testName
+                };
+                await CosmosDBHelpers.CreateDocumentCollections();
+                await CosmosDBHelpers.CreateDocument(testDocument1);
+                await CosmosDBHelpers.CreateDocument(testDocument2);
+
+                // Trigger and verify
+                Assert.True(await Utilities.InvokeHttpTrigger("CosmosDBInputQueryPOJOArray", "?&name=Joe", HttpStatusCode.OK, "Joe"));
+                Assert.True(await Utilities.InvokeHttpTrigger("CosmosDBInputQueryPOJOList", "?&name=Joe", HttpStatusCode.OK, "Joe"));
+            }
+            finally
+            {
+                //Clean up
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId1);
+                await CosmosDBHelpers.DeleteTestDocuments(expectedDocId2);
+            }
+        }
     }
 }

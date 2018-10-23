@@ -1,16 +1,14 @@
 package com.microsoft.azure.functions.worker.binding;
 
+import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
 
-import com.microsoft.azure.functions.worker.binding.BindingData.*;
-import com.microsoft.azure.functions.worker.binding.BindingDefinition.*;
 import com.microsoft.azure.functions.worker.broker.*;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.rpc.messages.*;
-
-import static com.microsoft.azure.functions.worker.binding.BindingData.MatchingLevel.*;
 
 /**
  * A warehouse storing all binding related information including actual binding value as well as binding declaration info.
@@ -21,6 +19,9 @@ public final class BindingDataStore {
     public BindingDataStore() {
         this.sources = new ArrayList<>();
         this.targets = new HashMap<>();
+        this.inputSources = new HashMap<>();
+        this.otherSources = new HashMap<>();
+        this.metadataSources = new HashMap<>();
         this.promotedTargets = null;
     }
 
@@ -29,34 +30,32 @@ public final class BindingDataStore {
     public void addParameterSources(List<ParameterBinding> parameters) {
         assert parameters != null;
         for (ParameterBinding parameter : parameters) {
-            this.sources.add(rpcSourceFromParameter(parameter));
+        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);
+            this.sources.add(inputValue);
+            this.inputSources.put(parameter.getName(), inputValue);
         }
     }
 
     public void addTriggerMetadataSource(Map<String, TypedData> metadata) {
         this.sources.add(new RpcTriggerMetadataDataSource(metadata));
+        for (Map.Entry<String,TypedData> entry : metadata.entrySet())  
+        {
+        	DataSource<?> inputValue = rpcSourceFromTypedData(entry.getKey(), entry.getValue());            
+            this.metadataSources.put(entry.getKey(), inputValue);        	
+        }            
     }
 
     public void addExecutionContextSource(String invocationId, String funcname) {
         this.sources.add(new ExecutionContextDataSource(invocationId, funcname));
+        otherSources.put(ExecutionContext.class, new ExecutionContextDataSource(invocationId, funcname));
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
-        return this.getDataByLevels((s, l) -> s.computeByName(l, name, target), BINDING_NAME, TRIGGER_METADATA_NAME, METADATA_NAME);
+    	return this.inputSources.get(name).computeByName(name, target);
     }
-
-    public Optional<BindingData> getDataByType(Type target) {
-        return this.getDataByLevels((s, l) -> s.computeByType(l, target), TYPE_ASSIGNMENT, TYPE_STRICT_CONVERSION, TYPE_RELAXED_CONVERSION);
-    }
-
-    private Optional<BindingData> getDataByLevels(BiFunction<DataSource<?>, MatchingLevel, Optional<BindingData>> worker, MatchingLevel... levels) {
-        for (MatchingLevel level : levels) {
-            List<BindingData> data = this.sources.stream()
-                .flatMap(src -> worker.apply(src, level).map(Stream::of).orElseGet(Stream::empty))
-                .limit(2).collect(Collectors.toList());
-            if (data.size() > 0) { return Optional.ofNullable(data.size() == 1 ? data.get(0) : null); }
-        }
-        return Optional.empty();
+    
+    public Optional<BindingData> getDataByType(Type target) throws JsonParseException, JsonMappingException, IOException {
+    	return this.otherSources.get(ExecutionContext.class).computeByType(target);        
     }
 
     static DataSource<?> rpcSourceFromTypedData(String name, TypedData data) {
@@ -104,7 +103,7 @@ public final class BindingDataStore {
                 this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
             }
         }
-        return Optional.ofNullable(output).map(out -> new BindingData(out, BINDING_NAME));
+        return Optional.ofNullable(output).map(out -> new BindingData(out));
     }
 
     public void setDataTargetValue(String name, Object value) {
@@ -155,6 +154,9 @@ public final class BindingDataStore {
     private final List<DataSource<?>> sources;
     private UUID promotedTargets;
     private final Map<UUID, Map<String, DataTarget>> targets;
+    private final Map<String, DataSource<?>> inputSources;
+    private final Map<Type, DataSource<?>> otherSources;
+    private final Map<String, DataSource<?>> metadataSources;
     private Map<String, BindingDefinition> definitions;
     public static final String RETURN_NAME = "$return";
 }

@@ -3,9 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import java.lang.invoke.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.stream.*;
 
-import com.google.common.collect.*;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.worker.binding.*;
 import org.apache.commons.lang3.reflect.*;
@@ -44,12 +42,22 @@ public class OverloadResolver {
         try {
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             for (ParamBindInfo param : method.params) {
-                Optional<BindingData> argument;
+                Optional<BindingData> argument = null;
                 if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
                     argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type);
-                } else if (param.name != null && !param.name.isEmpty()) {
+                }
+                /*else if(Collection.class.isAssignableFrom(TypeUtils.getRawType(param.type, null)))
+                {
+                    ParameterizedType pType = (ParameterizedType) param.type;
+                    Class<?> clazz = (Class<?>) pType.getActualTypeArguments()[0];
+                    System.out.println(clazz); //print
+                    argument = dataStore.getDataByNameList(param.name, clazz);
+                    
+                }*/
+                else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
-                } else {
+                } 
+                else {
                     argument = dataStore.getDataByType(param.type);
                 }
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
