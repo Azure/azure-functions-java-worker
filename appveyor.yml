@@ -76,7 +76,7 @@ after_build:
       
       Write-Host "Building endtoendtests...."
       cd -Path c:\projects\azure-functions-java-worker\endtoendtests
-      cmd.exe /c '.\..\mvnBuildSkipTests.bat'
+      mvn clean package -Dmaven.test.skip
       cd -Path c:\projects\azure-functions-java-worker
 
       Write-Host "Copying EventHubs function.json as temporary workaround...."
