@@ -1,9 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure.functions</groupId>
 	<artifactId>azure-functions-java-worker</artifactId>
-	<version>1.1.1-beta03</version>
+	<version>1.1.1-beta04-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<parent>
 		<groupId>com.microsoft.maven</groupId>
@@ -20,9 +19,8 @@
 	</organization>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<azure.functions.java.library.stagingrepo>commicrosoftazure-2669</azure.functions.java.library.stagingrepo>
-		<azure.functions.java.library.version>1.0.0-beta-6</azure.functions.java.library.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>		
+		<azure.functions.java.library.version>1.0.0-beta-7-SNAPSHOT</azure.functions.java.library.version>
 	</properties>
 
 	<licenses>
@@ -64,18 +62,7 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-		</repository>
-		<repository>
-			<id>${azure.functions.java.library.stagingrepo}</id>
-			<name>${azure.functions.java.library.stagingrepo}</name>
-			<url>https://oss.sonatype.org/content/repositories/${azure.functions.java.library.stagingrepo}/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
+		</repository>		
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -91,27 +78,27 @@
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-protobuf</artifactId>
-			<version>1.15.0</version>
+			<version>1.15.1</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-stub</artifactId>
-			<version>1.15.0</version>
+			<version>1.15.1</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-netty</artifactId>
-			<version>1.15.0</version>
+			<version>1.15.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>26.0-jre</version>
+			<version>27.0-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.8</version>
+			<version>3.8.1</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -121,12 +108,12 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.6</version>
+			<version>2.9.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.9.6</version>
+			<version>2.9.7</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.annotation</groupId>
