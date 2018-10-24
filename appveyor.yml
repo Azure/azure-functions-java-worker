@@ -24,7 +24,6 @@ install:
   - cmd: echo %JAVA_HOME%
   
 build_script:
-  - cmd: mvn clean package -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B
   - ps: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
@@ -74,9 +73,10 @@ after_build:
       $Env:FUNCTIONS_WORKER_RUNTIME = "java"
       $Env:AZURE_FUNCTIONS_ENVIRONMENT = "development"
       $Env:Path = $Env:Path+";c:\projects\azure-functions-java-worker\Azure.Functions.Cli"
-
+      
+      Write-Host "Building endtoendtests...."
       cd -Path c:\projects\azure-functions-java-worker\endtoendtests
-      mvn clean package -q
+      cmd.exe /c '.\..\mvnBuildSkipTests.bat'
       cd -Path c:\projects\azure-functions-java-worker
 
       Write-Host "Copying EventHubs function.json as temporary workaround...."
