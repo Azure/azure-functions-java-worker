@@ -64,6 +64,7 @@
 			</snapshots>
 		</repository>		
 	</repositories>
+	
 	<dependencies>
 		<dependency>
 			<groupId>com.microsoft.azure.functions</groupId>

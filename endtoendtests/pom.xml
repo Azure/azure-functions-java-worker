@@ -15,8 +15,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <azure.functions.maven.plugin.version>1.0.0-beta-7</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>1.0.0-beta-6</azure.functions.java.library.version>
-        <azure.functions.java.library.stagingrepo>commicrosoftazure-2669</azure.functions.java.library.stagingrepo>
+        <azure.functions.java.library.version>1.0.0-beta-7-SNAPSHOT</azure.functions.java.library.version>        
         <functionAppName>azure-functions-java-endtoendtests</functionAppName>
         <functionAppRegion>westus</functionAppRegion>
         <functionResourceGroup>java-functions-group</functionResourceGroup>
@@ -24,18 +23,18 @@
     </properties>
 
     <repositories>
-        <repository>
-            <id>${azure.functions.java.library.stagingrepo}</id>
-            <name>${azure.functions.java.library.stagingrepo}</name>
-            <url>https://oss.sonatype.org/content/repositories/${azure.functions.java.library.stagingrepo}/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+		<repository>
+			<id>maven.snapshots</id>
+			<name>Maven Central Snapshot Repository</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>		
+	</repositories>
 
     <dependencyManagement>
         <dependencies>
