@@ -9,7 +9,11 @@ function StopOnFailedExecution {
     exit $LastExitCode 
   }
 }
+Write-Host "Building azure-functions-java-worker" 
+cmd.exe /c '.\mvnBuild.bat'
+StopOnFailedExecution
 
+Write-Host "Creating nuget package Microsoft.Azure.Functions.JavaWorker" 
 Write-Host "buildNumber: " $buildNumber
 Get-Command nuget
 StopOnFailedExecution
