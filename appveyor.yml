@@ -65,6 +65,7 @@ after_build:
 
       Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
       Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
+      Copy-Item ".\worker.config.json" ".\Azure.Functions.Cli\workers\java"
 
 
       Write-Host "Staring Functions Host...."
