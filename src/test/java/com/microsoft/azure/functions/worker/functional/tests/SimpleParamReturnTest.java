@@ -23,7 +23,6 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 	private static String stringReturnValue;
 
 	public String ReturnStringFunction() {
-
 		return stringReturnValue;
 	}
 

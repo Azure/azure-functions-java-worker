@@ -69,8 +69,9 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
         addUrlToSystemClassLoader(url);
     }
     
-    private boolean isUrlPointingToAFile(URL url) {
-        File file = new File(url.getPath());
+    public static boolean isUrlPointingToAFile(URL url) throws UnsupportedEncodingException {
+    	String decodedPath = URLDecoder.decode(url.getPath(), "UTF-8");
+        File file = new File(decodedPath);
         return file.exists();
     }
     

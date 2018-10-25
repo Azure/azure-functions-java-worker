@@ -5,7 +5,6 @@ import java.util.*;
 
 import com.microsoft.azure.functions.OutputBinding;
 import org.junit.*;
-import org.junit.experimental.categories.*;
 
 import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.getRuntimeClass;
 import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.isValidOutputType;
