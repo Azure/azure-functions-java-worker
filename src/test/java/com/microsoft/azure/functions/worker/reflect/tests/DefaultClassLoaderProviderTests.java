@@ -24,21 +24,21 @@ public class DefaultClassLoaderProviderTests {
 
 	@Parameter
 	public String filePath;
-	
+
 	@Rule
 	public TemporaryFolder testFolder = new TemporaryFolder();
 
 	@Test
-	public void isUrlPointingToAFile_Returns_True() throws IOException {				
-		File createdFile = testFolder.newFile(filePath);			
+	public void isUrlPointingToAFile_Returns_True() throws IOException {
+		File createdFile = testFolder.newFile(filePath);
 		boolean fileExists = DefaultClassLoaderProvider.isUrlPointingToAFile(createdFile.toURI().toURL());
 		assertTrue(fileExists);
 	}
-	
+
 	@Test
-	public void isUrlPointingToAFile_False() throws IOException {	
+	public void isUrlPointingToAFile_False() throws IOException {
 		String dummyFile = "filedoesnotexist.txt";
-		URL jarUrl = new File(dummyFile).toURI().toURL();		
+		URL jarUrl = new File(dummyFile).toURI().toURL();
 		boolean fileExists = DefaultClassLoaderProvider.isUrlPointingToAFile(jarUrl);
 		assertFalse(fileExists);
 	}
