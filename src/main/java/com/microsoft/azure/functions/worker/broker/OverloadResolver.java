@@ -45,15 +45,7 @@ public class OverloadResolver {
                 Optional<BindingData> argument = null;
                 if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
                     argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type);
-                }
-                /*else if(Collection.class.isAssignableFrom(TypeUtils.getRawType(param.type, null)))
-                {
-                    ParameterizedType pType = (ParameterizedType) param.type;
-                    Class<?> clazz = (Class<?>) pType.getActualTypeArguments()[0];
-                    System.out.println(clazz); //print
-                    argument = dataStore.getDataByNameList(param.name, clazz);
-                    
-                }*/
+                }                
                 else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
                 } 
