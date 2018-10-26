@@ -32,8 +32,8 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 		try (FunctionsTestHost host = new FunctionsTestHost()) {
 			this.loadFunction(host, "returnStringTestId", "ReturnStringFunction");
 			InvocationResponse stringResponse = host.call("getret", "returnStringTestId");
-			//assertEquals(TypedData.DataCase.JSON, stringResponse.getReturnValue().getDataCase());
-			//assertEquals(stringInput, stringResponse.getReturnValue().getString());
+			assertEquals(TypedData.DataCase.JSON, stringResponse.getReturnValue().getDataCase());
+			assertEquals(stringInput, stringResponse.getReturnValue().getString());
 		}
 	}
 }

@@ -191,7 +191,7 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(float.class, RpcUnspecifiedDataTarget::toRealNumberData);
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(Float.class, RpcUnspecifiedDataTarget::toRealNumberData);
         UNSPECIFIED_TARGET_OPERATIONS.addOperation(byte[].class, RpcUnspecifiedDataTarget::toByteArrayData);
-        UNSPECIFIED_TARGET_OPERATIONS.addFullOperation(String.class, (val, type) -> {
+        UNSPECIFIED_TARGET_OPERATIONS.addGenericOperation(String.class, (val, type) -> {
             try {
                 return toJsonData(val);
             } catch (Exception ex) {

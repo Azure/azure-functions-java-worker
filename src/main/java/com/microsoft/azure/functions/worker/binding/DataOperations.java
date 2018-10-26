@@ -57,10 +57,10 @@ class DataOperations<T, R> {
 	}
 
 	void addOperation(Type targetType, CheckedFunction<T, R> operation) {
-		this.addFullOperation(targetType, (src, type) -> operation.apply(src));
+		this.addGenericOperation(targetType, (src, type) -> operation.apply(src));
 	}
 
-	void addFullOperation(Type targetType, CheckedBiFunction<T, Type, R> operation) {
+	void addGenericOperation(Type targetType, CheckedBiFunction<T, Type, R> operation) {
 		this.operations.put(targetType, operation);
 	}
 

@@ -40,7 +40,7 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
-        EXECONTEXT_DATA_OPERATIONS.addFullOperation(ExecutionContext.class, DataOperations::generalAssignment);
+        EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 }
 
@@ -137,7 +137,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
 
     private static final DataOperations<RpcHttpRequestDataSource, Object> HTTP_DATA_OPERATIONS = new DataOperations<>();
     static {
-        HTTP_DATA_OPERATIONS.addFullOperation(HttpRequestMessage.class, (v, t) -> {            
+        HTTP_DATA_OPERATIONS.addGenericOperation(HttpRequestMessage.class, (v, t) -> {            
                 Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(t, HttpRequestMessage.class);
                 Type actualType = typeArgs.size() > 0 ? typeArgs.values().iterator().next() : Object.class;
                 BindingData bodyData = v.bodyDataSource.computeByType(actualType).orElseThrow(ClassCastException::new);
