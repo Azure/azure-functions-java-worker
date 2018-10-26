@@ -85,13 +85,17 @@ class DataOperations<T, R> {
 		        	ParameterizedType pType = (ParameterizedType) targetType;
 		        	Class<?> collectionItemType = (Class<?>) pType.getActualTypeArguments()[0];
 		        	String sourceData = (String)sourceValue;
+		        	try {
+		        	
 		            Object objList = RELAXED_JSON_MAPPER.readValue(sourceData, RELAXED_JSON_MAPPER.getTypeFactory().constructCollectionType(List.class, collectionItemType));
-		            resultValue = (Optional<R>)Optional.ofNullable(objList);                    
+		            resultValue = (Optional<R>)Optional.ofNullable(objList);
+		        	} catch (Exception jsonParseEx) {
+		        		resultValue = convertFromJson(sourceValue, targetType, RELAXED_JSON_MAPPER);
+		        	}		        	
                 }
 		        else
 		        {
-		        	Object obj = RELAXED_JSON_MAPPER.readValue((String)sourceValue, TypeUtils.getRawType(targetType, null));
-			        resultValue = (Optional<R>)Optional.ofNullable(obj);
+		        	resultValue = convertFromJson(sourceValue, TypeUtils.getRawType(targetType, null), RELAXED_JSON_MAPPER);		        	
 		        }		        
 			}
 		}
@@ -100,6 +104,12 @@ class DataOperations<T, R> {
 			resultValue = ((Optional<R>) Optional.ofNullable(generalAssignment(sourceValue, targetType)));
 		}
 		return resultValue;
+	}
+
+	private Optional<R> convertFromJson(T sourceValue, Type targetType, ObjectMapper RELAXED_JSON_MAPPER)
+			throws IOException, JsonParseException, JsonMappingException {		
+		Object obj = RELAXED_JSON_MAPPER.readValue((String)sourceValue, TypeUtils.getRawType(targetType, null));
+		return (Optional<R>)Optional.ofNullable(obj);		
 	}
 
 	static Object generalAssignment(Object value, Type target) {

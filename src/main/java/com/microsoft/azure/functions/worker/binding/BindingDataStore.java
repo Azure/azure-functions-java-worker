@@ -16,8 +16,7 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Thread-safety: Single thread.
  */
 public final class BindingDataStore {
-    public BindingDataStore() {
-        this.sources = new ArrayList<>();
+    public BindingDataStore() {        
         this.targets = new HashMap<>();
         this.inputSources = new HashMap<>();
         this.otherSources = new HashMap<>();
@@ -30,14 +29,12 @@ public final class BindingDataStore {
     public void addParameterSources(List<ParameterBinding> parameters) {
         assert parameters != null;
         for (ParameterBinding parameter : parameters) {
-        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);
-            this.sources.add(inputValue);
+        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);            
             this.inputSources.put(parameter.getName(), inputValue);
         }
     }
 
-    public void addTriggerMetadataSource(Map<String, TypedData> metadata) {
-        this.sources.add(new RpcTriggerMetadataDataSource(metadata));
+    public void addTriggerMetadataSource(Map<String, TypedData> metadata) {        
         for (Map.Entry<String,TypedData> entry : metadata.entrySet())  
         {
         	DataSource<?> inputValue = rpcSourceFromTypedData(entry.getKey(), entry.getValue());            
@@ -45,8 +42,7 @@ public final class BindingDataStore {
         }            
     }
 
-    public void addExecutionContextSource(String invocationId, String funcname) {
-        this.sources.add(new ExecutionContextDataSource(invocationId, funcname));
+    public void addExecutionContextSource(String invocationId, String funcname) {        
         otherSources.put(ExecutionContext.class, new ExecutionContextDataSource(invocationId, funcname));
     }
 
@@ -75,7 +71,7 @@ public final class BindingDataStore {
         return rpcSourceFromTypedData(parameter.getName(), parameter.getData());
     }
 
-    ///////////////////////// endregion Input Binding Data
+    ///////////////////////// end region Input Binding Data
 
     ///////////////////////// region Output Binding Data
 
@@ -133,7 +129,7 @@ public final class BindingDataStore {
         return new RpcUnspecifiedDataTarget();
     }
 
-    ///////////////////////// endregion Output Binding Data
+    ///////////////////////// end region Output Binding Data
 
     ///////////////////////// region Binding Definitions
 
@@ -151,7 +147,6 @@ public final class BindingDataStore {
 
     ///////////////////////// endregion Binding Definitions
 
-    private final List<DataSource<?>> sources;
     private UUID promotedTargets;
     private final Map<UUID, Map<String, DataTarget>> targets;
     private final Map<String, DataSource<?>> inputSources;
