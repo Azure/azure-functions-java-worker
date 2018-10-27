@@ -1,7 +1,6 @@
 package com.microsoft.azure.functions.worker.functional.tests;
 
 import com.microsoft.azure.functions.rpc.messages.*;
-import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.worker.test.utilities.*;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -15,7 +14,7 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 
 	@Parameters
 	public static Object[] data() {
-		return new Object[] { "test String", "" };
+		return new Object[] { "test String" };
 	}
 
 	@Parameter

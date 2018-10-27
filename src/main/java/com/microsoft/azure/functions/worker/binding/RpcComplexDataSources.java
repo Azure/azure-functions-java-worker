@@ -4,12 +4,10 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.logging.*;
-import java.util.stream.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.*;
 
 import org.apache.commons.lang3.reflect.*;
 
@@ -17,9 +15,6 @@ import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.HttpResponseMessage.Builder;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
-import com.microsoft.azure.functions.worker.binding.BindingData.*;
-
-import static com.microsoft.azure.functions.worker.binding.BindingData.MatchingLevel.*;
 
 final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
     ExecutionContextDataSource(String invocationId, String funcname) {
@@ -45,7 +40,7 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
-        EXECONTEXT_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, DataOperations::generalAssignment);
+        EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 }
 
@@ -55,11 +50,8 @@ final class RpcTriggerMetadataDataSource extends DataSource<Map<String, TypedDat
     }
 
     @Override
-    Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
-        if (level == TRIGGER_METADATA_NAME) {
-            return Optional.ofNullable(this.getValue().get(name)).map(v -> BindingDataStore.rpcSourceFromTypedData(name, v));
-        }
-        return super.lookupName(level, name);
+    Optional<DataSource<?>> lookupName(String name) {
+      return Optional.ofNullable(this.getValue().get(name)).map(v -> BindingDataStore.rpcSourceFromTypedData(name, v));
     }
 
     private static final DataOperations<Map<String, TypedData>, Object> TRIGGER_METADATA_OPERATIONS = new DataOperations<>();
@@ -77,9 +69,8 @@ final class RpcJsonDataSource extends DataSource<String> {
         RELAXED_JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 
-        JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String.class, s -> s);
-        JSON_DATA_OPERATIONS.addOperation(TYPE_STRICT_CONVERSION, String[].class, s -> RELAXED_JSON_MAPPER.readValue(s, String[].class));
-        JSON_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (s, t) -> RELAXED_JSON_MAPPER.readValue(s, TypeUtils.getRawType(t, null)));
+        JSON_DATA_OPERATIONS.addOperation(String.class, s -> s);
+        JSON_DATA_OPERATIONS.addOperation(String[].class, s -> RELAXED_JSON_MAPPER.readValue(s, String[].class));        
     }
 }
 
@@ -91,23 +82,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         this.fields = Arrays.asList(this.httpPayload.getHeadersMap(), this.httpPayload.getQueryMap(), this.httpPayload.getParamsMap());
         this.setValue(this);
     }
-
-    @Override
-    Optional<DataSource<?>> lookupName(MatchingLevel level, String name) {
-        if (level == METADATA_NAME) {
-            List<DataSource<?>> values = this.fields.stream()
-                .map(f -> f.get(name))
-                .filter(Objects::nonNull)
-                .limit(2)
-                .map(v -> new RpcStringDataSource(name, v))
-                .collect(Collectors.toList());
-            if (values.size() == 1) {
-                return Optional.of(values.get(0));
-            }
-        }
-        return super.lookupName(level, name);
-    }
-
+    
     private static class HttpRequestMessageImpl implements HttpRequestMessage {
         private HttpRequestMessageImpl(RpcHttpRequestDataSource parentDataSource, Object body) {
             this.parentDataSource = parentDataSource;
@@ -146,16 +121,11 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
 
     private static final DataOperations<RpcHttpRequestDataSource, Object> HTTP_DATA_OPERATIONS = new DataOperations<>();
     static {
-        HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_ASSIGNMENT, (v, t) -> {
-            if (HttpRequestMessage.class.equals(TypeUtils.getRawType(t, null))) {
+        HTTP_DATA_OPERATIONS.addGenericOperation(HttpRequestMessage.class, (v, t) -> {            
                 Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(t, HttpRequestMessage.class);
                 Type actualType = typeArgs.size() > 0 ? typeArgs.values().iterator().next() : Object.class;
                 BindingData bodyData = v.bodyDataSource.computeByType(actualType).orElseThrow(ClassCastException::new);
                 return new HttpRequestMessageImpl(v, bodyData.getValue());
-            }
-            throw new ClassCastException();
-        });
-        HTTP_DATA_OPERATIONS.addGuardOperation(TYPE_RELAXED_CONVERSION, (v, t) ->
-                v.bodyDataSource.computeByType(t).orElseThrow(ClassCastException::new).getNullSafeValue());
+        });        
     }
 }

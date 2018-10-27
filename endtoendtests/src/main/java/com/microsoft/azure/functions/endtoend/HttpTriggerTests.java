@@ -35,14 +35,14 @@ public class HttpTriggerTests {
         final ExecutionContext context)  throws Exception{
         context.getLogger().info("Java HTTP trigger processed a request.");
         throw new Exception("Test Exception");
-    }
-
+    }   
+    
     @FunctionName("HttpTriggerJavaMetadata")
     public static String HttpTriggerJavaMetadata(
         @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-        @BindingName("name") String queryValue
+        @BindingName("firstName") String queryValue1, @BindingName("lastName") String queryValue2
     ) {
-        return queryValue;
+        return queryValue1+queryValue2;
     }
 
     @FunctionName("HttpTriggerCustomCode")

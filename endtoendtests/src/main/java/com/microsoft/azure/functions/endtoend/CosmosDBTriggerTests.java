@@ -47,7 +47,8 @@ public class CosmosDBTriggerTests {
             return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Did not find expected item in ItemsCollectionIn").build();
         }
-    }
+    } 
+   
 
     /**
      * This function will be invoked when a message is posted to
@@ -60,13 +61,24 @@ public class CosmosDBTriggerTests {
             @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") Document[] items,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a request.");
-
-        // Parse query parameters
-        String query = request.getQueryParameters().get("name");
-        String name = request.getBody().orElse(query);
-
+        
         if (items.length >= 2) {
-            return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
+            return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + items[0].name).build();
+        } else {
+            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Did not find expected items in CosmosDB input list").build();
+        }
+    }
+    
+    @FunctionName("CosmosDBInputQueryPOJOList")
+    public HttpResponseMessage CosmosDBInputQueryPOJOList(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
+            HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") List<Document> items,
+            final ExecutionContext context) {
+        context.getLogger().info("Java HTTP trigger processed a request.");
+        
+        if (items.size() >= 2) {
+            return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + items.get(0).name).build();
         } else {
             return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Did not find expected items in CosmosDB input list").build();
@@ -120,6 +132,8 @@ public class CosmosDBTriggerTests {
 
     public static class Document {
         public String id;
+        public String name;
         public String Description;
+        
     }
 }
