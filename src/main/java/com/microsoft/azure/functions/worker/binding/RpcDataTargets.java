@@ -192,7 +192,5 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
         UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Float.class, RpcUnspecifiedDataTarget::toRealNumberData);
         UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(byte[].class, RpcUnspecifiedDataTarget::toByteArrayData);
         UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(String.class, RpcUnspecifiedDataTarget::toStringData);
-        //UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(HttpResponseMessage.class, v -> RpcHttpDataTarget.toHttpData((RpcHttpDataTarget) v));
-        //UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(RpcHttpDataTarget.class, v -> RpcHttpDataTarget.toHttpData((RpcHttpDataTarget) v));
     }
 }

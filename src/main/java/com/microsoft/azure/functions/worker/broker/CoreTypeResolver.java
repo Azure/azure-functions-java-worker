@@ -73,12 +73,10 @@ public class CoreTypeResolver {
 
 	private static final List<Function<Parameter, Optional<String>>> BINDING_NAME_SUPPLIERS;
 	static {
-		BINDING_NAME_SUPPLIERS = new ArrayList<>();
-		BINDING_NAME_SUPPLIERS
-				.add(p -> Optional.ofNullable(p.getAnnotation(BindingName.class)).map(BindingName::value));
+		BINDING_NAME_SUPPLIERS = new ArrayList<>();		
 		try {
 			ClassPath coreClasses = ClassPath.from(ClassLoader.getSystemClassLoader());
-			String annotationsPackage = ClassUtils.getPackageName(BindingName.class);
+			String annotationsPackage = ClassUtils.getPackageName(HttpTrigger.class);
 			for (ClassInfo annotationInfo : coreClasses.getTopLevelClasses(annotationsPackage)) {
 				try {
 					String annotationName = annotationInfo.getSimpleName();

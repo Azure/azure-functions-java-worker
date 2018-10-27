@@ -54,20 +54,7 @@ abstract class DataSource<T> {
 			e.printStackTrace();
 		}
 		return Optional.empty();
-	}
-
-	Optional<BindingData> computeByNameList(String name, Type target)
-			throws JsonParseException, JsonMappingException, IOException {
-		Optional<DataSource<?>> source = this.lookupName(name);
-		if (!source.isPresent()) {
-			if (target.equals(Optional.class)) {
-				return Optional.of(new BindingData(Optional.empty()));
-			}
-			return Optional.empty();
-		}
-		Optional<BindingData> data = source.get().computeByList(target);
-		return data;
-	}
+	}	
 
 	Optional<BindingData> computeByType(Type target) throws JsonParseException, JsonMappingException, IOException {
 		boolean isTargetOptional = Optional.class.equals(TypeUtils.getRawType(target, null));
@@ -132,12 +119,8 @@ abstract class DataTarget implements OutputBinding {
 	DataTarget(DataOperations<Object, TypedData.Builder> dataOperations) {
 		this.dataOperations = dataOperations;
 	}
-
+	
 	Optional<TypedData> computeFromValue() {
-		return this.computeFromValueByLevels();
-	}
-
-	private Optional<TypedData> computeFromValueByLevels() {
 		if (this.value == null) {
 			return Optional.of(TypedData.newBuilder().setJson("null").build());
 		}

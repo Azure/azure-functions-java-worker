@@ -58,7 +58,7 @@ public class OverloadResolver {
                 else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
                 } 
-                else if (param.name != null && StringUtils.isEmpty(param.bindingNameAnnotation)) {
+                else if (param.name == null && !param.bindingNameAnnotation.isEmpty()) {
                 	argument = dataStore.getTriggerMetatDataByName(param.bindingNameAnnotation, param.type);
                 }
                 else {
