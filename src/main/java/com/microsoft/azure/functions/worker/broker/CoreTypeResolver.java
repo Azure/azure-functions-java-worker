@@ -68,7 +68,7 @@ public class CoreTypeResolver {
 		if (paramAnnotation != null) {
 			return paramAnnotation.value();
 		}
-		return null;
+		return new String("");
 	}
 
 	private static final List<Function<Parameter, Optional<String>>> BINDING_NAME_SUPPLIERS;

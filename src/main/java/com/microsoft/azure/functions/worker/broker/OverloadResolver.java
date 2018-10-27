@@ -100,7 +100,7 @@ public class OverloadResolver {
         
         private final String name;
         private final Type type;
-        private final String bindingNameAnnotation;
+        private String bindingNameAnnotation = new String("");
     }
 
     private final List<MethodBindInfo> candidates;
