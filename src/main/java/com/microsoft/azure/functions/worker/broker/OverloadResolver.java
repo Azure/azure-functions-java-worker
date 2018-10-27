@@ -1,12 +1,21 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.lang.invoke.*;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.invoke.WrongMethodTypeException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-import com.microsoft.azure.functions.*;
-import com.microsoft.azure.functions.worker.binding.*;
-import org.apache.commons.lang3.reflect.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
+
+import com.microsoft.azure.functions.OutputBinding;
+import com.microsoft.azure.functions.worker.binding.BindingData;
+import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 
 /**
  * Resolve a Java method overload using reflection.
@@ -49,8 +58,11 @@ public class OverloadResolver {
                 else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
                 } 
+                else if (param.name != null && StringUtils.isEmpty(param.bindingNameAnnotation)) {
+                	argument = dataStore.getTriggerMetatDataByName(param.bindingNameAnnotation, param.type);
+                }
                 else {
-                    argument = dataStore.getDataByType(param.type);
+                	argument = dataStore.getDataByType(param.type);
                 }
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
                 invokeInfo.appendArgument(actualArg.getValue());
@@ -63,8 +75,8 @@ public class OverloadResolver {
             //TODO log
             return null;
         }
-    }
-
+    }  
+  
     private final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
         InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.entry); }
         private final UUID outputsId = UUID.randomUUID();
@@ -76,16 +88,19 @@ public class OverloadResolver {
             this.params = Arrays.stream(this.entry.getParameters()).map(ParamBindInfo::new).toArray(ParamBindInfo[]::new);
         }
         private final Method entry;
-        private final ParamBindInfo[] params;
+        private final ParamBindInfo[] params;        
     }
 
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
             this.name = CoreTypeResolver.getBindingName(param);
             this.type = param.getParameterizedType();
-        }
+            this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
+        }        
+        
         private final String name;
         private final Type type;
+        private final String bindingNameAnnotation;
     }
 
     private final List<MethodBindInfo> candidates;

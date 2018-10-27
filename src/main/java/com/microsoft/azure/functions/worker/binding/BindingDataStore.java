@@ -50,6 +50,10 @@ public final class BindingDataStore {
     	return this.inputSources.get(name).computeByName(name, target);
     }
     
+    public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {    	
+    	return this.metadataSources.get(name).computeByName(name, target);
+    }
+    
     public Optional<BindingData> getDataByType(Type target) throws JsonParseException, JsonMappingException, IOException {
     	return this.otherSources.get(ExecutionContext.class).computeByType(target);        
     }
