@@ -82,23 +82,7 @@ final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource
         this.fields = Arrays.asList(this.httpPayload.getHeadersMap(), this.httpPayload.getQueryMap(), this.httpPayload.getParamsMap());
         this.setValue(this);
     }
-
-    @Override
-    Optional<DataSource<?>> lookupName(String name) {
-       /* if (level == METADATA_NAME) {
-            List<DataSource<?>> values = this.fields.stream()
-                .map(f -> f.get(name))
-                .filter(Objects::nonNull)
-                .limit(2)
-                .map(v -> new RpcStringDataSource(name, v))
-                .collect(Collectors.toList());
-            if (values.size() == 1) {
-                return Optional.of(values.get(0));
-            }
-        }*/
-        return super.lookupName(name);
-    }
-
+    
     private static class HttpRequestMessageImpl implements HttpRequestMessage {
         private HttpRequestMessageImpl(RpcHttpRequestDataSource parentDataSource, Object body) {
             this.parentDataSource = parentDataSource;

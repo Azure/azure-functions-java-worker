@@ -15,6 +15,8 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string InputBindingQueueName = "test-input-java";
         public static string OutputBindingQueueNamePOJO = "test-output-java-pojo";
         public static string InputBindingQueueNamePOJO = "test-input-java-pojo";
+        public static string InputBindingQueueNameMetadata = "test-input-java-metadata";
+        public static string OutputBindingQueueNameMetadata = "test-output-java-metadata";
         public static string TestQueueMessage = "Hello, World";
 
         // CosmosDB tests

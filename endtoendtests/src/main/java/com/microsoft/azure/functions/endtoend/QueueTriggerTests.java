@@ -33,11 +33,11 @@ public class QueueTriggerTests {
 
     @FunctionName("QueueTriggerMetadata")
     public void QueueTriggerMetadata(
-        @QueueTrigger(name = "message", queueName = "test-input-java-metadata", connection = "AzureWebJobsStorage") String message,@BindingName("ID") String metadataId,
+        @QueueTrigger(name = "message", queueName = "test-input-java-metadata", connection = "AzureWebJobsStorage") String message,@BindingName("Id") String metadataId,
         @QueueOutput(name = "output", queueName = "test-output-java-metadata", connection = "AzureWebJobsStorage") OutputBinding<TestData> output,
         final ExecutionContext context
     ) {
-        context.getLogger().info("Java Queue trigger function processed a message: " + message);
+        context.getLogger().info("Java Queue trigger function processed a message: " + message + " whith metadaId:" + metadataId );
         TestData testData = new TestData();
         testData.id = metadataId;
         output.setValue(testData);

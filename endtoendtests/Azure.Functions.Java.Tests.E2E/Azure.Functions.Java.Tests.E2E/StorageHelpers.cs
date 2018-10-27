@@ -34,12 +34,13 @@ namespace Azure.Functions.Java.Tests.E2E
             await queue.CreateIfNotExistsAsync();
         }
 
-        public async static Task InsertIntoQueue(string queueName, string queueMessage)
+        public async static Task<string> InsertIntoQueue(string queueName, string queueMessage)
         {
             CloudQueue queue = _queueClient.GetQueueReference(queueName);
             await queue.CreateIfNotExistsAsync();
-            CloudQueueMessage message = new CloudQueueMessage(queueMessage);
+            CloudQueueMessage message = new CloudQueueMessage(queueMessage);            
             await queue.AddMessageAsync(message);
+            return message.Id;
         }
 
         public async static Task<string> ReadFromQueue(string queueName)
