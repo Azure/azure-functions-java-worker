@@ -37,7 +37,7 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     private Object body;
     private Map<String, String> headers;
 
-    private static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
+    public static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
         	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatusCode()));
@@ -52,8 +52,8 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
 
     private static final DataOperations<Object, TypedData.Builder> HTTP_TARGET_OPERATIONS = new DataOperations<>();
     static {
-        HTTP_TARGET_OPERATIONS.addOperation(HttpResponseMessage.class, v -> toHttpData((RpcHttpDataTarget) v));
-        HTTP_TARGET_OPERATIONS.addOperation(RpcHttpDataTarget.class, v -> toHttpData((RpcHttpDataTarget) v));
+        HTTP_TARGET_OPERATIONS.addTargetOperation(HttpResponseMessage.class, v -> toHttpData((RpcHttpDataTarget) v));
+        HTTP_TARGET_OPERATIONS.addTargetOperation(RpcHttpDataTarget.class, v -> toHttpData((RpcHttpDataTarget) v));
     }
 
 	
@@ -178,19 +178,21 @@ final class RpcUnspecifiedDataTarget extends DataTarget {
         RELAXED_JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
         
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(long.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(Long.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(int.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(Integer.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(short.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(Short.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(byte.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(Byte.class, RpcUnspecifiedDataTarget::toIntData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(double.class, RpcUnspecifiedDataTarget::toRealNumberData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(Double.class, RpcUnspecifiedDataTarget::toRealNumberData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(float.class, RpcUnspecifiedDataTarget::toRealNumberData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(Float.class, RpcUnspecifiedDataTarget::toRealNumberData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(byte[].class, RpcUnspecifiedDataTarget::toByteArrayData);
-        UNSPECIFIED_TARGET_OPERATIONS.addtargetOperation(String.class, RpcUnspecifiedDataTarget::toStringData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(long.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Long.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(int.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Integer.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(short.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Short.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(byte.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Byte.class, RpcUnspecifiedDataTarget::toIntData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(double.class, RpcUnspecifiedDataTarget::toRealNumberData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Double.class, RpcUnspecifiedDataTarget::toRealNumberData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(float.class, RpcUnspecifiedDataTarget::toRealNumberData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Float.class, RpcUnspecifiedDataTarget::toRealNumberData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(byte[].class, RpcUnspecifiedDataTarget::toByteArrayData);
+        UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(String.class, RpcUnspecifiedDataTarget::toStringData);
+        //UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(HttpResponseMessage.class, v -> RpcHttpDataTarget.toHttpData((RpcHttpDataTarget) v));
+        //UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(RpcHttpDataTarget.class, v -> RpcHttpDataTarget.toHttpData((RpcHttpDataTarget) v));
     }
 }

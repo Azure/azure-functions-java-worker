@@ -129,8 +129,8 @@ abstract class DataSource<T> {
  * (source) -> TypedData.Builder. Thread-safety: Single thread.
  */
 abstract class DataTarget implements OutputBinding {
-	DataTarget(DataOperations<Object, TypedData.Builder> operations) {
-		this.operations = operations;
+	DataTarget(DataOperations<Object, TypedData.Builder> dataOperations) {
+		this.dataOperations = dataOperations;
 	}
 
 	Optional<TypedData> computeFromValue() {
@@ -144,7 +144,7 @@ abstract class DataTarget implements OutputBinding {
 
 		Optional<TypedData> data;
 		try {
-			data = this.operations.applyTypeAssignment(this.value, this.value.getClass())
+			data = this.dataOperations.applyTypeAssignment(this.value, this.value.getClass())
 					.map(TypedData.Builder::build);
 			if (data.isPresent()) {
 				return data;
@@ -168,5 +168,5 @@ abstract class DataTarget implements OutputBinding {
 	}
 
 	private Object value;
-	private final DataOperations<Object, TypedData.Builder> operations;
+	private DataOperations<Object, TypedData.Builder> dataOperations;
 }

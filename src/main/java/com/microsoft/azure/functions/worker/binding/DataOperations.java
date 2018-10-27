@@ -59,8 +59,8 @@ class DataOperations<T, R> {
 		this.targetOperations = new HashMap<>();		
 	}
 	
-	void addtargetOperation(Type targetType, CheckedFunction<T, R> operation) {
-		this.addGenericOperation(targetType, (src, type) -> operation.apply(src));
+	void addTargetOperation(Type targetType, CheckedFunction<T, R> operation) {
+		this.addGenericTargetOperation(targetType, (src, type) -> operation.apply(src));
 	}
 
 	void addOperation(Type targetType, CheckedFunction<T, R> operation) {
@@ -157,7 +157,7 @@ class DataOperations<T, R> {
 		throw new ClassCastException("Cannot convert " + value + "to type " + target.getTypeName());
 	}
 
-	private final Map<Type, CheckedBiFunction<T, Type, R>> operations;
-	private final Map<Type, CheckedBiFunction<T, Type, R>> targetOperations;
+	private Map<Type, CheckedBiFunction<T, Type, R>> operations;
+	private Map<Type, CheckedBiFunction<T, Type, R>> targetOperations;
 }
 
