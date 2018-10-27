@@ -144,18 +144,12 @@ abstract class DataTarget implements OutputBinding {
 
 		Optional<TypedData> data;
 		try {
-			data = this.operations.apply(this.value, this.value.getClass())
+			data = this.operations.applyTypeAssignment(this.value, this.value.getClass())
 					.map(TypedData.Builder::build);
 			if (data.isPresent()) {
 				return data;
-			}
-		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
+			}		
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
