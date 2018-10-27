@@ -7,9 +7,16 @@ function StopOnFailedExecution {
   }
 }
 
+$currDir =  Get-Location
+
 Write-Host "Building azure-function-java-worker"
-mvn clean package 
+cmd.exe /c '.\mvnBuild.bat'
 StopOnFailedExecution
 
 Write-Host "Starting azure-functions-java-endtoendtests execution"
-.\run-tests-local.ps1
+.\setup-tests.ps1
+$proc = start-process -filepath $currDir\Azure.Functions.Cli\func.exe -WorkingDirectory "$currDir\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
+
+# wait for host to start
+Start-Sleep -s 30
+.\run-tests.ps1
