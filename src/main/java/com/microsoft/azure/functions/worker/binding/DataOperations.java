@@ -1,10 +1,15 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import java.io.IOException;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -16,8 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
-import com.microsoft.azure.functions.worker.binding.DataTarget.*;
-import com.microsoft.azure.functions.worker.broker.*;
+import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
 
 @FunctionalInterface
 interface CheckedFunction<T, R> {

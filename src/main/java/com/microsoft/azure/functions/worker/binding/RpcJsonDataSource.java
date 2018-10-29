@@ -1,19 +1,10 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.lang.reflect.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
-
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonParser;
-
-import org.apache.commons.lang3.reflect.*;
-
-import com.microsoft.azure.functions.*;
-import com.microsoft.azure.functions.worker.*;
-import com.microsoft.azure.functions.rpc.messages.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 final class RpcJsonDataSource extends DataSource<String> {
     RpcJsonDataSource(String name, String value) { super(name, value, JSON_DATA_OPERATIONS); }

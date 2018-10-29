@@ -6,8 +6,8 @@ import java.lang.reflect.Type;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-final class RpcStringDataSource extends DataSource<String> {
-    RpcStringDataSource(String name, String value) { super(name, value, STRING_DATA_OPERATIONS); }
+public final class RpcStringDataSource extends DataSource<String> {
+    public RpcStringDataSource(String name, String value) { super(name, value, STRING_DATA_OPERATIONS); }
 
     private static Object convertToJson(boolean isStrict, String s, Type target) throws JsonParseException, JsonMappingException, ClassCastException, IOException {
         DataSource<?> jsonSource = new RpcJsonDataSource(null, s);
@@ -18,7 +18,7 @@ final class RpcStringDataSource extends DataSource<String> {
         }
     }
 
-    private static final DataOperations<String, Object> STRING_DATA_OPERATIONS = new DataOperations<>();
+    static final DataOperations<String, Object> STRING_DATA_OPERATIONS = new DataOperations<>();
     static {
         STRING_DATA_OPERATIONS.addOperation(long.class, Long::parseLong);
         STRING_DATA_OPERATIONS.addOperation(Long.class, Long::parseLong);
@@ -31,8 +31,7 @@ final class RpcStringDataSource extends DataSource<String> {
         STRING_DATA_OPERATIONS.addOperation(double.class, Double::parseDouble);
         STRING_DATA_OPERATIONS.addOperation(Double.class, Double::parseDouble);
         STRING_DATA_OPERATIONS.addOperation(float.class, Float::parseFloat);
-        STRING_DATA_OPERATIONS.addOperation(Float.class, Float::parseFloat);
-        //STRING_DATA_OPERATIONS.addOperation(String.class, s -> s);        
+        STRING_DATA_OPERATIONS.addOperation(Float.class, Float::parseFloat);        
         STRING_DATA_OPERATIONS.addGenericOperation(String.class, (v, t) -> convertToJson(false, v, t));
     }
 }
