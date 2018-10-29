@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Azure Java Functions</name>
+    <name>Azure Java Functions E2E Tests</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,6 +20,7 @@
         <functionAppRegion>westus</functionAppRegion>
         <functionResourceGroup>java-functions-group</functionResourceGroup>
         <stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>
+        <allowTelemetry>false</allowTelemetry>
     </properties>
 
     <repositories>
