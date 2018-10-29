@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -44,9 +45,8 @@ abstract class DataSource<T> {
 		try {
 			data = source.get().computeByType(target);
 			return data;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (IOException ex) {
+			ExceptionUtils.rethrow(ex);
 		}
 		return Optional.empty();
 	}

@@ -90,7 +90,7 @@ public class CoreTypeResolver {
 							try {
 								return Optional.ofNullable((String) getNameMethod.invoke(p.getAnnotation(annotation)));
 							} catch (Exception ex) {
-								// WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+								// TODO: WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
 								return Optional.empty();
 							}
 						});

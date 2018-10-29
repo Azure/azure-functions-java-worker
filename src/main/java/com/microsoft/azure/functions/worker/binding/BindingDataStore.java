@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.microsoft.azure.functions.worker.broker.*;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -79,7 +81,7 @@ public final class BindingDataStore {
 
     ///////////////////////// region Output Binding Data
 
-    public List<ParameterBinding> getOutputParameterBindings(boolean excludeReturn) {
+    public List<ParameterBinding> getOutputParameterBindings(boolean excludeReturn) throws Exception {
         List<ParameterBinding> bindings = new ArrayList<>();
         for (Map.Entry<String, DataTarget> entry : this.getTarget(this.promotedTargets).entrySet()) {
             if (!excludeReturn || !entry.getKey().equals(RETURN_NAME)) {
@@ -91,8 +93,15 @@ public final class BindingDataStore {
         return bindings;
     }
 
-    public Optional<TypedData> getDataTargetTypedValue(String name) {
-        return Optional.ofNullable(this.getTarget(this.promotedTargets).get(name)).map(o -> o.computeFromValue().orElse(null));
+    public Optional<TypedData> getDataTargetTypedValue(String name) throws Exception{
+    	return Optional.ofNullable(this.getTarget(this.promotedTargets).get(name)).map(o -> {
+			try {
+				return o.computeFromValue().orElse(null);
+			} catch (Exception ex) {
+				ExceptionUtils.rethrow(ex);
+				return null;
+			}
+		});
     }
 
     public Optional<BindingData> getOrAddDataTarget(UUID outputId, String name, Type target) {

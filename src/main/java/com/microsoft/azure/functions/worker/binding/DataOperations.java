@@ -27,7 +27,7 @@ interface CheckedFunction<T, R> {
 		try {
 			return this.apply(t);
 		} catch (Exception ex) {
-			// WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+			ExceptionUtils.rethrow(ex);
 			return null;
 		}
 	}

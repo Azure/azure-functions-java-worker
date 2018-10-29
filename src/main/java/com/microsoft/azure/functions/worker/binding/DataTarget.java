@@ -16,21 +16,16 @@ abstract class DataTarget implements OutputBinding {
 		this.dataOperations = dataOperations;
 	}
 
-	Optional<TypedData> computeFromValue() {
+	Optional<TypedData> computeFromValue() throws Exception {
 		if (this.value == null) {
 			return Optional.of(TypedData.newBuilder().setJson("null").build());
 		}
 
 		Optional<TypedData> data;
-		try {
-			data = this.dataOperations.applyTypeAssignment(this.value, this.value.getClass())
-					.map(TypedData.Builder::build);
-			if (data.isPresent()) {
-				return data;
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
+		data = this.dataOperations.applyTypeAssignment(this.value, this.value.getClass()).map(TypedData.Builder::build);
+		if (data.isPresent()) {
+			return data;
 		}
 
 		return Optional.empty();

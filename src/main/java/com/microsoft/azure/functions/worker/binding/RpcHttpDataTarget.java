@@ -32,7 +32,7 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     private Object body;
     private Map<String, String> headers;
 
-    public static TypedData.Builder toHttpData(RpcHttpDataTarget response) {
+    public static TypedData.Builder toHttpData(RpcHttpDataTarget response) throws Exception {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
         	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatusCode()));
