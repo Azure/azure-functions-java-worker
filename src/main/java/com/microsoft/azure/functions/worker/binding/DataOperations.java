@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
+import com.microsoft.azure.functions.worker.binding.DataTarget.*;
 import com.microsoft.azure.functions.worker.broker.*;
 
 @FunctionalInterface
@@ -53,25 +54,25 @@ interface CheckedBiFunction<T, U, R> {
  * @param <T> Type of the source data.
  * @param <R> Type of the target data.
  */
-class DataOperations<T, R> {
+public class DataOperations<T, R> {
 	DataOperations() {
 		this.operations = new HashMap<>();
-		this.targetOperations = new HashMap<>();		
+		this.targetOperations = new HashMap<>();
 	}
-	
-	void addTargetOperation(Type targetType, CheckedFunction<T, R> operation) {
+
+	public void addTargetOperation(Type targetType, CheckedFunction<T, R> operation) {
 		this.addGenericTargetOperation(targetType, (src, type) -> operation.apply(src));
 	}
 
-	void addOperation(Type targetType, CheckedFunction<T, R> operation) {
+	public void addOperation(Type targetType, CheckedFunction<T, R> operation) {
 		this.addGenericOperation(targetType, (src, type) -> operation.apply(src));
 	}
 
-	void addGenericOperation(Type targetType, CheckedBiFunction<T, Type, R> operation) {
+	public void addGenericOperation(Type targetType, CheckedBiFunction<T, Type, R> operation) {
 		this.operations.put(targetType, operation);
 	}
-	
-	void addGenericTargetOperation(Type targetType, CheckedBiFunction<T, Type, R> operation) {
+
+	public void addGenericTargetOperation(Type targetType, CheckedBiFunction<T, Type, R> operation) {
 		this.targetOperations.put(targetType, operation);
 	}
 
@@ -113,7 +114,7 @@ class DataOperations<T, R> {
 		}
 		return resultValue;
 	}
-	
+
 	Optional<R> applyTypeAssignment(T sourceValue, Type targetType) throws Exception {
 		Optional<R> resultValue = null;
 
@@ -123,15 +124,15 @@ class DataOperations<T, R> {
 			if (matchingOperation != null) {
 				resultValue = Optional.ofNullable(matchingOperation).map(op -> op.tryApply(sourceValue, targetType));
 			} else {
-				 try {
-					 Object jsonResult = RpcUnspecifiedDataTarget.toJsonData(sourceValue);
-					 resultValue = (Optional<R>) Optional.ofNullable(jsonResult);
-		                
-		            } catch (Exception ex) {
-		                WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
-		                Object stringResult = RpcUnspecifiedDataTarget.toJsonData(sourceValue);		 
-		                resultValue = (Optional<R>) Optional.ofNullable(stringResult);
-		            }
+				try {
+					Object jsonResult = RpcUnspecifiedDataTarget.toJsonData(sourceValue);
+					resultValue = (Optional<R>) Optional.ofNullable(jsonResult);
+
+				} catch (Exception ex) {
+					WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+					Object stringResult = RpcUnspecifiedDataTarget.toJsonData(sourceValue);
+					resultValue = (Optional<R>) Optional.ofNullable(stringResult);
+				}
 			}
 		}
 
@@ -160,4 +161,3 @@ class DataOperations<T, R> {
 	private Map<Type, CheckedBiFunction<T, Type, R>> operations;
 	private Map<Type, CheckedBiFunction<T, Type, R>> targetOperations;
 }
-
