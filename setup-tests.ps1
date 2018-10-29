@@ -13,7 +13,10 @@ Write-Host "Deleting Functions Core Tools if exists...."
 Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
 Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
 
-Write-Host "Downloading Functions Host...."
+Write-Host "Downloading Functions Core Tools...."
+Invoke-RestMethod -Uri 'https://functionsclibuilds.blob.core.windows.net/builds/2/latest/version.txt' -OutFile version.txt
+Write-Host "Using Functions Core Tools version: $(Get-Content -Raw version.txt)"
+Remove-Item version.txt
 
 $url = "https://functionsclibuilds.blob.core.windows.net/builds/2/latest/Azure.Functions.Cli.win-x86.zip"
 $output = "$currDir\Azure.Functions.Cli.zip"
