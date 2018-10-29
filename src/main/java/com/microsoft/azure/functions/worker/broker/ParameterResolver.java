@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import com.microsoft.azure.functions.OutputBinding;
@@ -21,8 +21,8 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
  * Resolve a Java method overload using reflection.
  * Thread-Safety: Multiple thread.
  */
-public class OverloadResolver {
-    OverloadResolver() {
+public class ParameterResolver {
+    ParameterResolver() {
         this.candidates = new ArrayList<>();
     }
 
@@ -72,7 +72,7 @@ public class OverloadResolver {
             }
             return invokeInfo;
         } catch (Exception ex) {
-            //TODO log
+        	ExceptionUtils.rethrow(ex);
             return null;
         }
     }  
@@ -93,7 +93,7 @@ public class OverloadResolver {
 
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
-            this.name = CoreTypeResolver.getBindingName(param);
+            this.name = CoreTypeResolver.getAnnotationName(param);
             this.type = param.getParameterizedType();
             this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
         }        

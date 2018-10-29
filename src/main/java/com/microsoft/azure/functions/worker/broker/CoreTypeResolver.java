@@ -1,19 +1,11 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
-import java.util.*;
-import java.util.function.*;
-
-import com.google.common.reflect.ClassPath;
-import com.google.common.reflect.ClassPath.*;
-import org.apache.commons.lang3.exception.*;
-import org.apache.commons.lang3.*;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
-import com.microsoft.azure.functions.worker.*;
+
 
 public class CoreTypeResolver {
 	private static boolean isOutputParameter(Type target) {
@@ -53,11 +45,20 @@ public class CoreTypeResolver {
 		return (Class<?>) type;
 	}
 
-	static String getBindingName(Parameter parameter) {
-		for (Function<Parameter, Optional<String>> bindingNameSupplier : BINDING_NAME_SUPPLIERS) {
-			Optional<String> bindingName = bindingNameSupplier.apply(parameter);
-			if (bindingName.isPresent()) {
-				return bindingName.get();
+	static String getAnnotationName(Parameter parameter) {
+		Annotation[] annotations = parameter.getAnnotations();
+		for (Annotation annotation : annotations) {
+			if (annotation.toString().contains("com.microsoft.azure.functions.annotation")) {
+				for (Method annotationMethod : annotation.getClass().getMethods()) {
+					if (annotationMethod.getName().equals("name")) {
+						try {
+							return (String) annotationMethod.invoke(annotation);
+						} catch (Exception ex) {
+							// Ignore
+							return null;
+						}
+					}
+				}
 			}
 		}
 		return null;
@@ -69,38 +70,5 @@ public class CoreTypeResolver {
 			return paramAnnotation.value();
 		}
 		return new String("");
-	}
-
-	private static final List<Function<Parameter, Optional<String>>> BINDING_NAME_SUPPLIERS;
-	static {
-		BINDING_NAME_SUPPLIERS = new ArrayList<>();		
-		try {
-			ClassPath coreClasses = ClassPath.from(ClassLoader.getSystemClassLoader());
-			String annotationsPackage = ClassUtils.getPackageName(HttpTrigger.class);
-			for (ClassInfo annotationInfo : coreClasses.getTopLevelClasses(annotationsPackage)) {
-				try {
-					String annotationName = annotationInfo.getSimpleName();
-					if (annotationName.endsWith("Input") || annotationName.endsWith("Output")
-							|| annotationName.endsWith("Trigger")) {
-						@SuppressWarnings("unchecked")
-						final Class<? extends Annotation> annotation = (Class<? extends Annotation>) annotationInfo
-								.load();
-						final Method getNameMethod = annotation.getMethod("name");
-						BINDING_NAME_SUPPLIERS.add(p -> {
-							try {
-								return Optional.ofNullable((String) getNameMethod.invoke(p.getAnnotation(annotation)));
-							} catch (Exception ex) {
-								// WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
-								return Optional.empty();
-							}
-						});
-					}
-				} catch (NoSuchMethodException ex) {
-					WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
-				}
-			}
-		} catch (IOException ex) {
-			WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
-		}
-	}
+	}	
 }

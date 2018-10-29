@@ -21,7 +21,7 @@ public class JavaMethodExecutor {
         descriptor.validateMethodInfo();
 
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
-        this.overloadResolver = new OverloadResolver();
+        this.overloadResolver = new ParameterResolver();
 
         for (Method method : this.containingClass.getMethods()) {                     
             if (method.getName().equals(descriptor.getMethodName())) {
@@ -46,7 +46,7 @@ public class JavaMethodExecutor {
     
     Map<String, BindingDefinition> getBindingDefinitions() { return this.bindingDefinitions; }
     
-    public OverloadResolver getOverloadResolver() { return this.overloadResolver; }
+    public ParameterResolver getOverloadResolver() { return this.overloadResolver; }
 
     void execute(BindingDataStore dataStore) throws Exception {
         Object retValue = this.overloadResolver.resolve(dataStore)
@@ -61,6 +61,6 @@ public class JavaMethodExecutor {
     }
 
     private Class<?> containingClass;
-    private final OverloadResolver overloadResolver;
+    private final ParameterResolver overloadResolver;
     private final Map<String, BindingDefinition> bindingDefinitions;
 }

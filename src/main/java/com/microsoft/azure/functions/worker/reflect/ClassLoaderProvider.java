@@ -13,7 +13,7 @@ public interface ClassLoaderProvider {
     /*
      * Adds all jar-files found in a directory (NOT recursive)
      */
-    void addDirectory(File directory);
+    void addDirectory(File directory) throws MalformedURLException, IOException;
     
     /*
      * Gets the class loader with the required search paths
