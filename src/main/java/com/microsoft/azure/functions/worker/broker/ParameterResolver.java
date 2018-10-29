@@ -93,7 +93,7 @@ public class ParameterResolver {
 
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
-            this.name = CoreTypeResolver.getBindingName(param);
+            this.name = CoreTypeResolver.getAnnotationName(param);
             this.type = param.getParameterizedType();
             this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
         }        
