@@ -6,6 +6,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -33,7 +34,7 @@ abstract class DataSource<T> {
 		this.value = value;
 	}
 
-	Optional<BindingData> computeByName(String name, Type target) {
+	public Optional<BindingData> computeByName(String name, Type target) {
 		Optional<DataSource<?>> source = this.lookupName(name);
 		if (!source.isPresent()) {
 			if (target.equals(Optional.class)) {
@@ -51,7 +52,7 @@ abstract class DataSource<T> {
 		return Optional.empty();
 	}
 
-	Optional<BindingData> computeByType(Type target) throws JsonParseException, JsonMappingException, IOException {
+	public Optional<BindingData> computeByType(Type target) throws JsonParseException, JsonMappingException, IOException {
 		boolean isTargetOptional = Optional.class.equals(TypeUtils.getRawType(target, null));
 		if (isTargetOptional) {
 			Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(target, Optional.class);
@@ -68,11 +69,12 @@ abstract class DataSource<T> {
 		});
 	}
 
-	Optional<DataSource<?>> lookupName(String name) {
+	protected Optional<DataSource<?>> lookupName(String name) {
 		return Optional.ofNullable(this.name != null && this.name.equals(name) ? this : null);
 	}
 
 	private final String name;
 	private T value;
 	private final DataOperations<T, Object> operations;
+	
 }

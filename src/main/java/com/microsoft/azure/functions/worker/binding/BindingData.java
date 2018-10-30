@@ -6,7 +6,7 @@ import org.apache.commons.lang3.*;
  * Provides the information such as the matching level of the actual value retrieved/converted from BindingDataStore.
  */
 public final class BindingData {
-    BindingData(Object value) {
+    public BindingData(Object value) {
         this.value = value;     
     }
 

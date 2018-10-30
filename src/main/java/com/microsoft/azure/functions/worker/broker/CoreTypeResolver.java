@@ -15,9 +15,9 @@ public class CoreTypeResolver {
 		return (target instanceof Class<?>) && (OutputBinding.class.isAssignableFrom((Class<?>) target));
 	}
 
-	public static Type getOutputParameterArgument(Type outputParamType) {
-		if (outputParamType instanceof ParameterizedType) {
-			ParameterizedType generics = (ParameterizedType) outputParamType;
+	public static Type getParameterizedActualTypeArgumentsType(Type paramType) {
+		if (paramType instanceof ParameterizedType) {
+			ParameterizedType generics = (ParameterizedType) paramType;
 			Type[] arguments = generics.getActualTypeArguments();
 			if (arguments.length > 0) {
 				return arguments[0];
@@ -30,7 +30,7 @@ public class CoreTypeResolver {
 		if (!isOutputParameter(target)) {
 			return false;
 		}
-		target = getOutputParameterArgument(target);
+		target = getParameterizedActualTypeArgumentsType(target);
 		return !isOutputParameter(target);
 	}
 

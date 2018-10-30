@@ -130,7 +130,7 @@ public final class BindingDataStore {
     private boolean isDataTargetValid(String name, Type target) {
         if (!name.equals(RETURN_NAME)) {
             if (!CoreTypeResolver.isValidOutputType(target)) { return false; }
-            target = CoreTypeResolver.getOutputParameterArgument(target);
+            target = CoreTypeResolver.getParameterizedActualTypeArgumentsType(target);
         }
         return true;
     }

@@ -1,10 +1,14 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import java.io.IOException;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -16,8 +20,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
-import com.microsoft.azure.functions.worker.binding.DataTarget.*;
-import com.microsoft.azure.functions.worker.broker.*;
+import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
 
 @FunctionalInterface
 interface CheckedFunction<T, R> {
@@ -92,8 +95,7 @@ public class DataOperations<T, R> {
 				RELAXED_JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 				RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 				if (Collection.class.isAssignableFrom(TypeUtils.getRawType(targetType, null))) {
-					ParameterizedType pType = (ParameterizedType) targetType;
-					Class<?> collectionItemType = (Class<?>) pType.getActualTypeArguments()[0];
+					Class<?> collectionItemType = (Class<?>) CoreTypeResolver.getParameterizedActualTypeArgumentsType(targetType);
 					String sourceData = (String) sourceValue;
 					try {
 						Object objList = RELAXED_JSON_MAPPER.readValue(sourceData, RELAXED_JSON_MAPPER.getTypeFactory()
