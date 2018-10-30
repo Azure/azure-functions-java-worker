@@ -1,25 +1,20 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-import org.apache.commons.lang3.reflect.TypeUtils;
-import org.junit.*;
+import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-import com.microsoft.azure.functions.ExecutionContext;
-import com.microsoft.azure.functions.HttpMethod;
-import com.microsoft.azure.functions.HttpRequestMessage;
-import com.microsoft.azure.functions.HttpResponseMessage;
-import com.microsoft.azure.functions.HttpStatus;
-import com.microsoft.azure.functions.annotation.AuthorizationLevel;
-import com.microsoft.azure.functions.annotation.CosmosDBInput;
-import com.microsoft.azure.functions.annotation.FunctionName;
-import com.microsoft.azure.functions.annotation.HttpTrigger;
-import com.microsoft.azure.functions.worker.binding.*;
-import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
+import com.microsoft.azure.functions.worker.binding.BindingData;
+import com.microsoft.azure.functions.worker.binding.RpcJsonDataSource;
+import com.microsoft.azure.functions.worker.binding.RpcStringDataSource;
 
 public class RpcStringDataSourceTests {
 
