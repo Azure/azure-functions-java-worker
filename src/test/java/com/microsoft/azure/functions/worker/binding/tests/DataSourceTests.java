@@ -9,14 +9,14 @@ import static org.junit.Assert.*;
 import com.microsoft.azure.functions.worker.binding.*;
 
 public class DataSourceTests {
-	
-	public static class TestPOJO {
-        public String id;
-        public String name;
-        public String Description;
-    }
 
-	// @Test
+	public static class TestPOJO {
+		public Integer id;
+		public String name;
+		public String Description;
+	}
+
+	@Test
 	public void rpcStringDataSource_To_String() {
 		String sourceKey = "testString";
 		String inputString = "Test String";
@@ -27,7 +27,7 @@ public class DataSourceTests {
 		assertEquals(bindingData.getValue(), actualArg.getValue());
 	}
 
-	// @Test
+	@Test
 	public void rpcJsonStringDataSource_To_String() {
 		String sourceKey = "testStringJson";
 		String jsonInString = "{\"id\":7500 , \"testname\":\"joe\"}";
@@ -37,7 +37,7 @@ public class DataSourceTests {
 		BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
 		assertEquals(bindingData.getValue(), actualArg.getValue());
 	}
-	
+
 	@Test
 	public void rpcStringArrayDataSource_To_StringArray() {
 		String sourceKey = "testStringArray";
@@ -54,16 +54,16 @@ public class DataSourceTests {
 	@Test
 	public void rpcJsonStringArrayDataSource_To_POJO() {
 		String sourceKey = "testStringJsonArray";
-		String jsonInStringArray = "[{\"id\":7500 , \"name\":\"joe\"}, {\"id\":7502 , \"name\":\"joe\"}]";
+		String jsonInStringArray = "[{\"id\":7500, \"name\":\"joe\"}, {\"id\":7501 , \"name\":\"joe\"}]";
 		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, jsonInStringArray);
-		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TestPOJO.class);
+		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TestPOJO[].class);
 		BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
 		TestPOJO[] convertedData = (TestPOJO[]) actualArg.getValue();
 		assertTrue(convertedData.length == 2);
-		assertTrue(convertedData[0].contains("7500"));
-		assertTrue(convertedData[1].contains("7502"));
+		assertTrue(convertedData[0].id == 7500);
+		assertEquals(convertedData[0].name, "joe");
+		assertTrue(convertedData[1].id == 7501);
+		assertEquals(convertedData[1].name, "joe");
 	}
-	
-	
 
 }
