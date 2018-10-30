@@ -6,8 +6,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-final class RpcJsonDataSource extends DataSource<String> {
-    RpcJsonDataSource(String name, String value) { super(name, value, JSON_DATA_OPERATIONS); }
+public final class RpcJsonDataSource extends DataSource<String> {
+	public RpcJsonDataSource(String name, String value) { super(name, value, JSON_DATA_OPERATIONS); }
 
     private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
     private static final DataOperations<String, Object> JSON_DATA_OPERATIONS = new DataOperations<>();
