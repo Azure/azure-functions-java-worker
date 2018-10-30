@@ -96,8 +96,7 @@ public class DataOperations<T, R> {
 				RELAXED_JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 				RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 				if (Collection.class.isAssignableFrom(TypeUtils.getRawType(targetType, null))) {
-					ParameterizedType pType = (ParameterizedType) targetType;
-					Class<?> collectionItemType = (Class<?>) pType.getActualTypeArguments()[0];
+					Class<?> collectionItemType = (Class<?>) CoreTypeResolver.getParameterizedActualTypeArgumentsType(targetType);
 					String sourceData = (String) sourceValue;
 					try {
 						Object objList = RELAXED_JSON_MAPPER.readValue(sourceData, RELAXED_JSON_MAPPER.getTypeFactory()
