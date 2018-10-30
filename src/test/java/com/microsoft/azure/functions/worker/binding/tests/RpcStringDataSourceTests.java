@@ -32,7 +32,7 @@ public class RpcStringDataSourceTests {
 	public void FunctionWithPOJOListInput(ArrayList<TestPOJO> items) {
 	}
 
-	// @Test
+	@Test
 	public void rpcStringDataSource_To_String() {
 		String sourceKey = "testString";
 		String inputString = "Test String";
@@ -43,7 +43,7 @@ public class RpcStringDataSourceTests {
 		assertEquals(bindingData.getValue(), actualArg.getValue());
 	}
 
-	// @Test
+	@Test
 	public void rpcJsonStringDataSource_To_String() {
 		String sourceKey = "testStringJson";
 		String jsonInString = "{\"id\":7500 , \"testname\":\"joe\"}";
@@ -54,7 +54,7 @@ public class RpcStringDataSourceTests {
 		assertEquals(bindingData.getValue(), actualArg.getValue());
 	}
 
-	// @Test
+	@Test
 	public void rpcStringArrayDataSource_To_StringArray() {
 		String sourceKey = "testStringArray";
 		String jsonInStringArray = "[\"item1\", \"item2\"]";
@@ -67,7 +67,7 @@ public class RpcStringDataSourceTests {
 		assertTrue(convertedData[1].contains("item2"));
 	}
 
-	// @Test
+	@Test
 	public void rpcJsonStringArrayDataSource_To_POJO() {
 		String sourceKey = "testStringJsonArray";
 		String jsonInStringArray = "[{\"id\":7500, \"name\":\"joe\"}, {\"id\":7501 , \"name\":\"joe\"}]";

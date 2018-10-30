@@ -1,7 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
