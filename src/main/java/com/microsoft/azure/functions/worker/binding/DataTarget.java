@@ -16,7 +16,7 @@ abstract class DataTarget implements OutputBinding {
 		this.dataOperations = dataOperations;
 	}
 
-	Optional<TypedData> computeFromValue() throws Exception {
+	public Optional<TypedData> computeFromValue() throws Exception {
 		if (this.value == null) {
 			return Optional.of(TypedData.newBuilder().setJson("null").build());
 		}

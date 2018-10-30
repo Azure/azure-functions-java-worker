@@ -32,7 +32,7 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
     private Object body;
     private Map<String, String> headers;
 
-    public static TypedData.Builder toHttpData(RpcHttpDataTarget response) throws Exception {
+    public static TypedData.Builder toRpcHttpData(RpcHttpDataTarget response) throws Exception {
         TypedData.Builder dataBuilder = TypedData.newBuilder();
         if (response != null) {
         	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatusCode()));
@@ -47,8 +47,8 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
 
     private static final DataOperations<Object, TypedData.Builder> HTTP_TARGET_OPERATIONS = new DataOperations<>();
     static {
-        HTTP_TARGET_OPERATIONS.addTargetOperation(HttpResponseMessage.class, v -> toHttpData((RpcHttpDataTarget) v));
-        HTTP_TARGET_OPERATIONS.addTargetOperation(RpcHttpDataTarget.class, v -> toHttpData((RpcHttpDataTarget) v));
+        HTTP_TARGET_OPERATIONS.addTargetOperation(HttpResponseMessage.class, v -> toRpcHttpData((RpcHttpDataTarget) v));
+        HTTP_TARGET_OPERATIONS.addTargetOperation(RpcHttpDataTarget.class, v -> toRpcHttpData((RpcHttpDataTarget) v));
     }
 
 	

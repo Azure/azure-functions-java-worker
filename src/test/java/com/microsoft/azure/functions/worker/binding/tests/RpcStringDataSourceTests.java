@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcJsonDataSource;
 import com.microsoft.azure.functions.worker.binding.RpcStringDataSource;
@@ -107,5 +108,12 @@ public class RpcStringDataSourceTests {
 		assertTrue(convertedData.get(1).id == 7501);
 		assertEquals(convertedData.get(1).name, "joe");
 	}
-
+	
+	@Test(expected = JsonParseException.class)
+	public void rpcStringStringDataSource_To_POJO_Throws() {
+		String sourceKey = "testString";
+		String testString = "item1";
+		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, testString);
+		stringData.computeByName(sourceKey, TestPOJO.class);
+	}
 }
