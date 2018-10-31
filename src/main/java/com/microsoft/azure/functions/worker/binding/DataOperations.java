@@ -44,7 +44,7 @@ interface CheckedBiFunction<T, U, R> {
 		try {
 			return this.apply(t, u);
 		} catch (Exception ex) {
-			// WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
+			WorkerLogManager.getSystemLogger().warning(ExceptionUtils.getRootCauseMessage(ex));
 			return null;
 		}
 	}

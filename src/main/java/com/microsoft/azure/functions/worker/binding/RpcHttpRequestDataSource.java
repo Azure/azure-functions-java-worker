@@ -17,8 +17,8 @@ import com.microsoft.azure.functions.HttpStatusType;
 import com.microsoft.azure.functions.HttpResponseMessage.Builder;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 
-final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource> {
-	RpcHttpRequestDataSource(String name, RpcHttp value) {
+public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource> {
+	public RpcHttpRequestDataSource(String name, RpcHttp value) {
 		super(name, null, HTTP_DATA_OPERATIONS);
 		this.httpPayload = value;
 		this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.httpPayload.getBody());

@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 
-final class RpcUnspecifiedDataTarget extends DataTarget {
-	RpcUnspecifiedDataTarget() {
+public final class RpcUnspecifiedDataTarget extends DataTarget {
+	public RpcUnspecifiedDataTarget() {
 		super(UNSPECIFIED_TARGET_OPERATIONS);
 	}
 
