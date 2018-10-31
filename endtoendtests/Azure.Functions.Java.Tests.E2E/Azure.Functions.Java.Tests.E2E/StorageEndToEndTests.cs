@@ -3,6 +3,9 @@
 
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -62,6 +65,21 @@ namespace Azure.Functions.Java.Tests.E2E
             //Verify
             var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBindingQueueNamePOJO);
             Assert.Contains(expectedQueueMessage, queueMessage);
+        }
+
+        [Fact]
+        public async Task QueueOutput_POJOList_Succeeds()
+        {
+            string expectedQueueMessage = Guid.NewGuid().ToString();
+            //Clear queue
+            await StorageHelpers.ClearQueue(Constants.OutputBindingQueueNamePOJO);
+
+            //Trigger
+            Assert.True(await Utilities.InvokeHttpTrigger("QueueOutputPOJOList", $"?queueMessageId={expectedQueueMessage}", HttpStatusCode.OK, expectedQueueMessage));
+
+            //Verify
+            IEnumerable<string> queueMessages = await StorageHelpers.ReadMessagesFromQueue(Constants.OutputBindingQueueNamePOJO);
+            Assert.True(queueMessages.All(msg => msg.Contains(expectedQueueMessage)));
         }
     }
 }
