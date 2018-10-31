@@ -269,3 +269,4 @@ pkg/
 /.recommenders/*
 /Azure.Functions.Cli.zip
 /Azure.Functions.Cli/
+/version.txt
