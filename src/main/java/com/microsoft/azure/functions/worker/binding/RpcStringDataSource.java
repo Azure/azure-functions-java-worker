@@ -1,15 +1,11 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public final class RpcStringDataSource extends DataSource<String> {
     public RpcStringDataSource(String name, String value) { super(name, value, STRING_DATA_OPERATIONS); }
 
-    private static Object convertToJson(boolean isStrict, String s, Type target) throws JsonParseException, JsonMappingException, ClassCastException, IOException {
+    private static Object convertToJson(boolean isStrict, String s, Type target) throws ClassCastException {
         DataSource<?> jsonSource = new RpcJsonDataSource(null, s);
         if (isStrict) {
             return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getNullSafeValue();

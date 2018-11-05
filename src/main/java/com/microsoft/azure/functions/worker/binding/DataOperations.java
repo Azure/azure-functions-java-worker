@@ -2,6 +2,8 @@ package com.microsoft.azure.functions.worker.binding;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +14,10 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.*;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
 
@@ -79,7 +78,7 @@ public class DataOperations<T, R> {
 		this.targetOperations.put(targetType, operation);
 	}
 
-	Optional<R> apply(T sourceValue, Type targetType) throws JsonParseException, JsonMappingException, IOException {
+	Optional<R> apply(T sourceValue, Type targetType) {
 		Optional<R> resultValue = null;
 
 		if (sourceValue != null) {
@@ -88,25 +87,20 @@ public class DataOperations<T, R> {
 			if (matchingOperation != null) {
 				resultValue = Optional.ofNullable(matchingOperation).map(op -> op.tryApply(sourceValue, targetType));
 			} else {
+				String sourceData = (String) sourceValue;
 				// Try POJO
-				ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
-				RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
-				RELAXED_JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-				RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 				if (Collection.class.isAssignableFrom(TypeUtils.getRawType(targetType, null))) {
-					Class<?> collectionItemType = (Class<?>) CoreTypeResolver.getParameterizedActualTypeArgumentsType(targetType);
-					String sourceData = (String) sourceValue;
+					Class<?> collectionItemType = (Class<?>) CoreTypeResolver
+							.getParameterizedActualTypeArgumentsType(targetType);
+
 					try {
-						Object objList = RELAXED_JSON_MAPPER.readValue(sourceData, RELAXED_JSON_MAPPER.getTypeFactory()
-								.constructCollectionType(List.class, collectionItemType));
+						Object objList = toList(sourceData, collectionItemType);
 						resultValue = (Optional<R>) Optional.ofNullable(objList);
 					} catch (Exception jsonParseEx) {
-						resultValue = convertFromJson(sourceValue, targetType, RELAXED_JSON_MAPPER);
+						resultValue = convertFromJson(sourceData, targetType);
 					}
 				} else {
-					resultValue = convertFromJson(sourceValue, TypeUtils.getRawType(targetType, null),
-							RELAXED_JSON_MAPPER);
+					resultValue = convertFromJson(sourceData, TypeUtils.getRawType(targetType, null));
 				}
 			}
 		}
@@ -144,10 +138,26 @@ public class DataOperations<T, R> {
 		return resultValue;
 	}
 
-	private Optional<R> convertFromJson(T sourceValue, Type targetType, ObjectMapper RELAXED_JSON_MAPPER)
-			throws IOException, JsonParseException, JsonMappingException {
-		Object obj = RELAXED_JSON_MAPPER.readValue((String) sourceValue, TypeUtils.getRawType(targetType, null));
-		return (Optional<R>) Optional.ofNullable(obj);
+	private Optional<R> convertFromJson(String sourceValue, Type targetType) {
+		if (null == sourceValue) {
+			return null;
+		}
+		Object result = RpcJsonDataSource.gson.fromJson(sourceValue, targetType);
+		return (Optional<R>) Optional.ofNullable(result);
+	}
+
+	public static <T> List<T> toList(String json, Class<T> elementType) {
+		if (null == json) {
+			return null;
+		}
+		List<T> pojoList = new ArrayList<T>();
+		JsonParser parser = new JsonParser();
+		JsonArray array = parser.parse(json).getAsJsonArray();
+		for (int i = 0; i < array.size(); i++) {
+			pojoList.add((T) RpcJsonDataSource.gson.fromJson(array.get(i), elementType));
+		}
+
+		return pojoList;
 	}
 
 	static Object generalAssignment(Object value, Type target) {

@@ -12,7 +12,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcJsonDataSource;
 import com.microsoft.azure.functions.worker.binding.RpcStringDataSource;
@@ -64,7 +64,7 @@ public class RpcStringDataSourceTests {
 	}
 
 	@Test
-	public void rpcJsonStringArrayDataSource_To_POJO() {
+	public void rpcJsonStringArrayDataSource_To_POJOArray() {
 		String sourceKey = "testStringJsonArray";
 		String jsonInStringArray = "[{\"id\":7500, \"name\":\"joe\"}, {\"id\":7501 , \"name\":\"joe\"}]";
 		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, jsonInStringArray);
@@ -76,6 +76,18 @@ public class RpcStringDataSourceTests {
 		assertEquals(convertedData[0].name, "joe");
 		assertTrue(convertedData[1].id == 7501);
 		assertEquals(convertedData[1].name, "joe");
+	}
+	
+	@Test
+	public void rpcJsonStringDataSource_To_POJO() {
+		String sourceKey = "testStringJson";
+		String jsonInStringArray = "{\"id\":7500, \"name\":\"joe\"}";
+		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, jsonInStringArray);
+		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TestPOJO.class);
+		BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
+		TestPOJO convertedData = (TestPOJO) actualArg.getValue();
+		assertTrue(convertedData.id == 7500);
+		assertEquals(convertedData.name, "joe");
 	}
 
 	@Test
@@ -109,7 +121,7 @@ public class RpcStringDataSourceTests {
 		assertEquals(convertedData.get(1).name, "joe");
 	}
 	
-	@Test(expected = JsonParseException.class)
+	@Test(expected = JsonSyntaxException.class) 
 	public void rpcStringStringDataSource_To_POJO_Throws() {
 		String sourceKey = "testString";
 		String testString = "item1";
