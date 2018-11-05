@@ -7,8 +7,6 @@ import java.util.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.microsoft.azure.functions.worker.broker.*;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.rpc.messages.*;
 
@@ -56,7 +54,7 @@ public final class BindingDataStore {
     	return this.metadataSources.get(name).computeByName(name, target);
     }
     
-    public Optional<BindingData> getDataByType(Type target) throws JsonParseException, JsonMappingException, IOException {
+    public Optional<BindingData> getDataByType(Type target) {
     	return this.otherSources.get(ExecutionContext.class).computeByType(target);        
     }
 

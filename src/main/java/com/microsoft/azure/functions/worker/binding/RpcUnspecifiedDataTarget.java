@@ -1,10 +1,5 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 
@@ -70,21 +65,15 @@ public final class RpcUnspecifiedDataTarget extends DataTarget {
 	public static TypedData.Builder toJsonData(Object value) throws Exception {
 		TypedData.Builder dataBuilder = TypedData.newBuilder();
 		if (value != null) {
-			dataBuilder.setJson(RELAXED_JSON_MAPPER.writeValueAsString(value));
+			dataBuilder.setJson(RpcJsonDataSource.gson.toJson((String) value));
 		} else {
 			throw new IllegalArgumentException();
 		}
 		return dataBuilder;
 	}
 
-	private static final ObjectMapper RELAXED_JSON_MAPPER = new ObjectMapper();
 	private static final DataOperations<Object, TypedData.Builder> UNSPECIFIED_TARGET_OPERATIONS = new DataOperations<>();
 	static {
-		RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-		RELAXED_JSON_MAPPER.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
-		RELAXED_JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		RELAXED_JSON_MAPPER.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
-
 		UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(long.class, RpcUnspecifiedDataTarget::toIntData);
 		UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(Long.class, RpcUnspecifiedDataTarget::toIntData);
 		UNSPECIFIED_TARGET_OPERATIONS.addTargetOperation(int.class, RpcUnspecifiedDataTarget::toIntData);
