@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <azure.functions.maven.plugin.version>1.0.0-beta-7</azure.functions.maven.plugin.version>
+        <azure.functions.maven.plugin.version>1.0.0-beta-8-SNAPSHOT</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>1.0.0-beta-7-SNAPSHOT</azure.functions.java.library.version>        
         <functionAppName>azure-functions-java-endtoendtests</functionAppName>
         <functionAppRegion>westus</functionAppRegion>
