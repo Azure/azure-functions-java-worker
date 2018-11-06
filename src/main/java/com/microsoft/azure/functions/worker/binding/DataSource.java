@@ -1,12 +1,10 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;

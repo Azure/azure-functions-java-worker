@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,10 +23,13 @@ public class RpcStringDataSourceTests {
 	public static class TestPOJO {
 		public Integer id;
 		public String name;
-		public String Description;
+		public String description;
 	}
 
 	public void FunctionWithPOJOListInput(ArrayList<TestPOJO> items) {
+	}
+
+	public void FunctionWithStringListInput(List<String> items) {
 	}
 
 	@Test
@@ -77,7 +81,36 @@ public class RpcStringDataSourceTests {
 		assertTrue(convertedData[1].id == 7501);
 		assertEquals(convertedData[1].name, "joe");
 	}
-	
+
+	@Test
+	public void rpcJsonStringArrayDataSource_To_StringArray() {
+		String sourceKey = "testStringJsonArray";
+		String jsonInStringArray = "[{\"id\":7500, \"name\":\"joe\"}, {\"id\":7501 , \"name\":\"joe\"}]";
+		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, jsonInStringArray);
+		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, String[].class);
+		BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
+		String[] convertedData = (String[]) actualArg.getValue();
+		assertTrue(convertedData.length == 2);
+		assertTrue(convertedData[0].contains("7500"));
+		assertTrue(convertedData[1].contains("7501"));
+	}
+
+	@Test
+	public void rpcJsonStringArrayDataSource_To_StringList() {
+		String sourceKey = "testStringJsonArray";
+		String jsonInStringArray = "[{\"id\":7500, \"name\":\"joe\"}, {\"id\":7501 , \"name\":\"joe\"}]";
+		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, jsonInStringArray);
+
+		Type paramType = getParameterType("FunctionWithStringListInput");
+		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey,paramType);	
+
+		BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
+		List<String> convertedData = (List<String>) actualArg.getValue();
+		assertTrue(convertedData.size() == 2);
+		assertTrue(convertedData.get(0).contains("7500"));
+		assertTrue(convertedData.get(1).contains("7501"));
+	}
+
 	@Test
 	public void rpcJsonStringDataSource_To_POJO() {
 		String sourceKey = "testStringJson";
@@ -97,21 +130,9 @@ public class RpcStringDataSourceTests {
 		String jsonInStringArray = "[{\"id\":7500, \"name\":\"joe\"}, {\"id\":7501 , \"name\":\"joe\"}]";
 		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, jsonInStringArray);
 
-		RpcStringDataSourceTests stringDataSourceTests = new RpcStringDataSourceTests();
-		Class<? extends RpcStringDataSourceTests> stringDataSourceTestsClass = stringDataSourceTests.getClass();
-		Method[] methods = stringDataSourceTestsClass.getMethods();
-		Method functionWithPOJOListInputMethod = null;
-		for (Method method : methods) {
-			if (method.getName() == "FunctionWithPOJOListInput") {
-				functionWithPOJOListInputMethod = method;
-				break;
-			}
-		}
+		Type paramType = getParameterType("FunctionWithPOJOListInput");
 
-		Parameter[] parameters = functionWithPOJOListInputMethod.getParameters();
-
-		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey,
-				parameters[0].getParameterizedType());
+		Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey,paramType);				
 		BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
 		List<TestPOJO> convertedData = (List<TestPOJO>) actualArg.getValue();
 		assertTrue(convertedData.size() == 2);
@@ -120,12 +141,28 @@ public class RpcStringDataSourceTests {
 		assertTrue(convertedData.get(1).id == 7501);
 		assertEquals(convertedData.get(1).name, "joe");
 	}
-	
-	@Test(expected = JsonSyntaxException.class) 
+
+	@Test(expected = JsonSyntaxException.class)
 	public void rpcStringStringDataSource_To_POJO_Throws() {
 		String sourceKey = "testString";
 		String testString = "item1";
 		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, testString);
 		stringData.computeByName(sourceKey, TestPOJO.class);
+	}
+
+	private static Type getParameterType(String functionName) {
+		RpcStringDataSourceTests stringDataSourceTests = new RpcStringDataSourceTests();
+		Class<? extends RpcStringDataSourceTests> stringDataSourceTestsClass = stringDataSourceTests.getClass();
+		Method[] methods = stringDataSourceTestsClass.getMethods();
+		Method functionWithStringListInputMethod = null;
+		for (Method method : methods) {
+			if (method.getName() == functionName) {
+				functionWithStringListInputMethod = method;
+				break;
+			}
+		}
+
+		Parameter[] parameters = functionWithStringListInputMethod.getParameters();
+		return parameters[0].getParameterizedType();
 	}
 }

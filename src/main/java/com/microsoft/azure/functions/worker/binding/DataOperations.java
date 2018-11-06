@@ -17,6 +17,7 @@ import org.apache.commons.lang3.reflect.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.*;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
@@ -142,7 +143,17 @@ public class DataOperations<T, R> {
 		if (null == sourceValue) {
 			return null;
 		}
-		Object result = RpcJsonDataSource.gson.fromJson(sourceValue, targetType);
+		Object result = null;
+		try {
+			result = RpcJsonDataSource.gson.fromJson(sourceValue, targetType);
+		} catch (JsonSyntaxException ex) {
+			if (Collection.class.isAssignableFrom(TypeUtils.getRawType(targetType, null)) || targetType.getClass().isArray()) {
+				result = RpcJsonDataSource.convertToStringArrayOrList(sourceValue, targetType);
+			}
+			else {
+				throw ex;
+			}
+		}
 		return (Optional<R>) Optional.ofNullable(result);
 	}
 

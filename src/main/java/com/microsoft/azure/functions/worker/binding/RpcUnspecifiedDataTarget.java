@@ -65,7 +65,7 @@ public final class RpcUnspecifiedDataTarget extends DataTarget {
 	public static TypedData.Builder toJsonData(Object value) throws Exception {
 		TypedData.Builder dataBuilder = TypedData.newBuilder();
 		if (value != null) {
-			dataBuilder.setJson(RpcJsonDataSource.gson.toJson((String) value));
+			dataBuilder.setJson(RpcJsonDataSource.gson.toJson(value));
 		} else {
 			throw new IllegalArgumentException();
 		}
