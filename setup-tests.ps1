@@ -37,7 +37,3 @@ Write-Host "Building azure-functions-maven-com.microsoft.azure.functions.endtoen
 cmd.exe /c '.\..\mvnBuildSkipTests.bat'
 StopOnFailedExecution
 Pop-Location -StackName "javaWorkerDir"
-
-Write-Host "Copying EventHubs function.json as temporary workaround...."
-Copy-Item ".\endtoendtests\functionInputJson.json" ".\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutputJSON\function.json"
-Copy-Item ".\endtoendtests\functionInputString.json" ".\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\EventHubTriggerAndOutputString\function.json"
