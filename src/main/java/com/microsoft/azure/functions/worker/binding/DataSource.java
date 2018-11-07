@@ -1,18 +1,13 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 /**
  * Base class of all data sources. Provides basic information and logic for type
@@ -46,13 +41,13 @@ abstract class DataSource<T> {
 		try {
 			data = source.get().computeByType(target);
 			return data;
-		} catch (IOException ex) {
+		} catch (Exception ex) {
 			ExceptionUtils.rethrow(ex);
 		}
 		return Optional.empty();
 	}
 
-	public Optional<BindingData> computeByType(Type target) throws JsonParseException, JsonMappingException, IOException {
+	public Optional<BindingData> computeByType(Type target) {
 		boolean isTargetOptional = Optional.class.equals(TypeUtils.getRawType(target, null));
 		if (isTargetOptional) {
 			Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(target, Optional.class);
