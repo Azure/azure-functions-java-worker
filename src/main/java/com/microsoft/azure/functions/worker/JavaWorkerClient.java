@@ -68,7 +68,7 @@ public class JavaWorkerClient implements AutoCloseable {
     private class StreamingMessagePeer implements StreamObserver<StreamingMessage>, AutoCloseable {
         StreamingMessagePeer() {
             this.task = new CompletableFuture<>();
-            this.threadpool = Executors.newWorkStealingPool();
+            this.threadpool = Executors.newCachedThreadPool();
             this.observer = FunctionRpcGrpc.newStub(JavaWorkerClient.this.channel).eventStream(this);
         }
 
@@ -87,10 +87,10 @@ public class JavaWorkerClient implements AutoCloseable {
         public void onNext(StreamingMessage message) {
             MessageHandler<?, ?> handler = JavaWorkerClient.this.handlerSuppliers.get(message.getContentCase()).get();
             handler.setRequest(message);
-            handler.registerTask(this.threadpool.submit(() -> {
+            this.threadpool.submit(() -> {
                 handler.handle();
                 this.send(message.getRequestId(), handler);
-            }));
+            });
         }
 
         @Override

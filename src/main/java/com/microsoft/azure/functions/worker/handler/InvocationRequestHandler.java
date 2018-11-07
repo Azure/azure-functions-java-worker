@@ -28,13 +28,13 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
 
         this.invocationLogger = WorkerLogManager.getInvocationLogger(invocationId);
         response.setInvocationId(invocationId);
-
+       
         List<ParameterBinding> outputBindings = new ArrayList<>();
         this.broker.invokeMethod(functionId, request, outputBindings).ifPresent(response::setReturnValue);
         response.addAllOutputData(outputBindings);
 
-        return String.format("Function \"%s\" (ID: %s) invoked by Java Worker",
-                this.broker.getMethodName(functionId).orElse("UNKNOWN"), functionId);
+        return String.format("Function \"%s\" (Id: %s) invoked by Java Worker",
+                this.broker.getMethodName(functionId).orElse("UNKNOWN"), invocationId);
     }
 
     private JavaFunctionBroker broker;
