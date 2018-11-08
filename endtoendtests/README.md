@@ -1,4 +1,4 @@
-# Microsoft Azure Functions in Java
+# Azure Functions in Java
 
 This repo contains several Java Azure Functions samples for different events.
 

@@ -59,8 +59,7 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
             this.responseStatusMarshaller.accept(this.response, result.build());
         }
     }
-
-    public void registerTask(Future<?> task) { }
+    
     Logger getLogger() { return WorkerLogManager.getHostLogger(); }
     abstract String execute(TRequest request, TResponse response) throws Exception;
 

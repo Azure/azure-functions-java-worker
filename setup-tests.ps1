@@ -6,9 +6,19 @@ function StopOnFailedExecution {
     exit $LastExitCode 
   }
 }
+Write-Host "$args[0]"
+Write-Host $args[0]
+
+$skipCliDownload = $false
+if($args[0])
+{
+$skipCliDownload = $args[0]
+}
+Write-Host $skipCliDownload
 
 $currDir =  Get-Location
-
+if(!$skipCliDownload)
+{
 Write-Host "Deleting Functions Core Tools if exists...."
 Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
 Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
@@ -25,7 +35,7 @@ $wc.DownloadFile($url, $output)
 
 Write-Host "Extracting Functions Core Tools...."
 Expand-Archive ".\Azure.Functions.Cli.zip" -DestinationPath ".\Azure.Functions.Cli"
-
+}
 Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
 Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 Copy-Item ".\worker.config.json" ".\Azure.Functions.Cli\workers\java"
