@@ -19,7 +19,6 @@ environment:
 
 install:
   - ps: Get-Command mvn
-  - cmd: mvn -v
   - ps: Get-Command nuget
   - cmd: echo %JAVA_HOME%
   
@@ -27,11 +26,11 @@ build_script:
   - ps: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
-       $buildNumber = ""
-       Write-Host “Found git tag. Not setting package suffix"
+       $buildNumber = $env:APPVEYOR_REPO_TAG_NAME
+       Write-Host “Found git tag."
       } 
       else {
-       $buildNumber = "-$env:APPVEYOR_BUILD_NUMBER"
+       $buildNumber = "1.2.$env:APPVEYOR_BUILD_NUMBER"
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
       .\package.ps1 -buildNumber $buildNumber
