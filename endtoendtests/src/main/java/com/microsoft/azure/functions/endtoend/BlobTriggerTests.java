@@ -1,6 +1,10 @@
-package com.microsoft.azure.functions.endtoendtests;
+package com.microsoft.azure.functions.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
 import com.microsoft.azure.functions.*;
 
 /**
@@ -10,29 +14,16 @@ public class BlobTriggerTests {
     /**
      * This function will be invoked when a new or updated blob is detected at the specified path. The blob contents are provided as input to this function.
      */
-    @FunctionName("BlobTrigger")
+    @FunctionName("BlobTriggerToBlobTest")
     @StorageAccount("AzureWebJobsStorage")
-     public void blobTrigger(
-        @BlobTrigger(name = "content", path = "myblob/{fileName}", dataType = "binary") byte[] content,
-        @BindingName("fileName") String fileName,
+     public void BlobTriggerToBlobTest(
+        @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-java/{name}", dataType = "binary") byte[] triggerBlob,
+        @BindingName("name") String fileName,
+        @BlobInput(name = "inputBlob", path = "test-input-java/{name}", dataType = "binary") byte[] inputBlob,
+        @BlobOutput(name = "outputBlob", path = "test-output-java/{name}", dataType = "binary") OutputBinding<byte[]> outputBlob,
         final ExecutionContext context
     ) {
-        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Size: " + content.length + " Bytes");
-    }
-    
-    /**
-     * This function will be invoked when a message add to queue. And the message is the file name to make a copy. Make sure the file exist or you will get an error
-     */
-
-    @FunctionName("BlobHandler")
-    @StorageAccount("AzureWebJobsStorage")
-    public void blobHandler(
-        @QueueTrigger(name = "myBlobQueue", queueName = "myblobqueue", connection = "AzureWebJobsStorage") String myBlobQueue,
-        @BlobInput(name = "myInputBlob", path = "myblob/{queueTrigger}", dataType = "binary") byte[] myInputBlob,
-        @BlobOutput(name = "myOutputBlob", path = "myblob/{queueTrigger}-Copy", dataType = "binary") OutputBinding<byte[]> myOutputBlob,
-        final ExecutionContext context
-    ) {
-        context.getLogger().info("Azure blob function is making a copy of " + myBlobQueue);
-        myOutputBlob.setValue(myInputBlob);
-    }
+        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Size: " + triggerBlob.length + " Bytes");        
+        outputBlob.setValue(inputBlob);
+    }    
 }

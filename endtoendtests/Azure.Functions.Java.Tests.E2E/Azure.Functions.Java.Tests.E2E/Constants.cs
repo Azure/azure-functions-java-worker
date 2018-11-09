@@ -19,6 +19,11 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string OutputBindingQueueNameMetadata = "test-output-java-metadata";
         public static string TestQueueMessage = "Hello, World";
 
+        //Blob tests
+        public static string TriggerInputBindingBlobContainer = "test-triggerinput-java";
+        public static string InputBindingBlobContainer = "test-input-java";
+        public static string OutputBindingBlobContainer = "test-output-java";
+
         // CosmosDB tests
         public static string CosmosDBConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsCosmosDBConnectionString");
         public static string DocDbDatabaseName = "ItemDb";
