@@ -4,7 +4,7 @@
     <id>Microsoft.Azure.Functions.JavaWorker</id>
     <title>Microsoft Azure Functions Java Worker</title>
     <tags>java azure-functions azure</tags>
-    <version>1.2.0-$version$</version>
+    <version>1.2.$version$</version>
     <authors>Microsoft</authors>
     <owners>Microsoft</owners>
     <projectUrl>https://github.com/Azure/azure-functions-java-worker</projectUrl>
