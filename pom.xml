@@ -64,12 +64,7 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-		</repository>
-		<repository>
-			<id>commicrosoftazure-2702</id>
-			<name>commicrosoftazure-2702</name>
-			<url>https://oss.sonatype.org/content/repositories/commicrosoftazure-2702/</url>
-		</repository>
+		</repository>		
 	</repositories>
 
 	<dependencies>
