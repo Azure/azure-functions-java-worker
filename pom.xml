@@ -13,7 +13,7 @@
 	</parent>
 
 	<name>Azure Functions Java Worker</name>
-	<description>This package contains the Java runtime environment for Microsoft Azure functions host.</description>
+	<description>This package contains the Java Language Worker used by Azure functions host to execute java functions</description>
 	<url>https://azure.microsoft.com/en-us/services/functions</url>
 	<organization>
 		<name>Microsoft Azure</name>
@@ -40,12 +40,7 @@
 		<tag>HEAD</tag>
 	</scm>
 
-	<developers>
-		<developer>
-			<id>junyi</id>
-			<name>Junyi Yi</name>
-			<email>junyi@microsoft.com</email>
-		</developer>
+	<developers>		
 		<developer>
 			<id>pgopa</id>
 			<name>Pragna Gopa</name>
