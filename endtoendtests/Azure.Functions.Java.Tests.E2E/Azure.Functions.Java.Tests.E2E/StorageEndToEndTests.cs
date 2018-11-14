@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -80,6 +81,27 @@ namespace Azure.Functions.Java.Tests.E2E
             //Verify
             IEnumerable<string> queueMessages = await StorageHelpers.ReadMessagesFromQueue(Constants.OutputBindingQueueNamePOJO);
             Assert.True(queueMessages.All(msg => msg.Contains(expectedQueueMessage)));
+        }
+
+        [Fact]
+        public async Task BlobTriggerToBlob_Succeeds()
+        {
+            string fileName = Guid.NewGuid().ToString();
+
+            //cleanup
+            await StorageHelpers.ClearBlobContainers();
+
+            //Setup
+            await StorageHelpers.CreateBlobContainers();
+            await StorageHelpers.UpdloadFileToContainer(Constants.InputBindingBlobContainer, fileName);
+
+            //Trigger
+            await StorageHelpers.UpdloadFileToContainer(Constants.TriggerInputBindingBlobContainer, fileName);
+
+            //Verify
+            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, fileName);
+
+            Assert.Equal("Hello World", result);
         }
     }
 }

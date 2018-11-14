@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.endtoendtests;
+package com.microsoft.azure.functions.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
