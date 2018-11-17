@@ -4,6 +4,7 @@ import java.util.logging.*;
 import javax.annotation.*;
 
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * The entry point of the Java Language Worker. Every component could get the command line options from this singleton
@@ -122,7 +123,7 @@ public final class Application implements IApplication {
             try (JavaWorkerClient client = new JavaWorkerClient(app)) {
                 client.listen(app.getWorkerId(), app.getRequestId()).get();
             } catch (Exception ex) {
-                WorkerLogManager.getSystemLogger().log(Level.SEVERE, "Unexpected Exception causes system to exit", ex);
+                WorkerLogManager.getSystemLogger().log(Level.SEVERE, ExceptionUtils.getRootCauseMessage(ex), ex);
                 System.exit(-1);
             }
         }
