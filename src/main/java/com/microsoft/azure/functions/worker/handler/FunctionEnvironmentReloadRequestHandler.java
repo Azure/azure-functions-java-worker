@@ -38,6 +38,11 @@ public class FunctionEnvironmentReloadRequestHandler
         metadata.getScriptFile());
   }
   
+  /*
+   * This is a helper utility specifically to reload environment variables 
+   * if java language worker is started in standby mode by the functions runtime
+   * and should not be used for other purposes
+   */
   public static void setEnv(Map<String, String> newSettings) throws Exception {
     if (newSettings == null || newSettings.isEmpty()) {    
       return;
