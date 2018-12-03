@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>com.microsoft.maven</groupId>
 		<artifactId>java-8-parent</artifactId>
-		<version>8.0.0-SNAPSHOT</version>
+		<version>8.0.0</version>
 	</parent>
 
 	<name>Azure Functions Java Worker</name>
@@ -40,7 +40,7 @@
 		<tag>HEAD</tag>
 	</scm>
 
-	<developers>		
+	<developers>
 		<developer>
 			<id>pgopa</id>
 			<name>Pragna Gopa</name>
@@ -59,7 +59,7 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-		</repository>		
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -210,6 +210,25 @@
 						<goals>
 							<goal>test-jar</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/protobuf/java/</source>
+							</sources>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>

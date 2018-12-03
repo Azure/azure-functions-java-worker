@@ -22,13 +22,13 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 
     @Override
     public String getFunctionName() { return this.funcname; }
-
+   
     private final String invocationId;
     private final Logger logger;
-    private final String funcname;
+    private final String funcname;    
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
         EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
-    }
+    }    
 }
