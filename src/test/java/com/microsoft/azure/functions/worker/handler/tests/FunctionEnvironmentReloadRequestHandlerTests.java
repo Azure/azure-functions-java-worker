@@ -27,10 +27,13 @@ public class FunctionEnvironmentReloadRequestHandlerTests {
 		Map<String, String> newEnvVariables = new HashMap<>();
 		newEnvVariables.putAll(existingVariables);
 		newEnvVariables.put("testSetting", "testSettingValue");
-		envHandler.setEnv(newEnvVariables);
+		envHandler.specialize(newEnvVariables);
 		testSetting = System.getenv("testSetting");
 		assertNotNull(testSetting);
 		assertEquals(testSetting, "testSettingValue");
+		testSetting = System.getenv(envHandler.WebsitePlaceholderMode);
+		assertNotNull(testSetting);
+		assertEquals(testSetting, "0");
 	}
 
 	@Test
@@ -40,6 +43,6 @@ public class FunctionEnvironmentReloadRequestHandlerTests {
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
 		Map<String, String> newEnvVariables = null;
-		envHandler.setEnv(newEnvVariables);
+		envHandler.specialize(newEnvVariables);
 	}
 }

@@ -35,7 +35,7 @@ public class FunctionEnvironmentReloadRequestHandler
       return String.format("Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null");
     }
     
-    setEnv(EnvironmentVariables);    
+    specialize(EnvironmentVariables);    
     return String.format("FunctionEnvironmentReloadRequest completed");
   }
 
@@ -46,27 +46,18 @@ public class FunctionEnvironmentReloadRequestHandler
   }
   
   /*
-   * This is a helper utility specifically to reload environment variables 
-   * if java language worker is started in standby mode by the functions runtime
+   * This is a helper utility specifically to reload environment variables and
+   * ReinitializeDetours if java language worker is started in standby mode by the functions runtime
    * and should not be used for other purposes
    */
-  public void setEnv(Map<String, String> newSettings) throws Exception {
+  public void specialize(Map<String, String> newSettings) throws Exception {
     if (newSettings == null || newSettings.isEmpty()) {    
       return;
     }
 
-    for (Map.Entry<String,String> entry : newSettings.entrySet()) {
-        Kernel32.INSTANCE.SetEnvironmentVariable(entry.getKey(), entry.getValue());
-      }
-
-      Kernel32.INSTANCE.SetEnvironmentVariable("WEBSITE_PLACEHOLDER_MODE", null);
-      Kernel32.INSTANCE.SetEnvironmentVariable("WEBSITE_PLACEHOLDER_MODE", "0");
-
-      PicoHelper picoHelperInstance = PicoHelper.INSTANCE;
-
-      picoHelperInstance.ReinitializeDetours();
-
-      try {
+    // This is required to reinitialize file detours
+    newSettings.put(WebsitePlaceholderMode, "0");
+    try {
         Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
         Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
         theEnvironmentField.setAccessible(true);
@@ -92,7 +83,16 @@ public class FunctionEnvironmentReloadRequestHandler
           }
         }
       }
+      
+      String  azureWebsiteInstanceId = System.getenv(AzureWebsiteInstanceId);
+      if (azureWebsiteInstanceId != null && azureWebsiteInstanceId != "")
+      {
+    	  PicoHelper picoHelperInstance = PicoHelper.INSTANCE;
+          picoHelperInstance.ReinitializeDetours();
+      }      
     }
 	
   private final JavaFunctionBroker broker;
+  public final String AzureWebsiteInstanceId = "WEBSITE_INSTANCE_ID";
+  public final String WebsitePlaceholderMode = "WEBSITE_PLACEHOLDER_MODE";
 }
