@@ -108,6 +108,11 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+   			<groupId>net.java.dev.jna</groupId>
+   			<artifactId>jna-platform</artifactId>
+   			<version>5.1.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
