@@ -15,7 +15,7 @@ import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 
 public class FunctionEnvironmentReloadRequestHandlerTests {
 
-	//@Test
+	@Test
 	public void SetEnv_Succeeds() throws Exception {
 		DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
 		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
@@ -27,22 +27,19 @@ public class FunctionEnvironmentReloadRequestHandlerTests {
 		Map<String, String> newEnvVariables = new HashMap<>();
 		newEnvVariables.putAll(existingVariables);
 		newEnvVariables.put("testSetting", "testSettingValue");
-		//envHandler.specialize(newEnvVariables);
+		envHandler.setEnv(newEnvVariables);
 		testSetting = System.getenv("testSetting");
 		assertNotNull(testSetting);
-		assertEquals(testSetting, "testSettingValue");
-		//testSetting = System.getenv(envHandler.WebsitePlaceholderMode);
-		//assertNotNull(testSetting);
-		//assertEquals(testSetting, "0");
+		assertEquals(testSetting, "testSettingValue");		
 	}
 
-	//@Test
+	@Test
 	public void SetEnv_Null_Succeeds() throws Exception {
 		DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
 		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
 		Map<String, String> newEnvVariables = null;
-		//envHandler.specialize(newEnvVariables);
+		envHandler.setEnv(newEnvVariables);
 	}
 }
