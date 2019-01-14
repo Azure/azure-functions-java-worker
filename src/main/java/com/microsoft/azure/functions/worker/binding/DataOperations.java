@@ -92,7 +92,7 @@ public class DataOperations<T, R> {
 			  String sourceData;
 			  Class<?> sourceValueClass = sourceValue.getClass();
 			  if (sourceValueClass.isAssignableFrom(byte[].class)) {
-			    sourceData = Base64.getEncoder().encodeToString((byte[])sourceValue);			      
+			    sourceData = new String((byte[]) sourceValue);			      
 			  }
 			  else
 			  {

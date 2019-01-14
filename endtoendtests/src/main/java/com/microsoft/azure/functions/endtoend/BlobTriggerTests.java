@@ -27,6 +27,9 @@ public class BlobTriggerTests {
         outputBlob.setValue(inputBlob);
     }   
     
+    /*
+     * Verified via Unit tests. Added test here for sample code
+     */
     @FunctionName("BlobTriggerPOJOTest")
     @StorageAccount("AzureWebJobsStorage")
      public void BlobTriggerPOJOTest(
@@ -36,6 +39,21 @@ public class BlobTriggerTests {
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText.blobText);        
+        outputBlob.setValue(triggerBlobText);
+    }
+    
+    /*
+     * Verified via Unit tests. Added test here for sample code
+     */
+    @FunctionName("BlobTriggerStringTest")
+    @StorageAccount("AzureWebJobsStorage")
+     public void BlobTriggerStringTest(
+        @BlobTrigger(name = "triggerBlob", path = "test-triggerinputstring-java/{name}") String triggerBlobText,
+        @BindingName("name") String fileName,        
+        @BlobOutput(name = "outputBlob", path = "test-outputstring-java/{name}") OutputBinding<String> outputBlob,
+        final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText);        
         outputBlob.setValue(triggerBlobText);
     }
     
