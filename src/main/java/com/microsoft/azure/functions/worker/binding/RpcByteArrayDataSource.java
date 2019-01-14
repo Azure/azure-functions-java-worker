@@ -13,5 +13,6 @@ final public class RpcByteArrayDataSource extends DataSource<byte[]> {
   static {
     BYTE_ARRAY_DATA_OPERATIONS.addOperation(Byte[].class, ArrayUtils::toObject);
     BYTE_ARRAY_DATA_OPERATIONS.addOperation(byte[].class, ArrayUtils::clone);
+    BYTE_ARRAY_DATA_OPERATIONS.addGenericOperation(String.class, (v,t) -> new String(v));
   }
 }
