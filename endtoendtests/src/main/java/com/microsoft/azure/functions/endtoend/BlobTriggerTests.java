@@ -25,5 +25,21 @@ public class BlobTriggerTests {
     ) {
         context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Size: " + triggerBlob.length + " Bytes");        
         outputBlob.setValue(inputBlob);
-    }    
+    }   
+    
+    @FunctionName("BlobTriggerPOJOTest")
+    @StorageAccount("AzureWebJobsStorage")
+     public void BlobTriggerPOJOTest(
+        @BlobTrigger(name = "triggerBlob", path = "test-triggerinputpojo-java/{name}") TestBlobData triggerBlobText,
+        @BindingName("name") String fileName,        
+        @BlobOutput(name = "outputBlob", path = "test-outputpojo-java/{name}") OutputBinding<TestBlobData> outputBlob,
+        final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText.blobText);        
+        outputBlob.setValue(triggerBlobText);
+    }
+    
+    public static class TestBlobData {
+      public String blobText;
+  }
 }

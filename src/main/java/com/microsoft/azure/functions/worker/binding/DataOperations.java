@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -87,8 +88,17 @@ public class DataOperations<T, R> {
 					.get(TypeUtils.getRawType(targetType, null));
 			if (matchingOperation != null) {
 				resultValue = Optional.ofNullable(matchingOperation).map(op -> op.tryApply(sourceValue, targetType));
-			} else {
-				String sourceData = (String) sourceValue;
+			} else {		
+			  String sourceData;
+			  Class<?> sourceValueClass = sourceValue.getClass();
+			  if (sourceValueClass.isAssignableFrom(byte[].class)) {
+			    sourceData = Base64.getEncoder().encodeToString((byte[])sourceValue);			      
+			  }
+			  else
+			  {
+			    sourceData = (String) sourceValue;
+			  }
+			  
 				// Try POJO
 				if (Collection.class.isAssignableFrom(TypeUtils.getRawType(targetType, null))) {
 					Class<?> collectionItemType = (Class<?>) CoreTypeResolver
