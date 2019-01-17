@@ -5,5 +5,10 @@
         "defaultExecutablePath": "java",
         "defaultWorkerPath": "azure-functions-java-worker.jar",
         "arguments": ["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPV4Stack=true -jar"]
+    },
+    "profiles": {
+        "appServiceEnvironment": {
+            "defaultExecutablePath": "../../../FunctionsJava/jdk1.8.0_172-win_x86/bin/java"
+        }
     }
 }
