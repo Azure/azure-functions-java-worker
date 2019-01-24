@@ -31,7 +31,7 @@ public class FunctionEnvironmentReloadRequestHandler extends
       return String.format(
           "Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null");
     }
-    setEnv(EnvironmentVariables);
+    //setEnv(EnvironmentVariables);
     return String.format("FunctionEnvironmentReloadRequest completed");
   }
 

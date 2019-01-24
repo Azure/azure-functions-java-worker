@@ -15,7 +15,7 @@ import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 
 public class FunctionEnvironmentReloadRequestHandlerTests {
 
-	@Test
+	//@Test
 	public void SetEnv_Succeeds() throws Exception {
 		DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
 		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
@@ -33,7 +33,7 @@ public class FunctionEnvironmentReloadRequestHandlerTests {
 		assertEquals(testSetting, "testSettingValue");		
 	}
 
-	@Test
+	//@Test
 	public void SetEnv_Null_Succeeds() throws Exception {
 		DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
 		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
