@@ -45,7 +45,6 @@ public class FunctionEnvironmentReloadRequestHandler
 		if (newSettings == null || newSettings.isEmpty()) {
 			return;
 		}
-		WorkerLogManager.getSystemLogger().log(Level.INFO, "Will set environment variables using Kernel32.INSTANCE");
 		// Update Environment variables at the process level
 		Map<String, String> oldSettings = System.getenv();
 		for (Map.Entry<String, String> oldEntry : oldSettings.entrySet()) {
@@ -59,13 +58,11 @@ public class FunctionEnvironmentReloadRequestHandler
 		Kernel32.INSTANCE.SetEnvironmentVariable(WebsitePlaceholderMode, null);
 
 		WorkerLogManager.getSystemLogger().log(Level.INFO,
-				"Done setting environment variables using Kernel32.INSTANCE");
+				"Finished resetting environment variables using Kernel32.INSTANCE");
 
 		String azureWebsiteInstanceId = System.getenv(AzureWebsiteInstanceId);
 		if (azureWebsiteInstanceId != null && !azureWebsiteInstanceId.isEmpty()) {
-			WorkerLogManager.getSystemLogger().log(Level.INFO,
-					"Starting ReinitializeDetours");
-
+			
 			PicoHelper picoHelperInstance = PicoHelper.INSTANCE;
 			picoHelperInstance.ReinitializeDetours();
 			WorkerLogManager.getSystemLogger().log(Level.INFO,
@@ -73,9 +70,7 @@ public class FunctionEnvironmentReloadRequestHandler
 		}
 
 		// Update Environment variables in the JVM
-		try {
-			WorkerLogManager.getSystemLogger().log(Level.INFO,
-					"Setting environment variables in the JVM");
+		try {			
 			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
 			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
 			theEnvironmentField.setAccessible(true);
@@ -89,7 +84,7 @@ public class FunctionEnvironmentReloadRequestHandler
 			cienv.clear();
 			cienv.putAll(newSettings);
 			WorkerLogManager.getSystemLogger().log(Level.INFO,
-					"Completed resetting environment variables in the JVM");
+					"Finished resetting environment variables in the JVM");
 		} catch (NoSuchFieldException e) {
 			Class[] classes = Collections.class.getDeclaredClasses();
 			Map<String, String> env = System.getenv();
