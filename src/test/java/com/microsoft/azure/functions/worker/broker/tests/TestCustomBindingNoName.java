@@ -9,9 +9,8 @@ import com.microsoft.azure.functions.annotation.CustomBinding;
 
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@CustomBinding(direction = "in", name = "", type = "customBinding")
-public @interface TestCustomBinding {
+@CustomBinding(direction = "in", name = "cutomBindingName", type = "customBinding")
+public @interface TestCustomBindingNoName {
    String index();
    String path();
-   String name();
 }
