@@ -24,11 +24,14 @@ public class EventHubTriggerTests {
     @FunctionName("EventHubTriggerAndOutputString")
     public void EventHubTriggerAndOutputString(
         @EventHubTrigger(name = "messages", eventHubName = "test-input-java", connection = "AzureWebJobsEventHubSender", dataType = "string", cardinality = Cardinality.MANY) String[] messages,
+        @BindingName("SystemPropertiesArray") SystemProperty[] systemPropertiesArray,
         @EventHubOutput(name = "output", eventHubName = "test-output-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received " + messages.length +" messages");
+        context.getLogger().info("SystemProperties for message[0]: EnqueuedTimeUtc=" + systemPropertiesArray[0].EnqueuedTimeUtc +" Offset=" +systemPropertiesArray[0].Offset);
         output.setValue(messages[0]);
+        
     }
 
     @FunctionName("EventHubTriggerCardinalityOne")
@@ -74,5 +77,11 @@ public class EventHubTriggerTests {
         output.setValue(message);
     }
 
+    public static class SystemProperty {
+      public String SequenceNumber;
+      public String Offset;
+      public String PartitionKey;        
+      public String EnqueuedTimeUtc;
+  }
    
 }
