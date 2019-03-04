@@ -35,7 +35,7 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-		</repository>		
+		</repository>
 	</repositories>
 
 	<pluginRepositories>
@@ -66,6 +66,11 @@
 		<dependency>
 			<groupId>com.microsoft.azure.functions</groupId>
 			<artifactId>azure-functions-java-library</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft.azure</groupId>
+			<artifactId>azure-eventhubs</artifactId>
+			<version>2.2.0</version>
 		</dependency>
 	</dependencies>
 
