@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import com.sun.jna.platform.win32.Kernel32;
-
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.rpc.messages.FunctionEnvironmentReloadResponse.Builder;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
@@ -45,30 +43,7 @@ public class FunctionEnvironmentReloadRequestHandler
 		if (newSettings == null || newSettings.isEmpty()) {
 			return;
 		}
-		// Update Environment variables at the process level
-		Map<String, String> oldSettings = System.getenv();
-		for (Map.Entry<String, String> oldEntry : oldSettings.entrySet()) {
-			Kernel32.INSTANCE.SetEnvironmentVariable(oldEntry.getKey(), null);
-		}
-
-		for (Map.Entry<String, String> entry : newSettings.entrySet()) {
-			Kernel32.INSTANCE.SetEnvironmentVariable(entry.getKey(), entry.getValue());
-		}
-
-		Kernel32.INSTANCE.SetEnvironmentVariable(WebsitePlaceholderMode, null);
-
-		WorkerLogManager.getSystemLogger().log(Level.INFO,
-				"Finished resetting environment variables using Kernel32.INSTANCE");
-
-		String azureWebsiteInstanceId = System.getenv(AzureWebsiteInstanceId);
-		if (azureWebsiteInstanceId != null && !azureWebsiteInstanceId.isEmpty()) {
-			
-			PicoHelper picoHelperInstance = PicoHelper.INSTANCE;
-			picoHelperInstance.ReinitializeDetours();
-			WorkerLogManager.getSystemLogger().log(Level.INFO,
-					"Finished Reinitializing Detours");
-		}
-
+		
 		// Update Environment variables in the JVM
 		try {			
 			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
