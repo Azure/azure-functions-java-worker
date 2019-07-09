@@ -30,7 +30,7 @@ build_script:
        Write-Host “Found git tag."
       } 
       else {
-       $buildNumber = "1.4.1-SNAPSHOT-$env:APPVEYOR_BUILD_NUMBER"
+       $buildNumber = "1.5.0-SNAPSHOT-$env:APPVEYOR_BUILD_NUMBER"
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
       .\package.ps1 -buildNumber $buildNumber
