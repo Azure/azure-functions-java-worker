@@ -37,10 +37,19 @@ namespace Azure.Functions.Java.Tests.E2E
         // EventHubs
         public static string OutputEventHubQueueName = "test-eventhuboutput-java";
         public static string InputEventHubName = "test-input-java";
+
         public static string OutputJsonEventHubQueueName = "test-eventhuboutputjson-java";
         public static string InputJsonEventHubName = "test-inputjson-java";
+
         public static string OutputOneEventHubQueueName = "test-eventhuboutputone-java";
         public static string InputCardinalityOneEventHubName = "test-inputOne-java";
+
+        public static string OutputBinaryOneEventHubQueueName = "test-outputone-java-cardinality-one";
+        public static string InputBinaryOneEventHubQueueName = "test-inputone-java-cardinality-one";
+
+        public static string OutputBinaryManyEventHubQueueName = "test-outputbinary-java-cardinality-many";
+        public static string InputBinaryManyEventHubQueueName = "test-inputbinary-java-cardinality-many";
+
         public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
 
         // Xunit Fixtures and Collections

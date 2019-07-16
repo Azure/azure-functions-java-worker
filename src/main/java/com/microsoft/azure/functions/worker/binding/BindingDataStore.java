@@ -1,6 +1,5 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -35,7 +34,7 @@ public final class BindingDataStore {
     }
 
     public void addTriggerMetadataSource(Map<String, TypedData> metadata) {        
-        for (Map.Entry<String,TypedData> entry : metadata.entrySet())  
+        for (Map.Entry<String,TypedData> entry : metadata.entrySet())
         {
         	DataSource<?> inputValue = rpcSourceFromTypedData(entry.getKey(), entry.getValue());            
             this.metadataSources.put(entry.getKey(), inputValue);        	
@@ -66,6 +65,10 @@ public final class BindingDataStore {
             case BYTES:  return new RpcByteArrayDataSource(name, data.getBytes());
             case JSON:   return new RpcJsonDataSource(name, data.getJson());
             case HTTP:   return new RpcHttpRequestDataSource(name, data.getHttp());
+            case COLLECTION_STRING: return new RpcCollectionStringDataSource(name, data.getCollectionString());
+            case COLLECTION_DOUBLE: return new RpcCollectionDoubleDataSource(name, data.getCollectionDouble());
+            case COLLECTION_BYTES: return new RpcCollectionByteArrayDataSource(name, data.getCollectionBytes());
+            case COLLECTION_SINT64: return new RpcCollectionLongDataSource(name, data.getCollectionSint64());
             case DATA_NOT_SET: return new RpcEmptyDataSource(name);
             default:     throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
         }
