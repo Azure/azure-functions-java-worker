@@ -14,6 +14,7 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
     @Override
     String execute(WorkerInitRequest request, WorkerInitResponse.Builder response) {
         response.setWorkerVersion(Application.version());
+        response.putCapabilities("TYPED_DATA_COLLECTION_SUPPORTED", "TRUE");
         return "Worker initialized";
     }
 }

@@ -77,6 +77,29 @@ public class EventHubTriggerTests {
         output.setValue(message);
     }
 
+    @FunctionName("EventHubTriggerAndOutputBinaryCardinalityMany")
+    public void EventHubTriggerAndOutputBinaryCardinalityMany(
+            @EventHubTrigger(name = "messages", eventHubName = "test-inputbinary-java-cardinality-many", connection = "AzureWebJobsEventHubSender", dataType = "string", cardinality = Cardinality.MANY) byte[][] messages,
+            @EventHubOutput(name = "output", eventHubName = "test-outputbinary-java-cardinality-many", connection = "AzureWebJobsEventHubSender") OutputBinding<byte[]> output,
+            final ExecutionContext context
+    ) {
+//        context.getLogger().info("Java Event Hub trigger received " + messages.size() +" messages");
+//        Byte[] test = messages.get(0);
+//        output.setValue(messages.get(0));
+
+
+    }
+
+    @FunctionName("EventHubTriggerAndOutputBinaryCardinalityOne")
+    public void EventHubTriggerAndOutputBinaryCardinalityOne(
+            @EventHubTrigger(name = "message", eventHubName = "test-inputone-java-cardinality-one", connection = "AzureWebJobsEventHubSender", dataType = "binary", cardinality = Cardinality.ONE) byte[] message,
+            @EventHubOutput(name = "output", eventHubName = "test-outputone-java-cardinality-one", connection = "AzureWebJobsEventHubSender", dataType = "binary") OutputBinding<byte[]> output,
+            final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Event Hub trigger received message" + message);
+        output.setValue(message);
+    }
+
     public static class SystemProperty {
       public String SequenceNumber;
       public String Offset;
