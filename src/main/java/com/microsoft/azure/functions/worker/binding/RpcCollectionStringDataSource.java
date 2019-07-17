@@ -14,11 +14,17 @@ public final class RpcCollectionStringDataSource extends DataSource<List<String>
 	private static final DataOperations<List<String>, Object> COLLECTION_DATA_OPERATIONS = new DataOperations<>();
 
 	public static Object convertToStringList(List<String> sourceValue, Type targetType) {
-		Type targetActualType = ((ParameterizedTypeImpl) targetType).getActualTypeArguments()[0];
-		if (targetActualType == String.class) {
+		if(targetType == List.class) {
 			return new ArrayList<>(sourceValue);
 		}
-		throw new UnsupportedOperationException("Input data type \"" + targetActualType + "\" is not supported");
+		else if(targetType instanceof ParameterizedTypeImpl) {
+			Type targetActualType = ((ParameterizedTypeImpl) targetType).getActualTypeArguments()[0];
+			if (targetActualType == String.class) {
+				return new ArrayList<>(sourceValue);
+			}
+			throw new UnsupportedOperationException("Input data type \"" + targetActualType + "\" is not supported");
+		}
+		throw new UnsupportedOperationException("Input data type \"" + targetType + "\" is not supported");
 	}
 
 	public static Object convertToStringArray(List<String> sourceValue, Type targetType) {
