@@ -19,11 +19,17 @@ public final class RpcCollectionDoubleDataSource extends DataSource<List<Double>
 	}
 
 	public static Object convertToDoubleList(List<Double> sourceValue, Type targetType) {
-		Type targetActualType = ((ParameterizedTypeImpl) targetType).getActualTypeArguments()[0];
-		if (targetActualType == Double.class) {
+		if(targetType == List.class) {
 			return new ArrayList<>(sourceValue);
 		}
-		throw new UnsupportedOperationException("Input data type \"" + targetActualType + "\" is not supported");
+		else if(targetType instanceof ParameterizedTypeImpl) {
+			Type targetActualType = ((ParameterizedTypeImpl) targetType).getActualTypeArguments()[0];
+			if (targetActualType == Double.class) {
+				return new ArrayList<>(sourceValue);
+			}
+			throw new UnsupportedOperationException("Input data type \"" + targetActualType + "\" is not supported");
+		}
+		throw new UnsupportedOperationException("Input data type \"" + targetType + "\" is not supported");
 	}
 
     public static Object convertToDoubleObjectArray(List<Double> sourceValue, Type targetType) {

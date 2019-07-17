@@ -79,7 +79,7 @@ public class EventHubTriggerTests {
 
     @FunctionName("EventHubTriggerAndOutputBinaryCardinalityMany")
     public void EventHubTriggerAndOutputBinaryCardinalityMany(
-            @EventHubTrigger(name = "messages", eventHubName = "test-inputbinary-java-cardinality-many", connection = "AzureWebJobsEventHubSender", dataType = "string", cardinality = Cardinality.MANY) byte[][] messages,
+            @EventHubTrigger(name = "messages", eventHubName = "test-inputbinary-java-cardinality-many", connection = "AzureWebJobsEventHubSender", dataType = "binary", cardinality = Cardinality.MANY) List<byte[]> messages,
             @EventHubOutput(name = "output", eventHubName = "test-outputbinary-java-cardinality-many", connection = "AzureWebJobsEventHubSender") OutputBinding<byte[]> output,
             final ExecutionContext context
     ) {
