@@ -8,6 +8,5 @@ import java.util.List;
 public class Utility {
     public static Type getActualType(Class clazz) {
         return ParameterizedTypeImpl.make(List.class, new Type[]{clazz}, null);
-
     }
 }
