@@ -44,7 +44,7 @@ public final class RpcCollectionDoubleDataSource extends DataSource<List<Double>
 		COLLECTION_DATA_OPERATIONS.addGenericOperation(List.class, (v, t) -> convertToDoubleList(v, t));
 		COLLECTION_DATA_OPERATIONS.addGenericOperation(Double[].class, (v, t) -> convertToDoubleObjectArray(v, t));
 		COLLECTION_DATA_OPERATIONS.addGenericOperation(double[].class, (v, t) -> convertToDoubleArray(v, t));
-        COLLECTION_DATA_OPERATIONS.addGenericOperation(String.class, (v, t) -> convertToDoubleListDefault(v, t));
+		COLLECTION_DATA_OPERATIONS.addGenericOperation(String.class, (v, t) -> convertToDoubleListDefault(v, t));
     }
 }
 
