@@ -1,7 +1,7 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionString.Builder;
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionString;
+import com.microsoft.azure.functions.rpc.messages.CollectionString.Builder;
+import com.microsoft.azure.functions.rpc.messages.CollectionString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionStringDataSource;
 import org.junit.Test;
@@ -22,10 +22,10 @@ public class RpcCollectionStringDataSourceTest {
         List<String> input = new ArrayList<String>();
         input.add(expectedString);
 
-        Builder a = TypedDataCollectionString.newBuilder();
+        Builder a = CollectionString.newBuilder();
         a.addAllString(input);
 
-        TypedDataCollectionString typedDataCollectionString = a.build();
+        CollectionString typedDataCollectionString = a.build();
 
         RpcCollectionStringDataSource stringData = new RpcCollectionStringDataSource(sourceKey, typedDataCollectionString);
 
@@ -44,10 +44,10 @@ public class RpcCollectionStringDataSourceTest {
         List<String> input = new ArrayList<String>();
         input.add(expectedString);
 
-        Builder a = TypedDataCollectionString.newBuilder();
+        Builder a = CollectionString.newBuilder();
         a.addAllString(input);
 
-        TypedDataCollectionString typedDataCollectionString = a.build();
+        CollectionString typedDataCollectionString = a.build();
 
         RpcCollectionStringDataSource stringData = new RpcCollectionStringDataSource(sourceKey, typedDataCollectionString);
 
@@ -66,10 +66,10 @@ public class RpcCollectionStringDataSourceTest {
         List<String> input = new ArrayList<String>();
         input.add(expectedString);
 
-        Builder a = TypedDataCollectionString.newBuilder();
+        Builder a = CollectionString.newBuilder();
         a.addAllString(input);
 
-        TypedDataCollectionString typedDataCollectionString = a.build();
+        CollectionString typedDataCollectionString = a.build();
 
         RpcCollectionStringDataSource stringData = new RpcCollectionStringDataSource(sourceKey, typedDataCollectionString);
 
@@ -88,10 +88,10 @@ public class RpcCollectionStringDataSourceTest {
         List<String> input = new ArrayList<String>();
         input.add(expectedString);
 
-        Builder a = TypedDataCollectionString.newBuilder();
+        Builder a = CollectionString.newBuilder();
         a.addAllString(input);
 
-        TypedDataCollectionString typedDataCollectionString = a.build();
+        CollectionString typedDataCollectionString = a.build();
 
         RpcCollectionStringDataSource stringData = new RpcCollectionStringDataSource(sourceKey, typedDataCollectionString);
 

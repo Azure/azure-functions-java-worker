@@ -1,8 +1,7 @@
 
 package com.microsoft.azure.functions.worker.binding.tests;
 
-        import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionDouble;
-        import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionDouble.Builder;
+        import com.microsoft.azure.functions.rpc.messages.CollectionDouble;
         import com.microsoft.azure.functions.worker.binding.BindingData;
         import com.microsoft.azure.functions.worker.binding.RpcCollectionDoubleDataSource;
         import org.junit.Test;
@@ -23,10 +22,10 @@ public class RpcCollectionDoubleDataSourceTest {
         List<Double> input = new ArrayList<Double>();
         input.add(expectedDouble);
 
-        TypedDataCollectionDouble.Builder a = TypedDataCollectionDouble.newBuilder();
+        CollectionDouble.Builder a = CollectionDouble.newBuilder();
         a.addAllDouble(input);
 
-        TypedDataCollectionDouble typedDataCollectionDouble = a.build();
+        CollectionDouble typedDataCollectionDouble = a.build();
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 
@@ -45,10 +44,10 @@ public class RpcCollectionDoubleDataSourceTest {
         List<Double> input = new ArrayList<Double>();
         input.add(expectedDouble);
 
-        TypedDataCollectionDouble.Builder a = TypedDataCollectionDouble.newBuilder();
+        CollectionDouble.Builder a = CollectionDouble.newBuilder();
         a.addAllDouble(input);
 
-        TypedDataCollectionDouble typedDataCollectionDouble = a.build();
+        CollectionDouble typedDataCollectionDouble = a.build();
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 
@@ -67,10 +66,10 @@ public class RpcCollectionDoubleDataSourceTest {
         List<Double> input = new ArrayList<Double>();
         input.add(expectedDouble);
 
-        TypedDataCollectionDouble.Builder a = TypedDataCollectionDouble.newBuilder();
+        CollectionDouble.Builder a = CollectionDouble.newBuilder();
         a.addAllDouble(input);
 
-        TypedDataCollectionDouble typedDataCollectionDouble = a.build();
+        CollectionDouble typedDataCollectionDouble = a.build();
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 
@@ -89,10 +88,10 @@ public class RpcCollectionDoubleDataSourceTest {
         List<Double> input = new ArrayList<Double>();
         input.add(expectedDouble);
 
-        TypedDataCollectionDouble.Builder a = TypedDataCollectionDouble.newBuilder();
+        CollectionDouble.Builder a = CollectionDouble.newBuilder();
         a.addAllDouble(input);
 
-        TypedDataCollectionDouble typedDataCollectionDouble = a.build();
+        CollectionDouble typedDataCollectionDouble = a.build();
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 
@@ -111,10 +110,10 @@ public class RpcCollectionDoubleDataSourceTest {
         List<Double> input = new ArrayList<Double>();
         input.add(expectedDouble);
 
-        TypedDataCollectionDouble.Builder a = TypedDataCollectionDouble.newBuilder();
+        CollectionDouble.Builder a = CollectionDouble.newBuilder();
         a.addAllDouble(input);
 
-        TypedDataCollectionDouble typedDataCollectionDouble = a.build();
+        CollectionDouble typedDataCollectionDouble = a.build();
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 

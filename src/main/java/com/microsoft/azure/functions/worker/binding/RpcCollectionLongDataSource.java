@@ -1,6 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionSInt64;
+import com.microsoft.azure.functions.rpc.messages.CollectionSInt64;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Type;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RpcCollectionLongDataSource extends DataSource<List<Long>> {
-	public RpcCollectionLongDataSource(String name, TypedDataCollectionSInt64 value) {
+	public RpcCollectionLongDataSource(String name, CollectionSInt64 value) {
 		super(name, value.getSint64List(), COLLECTION_DATA_OPERATIONS);
 	}
 	private static final DataOperations<List<Long>, Object> COLLECTION_DATA_OPERATIONS = new DataOperations<>();
