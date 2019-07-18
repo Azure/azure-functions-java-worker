@@ -1,7 +1,7 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import com.google.protobuf.ByteString;
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionBytes;
+import com.microsoft.azure.functions.rpc.messages.CollectionBytes;
 import org.apache.commons.lang3.ArrayUtils;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class RpcCollectionByteArrayDataSource extends DataSource<List<ByteString>> {
-	public RpcCollectionByteArrayDataSource(String name, TypedDataCollectionBytes value) {
+	public RpcCollectionByteArrayDataSource(String name, CollectionBytes value) {
 		super(name, value.getBytesList(), COLLECTION_DATA_OPERATIONS);
 	}
 	private static final DataOperations<List<ByteString>, Object> COLLECTION_DATA_OPERATIONS = new DataOperations<>();

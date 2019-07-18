@@ -1,10 +1,8 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionDouble;
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionSInt64;
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionSInt64.Builder;
+import com.microsoft.azure.functions.rpc.messages.CollectionSInt64;
+import com.microsoft.azure.functions.rpc.messages.CollectionSInt64.Builder;
 import com.microsoft.azure.functions.worker.binding.BindingData;
-import com.microsoft.azure.functions.worker.binding.RpcCollectionDoubleDataSource;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionLongDataSource;
 import org.junit.Test;
 
@@ -24,10 +22,10 @@ public class  RpcCollectionLongDataSourceTest{
         List<Long> input = new ArrayList<Long>();
         input.add(expectedLong);
 
-        Builder a = TypedDataCollectionSInt64.newBuilder();
+        Builder a = CollectionSInt64.newBuilder();
         a.addAllSint64(input);
 
-        TypedDataCollectionSInt64 typedDataCollectionLong = a.build();
+        CollectionSInt64 typedDataCollectionLong = a.build();
 
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
@@ -46,10 +44,10 @@ public class  RpcCollectionLongDataSourceTest{
         List<Long> input = new ArrayList<Long>();
         input.add(expectedLong);
 
-        Builder a = TypedDataCollectionSInt64.newBuilder();
+        Builder a = CollectionSInt64.newBuilder();
         a.addAllSint64(input);
 
-        TypedDataCollectionSInt64 typedDataCollectionLong = a.build();
+        CollectionSInt64 typedDataCollectionLong = a.build();
 
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
@@ -68,10 +66,10 @@ public class  RpcCollectionLongDataSourceTest{
         List<Long> input = new ArrayList<Long>();
         input.add(expectedLong);
 
-        Builder a = TypedDataCollectionSInt64.newBuilder();
+        Builder a = CollectionSInt64.newBuilder();
         a.addAllSint64(input);
 
-        TypedDataCollectionSInt64 typedDataCollectionLong = a.build();
+        CollectionSInt64 typedDataCollectionLong = a.build();
 
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
@@ -90,10 +88,10 @@ public class  RpcCollectionLongDataSourceTest{
         List<Long> input = new ArrayList<Long>();
         input.add(expectedLong);
 
-        Builder a = TypedDataCollectionSInt64.newBuilder();
+        Builder a = CollectionSInt64.newBuilder();
         a.addAllSint64(input);
 
-        TypedDataCollectionSInt64 typedDataCollectionLong = a.build();
+        CollectionSInt64 typedDataCollectionLong = a.build();
 
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
@@ -113,10 +111,10 @@ public class  RpcCollectionLongDataSourceTest{
         List<Long> input = new ArrayList<Long>();
         input.add(expectedLong);
 
-        Builder a = TypedDataCollectionSInt64.newBuilder();
+        Builder a = CollectionSInt64.newBuilder();
         a.addAllSint64(input);
 
-        TypedDataCollectionSInt64 typedDataCollectionLong = a.build();
+        CollectionSInt64 typedDataCollectionLong = a.build();
 
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
