@@ -3,8 +3,8 @@ package com.microsoft.azure.functions.worker.binding.tests;
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionByteArrayDataSource;
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionBytes;
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionBytes.Builder;
+import com.microsoft.azure.functions.rpc.messages.CollectionBytes;
+import com.microsoft.azure.functions.rpc.messages.CollectionBytes.Builder;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
@@ -27,10 +27,10 @@ public class RpcCollectionByteArrayDataSourceTest {
         List<ByteString> input = new ArrayList<ByteString>();
         input.add(inputByteString);
 
-        Builder a = TypedDataCollectionBytes.newBuilder();
+        Builder a = CollectionBytes.newBuilder();
         a.addAllBytes(input);
 
-        TypedDataCollectionBytes typedDataCollectionBytes = a.build();
+        CollectionBytes typedDataCollectionBytes = a.build();
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
@@ -51,10 +51,10 @@ public class RpcCollectionByteArrayDataSourceTest {
         List<ByteString> input = new ArrayList<ByteString>();
         input.add(inputByteString);
 
-        Builder a = TypedDataCollectionBytes.newBuilder();
+        Builder a = CollectionBytes.newBuilder();
         a.addAllBytes(input);
 
-        TypedDataCollectionBytes typedDataCollectionBytes = a.build();
+        CollectionBytes typedDataCollectionBytes = a.build();
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
@@ -75,10 +75,10 @@ public class RpcCollectionByteArrayDataSourceTest {
         List<ByteString> input = new ArrayList<ByteString>();
         input.add(inputByteString);
 
-        Builder a = TypedDataCollectionBytes.newBuilder();
+        Builder a = CollectionBytes.newBuilder();
         a.addAllBytes(input);
 
-        TypedDataCollectionBytes typedDataCollectionBytes = a.build();
+        CollectionBytes typedDataCollectionBytes = a.build();
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
@@ -99,10 +99,10 @@ public class RpcCollectionByteArrayDataSourceTest {
         List<ByteString> input = new ArrayList<ByteString>();
         input.add(inputByteString);
 
-        Builder a = TypedDataCollectionBytes.newBuilder();
+        Builder a = CollectionBytes.newBuilder();
         a.addAllBytes(input);
 
-        TypedDataCollectionBytes typedDataCollectionBytes = a.build();
+        CollectionBytes typedDataCollectionBytes = a.build();
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
@@ -123,10 +123,10 @@ public class RpcCollectionByteArrayDataSourceTest {
         List<ByteString> input = new ArrayList<ByteString>();
         input.add(inputByteString);
 
-        Builder a = TypedDataCollectionBytes.newBuilder();
+        Builder a = CollectionBytes.newBuilder();
         a.addAllBytes(input);
 
-        TypedDataCollectionBytes typedDataCollectionBytes = a.build();
+        CollectionBytes typedDataCollectionBytes = a.build();
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
@@ -147,10 +147,10 @@ public class RpcCollectionByteArrayDataSourceTest {
         List<ByteString> input = new ArrayList<ByteString>();
         input.add(inputByteString);
 
-        Builder a = TypedDataCollectionBytes.newBuilder();
+        Builder a = CollectionBytes.newBuilder();
         a.addAllBytes(input);
 
-        TypedDataCollectionBytes typedDataCollectionBytes = a.build();
+        CollectionBytes typedDataCollectionBytes = a.build();
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 

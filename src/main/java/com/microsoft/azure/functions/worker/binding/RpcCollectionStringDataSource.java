@@ -1,6 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionString;
+import com.microsoft.azure.functions.rpc.messages.CollectionString;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Type;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RpcCollectionStringDataSource extends DataSource<List<String>> {
-	public RpcCollectionStringDataSource(String name, TypedDataCollectionString value) {
+	public RpcCollectionStringDataSource(String name, CollectionString value) {
 		super(name, value.getStringList(), COLLECTION_DATA_OPERATIONS);
 	}
 	private static final DataOperations<List<String>, Object> COLLECTION_DATA_OPERATIONS = new DataOperations<>();

@@ -1,6 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import com.microsoft.azure.functions.rpc.messages.TypedDataCollectionDouble;
+import com.microsoft.azure.functions.rpc.messages.CollectionDouble;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Array;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RpcCollectionDoubleDataSource extends DataSource<List<Double>> {
-	public RpcCollectionDoubleDataSource(String name, TypedDataCollectionDouble value) {
+	public RpcCollectionDoubleDataSource(String name, CollectionDouble value) {
 		super(name, value.getDoubleList(), COLLECTION_DATA_OPERATIONS);
 	}
 	private static final DataOperations<List<Double>, Object> COLLECTION_DATA_OPERATIONS = new DataOperations<>();
