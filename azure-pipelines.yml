@@ -24,7 +24,7 @@ steps:
        Write-Host “Found git tag."
       } 
       else {
-       $buildNumber = "1.5.0-SNAPSHOT-$(Release.ReleaseId)"
+       $buildNumber = "1.5.0-SNAPSHOT-$(Build.BuildId)"
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
       .\package.ps1 -buildNumber $buildNumber
