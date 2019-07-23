@@ -17,7 +17,16 @@ steps:
      Get-Command mvn
      Get-Command nuget
 - pwsh: |
-    .\build.ps1
+      $buildNumber = 0      
+      if($env:APPVEYOR_REPO_TAG -eq "true") {
+       $buildNumber = $(Build.SourceBranchName)
+       Write-Host “Found git tag."
+      } 
+      else {
+       $buildNumber = "1.5.0-SNAPSHOT-$(devops_buildNumber)"
+       Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
+      }     
+      .\package.ps1 -buildNumber $buildNumber
   env:
     AzureWebJobsStorage: $(AzureWebJobsStorage)
     AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
