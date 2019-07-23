@@ -14,7 +14,7 @@ steps:
   displayName: 'Run a one-line script'
 - pwsh: |
      Get-Command mvn
-     Get-Command nuget
+     Install-Package NuGet.CommandLine
 - pwsh: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
