@@ -42,7 +42,7 @@ steps:
     publishLocation: 'Container'
 - pwsh: |
       .\setup-tests.ps1
-  displayName: 'Starting Functions Host'
+  displayName: 'Setting tests'
 - pwsh: |
       $proc = start-process -filepath $(System.DefaultWorkingDirectory)\Azure.Functions.Cli\func.exe -WorkingDirectory "$(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start --java" -RedirectStandardOutput "output.txt" -RedirectStandardError "error.txt" -PassThru
       # wait for host to start
@@ -52,4 +52,15 @@ steps:
       # Output standard input stream and error stream
       Write-Output "Standard input stream :" (gc ".\output.txt")
       Write-Output "Standard error stream :" (gc ".\error.txt")
+  env:
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
   displayName: 'Starting Functions Host and running'
