@@ -12,9 +12,11 @@ pool:
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
+- task: NuGetToolInstaller@0
+  inputs:
+   checkLatest: true
 - pwsh: |
      Get-Command mvn
-     Install-Package NuGet.CommandLine
 - pwsh: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
