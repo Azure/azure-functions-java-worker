@@ -2,6 +2,17 @@
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
+variables:
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
 
 trigger:
 - master
@@ -27,20 +38,28 @@ steps:
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
       .\package.ps1 -buildNumber $buildNumber
-  env:
-    AzureWebJobsStorage: $(AzureWebJobsStorage)
-    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
-    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
-    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
-    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
-    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-    SBTopicName: $(SBTopicName)
-    SBTopicSubName: $(SBTopicSubName)
-    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
-    SBQueueName: $(SBQueueName)
+ 
   displayName: 'Executing build script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.Repository.LocalPath)/pkg'
+    Contents: '*.nupkg'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    CleanTargetFolder: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+- pwsh: |
+      .\setup-tests.ps1
+      $proc = start-process -filepath $(System.DefaultWorkingDirectory)\Azure.Functions.Cli\func.exe -WorkingDirectory "$(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -RedirectStandardOutput "output.txt" -RedirectStandardError "error.txt" -PassThru
+      # wait for host to start
+      Start-Sleep -s 30
+- pwsh: |
+      .\run-tests.ps1
+- pwsh: | 
+      Stop-Process -Id $proc.Id -Erroraction Ignore
+      # Output standard input stream and error stream
+      Write-Output "Standard input stream :" (gc ".\output.txt")
+      Write-Output "Standard error stream :" (gc ".\error.txt")
