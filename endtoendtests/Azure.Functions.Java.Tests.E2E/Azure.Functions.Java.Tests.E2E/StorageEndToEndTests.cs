@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -12,8 +11,16 @@ using Xunit;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
+    [Collection(Constants.FunctionAppCollectionName)]
     public class StorageEndToEndTests 
     {
+        private readonly FunctionAppFixture _fixture;
+
+        public StorageEndToEndTests(FunctionAppFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         [Fact]
         public async Task QueueTrigger_QueueOutput_Succeeds()
         {

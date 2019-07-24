@@ -12,33 +12,33 @@ Write-Host $args[0]
 $skipCliDownload = $false
 if($args[0])
 {
-$skipCliDownload = $args[0]
+  $skipCliDownload = $args[0]
 }
 Write-Host $skipCliDownload
 
 $currDir =  Get-Location
 if(!$skipCliDownload)
 {
-Write-Host "Deleting Functions Core Tools if exists...."
-Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
-Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
+  Write-Host "Deleting Functions Core Tools if exists...."
+  Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
+  Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
 
-Write-Host "Downloading Functions Core Tools...."
-Invoke-RestMethod -Uri 'https://functionsclibuilds.blob.core.windows.net/builds/2/latest/version.txt' -OutFile version.txt
-Write-Host "Using Functions Core Tools version: $(Get-Content -Raw version.txt)"
-Remove-Item version.txt
+  Write-Host "Downloading Functions Core Tools...."
+  Invoke-RestMethod -Uri 'https://functionsclibuilds.blob.core.windows.net/builds/2/latest/version.txt' -OutFile version.txt
+  Write-Host "Using Functions Core Tools version: $(Get-Content -Raw version.txt)"
+  Remove-Item version.txt
 
-if (-not (Test-Path env:CORE_TOOLS_URL)) 
-{ 
-$env:CORE_TOOLS_URL = "https://functionsclibuilds.blob.core.windows.net/builds/2/latest/Azure.Functions.Cli.win-x86.zip"
-}
-Write-Host "CORE_TOOLS_URL: $env:CORE_TOOLS_URL"
-$output = "$currDir\Azure.Functions.Cli.zip"
-$wc = New-Object System.Net.WebClient
-$wc.DownloadFile($env:CORE_TOOLS_URL, $output)
+  if (-not (Test-Path env:CORE_TOOLS_URL)) 
+  { 
+    $env:CORE_TOOLS_URL = "https://functionsclibuilds.blob.core.windows.net/builds/2/latest/Azure.Functions.Cli.win-x86.zip"
+  }
+  Write-Host "CORE_TOOLS_URL: $env:CORE_TOOLS_URL"
+  $output = "$currDir\Azure.Functions.Cli.zip"
+  $wc = New-Object System.Net.WebClient
+  $wc.DownloadFile($env:CORE_TOOLS_URL, $output)
 
-Write-Host "Extracting Functions Core Tools...."
-Expand-Archive ".\Azure.Functions.Cli.zip" -DestinationPath ".\Azure.Functions.Cli"
+  Write-Host "Extracting Functions Core Tools...."
+  Expand-Archive ".\Azure.Functions.Cli.zip" -DestinationPath ".\Azure.Functions.Cli"
 }
 Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
 Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }

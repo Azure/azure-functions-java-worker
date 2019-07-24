@@ -42,20 +42,10 @@ cache:
   - C:\maven\
   
 after_build:
-  - ps: |
+  - ps: >
       .\setup-tests.ps1
-      $proc = start-process -filepath c:\projects\azure-functions-java-worker\Azure.Functions.Cli\func.exe -WorkingDirectory "c:\projects\azure-functions-java-worker\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -RedirectStandardOutput "output.txt" -RedirectStandardError "error.txt" -PassThru
-      # wait for host to start
-      Start-Sleep -s 30
-
+        
 test_script:
   - ps: >
       .\run-tests.ps1
-
-on_finish:
-  - ps: | 
-      Stop-Process -Id $proc.Id -Erroraction Ignore
-      # Output standard input stream and error stream
-      Write-Output "Standard input stream :" (gc ".\output.txt")
-      Write-Output "Standard error stream :" (gc ".\error.txt")
   

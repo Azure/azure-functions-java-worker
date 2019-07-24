@@ -18,8 +18,4 @@ StopOnFailedExecution
 Write-Host "Starting azure-functions-java-endtoendtests execution"
 Write-Host s$cliDownload
 .\setup-tests.ps1 $skipCliDownload
-$proc = start-process -filepath $currDir\Azure.Functions.Cli\func.exe -WorkingDirectory "$currDir\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests" -ArgumentList "host start" -PassThru
-
-# wait for host to start
-Start-Sleep -s 30
 .\run-tests.ps1

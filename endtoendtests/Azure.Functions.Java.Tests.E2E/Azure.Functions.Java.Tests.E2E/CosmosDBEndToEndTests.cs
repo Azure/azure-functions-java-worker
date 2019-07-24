@@ -8,8 +8,16 @@ using Xunit;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
+    [Collection(Constants.FunctionAppCollectionName)]
     public class CosmosDBEndToEndTests 
     {
+        private readonly FunctionAppFixture _fixture;
+
+        public CosmosDBEndToEndTests(FunctionAppFixture fixture)
+        {
+            this._fixture = fixture;
+        }
+
         [Fact]
         public async Task CosmosDBTrigger_CosmosDBOutput_Succeeds()
         {

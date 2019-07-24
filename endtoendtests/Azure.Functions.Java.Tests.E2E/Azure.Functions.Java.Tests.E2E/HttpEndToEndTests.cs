@@ -7,8 +7,16 @@ using Xunit;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
+    [Collection(Constants.FunctionAppCollectionName)]
     public class HttpEndToEndTests 
     {
+        private readonly FunctionAppFixture _fixture;
+
+        public HttpEndToEndTests(FunctionAppFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         [Theory]
         [InlineData("HttpTriggerJava", "?&name=Test", HttpStatusCode.OK, "Test")]
         [InlineData("HttpTriggerJavaMetadata", "?&firstName=John&lastName=Doe", HttpStatusCode.OK, "JohnDoe")]
