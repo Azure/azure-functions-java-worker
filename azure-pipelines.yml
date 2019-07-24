@@ -35,16 +35,9 @@ steps:
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
     CleanTargetFolder: true
   displayName: 'Copying files for artifacts'
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
 - pwsh: |
       .\setup-tests.ps1
   displayName: 'Setting tests'
-# Visual Studio Test
-# Run unit and functional tests (Selenium, Appium, Coded UI test, etc.) using the Visual Studio Test (VsTest) runner. Test frameworks that have a Visual Studio test adapter such as MsTest, xUnit, NUnit, Chutzpah (for JavaScript tests using QUnit, Mocha and Jasmine), etc. can be run. Tests can be distributed on multiple agents using this task (version 2).
 - pwsh: |
       .\run-tests.ps1
   env:
@@ -59,3 +52,16 @@ steps:
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
   displayName: 'running tests'
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
+    Contents: '*.trx'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    CleanTargetFolder: true
+  displayName: 'Copying test result file for artifacts'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publishing build and test result artifacts'
