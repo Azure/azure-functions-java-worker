@@ -1,8 +1,8 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import com.microsoft.azure.functions.rpc.messages.CollectionString;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +17,8 @@ public final class RpcCollectionStringDataSource extends DataSource<List<String>
 		if(targetType == List.class) {
 			return new ArrayList<>(sourceValue);
 		}
-		else if(targetType instanceof ParameterizedTypeImpl) {
-			Type targetActualType = ((ParameterizedTypeImpl) targetType).getActualTypeArguments()[0];
+		else if(targetType instanceof ParameterizedType) {
+			Type targetActualType = ((ParameterizedType) targetType).getActualTypeArguments()[0];
 			if (targetActualType == String.class) {
 				return new ArrayList<>(sourceValue);
 			}
