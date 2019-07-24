@@ -43,8 +43,22 @@ steps:
 - pwsh: |
       .\setup-tests.ps1
   displayName: 'Setting tests'
-- pwsh: |
-      .\run-tests.ps1
+# Visual Studio Test
+# Run unit and functional tests (Selenium, Appium, Coded UI test, etc.) using the Visual Studio Test (VsTest) runner. Test frameworks that have a Visual Studio test adapter such as MsTest, xUnit, NUnit, Chutzpah (for JavaScript tests using QUnit, Mocha and Jasmine), etc. can be run. Tests can be distributed on multiple agents using this task (version 2).
+- task: VSTest@2
+  inputs:
+    testSelector: 'testAssemblies' 
+    testAssemblyVer2: | 
+      Azure.Functions.Java.Tests.E2E.dll
+    searchFolder: '$(System.DefaultWorkingDirectory)' 
+    publishRunAttachments: true # Optional
+    diagnosticsEnabled: true # Optional
+    #collectDumpOn: 'onAbortOnly' # Optional. Options: onAbortOnly, always, never
+    #rerunFailedTests: False # Optional
+    #rerunType: 'basedOnTestFailurePercentage' # Optional. Options: basedOnTestFailurePercentage, basedOnTestFailureCount
+    #rerunFailedThreshold: '30' # Optional
+    #rerunFailedTestCasesMaxLimit: '5' # Optional
+    #rerunMaxAttempts: '3' # Optional
   env:
     AzureWebJobsStorage: $(AzureWebJobsStorage)
     AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
