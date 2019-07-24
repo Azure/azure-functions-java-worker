@@ -52,6 +52,7 @@ steps:
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
   displayName: 'running tests'
+  continueOnError: true
 - task: CopyFiles@2
   inputs:
     SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
