@@ -95,7 +95,7 @@ public class RpcCollectionDoubleDataSourceTest {
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 
-        Optional<BindingData> actualBindingData = data.computeByName(sourceKey, Utility.getActualType(Double[].class));
+        Optional<BindingData> actualBindingData = data.computeByName(sourceKey, Utility.getActualType(Double.class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Double> actualDoubleList  = (List) actualArg.getValue();
         Double actualLong = actualDoubleList.get(0);
