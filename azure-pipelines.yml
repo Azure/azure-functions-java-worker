@@ -58,7 +58,6 @@ steps:
     SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
     Contents: '*.trx'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    CleanTargetFolder: true
   displayName: 'Copying test result file for artifacts'
 - task: PublishBuildArtifacts@1
   inputs:
