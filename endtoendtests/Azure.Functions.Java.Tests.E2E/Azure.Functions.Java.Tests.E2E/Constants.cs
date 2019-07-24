@@ -44,11 +44,17 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string OutputOneEventHubQueueName = "test-eventhuboutputone-java";
         public static string InputCardinalityOneEventHubName = "test-inputOne-java";
 
-        public static string OutputBinaryOneEventHubQueueName = "test-outputone-java-cardinality-one";
-        public static string InputBinaryOneEventHubQueueName = "test-inputone-java-cardinality-one";
+        public static string OutputBinaryOneQueueName = "test-binary-output-java-cardinality-one";
+        public static string InputBinaryOneEventHubQueueName = "test-binary-input-java-cardinality-one";
 
-        public static string OutputBinaryManyEventHubQueueName = "test-outputbinary-java-cardinality-many";
-        public static string InputBinaryManyEventHubQueueName = "test-inputbinary-java-cardinality-many";
+        public static string OutputBinaryManyQueueName = "test-binary-output-java-cardinality-many-list";
+        public static string InputBinaryManyEventHubQueueName = "test-binary-input-java-cardinality-many-list";
+
+        public static string OutputBinaryArrayManyQueueName = "test-binary-output-java-cardinality-many-array";
+        public static string InputBinaryManyArrayEventHubQueueName = "test-binary-input-java-cardinality-many-array";
+
+        public static string EventHubsConnectionStringSenderSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
+        public static string EventHubsConnectionStringSenderSetting2 = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender_2");
 
         public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
 

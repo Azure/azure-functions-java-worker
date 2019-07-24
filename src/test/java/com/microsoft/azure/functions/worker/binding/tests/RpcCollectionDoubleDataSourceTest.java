@@ -1,17 +1,17 @@
 
 package com.microsoft.azure.functions.worker.binding.tests;
 
-        import com.microsoft.azure.functions.rpc.messages.CollectionDouble;
-        import com.microsoft.azure.functions.worker.binding.BindingData;
-        import com.microsoft.azure.functions.worker.binding.RpcCollectionDoubleDataSource;
-        import org.junit.Test;
+import com.microsoft.azure.functions.rpc.messages.CollectionDouble;
+import com.microsoft.azure.functions.worker.binding.BindingData;
+import com.microsoft.azure.functions.worker.binding.RpcCollectionDoubleDataSource;
+import org.junit.Test;
 
-        import java.lang.invoke.WrongMethodTypeException;
-        import java.util.ArrayList;
-        import java.util.List;
-        import java.util.Optional;
+import java.lang.invoke.WrongMethodTypeException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-        import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class RpcCollectionDoubleDataSourceTest {
     @Test
