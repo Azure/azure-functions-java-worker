@@ -79,8 +79,8 @@ public class EventHubTriggerTests {
 
     @FunctionName("EventHubTriggerAndOutputBinaryCardinalityManyListBinary")
     public void EventHubTriggerAndOutputBinaryCardinalityManyListBinary(
-            @EventHubTrigger(name = "messages", eventHubName = "test-binary-input-java-cardinality-many-list", connection = "AzureWebJobsEventHubSender_2", dataType = "binary", cardinality = Cardinality.MANY) List<byte[]> messages,
-            @QueueOutput(name = "output", queueName = "test-binary-output-java-cardinality-many-list", connection = "AzureWebJobsStorage") OutputBinding<byte[]> output,
+            @EventHubTrigger(name = "messages", eventHubName = "test-binary-input-cardinality-many-list-java", connection = "AzureWebJobsEventHubSender_2", dataType = "binary", cardinality = Cardinality.MANY) List<byte[]> messages,
+            @QueueOutput(name = "output", queueName = "test-binary-output-cardinality-many-list-java", connection = "AzureWebJobsStorage") OutputBinding<byte[]> output,
             final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received " + messages.size() +" messages");
@@ -89,8 +89,8 @@ public class EventHubTriggerTests {
 
     @FunctionName("EventHubTriggerAndOutputBinaryCardinalityOne")
     public void EventHubTriggerAndOutputBinaryCardinalityOne(
-            @EventHubTrigger(name = "message", eventHubName = "test-binary-input-java-cardinality-one", connection = "AzureWebJobsEventHubSender_2", dataType = "binary", cardinality = Cardinality.ONE) byte[] message,
-            @QueueOutput(name = "output", queueName = "test-binary-output-java-cardinality-one",connection = "AzureWebJobsStorage") OutputBinding<byte[]> output,
+            @EventHubTrigger(name = "message", eventHubName = "test-binary-input-cardinality-one-java", connection = "AzureWebJobsEventHubSender_2", dataType = "binary", cardinality = Cardinality.ONE) byte[] message,
+            @QueueOutput(name = "output", queueName = "test-binary-output-cardinality-one-java",connection = "AzureWebJobsStorage") OutputBinding<byte[]> output,
             final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received message" + message);
@@ -99,8 +99,8 @@ public class EventHubTriggerTests {
 
     @FunctionName("EventHubTriggerAndOutputBinaryCardinalityManyArrayBinary")
     public void EventHubTriggerAndOutputBinaryCardinalityManyArrayBinary(
-            @EventHubTrigger(name = "messages", eventHubName = "test-binary-input-java-cardinality-many-array", connection = "AzureWebJobsEventHubSender_2", dataType = "binary", cardinality = Cardinality.MANY) byte[][] messages,
-            @QueueOutput(name = "output", queueName = "test-binary-output-java-cardinality-many-array", connection = "AzureWebJobsStorage") OutputBinding<byte[]> output,
+            @EventHubTrigger(name = "messages", eventHubName = "test-binary-input-cardinality-many-array-java", connection = "AzureWebJobsEventHubSender_2", dataType = "binary", cardinality = Cardinality.MANY) byte[][] messages,
+            @QueueOutput(name = "output", queueName = "test-binary-output-cardinality-many-array-java", connection = "AzureWebJobsStorage") OutputBinding<byte[]> output,
             final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received " + messages.length +" messages");
