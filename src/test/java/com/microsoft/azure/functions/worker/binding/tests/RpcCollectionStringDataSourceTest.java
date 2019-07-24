@@ -73,7 +73,7 @@ public class RpcCollectionStringDataSourceTest {
 
         RpcCollectionStringDataSource stringData = new RpcCollectionStringDataSource(sourceKey, typedDataCollectionString);
 
-        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(String[].class));
+        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(String.class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
