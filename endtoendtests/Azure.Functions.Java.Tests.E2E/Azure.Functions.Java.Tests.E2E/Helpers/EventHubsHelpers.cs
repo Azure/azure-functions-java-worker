@@ -12,7 +12,7 @@ namespace Azure.Functions.Java.Tests.E2E
 {
     public class EventHubsHelpers
     {
-        public static async Task SendJSONMessagesAsync(string eventId)
+        public static async Task SendJSONMessagesAsync(string eventId, string connectionString)
         {
             // write 3 events
             List<EventData> events = new List<EventData>();
@@ -29,13 +29,13 @@ namespace Azure.Functions.Java.Tests.E2E
                 events.Add(evt);
             }
 
-            EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(Constants.EventHubsConnectionStringSetting);
+            EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(connectionString);
             builder.EntityPath = Constants.InputJsonEventHubName;
             EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(builder.ToString());
             await eventHubClient.SendAsync(events);
         }
 
-        public static async Task SendMessagesAsync(string eventId, string evenHubName)
+        public static async Task SendMessagesAsync(string eventId, string evenHubName, string connectionString)
         {
             // write 3 events
             List<EventData> events = new List<EventData>();
@@ -48,7 +48,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 events.Add(evt);
             }
 
-            EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(Constants.EventHubsConnectionStringSetting);
+            EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(connectionString);
             builder.EntityPath = evenHubName;
             EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(builder.ToString());
             await eventHubClient.SendAsync(events);

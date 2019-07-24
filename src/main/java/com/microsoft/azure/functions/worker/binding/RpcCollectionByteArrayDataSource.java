@@ -3,8 +3,8 @@ package com.microsoft.azure.functions.worker.binding;
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.rpc.messages.CollectionBytes;
 import org.apache.commons.lang3.ArrayUtils;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,8 @@ public final class RpcCollectionByteArrayDataSource extends DataSource<List<Byte
 		if(targetType == List.class) {
 			return sourceValue.stream().map(element -> element.toByteArray()).collect(Collectors.toCollection(ArrayList::new));
 		}
-		else if(targetType instanceof ParameterizedTypeImpl){
-			Type targetActualType = ((ParameterizedTypeImpl) targetType).getActualTypeArguments()[0];
+		else if(targetType instanceof ParameterizedType){
+			Type targetActualType = ((ParameterizedType) targetType).getActualTypeArguments()[0];
 			if (targetActualType == byte[].class) {
 				return sourceValue.stream().map(element -> element.toByteArray()).collect(Collectors.toCollection(ArrayList::new));
 			} else if (targetActualType == Byte[].class) {
