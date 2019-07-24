@@ -96,7 +96,7 @@ public class  RpcCollectionLongDataSourceTest{
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
 
-        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(Long[].class));
+        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(Long.class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Long> actualLongList  = (List) actualArg.getValue();
         Long actualLong = actualLongList.get(0);
