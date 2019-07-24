@@ -45,7 +45,6 @@ steps:
   displayName: 'Setting tests'
 - pwsh: |
       .\run-tests.ps1
-  displayName: 'running tests'  
   env:
     AzureWebJobsStorage: $(AzureWebJobsStorage)
     AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
@@ -57,4 +56,4 @@ steps:
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
-  displayName: 'Starting Functions Host and running'
+  displayName: 'running tests'
