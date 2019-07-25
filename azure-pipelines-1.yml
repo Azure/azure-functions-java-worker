@@ -38,12 +38,12 @@ steps:
       Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
   displayName: 'Create test app zip file'
 - pwsh: |
-    $localFile = $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
+    $localFile = '$(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip'
     if (Test-Path $localFile)
     {
       Write-Host "File exists"
     } 
-    $blobName = e2etestsjava.zip
+    $blobName = 'e2etestsjava.zip'
     $Context = New-AzureStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
     Set-AzureStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $BlobName -Context $Context
     Get-AzureStorageBlob -Container "ContosoUploads" -Blob "Planning2015" | Set-AzureStorageBlobContent -File "ContosoPlanning" 
