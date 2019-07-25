@@ -4,6 +4,7 @@
     "AzureWebJobsServiceBus": "",
     "AzureWebJobsEventHubReceiver":"",
     "AzureWebJobsEventHubSender":"",
+    "AzureWebJobsEventHubSender_2":"",
     "AzureWebJobsEventHubPath":"",
     "CosmosDBDatabaseName":"",
     "CosmosDBCollectionName":"",
