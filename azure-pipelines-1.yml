@@ -56,14 +56,17 @@ steps:
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
   displayName: 'Copying test result file for artifacts'
 - pwsh: |
-      Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -CompressionLevel Fastest -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests
+      Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
   displayName: 'Create test app zip file'
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(System.DefaultWorkingDirectory)/endtoendtests'
-    Contents: '*.zip'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
-  displayName: 'Copying test app zip artifacts'
+- pwsh: |
+    $localFile = $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
+    $blobName = e2etestsjava.zip
+    $Context = New-AzureStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
+    Set-AzureStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $BlobName -Context $Context
+    Get-AzureStorageBlob -Container "ContosoUploads" -Blob "Planning2015" | Set-AzureStorageBlobContent -File "ContosoPlanning" 
+  env:
+    AzureFunctionsE2ETestStorage: $(AzureFunctionsE2ETestStorage)
+  displayName: 'Copying test app zip artifacts to blob'
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
