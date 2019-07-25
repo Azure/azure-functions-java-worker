@@ -50,7 +50,7 @@ steps:
     } 
     $blobName = 'e2etestsjava.zip'
     $Context = New-AzStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
-    Set-AzStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $blobName -Context $Context  
+    Set-AzStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $blobName -Context $Context  -Force
   env:
     AzureFunctionsE2ETestStorage: $(AzureFunctionsE2ETestStorage)
   displayName: 'Copying test app zip artifacts to blob'
