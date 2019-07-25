@@ -1,0 +1,72 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+pool:
+  vmImage: 'vs2017-win2016'
+
+steps:
+- task: NuGetToolInstaller@0
+  inputs:
+   checkLatest: true
+- pwsh: |
+     Get-Command mvn
+  displayName: 'Installing Maven'
+- pwsh: |
+      $buildNumber = 0      
+      if($env:APPVEYOR_REPO_TAG -eq "true") {
+       $buildNumber = $(Build.SourceBranchName)
+       Write-Host “Found git tag."
+      } 
+      else {
+       $buildNumber = "1.5.0-SNAPSHOT-$(Build.BuildId)"
+       Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
+      }     
+      .\package.ps1 -buildNumber $buildNumber
+  displayName: 'Executing build script'
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.Repository.LocalPath)/pkg'
+    Contents: '*.nupkg'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    CleanTargetFolder: true
+  displayName: 'Copying files for artifacts'
+- pwsh: |
+      .\setup-tests.ps1
+  displayName: 'Setting tests'
+- pwsh: |
+      .\run-tests.ps1
+  env:
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+  displayName: 'running tests'
+  continueOnError: true
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
+    Contents: '*.trx'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  displayName: 'Copying test result file for artifacts'
+- pwsh: |
+      Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -CompressionLevel Fastest -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests
+  displayName: 'Create test app zip file'
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)/endtoendtests'
+    Contents: '*.zip'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  displayName: 'Copying test app zip artifacts'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publishing build and test result artifacts'
