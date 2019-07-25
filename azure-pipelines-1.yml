@@ -38,14 +38,19 @@ steps:
       Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
   displayName: 'Create test app zip file'
 - pwsh: |
+    Install-Module Az.Storage -Force -Verbose -Scope CurrentUser
+    if (-not (Get-command new-azstoragecontext -ea SilentlyContinue))
+    {
+      throw "new-azstoragecontext is not present"
+    }
     $localFile = '$(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip'
     if (Test-Path $localFile)
     {
       Write-Host "File exists"
     } 
     $blobName = 'e2etestsjava.zip'
-    $Context = New-AzureStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
-    Set-AzureStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $blobName -Context $Context  
+    $Context = New-AzStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
+    Set-AzStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $blobName -Context $Context  
   env:
     AzureFunctionsE2ETestStorage: $(AzureFunctionsE2ETestStorage)
   displayName: 'Copying test app zip artifacts to blob'
