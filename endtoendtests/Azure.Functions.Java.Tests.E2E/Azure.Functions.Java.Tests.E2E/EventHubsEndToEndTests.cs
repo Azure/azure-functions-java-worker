@@ -88,7 +88,7 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-
+/*
         [Fact]
         public async Task EventHubTriggerAndOutputBinaryListMany_Succeeds()
         {
@@ -109,9 +109,9 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
-
+*/
         [Fact]
-        public async Task EventHubTriggerAndOutputBinaryOne_Succeeds()
+       public async Task EventHubTriggerAndOutputBinaryOne_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
@@ -132,7 +132,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
-        public async Task EventHubTriggerAndOutputBinaryArrayMany_Succeeds()
+ /*       public async Task EventHubTriggerAndOutputBinaryArrayMany_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
@@ -151,6 +151,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
+*/
 
         private static async Task SetupQueue(string queueName)
         {
