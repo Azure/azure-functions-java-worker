@@ -88,7 +88,7 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-/*
+
         [Fact]
         public async Task EventHubTriggerAndOutputBinaryListMany_Succeeds()
         {
@@ -109,7 +109,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
-*/
+
         [Fact]
        public async Task EventHubTriggerAndOutputBinaryOne_Succeeds()
         {
@@ -131,27 +131,27 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-        [Fact]
- /*       public async Task EventHubTriggerAndOutputBinaryArrayMany_Succeeds()
-        {
-            string expectedEventId = Guid.NewGuid().ToString();
-            try
-            {
-                await SetupQueue(Constants.OutputBinaryArrayManyQueueName);
+                [Fact]
+              public async Task EventHubTriggerAndOutputBinaryArrayMany_Succeeds()
+               {
+                   string expectedEventId = Guid.NewGuid().ToString();
+                   try
+                   {
+                       await SetupQueue(Constants.OutputBinaryArrayManyQueueName);
 
-                await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryManyArrayEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
+                       await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryManyArrayEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
 
-                //Verify
-                var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBinaryArrayManyQueueName);
-                Assert.Contains(expectedEventId, queueMessage);
-            }
-            finally
-            {
-                //Clear queue
-                await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
-            }
-        }
-*/
+                       //Verify
+                       var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBinaryArrayManyQueueName);
+                       Assert.Contains(expectedEventId, queueMessage);
+                   }
+                   finally
+                   {
+                       //Clear queue
+                       await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
+                   }
+               }
+       
 
         private static async Task SetupQueue(string queueName)
         {
