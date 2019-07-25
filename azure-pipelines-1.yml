@@ -35,31 +35,14 @@ steps:
       .\setup-tests.ps1
   displayName: 'Setting tests'
 - pwsh: |
-      .\run-tests.ps1
-  env:
-    AzureWebJobsStorage: $(AzureWebJobsStorage)
-    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
-    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
-    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
-    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
-    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-    SBTopicName: $(SBTopicName)
-    SBTopicSubName: $(SBTopicSubName)
-    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
-    SBQueueName: $(SBQueueName)
-  displayName: 'running tests'
-  continueOnError: true
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
-    Contents: '*.trx'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
-  displayName: 'Copying test result file for artifacts'
-- pwsh: |
       Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
   displayName: 'Create test app zip file'
 - pwsh: |
     $localFile = $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
+    if (Test-Path $localFile)
+    {
+      Write-Host "File exists"
+    } 
     $blobName = e2etestsjava.zip
     $Context = New-AzureStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
     Set-AzureStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $BlobName -Context $Context
