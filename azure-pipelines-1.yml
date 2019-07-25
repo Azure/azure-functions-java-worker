@@ -35,6 +35,21 @@ steps:
       .\setup-tests.ps1
   displayName: 'Setting tests'
 - pwsh: |
+      .\run-tests.ps1
+  env:
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+  displayName: 'running tests'
+  continueOnError: true
+- pwsh: |
       Compress-Archive -Path $(System.DefaultWorkingDirectory)\endtoendtests\target\azure-functions\azure-functions-java-endtoendtests\* -DestinationPath $(System.DefaultWorkingDirectory)\endtoendtests\e2etestsjava.zip
   displayName: 'Create test app zip file'
 - pwsh: |
@@ -54,6 +69,21 @@ steps:
   env:
     AzureFunctionsE2ETestStorage: $(AzureFunctionsE2ETestStorage)
   displayName: 'Copying test app zip artifacts to blob'
+- pwsh: |
+      Compress-Archive -Path '$(Build.Repository.LocalPath)\pkg\*' -DestinationPath $(System.DefaultWorkingDirectory)\javaworker.zip
+  displayName: 'Create test app zip file'
+- pwsh: |
+    $localFileJavaWorker = '$(System.DefaultWorkingDirectory)\javaworker.zip'
+    if (Test-Path $localFileJavaWorker)
+    {
+      Write-Host "localFileJavaWorker file exists"
+    } 
+    $blobName = 'javaworker.zip'
+    $Context = New-AzStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
+    Set-AzStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $blobName -Context $Context  -Force -Verbose
+  env:
+    AzureFunctionsE2ETestStorage: $(AzureFunctionsE2ETestStorage)
+  displayName: 'Copying java worker zip to blob'
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
