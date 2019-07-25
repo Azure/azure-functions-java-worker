@@ -45,7 +45,7 @@ steps:
     } 
     $blobName = 'e2etestsjava.zip'
     $Context = New-AzureStorageContext -StorageAccountName $(StorageAccountName) -StorageAccountKey $(StorageAccountKey)
-    Set-AzureStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $BlobName -Context $Context
+    Set-AzureStorageBlobContent -File $localFile -Container $(ContainerName) -Blob $blobName -Context $Context
     Get-AzureStorageBlob -Container "ContosoUploads" -Blob "Planning2015" | Set-AzureStorageBlobContent -File "ContosoPlanning" 
   env:
     AzureFunctionsE2ETestStorage: $(AzureFunctionsE2ETestStorage)
