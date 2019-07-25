@@ -53,6 +53,7 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string OutputBinaryArrayManyQueueName = "test-binary-output-cardinality-many-array-java";
         public static string InputBinaryManyArrayEventHubQueueName = "test-binary-input-cardinality-many-array-java";
 
+        // Settings
         public static string EventHubsConnectionStringSenderSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
         public static string EventHubsConnectionStringSenderSetting2 = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender_2");
 
