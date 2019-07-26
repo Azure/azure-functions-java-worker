@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
 using System;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Azure.Functions.Java.Tests.E2E
@@ -33,6 +36,7 @@ namespace Azure.Functions.Java.Tests.E2E
 
                 FixtureHelpers.StartProcessWithLogging(_funcProcess);
 
+                _logger.LogInformation($"Waiting for functions host to be ready...");
                 Thread.Sleep(TimeSpan.FromSeconds(30));
             }
         }
