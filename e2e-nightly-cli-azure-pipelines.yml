@@ -47,6 +47,7 @@ steps:
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
+    AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
   displayName: 'running tests'
   continueOnError: true
 - pwsh: |
