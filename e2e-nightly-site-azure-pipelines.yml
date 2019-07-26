@@ -23,6 +23,12 @@ steps:
     AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
   displayName: 'running tests'
   continueOnError: true
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
+    Contents: '*.trx'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  displayName: 'Copying test result file for artifacts'
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
