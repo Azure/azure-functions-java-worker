@@ -6,12 +6,6 @@ pool:
   vmImage: 'vs2017-win2016'
 
 steps:
-- task: NuGetToolInstaller@0
-  inputs:
-   checkLatest: true
-- pwsh: |
-     Get-Command mvn
-  displayName: 'Installing Maven'
 - pwsh: |
       .\run-tests.ps1
   env:
