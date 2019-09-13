@@ -1,18 +1,20 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang3.tuple.*;
-import org.apache.commons.lang3.exception.*;
-
-import com.microsoft.azure.functions.worker.binding.*;
-import com.microsoft.azure.functions.worker.description.*;
-import com.microsoft.azure.functions.worker.reflect.*;
-import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
+import com.microsoft.azure.functions.worker.binding.BindingDataStore;
+import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
+import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  * A broker between JAR methods and the function RPC. It can load methods using
@@ -46,7 +48,7 @@ public class JavaFunctionBroker {
 		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(request.getTriggerMetadataMap());
 		dataStore.addParameterSources(request.getInputDataList());
-		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left);
+		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 
 		executor.execute(dataStore);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
