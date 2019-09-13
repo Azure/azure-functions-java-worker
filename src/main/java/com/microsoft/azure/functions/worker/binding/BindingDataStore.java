@@ -1,13 +1,19 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import com.microsoft.azure.functions.ExecutionContext;
+import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
+import com.microsoft.azure.functions.rpc.messages.TypedData;
+import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import com.microsoft.azure.functions.worker.broker.*;
-import com.microsoft.azure.functions.ExecutionContext;
-import com.microsoft.azure.functions.rpc.messages.*;
 
 /**
  * A warehouse storing all binding related information including actual binding value as well as binding declaration info.
@@ -41,8 +47,8 @@ public final class BindingDataStore {
         }            
     }
 
-    public void addExecutionContextSource(String invocationId, String funcname) {        
-        otherSources.put(ExecutionContext.class, new ExecutionContextDataSource(invocationId, funcname));
+    public void addExecutionContextSource(String invocationId, String funcname, String traceParent, String traceState, Map<String, String> attributes) {        
+        otherSources.put(ExecutionContext.class, new ExecutionContextDataSource(invocationId, funcname, new ExecutionTraceContext(traceParent, traceState, attributes)));
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
