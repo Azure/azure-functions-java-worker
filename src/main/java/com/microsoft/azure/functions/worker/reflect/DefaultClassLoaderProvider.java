@@ -26,7 +26,9 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
     URL[] urlsForClassLoader = new URL[urls.size()];
     urls.toArray(urlsForClassLoader);
 
-    URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
+    URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader, ClassLoader.getSystemClassLoader());
+    
+    // note this is not proper practice with regards to setContextClassLoader.    
     Thread.currentThread().setContextClassLoader(classLoader);
 
     return classLoader;
@@ -59,7 +61,7 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
     WorkerLogManager.getSystemLogger().info("Loading file URL: " + url);    
 
     urls.add(url);
-    addUrlToSystemClassLoader(url);
+//    addUrlToSystemClassLoader(url);
   }
 
   public static boolean isUrlPointingToAFile(URL url) throws UnsupportedEncodingException {
@@ -68,21 +70,21 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
     return file.exists();
   }
 
-  private void addUrlToSystemClassLoader(URL url) throws IOException {
-    URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-    Class<?> sysclass = URLClassLoader.class;
+//  private void addUrlToSystemClassLoader(URL url) throws IOException {
+//    URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+//    Class<?> sysclass = URLClassLoader.class;
+//
+//    try {
+//      Method method = sysclass.getDeclaredMethod(SYS_LOADER_ADDURL_METHOD_NAME, parameters);
+//      method.setAccessible(true);
+//      method.invoke(sysloader, new Object[] { url });
+//    } catch (Throwable t) {
+//      throw new IOException("Error adding " + url + " to system classloader");
+//    }
+//
+//  }
 
-    try {
-      Method method = sysclass.getDeclaredMethod(SYS_LOADER_ADDURL_METHOD_NAME, parameters);
-      method.setAccessible(true);
-      method.invoke(sysloader, new Object[] { url });
-    } catch (Throwable t) {
-      throw new IOException("Error adding " + url + " to system classloader");
-    }
-
-  }
-
-  private static final String SYS_LOADER_ADDURL_METHOD_NAME = "addURL";
-  private static final Class<?>[] parameters = new Class[] { URL.class };
+//  private static final String SYS_LOADER_ADDURL_METHOD_NAME = "addURL";
+//  private static final Class<?>[] parameters = new Class[] { URL.class };
   private final Set<URL> urls;
 }
