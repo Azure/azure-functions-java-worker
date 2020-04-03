@@ -11,7 +11,7 @@ steps:
    checkLatest: true
 - pwsh: |
      Get-Command mvn
-  displayName: 'Installing Maven'
+  displayName: 'Check Maven is installed'
 - pwsh: |
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
@@ -32,10 +32,10 @@ steps:
     CleanTargetFolder: true
   displayName: 'Copying files for artifacts'
 - pwsh: |
-      .\setup-tests.ps1
+      .\setup-tests-pipeline.ps1
   displayName: 'Setting tests'
 - pwsh: |
-      .\run-tests.ps1
+      .\build-run-tests-pipeline.ps1
   env:
     AzureWebJobsStorage: $(AzureWebJobsStorage)
     AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
@@ -47,8 +47,25 @@ steps:
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
-  displayName: 'running tests'
-  continueOnError: true
+  displayName: 'Build & Run tests for java 8'
+  continueOnError: false
+- pwsh: |
+    .\build-run-tests-pipeline.ps1
+  env:
+    JAVA_HOME: 'C:\Program Files\Java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64'
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+  displayName: 'Build & Run tests for java 11'
+  continueOnError: false
 - task: CopyFiles@2
   inputs:
     SourceFolder: '$(System.DefaultWorkingDirectory)/testResults'
