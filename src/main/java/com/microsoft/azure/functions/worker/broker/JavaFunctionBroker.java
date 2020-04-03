@@ -31,7 +31,7 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 
 		addSearchPathsToClassLoader(descriptor);
-		JavaMethodExecutor executor = new JavaMethodExecutor(descriptor, bindings, classLoaderProvider);
+		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
 
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
 	}
