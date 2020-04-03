@@ -28,7 +28,7 @@ public class JavaWorkerClient implements AutoCloseable {
         this.channel = chanBuilder.build();
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
-        this.classPathProvider = new DefaultClassLoaderProvider();
+        this.classPathProvider = new FactoryClassLoader().createClassLoaderProvider();
         
         this.addHandlers();
     }
@@ -117,5 +117,5 @@ public class JavaWorkerClient implements AutoCloseable {
     private final ManagedChannel channel;
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
-    private final DefaultClassLoaderProvider classPathProvider;
+    private final ClassLoaderProvider classPathProvider;
 }

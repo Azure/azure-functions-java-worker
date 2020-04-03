@@ -19,10 +19,10 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
   }
 
   /*
-   * @see com.microsoft.azure.functions.reflect.ClassLoaderProvider#getClassLoader()
+   * @see com.microsoft.azure.functions.reflect.ClassLoaderProvider#createClassLoader()
    */
   @Override
-  public ClassLoader getClassLoader() {
+  public ClassLoader createClassLoader() {
     URL[] urlsForClassLoader = new URL[urls.size()];
     urls.toArray(urlsForClassLoader);
 
@@ -59,6 +59,8 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
     WorkerLogManager.getSystemLogger().info("Loading file URL: " + url);    
 
     urls.add(url);
+
+
     addUrlToSystemClassLoader(url);
   }
 
