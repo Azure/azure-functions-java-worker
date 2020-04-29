@@ -1,6 +1,7 @@
 package com.microsoft.azure.functions.worker.test.utilities;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
@@ -17,9 +18,21 @@ import io.grpc.stub.*;
 import org.apache.commons.lang3.tuple.*;
 
 public final class FunctionsTestHost implements AutoCloseable, IApplication {
+    private int port;
     public FunctionsTestHost() throws Exception {
+        this.port = populatePort();
         this.initializeServer();
         this.initializeClient();
+    }
+
+    private final List<Integer> list = Arrays.asList(55005, 5005);
+
+    private int populatePort() {
+        try (ServerSocket ignored = new ServerSocket(this.list.get(0))) {
+            return this.list.get(0);
+        } catch (IOException e) {
+            return this.list.get(1);
+        }
     }
 
     @PostConstruct
@@ -65,7 +78,7 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
     @Override
     public String getHost() { return "localhost"; }
     @Override
-    public int getPort() { return 55005; }
+    public int getPort() { return this.port; }
     @Override
     public Integer getMaxMessageSize() { return null; }
 
