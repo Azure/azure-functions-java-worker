@@ -3,12 +3,11 @@ package com.microsoft.azure.functions.worker.broker;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.azure.functions.rpc.messages.*;
+import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
@@ -46,7 +45,7 @@ public class JavaFunctionBroker {
 
 		BindingDataStore dataStore = new BindingDataStore();
 		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
-		dataStore.addTriggerMetadataSource(request.getTriggerMetadataMap());
+		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 
@@ -57,6 +56,29 @@ public class JavaFunctionBroker {
 
 	public Optional<String> getMethodName(String id) {
 		return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
+	}
+
+	// TODO the scope should be package private for testability. Modify the package name as same as main package
+	public Map<String, TypedData> getTriggerMetadataMap(InvocationRequest request) {
+		String    name ="";
+		TypedData dataWithHttp = null;
+		for(ParameterBinding e: request.getInputDataList()) {
+			if (e.getData().hasHttp()) {
+				dataWithHttp = e.getData();
+				name = e.getName();
+				break;
+			}
+		}
+
+		Map<String, TypedData> triggerMetadata = new HashMap(request.getTriggerMetadataMap());
+		if (!name.isEmpty() && !triggerMetadata.containsKey(name)) {
+			triggerMetadata.put(name, dataWithHttp);
+		}
+		String requestKey = Constants.TRIGGER_METADATA_DOLLAR_REQUEST_KEY;
+		if (dataWithHttp != null & !triggerMetadata.containsKey(requestKey)) {
+			triggerMetadata.put(requestKey, dataWithHttp);
+		}
+		return Collections.unmodifiableMap(triggerMetadata);
 	}
 
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
