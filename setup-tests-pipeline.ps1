@@ -1,11 +1,3 @@
-
-# A function that checks exit codes and fails script if an error is found 
-function StopOnFailedExecution {
-  if ($LastExitCode)
-  {
-    exit $LastExitCode
-  }
-}
 Write-Host "$args[0]"
 Write-Host $args[0]
 
@@ -45,10 +37,3 @@ Write-Host "Copying azure-functions-java-worker to  Functions Host workers direc
 Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar','*tests.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 Copy-Item ".\worker.config.json" ".\Azure.Functions.Cli\workers\java"
 
-Write-Host "Building endtoendtests...."
-$Env:Path = $Env:Path+";$currDir\Azure.Functions.Cli"
-Push-Location -Path "./endtoendtests" -StackName javaWorkerDir
-Write-Host "Building azure-functions-maven-com.microsoft.azure.functions.endtoendtests"
-cmd.exe /c '.\..\mvnBuildSkipTests.bat'
-StopOnFailedExecution
-Pop-Location -StackName "javaWorkerDir"

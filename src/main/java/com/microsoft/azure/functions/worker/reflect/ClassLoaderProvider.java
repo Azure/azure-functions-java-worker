@@ -16,7 +16,7 @@ public interface ClassLoaderProvider {
     void addDirectory(File directory) throws MalformedURLException, IOException;
     
     /*
-     * Gets the class loader with the required search paths
+     * Create the class loader with the required search paths
      */
-    ClassLoader getClassLoader();
+    ClassLoader createClassLoader();
 }
