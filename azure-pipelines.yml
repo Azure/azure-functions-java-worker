@@ -3,7 +3,7 @@
 # Add steps that build, run tests, deploy, and more:
 
 pool:
-  vmImage: 'vs2017-win2016'
+  vmImage: 'windows-2019'
 
 steps:
 - task: NuGetToolInstaller@0
