@@ -22,7 +22,7 @@ import com.microsoft.azure.functions.rpc.messages.*;
 public class JavaWorkerClient implements AutoCloseable {
     public JavaWorkerClient(IApplication app) {
         WorkerLogManager.initialize(this, app.logToConsole());
-        ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext();
+        ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext(true);
         chanBuilder.maxInboundMessageSize(Integer.MAX_VALUE);
 
         this.channel = chanBuilder.build();
