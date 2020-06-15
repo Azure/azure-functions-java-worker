@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
@@ -78,6 +80,21 @@ public final class BindingDataStore {
             case DATA_NOT_SET: return new RpcEmptyDataSource(name);
             default:     throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
         }
+    }
+
+    public static DataSource<?> deriveHttpBody(TypedData data, Map<String, String> headerMap) {
+        String contentType = headerMap.get("content-type");
+        if(data.getDataCase().equals(TypedData.DataCase.STRING) && headerMap.get("content-type") != null && contentType.equals("application/json")) {
+            JsonObject jsonObject;
+            try {
+                jsonObject = new JsonParser().parse(data.getString()).getAsJsonObject();
+            }
+            catch(Exception ex) {
+                return BindingDataStore.rpcSourceFromTypedData(null, data);
+            }
+            return new RpcJsonDataSource(null, jsonObject.toString());
+        }
+        return BindingDataStore.rpcSourceFromTypedData(null, data);
     }
 
     private static DataSource<?> rpcSourceFromParameter(ParameterBinding parameter) {

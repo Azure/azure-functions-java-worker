@@ -21,7 +21,8 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 	public RpcHttpRequestDataSource(String name, RpcHttp value) {
 		super(name, null, HTTP_DATA_OPERATIONS);
 		this.httpPayload = value;
-		this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.httpPayload.getBody());
+//		this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.httpPayload.getBody());
+		this.bodyDataSource = BindingDataStore.deriveHttpBody(this.httpPayload.getBody(), this.httpPayload.getHeadersMap());
 		this.fields = Arrays.asList(this.httpPayload.getHeadersMap(), this.httpPayload.getQueryMap(),
 				this.httpPayload.getParamsMap());
 		this.setValue(this);
