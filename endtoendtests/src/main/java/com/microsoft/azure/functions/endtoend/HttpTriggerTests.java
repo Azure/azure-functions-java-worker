@@ -46,12 +46,6 @@ public class HttpTriggerTests {
             }
         }
 
-        Gson a = new Gson();
-
-//        if(!SystemUtils.IS_JAVA_15) {
-//            context.getLogger().info("Java version not 15");
-//        }
-
         get("https://httpstat.us/200");
 
         if (name == null ) {
@@ -107,5 +101,29 @@ public class HttpTriggerTests {
         } else {
             return request.createResponseBuilder(HttpStatusType.custom(209)).body("Hello, " + name).build();
         }
+    }
+
+    @FunctionName("HttpTriggerJavaClassLoader")
+    public HttpResponseMessage HttpTriggerJavaClassLoader(
+            @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context
+    ) throws Exception {
+        context.getLogger().info("Java HTTP trigger processed a request.");
+
+        // Parse query parameters
+        String query = request.getQueryParameters().get("name");
+        String name = request.getBody().orElse(query);
+
+        //Make sure there is no class not found excption.
+        new Gson();
+
+        if(!SystemUtils.IS_JAVA_15) {
+            context.getLogger().info("Java version not 15");
+        }
+
+        if (name == null ) {
+            return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
+        }
+        return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
     }
 }

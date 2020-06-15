@@ -2,8 +2,8 @@
 
 |Branch|Status|
 |---|---|
-|master|[![Build status](https://ci.appveyor.com/api/projects/status/ebphtfegnposba6w?svg=true)](https://ci.appveyor.com/project/appsvc/azure-functions-java-worker?branch=master)|
-|dev|[![Build status](https://ci.appveyor.com/api/projects/status/ebphtfegnposba6w?svg=true)](https://ci.appveyor.com/project/appsvc/azure-functions-java-worker?branch=dev)|
+|master|[![Build status](https://dev.azure.com/azfunc/Azure%20Functions/_apis/build/status/Azure.azure-functions-java-worker?branchName=master)](https://dev.azure.com/azfunc/Azure%20Functions/_build/latest?definitionId=20&branchName=master)|
+|dev|[![Build status](https://dev.azure.com/azfunc/Azure%20Functions/_apis/build/status/Azure.azure-functions-java-worker?branchName=dev)](https://dev.azure.com/azfunc/Azure%20Functions/_build/latest?definitionId=20&branchName=dev)|
 
 # Contributing
 
@@ -103,6 +103,10 @@ Simply using the following command to do so (if there are dependency errors, run
 ```sh
 mvn javadoc:javadoc
 ```
+
+# Development Notes
+
+Java worker now shades all its jars, to introduce any new jars it is required by the developers to add a section in the pom file to relocate it.
 
 # Coding Convention
 

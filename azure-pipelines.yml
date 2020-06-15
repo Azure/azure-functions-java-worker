@@ -19,10 +19,10 @@ steps:
        Write-Host “Found git tag."
       } 
       else {
-       $buildNumber = "1.6.2-$(Build.BuildId)"
+       $buildNumber = "1.7.1-$(Build.BuildId)"
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
-      .\package.ps1 -buildNumber $buildNumber
+      .\package-pipeline.ps1 -buildNumber $buildNumber
   displayName: 'Executing build script'
 - task: CopyFiles@2
   inputs:
@@ -48,6 +48,22 @@ steps:
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
   displayName: 'Build & Run tests for java 8'
+  continueOnError: false
+- pwsh: |
+    .\build-run-tests-pipeline.ps1
+  env:
+    FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS: 'True'
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+  displayName: 'Build & Run tests for java 8 Customer jar loaded first'
   continueOnError: false
 - pwsh: |
     .\build-run-tests-pipeline.ps1
