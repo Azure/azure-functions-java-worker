@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.broker.tests;
+package com.microsoft.azure.functions.worker.broker;
 
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
@@ -7,9 +7,13 @@ import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 import mockit.*;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JavaFunctionBrokerTest {
 
@@ -104,5 +108,19 @@ public class JavaFunctionBrokerTest {
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         // In case of non-http request, it will not modify the triggerMetadata
         assertEquals(expectedCount, actualTriggerMetadata.size());
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void checkLibFolderNoWorkerLib() throws Exception {
+        JavaFunctionBroker broker = new JavaFunctionBroker(null);
+        broker.verifyLibrariesExist (new File(""), null);
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void checkLibFolderNoJarsInLib() throws Exception {
+        JavaFunctionBroker broker = new JavaFunctionBroker(null);
+        String path = "../";
+        File file = new File(path);
+        broker.verifyLibrariesExist (file, path);
     }
 }

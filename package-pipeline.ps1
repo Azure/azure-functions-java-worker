@@ -19,7 +19,7 @@ Get-Command nuget
 StopOnFailedExecution
 remove-item pkg -Recurse -ErrorAction Ignore
 mkdir pkg
-Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Copy-Item $_.FullName .\pkg\azure-functions-java-worker.jar }
+Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar','*tests.jar' | %{ Copy-Item $_.FullName .\pkg\azure-functions-java-worker.jar }
 StopOnFailedExecution
 copy-item ./worker.config.json pkg
 copy-item ./tools/AzureFunctionsJavaWorker.nuspec pkg/

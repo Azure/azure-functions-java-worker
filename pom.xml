@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure.functions</groupId>
 	<artifactId>azure-functions-java-worker</artifactId>
-	<version>1.6.2</version>
+	<version>1.7.1</version>
 	<packaging>jar</packaging>
 	<parent>
 		<groupId>com.microsoft.maven</groupId>
@@ -174,7 +174,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.4</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -184,7 +184,7 @@
 						<configuration>
 							<transformers>
 								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+										implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>com.microsoft.azure.functions.worker.Application</mainClass>
 									<manifestEntries>
 										<Implementation-Title>${project.name}</Implementation-Title>
@@ -192,6 +192,7 @@
 										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
 									</manifestEntries>
 								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
 							</transformers>
 							<filters>
 								<filter>
@@ -203,6 +204,56 @@
 									</excludes>
 								</filter>
 							</filters>
+							<relocations>
+								<relocation combine.children="append">
+									<pattern>com.google</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.com.google</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>com.sun</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.com.sun</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>android</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.android</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>google</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.google</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>identity</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.identity</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>shared</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.shared</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>org</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.org</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>io.netty</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.io.netty</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>io.perfmark</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.io.perfmark</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>io.grpc</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.io.grpc</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>javax.annotation</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
+								</relocation>
+								<relocation combine.children="append">
+									<pattern>io.opencensus</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.io.opencensus</shadedPattern>
+								</relocation>
+							</relocations>
 						</configuration>
 					</execution>
 				</executions>
