@@ -46,7 +46,7 @@ namespace Azure.Functions.Java.Tests.E2E
 
             String value = Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS");
             String java_home = Environment.GetEnvironmentVariable("JAVA_HOME");
-            if (java_home.Contains("zulu-11") || (value != null && value.ToLower().Equals("true")))
+            if (java_home.Contains("zulu11") || (value != null && value.ToLower().Equals("true")))
             {
                 Assert.True(await Utilities.InvokeHttpTrigger("HttpTriggerJavaClassLoader", "?&name=Test", HttpStatusCode.OK, "Test"));
             }
