@@ -66,9 +66,19 @@ steps:
   displayName: 'Build & Run tests for java 8 Customer jar loaded first'
   continueOnError: false
 - pwsh: |
+    $JAVA_VERSION="zulu11.33.15-ca-jdk11.0.4-win_x64"
+    Invoke-WebRequest "https://cdn.azul.com/zulu/bin/$JAVA_VERSION.zip" -O "$JAVA_VERSION.zip"
+    Expand-Archive -Force "$JAVA_VERSION.zip" .
+    cd $JAVA_VERSION
+    $current = get-location | select -ExpandProperty Path
+    cd ..
+    Write-Host "##vso[task.setvariable variable=Java11Home;]$current"
+  displayName: 'Setup Java 11 SDK'
+  continueOnError: false
+- pwsh: |
     .\build-run-tests-pipeline.ps1
   env:
-    JAVA_HOME: 'C:\Program Files\Java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64'
+    JAVA_HOME: $(Java11Home)
     AzureWebJobsStorage: $(AzureWebJobsStorage)
     AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
     AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)

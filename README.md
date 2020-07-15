@@ -145,3 +145,4 @@ All Java types are represented by `Type` interface, which may be one of the foll
 
 For the generic type behaviors (including compile-time validation and runtime type erasure) in Java, please refer to *[Generics in the Java Programming Language
 ](https://www.cs.rice.edu/~cork/312/Readings/GenericsTutorial.pdf)*.
+
