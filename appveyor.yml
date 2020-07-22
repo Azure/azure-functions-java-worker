@@ -40,12 +40,3 @@ artifacts:
 
 cache:
   - C:\maven\
-  
-after_build:
-  - ps: >
-      .\setup-tests.ps1
-        
-test_script:
-  - ps: >
-      .\run-tests.ps1
-  

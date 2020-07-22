@@ -41,6 +41,7 @@ namespace Azure.Functions.Java.Tests.E2E
             var httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(Constants.FunctionsHostUrl);
             var response = await httpClient.SendAsync(request);
+            Console.WriteLine($"InvokeHttpTrigger: {functionName}{queryString} : {response.StatusCode} : {response.ReasonPhrase}");
             if (expectedStatusCode != response.StatusCode && expectedCode != (int)response.StatusCode)
             {
                 return false;
@@ -49,6 +50,7 @@ namespace Azure.Functions.Java.Tests.E2E
             if (!string.IsNullOrEmpty(expectedMessage))
             {
                 string actualMessage = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"InvokeHttpTrigger: expectedMessage : {expectedMessage}, actualMessage : {actualMessage}");
                 return actualMessage.Contains(expectedMessage);
             }
             return true;

@@ -21,6 +21,9 @@ steps:
     SBQueueName: $(SBQueueName)
     FunctionAppUrl: $(FunctionAppUrl)
     AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
   displayName: 'running tests'
   continueOnError: true
 - task: CopyFiles@2

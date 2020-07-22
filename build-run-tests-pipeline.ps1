@@ -35,6 +35,10 @@ Push-Location -Path "./endtoendtests" -StackName javaWorkerDir
 Write-Host "Building azure-functions-maven-com.microsoft.azure.functions.endtoendtests"
 cmd.exe /c '.\..\mvnBuildSkipTests.bat'
 StopOnFailedExecution
+# func extensions install -p Microsoft.Azure.WebJobs.Extensions.Kafka -v 3.0.0
+Copy-Item "confluent_cloud_cacert.pem" ".\target\azure-functions\azure-functions-java-endtoendtests"
+tree .
+ls .\target\azure-functions\azure-functions-java-endtoendtests\bin
 Pop-Location -StackName "javaWorkerDir"
 
 $tests = @(
