@@ -52,4 +52,7 @@ Push-Location -Path "./endtoendtests" -StackName javaWorkerDir
 Write-Host "Building azure-functions-maven-com.microsoft.azure.functions.endtoendtests"
 cmd.exe /c '.\..\mvnBuildSkipTests.bat'
 StopOnFailedExecution
+Copy-Item "confluent_cloud_cacert.pem" ".\target\azure-functions\azure-functions-java-endtoendtests"
+tree .
+ls .\target\azure-functions\azure-functions-java-endtoendtests\bin
 Pop-Location -StackName "javaWorkerDir"

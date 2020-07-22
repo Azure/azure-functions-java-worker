@@ -48,6 +48,9 @@ steps:
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
     AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
   displayName: 'running tests'
   continueOnError: true
 - pwsh: |

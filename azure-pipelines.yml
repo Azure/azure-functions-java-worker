@@ -47,6 +47,9 @@ steps:
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
   displayName: 'Build & Run tests for java 8'
   continueOnError: false
 - pwsh: |
@@ -63,6 +66,9 @@ steps:
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
   displayName: 'Build & Run tests for java 8 Customer jar loaded first'
   continueOnError: false
 - pwsh: |
@@ -90,6 +96,9 @@ steps:
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
     SBQueueName: $(SBQueueName)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
   displayName: 'Build & Run tests for java 11'
   continueOnError: false
 - task: CopyFiles@2
