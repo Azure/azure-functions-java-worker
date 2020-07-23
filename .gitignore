@@ -270,3 +270,6 @@ pkg/
 /Azure.Functions.Cli.zip
 /Azure.Functions.Cli/
 /version.txt
+
+# Mac specific gitignore
+.DS_Store

@@ -56,6 +56,9 @@ namespace Azure.Functions.Java.Tests.E2E
         // Kafka
         public static string OutputStringOneKafkaQueueName = "test-kafka-output-cardinality-one-java";
 
+        // EventGrid
+        public static string EventGridStorageOutputBindingQueueName = "test-eventgrid-output-binding-queue-java";
+
         // Settings
         public static string EventHubsConnectionStringSenderSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
         public static string EventHubsConnectionStringSenderSetting2 = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender_2");

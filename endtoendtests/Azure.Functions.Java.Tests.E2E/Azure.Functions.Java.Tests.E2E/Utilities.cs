@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
@@ -53,6 +55,32 @@ namespace Azure.Functions.Java.Tests.E2E
                 Console.WriteLine($"InvokeHttpTrigger: expectedMessage : {expectedMessage}, actualMessage : {actualMessage}");
                 return actualMessage.Contains(expectedMessage);
             }
+            return true;
+        }
+
+        public static async Task<bool> InvokeEventGridTrigger(string functionName, JObject jsonContent, HttpStatusCode expectedStatusCode=HttpStatusCode.Accepted)
+        {
+            string uri = $"runtime/webhooks/eventgrid?functionName={functionName}";
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Add("aeg-event-type", "Notification");
+            request.Content = new StringContent(
+                jsonContent.ToString(),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var httpClient = new HttpClient {
+                BaseAddress = new Uri(Constants.FunctionsHostUrl)
+            };
+
+            var response = await httpClient.SendAsync(request);
+
+            if (expectedStatusCode != response.StatusCode) {
+                Console.WriteLine($"InvokeEventGridTrigger: expectedStatusCode : {expectedStatusCode}, actualMessage : {response.StatusCode}");
+                return false;
+            }
+
             return true;
         }
     }

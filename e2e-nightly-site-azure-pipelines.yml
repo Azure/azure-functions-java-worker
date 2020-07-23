@@ -24,6 +24,8 @@ steps:
     BrokerList": $(BrokerList)
     ConfluentCloudUsername: $(ConfluentCloudUsername)
     ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
   displayName: 'running tests'
   continueOnError: true
 - task: CopyFiles@2

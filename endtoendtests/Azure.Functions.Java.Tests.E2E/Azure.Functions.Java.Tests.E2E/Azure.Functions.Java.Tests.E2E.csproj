@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.1.1" />
     <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.2.1" />
+    <PackageReference Include="Microsoft.Azure.Management.EventGrid" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
