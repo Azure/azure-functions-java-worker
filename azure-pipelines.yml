@@ -19,7 +19,7 @@ steps:
        Write-Host “Found git tag."
       } 
       else {
-       $buildNumber = "1.7.1-$(Build.BuildId)"
+       $buildNumber = "1.7.2-SNAPSHOT-$(Build.BuildId)"
        Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
       }     
       .\package-pipeline.ps1 -buildNumber $buildNumber
