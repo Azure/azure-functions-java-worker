@@ -50,6 +50,8 @@ steps:
     BrokerList": $(BrokerList)
     ConfluentCloudUsername: $(ConfluentCloudUsername)
     ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
   displayName: 'Build & Run tests for java 8'
   continueOnError: false
 - pwsh: |
@@ -69,6 +71,8 @@ steps:
     BrokerList": $(BrokerList)
     ConfluentCloudUsername: $(ConfluentCloudUsername)
     ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
   displayName: 'Build & Run tests for java 8 Customer jar loaded first'
   continueOnError: false
 - pwsh: |
@@ -99,6 +103,8 @@ steps:
     BrokerList": $(BrokerList)
     ConfluentCloudUsername: $(ConfluentCloudUsername)
     ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
   displayName: 'Build & Run tests for java 11'
   continueOnError: false
 - task: CopyFiles@2
