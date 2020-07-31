@@ -4,6 +4,7 @@ import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
+import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 import mockit.*;
 import org.junit.Test;
@@ -122,5 +123,11 @@ public class JavaFunctionBrokerTest {
         String path = "../";
         File file = new File(path);
         broker.verifyLibrariesExist (file, path);
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void registerWithClassLoaderProviderWorkerLibOnly_Exception() throws Exception {
+        JavaFunctionBroker broker = new JavaFunctionBroker(null);
+        broker.registerWithClassLoaderProviderWorkerLibOnly();
     }
 }
