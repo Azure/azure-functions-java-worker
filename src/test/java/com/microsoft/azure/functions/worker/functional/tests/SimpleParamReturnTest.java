@@ -28,6 +28,7 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 	@Test
 	public void testStringData() throws Exception {
 		stringReturnValue = stringInput;
+		System.setProperty("azure.functions.worker.java.skip.testing", "true");
 		try (FunctionsTestHost host = new FunctionsTestHost()) {
 			this.loadFunction(host, "returnStringTestId", "ReturnStringFunction");
 			InvocationResponse stringResponse = host.call("getret", "returnStringTestId");
