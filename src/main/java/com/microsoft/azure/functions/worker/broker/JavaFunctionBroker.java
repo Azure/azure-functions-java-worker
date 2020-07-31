@@ -89,33 +89,7 @@ public class JavaFunctionBroker {
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
 		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
 		classLoaderProvider.addUrl(jarUrl);
-		if(function.getLibDirectory().isPresent()) {
-			registerWithClassLoaderProvider(function.getLibDirectory().get());
-		} else {
-			registerWithClassLoaderProviderWorkerLibOnly();
-		}
-	}
-
-	void registerWithClassLoaderProviderWorkerLibOnly() {
-		try {
-			if(SystemUtils.IS_JAVA_1_8 && !isTesting()) {
-				String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
-				File workerLib = new File(workerLibPath);
-				verifyLibrariesExist (workerLib, workerLibPath);
-				classLoaderProvider.addDirectory(workerLib);
-			}
-		} catch (Exception ex) {
-			ExceptionUtils.rethrow(ex);
-		}
-	}
-
-	private boolean isTesting(){
-		if(System.getProperty("azure.functions.worker.java.skip.testing") != null
-				&& System.getProperty("azure.functions.worker.java.skip.testing").equals("true")) {
-			return true;
-		} else {
-			return false;
-		}
+		function.getLibDirectory().ifPresent(d -> registerWithClassLoaderProvider(d));
 	}
 
 	void registerWithClassLoaderProvider(File libDirectory) {
