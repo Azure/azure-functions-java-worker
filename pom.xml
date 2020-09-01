@@ -74,19 +74,24 @@
 			<version>3.7.1</version>
 		</dependency>
 		<dependency>
-			<groupId>io.grpc</groupId>
-			<artifactId>grpc-protobuf</artifactId>
-			<version>1.20.0</version>
-		</dependency>
-		<dependency>
-			<groupId>io.grpc</groupId>
-			<artifactId>grpc-stub</artifactId>
-			<version>1.20.0</version>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.6</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-netty</artifactId>
-			<version>1.20.0</version>
+			<version>1.31.1</version>
+		</dependency>
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-protobuf</artifactId>
+			<version>1.31.1</version>
+		</dependency>
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-stub</artifactId>
+			<version>1.31.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -204,56 +209,56 @@
 									</excludes>
 								</filter>
 							</filters>
-							<relocations>
-								<relocation combine.children="append">
-									<pattern>com.google</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.com.google</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>com.sun</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.com.sun</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>android</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.android</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>google</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.google</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>identity</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.identity</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>shared</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.shared</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>org</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.org</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>io.netty</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.io.netty</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>io.perfmark</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.io.perfmark</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>io.grpc</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.io.grpc</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>javax.annotation</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>io.opencensus</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.io.opencensus</shadedPattern>
-								</relocation>
-							</relocations>
+<!--							<relocations>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>com.google</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.com.google</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>com.sun</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.com.sun</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>android</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.android</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>google</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.google</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>identity</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.identity</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>shared</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.shared</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>org</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.org</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>io.netty</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.io.netty</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>io.perfmark</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.io.perfmark</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>io.grpc</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.io.grpc</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>javax.annotation</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>-->
+<!--								</relocation>-->
+<!--								<relocation combine.children="append">-->
+<!--									<pattern>io.opencensus</pattern>-->
+<!--									<shadedPattern>com.microsoft.azure.functions.shaded.io.opencensus</shadedPattern>-->
+<!--								</relocation>-->
+<!--							</relocations>-->
 						</configuration>
 					</execution>
 				</executions>
