@@ -208,6 +208,9 @@
 								<relocation combine.children="append">
 									<pattern>com.google</pattern>
 									<shadedPattern>com.microsoft.azure.functions.shaded.com.google</shadedPattern>
+									<excludes>
+										<exclude>com/google/gson/**</exclude>
+									</excludes>
 								</relocation>
 								<relocation combine.children="append">
 									<pattern>com.sun</pattern>
