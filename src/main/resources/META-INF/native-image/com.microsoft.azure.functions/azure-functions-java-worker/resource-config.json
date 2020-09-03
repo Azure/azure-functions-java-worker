@@ -1,0 +1,8 @@
+{
+  "resources":[
+    {"pattern":"\\QMETA-INF/services/com.microsoft.azure.functions.shaded.io.grpc.LoadBalancerProvider\\E"}, 
+    {"pattern":"\\QMETA-INF/services/com.microsoft.azure.functions.shaded.io.grpc.ManagedChannelProvider\\E"}, 
+    {"pattern":"\\QMETA-INF/services/com.microsoft.azure.functions.shaded.io.grpc.NameResolverProvider\\E"}
+  ],
+  "bundles":[]
+}
