@@ -5,63 +5,63 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.com.google.protobuf.Extension"
+  "name":"com.google.protobuf.Extension"
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.com.google.protobuf.ExtensionRegistry",
+  "name":"com.google.protobuf.ExtensionRegistry",
   "methods":[{"name":"getEmptyRegistry","parameterTypes":[] }]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.grpc.internal.DnsNameResolverProvider"
+  "name":"io.grpc.internal.DnsNameResolverProvider"
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.grpc.internal.JndiResourceResolverFactory",
+  "name":"io.grpc.internal.JndiResourceResolverFactory",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.grpc.internal.PickFirstLoadBalancerProvider"
+  "name":"io.grpc.internal.PickFirstLoadBalancerProvider"
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.grpc.util.SecretRoundRobinLoadBalancerProvider$Provider"
+  "name":"io.grpc.util.SecretRoundRobinLoadBalancerProvider$Provider"
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.buffer.AbstractByteBufAllocator",
+  "name":"io.netty.buffer.AbstractByteBufAllocator",
   "allDeclaredMethods":true
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.buffer.AbstractReferenceCountedByteBuf",
+  "name":"io.netty.buffer.AbstractReferenceCountedByteBuf",
   "fields":[{"name":"refCnt", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.channel.socket.nio.NioSocketChannel",
+  "name":"io.netty.channel.socket.nio.NioSocketChannel",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.ReferenceCountUtil",
+  "name":"io.netty.util.ReferenceCountUtil",
   "allDeclaredMethods":true
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
+  "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
   "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
+  "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
   "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
+  "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
   "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField",
+  "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField",
   "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
+  "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
   "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.microsoft.azure.functions.shaded.io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
+  "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
   "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
 },
 {
