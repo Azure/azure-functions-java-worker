@@ -78,8 +78,8 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
       Method method = sysclass.getDeclaredMethod(SYS_LOADER_ADDURL_METHOD_NAME, parameters);
       method.setAccessible(true);
       method.invoke(sysloader, new Object[] { url });
-    } catch (Throwable t) {
-      throw new IOException("Error adding " + url + " to system classloader");
+    } catch (Exception t) {
+      throw new IOException("Error adding " + url + " to system classloader", t);
     }
 
   }
