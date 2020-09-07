@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import com.google.gson.Gson;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -39,6 +39,11 @@ public class ParameterResolver {
     }
 
     synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
+      //  Gson gson = new Gson();
+      //  String json = gson.toJson(this.candidates.get(0).params);
+      //  System.out.println("**************************** ParameterResolver.resolve");
+      //  System.out.println(json);
+      //  System.out.println("***************************** until here.");
         InvokeInfoBuilder invoker = this.resolve(this.candidates.get(0), dataStore);
         if (invoker != null) {
             dataStore.promoteDataTargets(invoker.outputsId);
@@ -51,17 +56,36 @@ public class ParameterResolver {
         try {
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             for (ParamBindInfo param : method.params) {
+                System.out.println("********************** ParameterResolver.resolve 2...");
+                System.out.println("param.name: " + param.name + " param.type: " + param.type.getTypeName());
+                System.out.println("********************** end of resolve 2. ");
                 Optional<BindingData> argument = null;
                 if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
+                    Gson gson = new Gson();
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ ParameterResolver.resolve 3 ....");
+                    System.out.println("dataSource: " + gson.toJson(dataStore));
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ end of ParameterResolver.resolve 3 ....");
                     argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type);
                 }                
                 else if (param.name != null && !param.name.isEmpty()) {
+                    Gson gson = new Gson();
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ ParameterResolver.resolve 4 ....");
+                    System.out.println("dataSource: " + gson.toJson(dataStore));
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ end of ParameterResolver.resolve 4 ....");
                     argument = dataStore.getDataByName(param.name, param.type);
                 } 
                 else if (param.name == null && !param.bindingNameAnnotation.isEmpty()) {
+                    Gson gson = new Gson();
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ ParameterResolver.resolve 5 ....");
+                    System.out.println("dataSource: " + gson.toJson(dataStore));
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ end of ParameterResolver.resolve 5 ....");
                 	argument = dataStore.getTriggerMetatDataByName(param.bindingNameAnnotation, param.type);
                 }
                 else {
+                    Gson gson = new Gson();
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ ParameterResolver.resolve 6 ....");
+                    System.out.println("dataSource: " + gson.toJson(dataStore));
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@ end of ParameterResolver.resolve 6 ....");
                 	argument = dataStore.getDataByType(param.type);
                 }
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
@@ -93,6 +117,7 @@ public class ParameterResolver {
 
     private final class ParamBindInfo {
         ParamBindInfo(Parameter param) {
+
             this.name = CoreTypeResolver.getAnnotationName(param);
             this.type = param.getParameterizedType();
             this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);

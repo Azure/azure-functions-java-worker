@@ -1,175 +1,217 @@
 [
 {
-  "name":"com.function.Function",
-  "allPublicMethods":true,
-  "methods":[{"name":"<init>","parameterTypes":[] }]
+"name":"com.function.Function",
+"allPublicMethods":true,
+"methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.google.protobuf.Extension"
+"name":"com.google.protobuf.Extension"
 },
 {
-  "name":"com.google.protobuf.ExtensionRegistry",
-  "methods":[{"name":"getEmptyRegistry","parameterTypes":[] }]
+"name":"com.google.protobuf.ExtensionRegistry",
+"methods":[{"name":"getEmptyRegistry","parameterTypes":[] }]
 },
 {
-  "name":"io.grpc.internal.DnsNameResolverProvider"
+"name":"com.microsoft.azure.functions.rpc.messages.BindingInfo$Direction",
+"fields":[
+{"name":"UNRECOGNIZED"},
+{"name":"in"},
+{"name":"inout"},
+{"name":"out"}
+]
 },
 {
-  "name":"io.grpc.internal.JndiResourceResolverFactory",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
+"name":"com.microsoft.azure.functions.worker.binding.BindingDataStore",
+"allDeclaredFields":true,
+"methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"io.grpc.internal.PickFirstLoadBalancerProvider"
+"name":"com.microsoft.azure.functions.worker.binding.BindingDefinition",
+"allDeclaredFields":true
 },
 {
-  "name":"io.grpc.util.SecretRoundRobinLoadBalancerProvider$Provider"
+"name":"com.microsoft.azure.functions.worker.binding.DataOperations",
+"allDeclaredFields":true,
+"methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"io.netty.buffer.AbstractByteBufAllocator",
-  "allDeclaredMethods":true
+"name":"com.microsoft.azure.functions.worker.binding.DataSource",
+"allDeclaredFields":true
 },
 {
-  "name":"io.netty.buffer.AbstractReferenceCountedByteBuf",
-  "fields":[{"name":"refCnt", "allowUnsafeAccess":true}]
+"name":"com.microsoft.azure.functions.worker.binding.DataTarget",
+"allDeclaredFields":true
 },
 {
-  "name":"io.netty.channel.socket.nio.NioSocketChannel",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
+"name":"com.sun.jndi.dns.DnsContextFactory"
 },
 {
-  "name":"io.netty.util.ReferenceCountUtil",
-  "allDeclaredMethods":true
+"name":"com.sun.proxy.$Proxy1",
+"allPublicMethods":true
 },
 {
-  "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
-  "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
+"name":"io.grpc.internal.DnsNameResolverProvider"
 },
 {
-  "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
-  "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
+"name":"io.grpc.internal.JndiResourceResolverFactory",
+"methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
-  "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
+"name":"io.grpc.internal.PickFirstLoadBalancerProvider"
 },
 {
-  "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField",
-  "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
+"name":"io.grpc.util.SecretRoundRobinLoadBalancerProvider$Provider"
 },
 {
-  "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
-  "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
+"name":"io.netty.buffer.AbstractByteBufAllocator",
+"allDeclaredMethods":true
 },
 {
-  "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
-  "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
+"name":"io.netty.buffer.AbstractReferenceCountedByteBuf",
+"fields":[{"name":"refCnt", "allowUnsafeAccess":true}]
 },
 {
-  "name":"com.sun.proxy.$Proxy1",
-  "allPublicMethods":true
+"name":"io.netty.channel.socket.nio.NioSocketChannel",
+"methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"java.lang.management.ManagementFactory",
-  "methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
+"name":"io.netty.util.ReferenceCountUtil",
+"allDeclaredMethods":true
 },
 {
-  "name":"java.lang.management.RuntimeMXBean",
-  "methods":[
-    {"name":"getInputArguments","parameterTypes":[] }, 
-    {"name":"getName","parameterTypes":[] }
-  ]
+"name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
+"fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
 },
 {
-  "name":"java.lang.reflect.AccessibleObject",
-  "fields":[{"name":"override"}]
+"name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
+"fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"java.net.InetSocketAddress",
-  "methods":[{"name":"getHostString","parameterTypes":[] }]
+"name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
+"fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"java.nio.Bits",
-  "fields":[{"name":"UNALIGNED"}]
+"name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField",
+"fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"java.nio.Buffer",
-  "fields":[{"name":"address", "allowUnsafeAccess":true}]
+"name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
+"fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
 },
 {
-  "name":"java.nio.DirectByteBuffer",
-  "methods":[{"name":"<init>","parameterTypes":["long","int"] }]
+"name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
+"fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
 },
 {
-  "name":"java.security.MessageDigestSpi"
+"name":"java.lang.ProcessEnvironment",
+"fields":[{"name":"theEnvironment"}]
 },
 {
-  "name":"java.security.SecureRandomParameters"
+"name":"java.lang.management.ManagementFactory",
+"methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
 },
 {
-  "name":"java.util.concurrent.atomic.LongAdder",
-  "allPublicConstructors":true,
-  "methods":[
-    {"name":"add","parameterTypes":["long"] }, 
-    {"name":"sum","parameterTypes":[] }
-  ]
+"name":"java.lang.management.RuntimeMXBean",
+"methods":[{"name":"getName","parameterTypes":[] }]
 },
 {
-  "name":"javax.naming.directory.InitialDirContext"
+"name":"java.net.InetSocketAddress",
+"methods":[{"name":"getHostString","parameterTypes":[] }]
 },
 {
-  "name":"jdk.internal.misc.Unsafe",
-  "methods":[{"name":"getUnsafe","parameterTypes":[] }]
+"name":"java.net.URLClassLoader",
+"methods":[{"name":"addURL","parameterTypes":["java.net.URL"] }]
 },
 {
-  "name":"sun.misc.Unsafe",
-  "allDeclaredFields":true,
-  "methods":[
-    {"name":"arrayBaseOffset","parameterTypes":["java.lang.Class"] }, 
-    {"name":"arrayIndexScale","parameterTypes":["java.lang.Class"] }, 
-    {"name":"copyMemory","parameterTypes":["long","long","long"] }, 
-    {"name":"copyMemory","parameterTypes":["java.lang.Object","long","java.lang.Object","long","long"] }, 
-    {"name":"getAndSetObject","parameterTypes":["java.lang.Object","long","java.lang.Object"] }, 
-    {"name":"getBoolean","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"getByte","parameterTypes":["long"] }, 
-    {"name":"getByte","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"getDouble","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"getFloat","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"getInt","parameterTypes":["long"] }, 
-    {"name":"getInt","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"getLong","parameterTypes":["long"] }, 
-    {"name":"getLong","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"getObject","parameterTypes":["java.lang.Object","long"] }, 
-    {"name":"invokeCleaner","parameterTypes":["java.nio.ByteBuffer"] }, 
-    {"name":"objectFieldOffset","parameterTypes":["java.lang.reflect.Field"] }, 
-    {"name":"putBoolean","parameterTypes":["java.lang.Object","long","boolean"] }, 
-    {"name":"putByte","parameterTypes":["long","byte"] }, 
-    {"name":"putByte","parameterTypes":["java.lang.Object","long","byte"] }, 
-    {"name":"putDouble","parameterTypes":["java.lang.Object","long","double"] }, 
-    {"name":"putFloat","parameterTypes":["java.lang.Object","long","float"] }, 
-    {"name":"putInt","parameterTypes":["long","int"] }, 
-    {"name":"putInt","parameterTypes":["java.lang.Object","long","int"] }, 
-    {"name":"putLong","parameterTypes":["long","long"] }, 
-    {"name":"putLong","parameterTypes":["java.lang.Object","long","long"] }, 
-    {"name":"putObject","parameterTypes":["java.lang.Object","long","java.lang.Object"] }
-  ]
+"name":"java.nio.Bits",
+"methods":[{"name":"unaligned","parameterTypes":[] }]
 },
 {
-  "name":"sun.nio.ch.SelectorImpl",
-  "fields":[
-    {"name":"publicSelectedKeys", "allowUnsafeAccess":true}, 
-    {"name":"selectedKeys", "allowUnsafeAccess":true}
-  ]
+"name":"java.nio.Buffer",
+"fields":[{"name":"address", "allowUnsafeAccess":true}]
 },
 {
-  "name":"sun.security.provider.DRBG",
-  "methods":[{"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
+"name":"java.nio.DirectByteBuffer",
+"fields":[{"name":"cleaner", "allowUnsafeAccess":true}],
+"methods":[{"name":"<init>","parameterTypes":["long","int"] }]
 },
 {
-  "name":"sun.security.provider.SHA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
+"name":"java.security.MessageDigestSpi"
 },
 {
-  "name":"sun.security.provider.SHA2$SHA256",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
+"name":"java.util.Collections$UnmodifiableMap",
+"fields":[{"name":"m"}]
+},
+{
+"name":"java.util.concurrent.atomic.LongAdder",
+"allPublicConstructors":true,
+"methods":[
+{"name":"add","parameterTypes":["long"] },
+{"name":"sum","parameterTypes":[] }
+]
+},
+{
+"name":"javax.naming.directory.InitialDirContext"
+},
+{
+"name":"sun.misc.Cleaner",
+"methods":[{"name":"clean","parameterTypes":[] }]
+},
+{
+"name":"sun.misc.Unsafe",
+"allDeclaredFields":true,
+"methods":[
+{"name":"allocateInstance","parameterTypes":["java.lang.Class"] },
+{"name":"arrayBaseOffset","parameterTypes":["java.lang.Class"] },
+{"name":"arrayIndexScale","parameterTypes":["java.lang.Class"] },
+{"name":"copyMemory","parameterTypes":["long","long","long"] },
+{"name":"copyMemory","parameterTypes":["java.lang.Object","long","java.lang.Object","long","long"] },
+{"name":"getAndAddLong","parameterTypes":["java.lang.Object","long","long"] },
+{"name":"getAndSetObject","parameterTypes":["java.lang.Object","long","java.lang.Object"] },
+{"name":"getBoolean","parameterTypes":["java.lang.Object","long"] },
+{"name":"getByte","parameterTypes":["long"] },
+{"name":"getByte","parameterTypes":["java.lang.Object","long"] },
+{"name":"getDouble","parameterTypes":["java.lang.Object","long"] },
+{"name":"getFloat","parameterTypes":["java.lang.Object","long"] },
+{"name":"getInt","parameterTypes":["long"] },
+{"name":"getInt","parameterTypes":["java.lang.Object","long"] },
+{"name":"getLong","parameterTypes":["long"] },
+{"name":"getLong","parameterTypes":["java.lang.Object","long"] },
+{"name":"getObject","parameterTypes":["java.lang.Object","long"] },
+{"name":"objectFieldOffset","parameterTypes":["java.lang.reflect.Field"] },
+{"name":"putBoolean","parameterTypes":["java.lang.Object","long","boolean"] },
+{"name":"putByte","parameterTypes":["long","byte"] },
+{"name":"putByte","parameterTypes":["java.lang.Object","long","byte"] },
+{"name":"putDouble","parameterTypes":["java.lang.Object","long","double"] },
+{"name":"putFloat","parameterTypes":["java.lang.Object","long","float"] },
+{"name":"putInt","parameterTypes":["long","int"] },
+{"name":"putInt","parameterTypes":["java.lang.Object","long","int"] },
+{"name":"putLong","parameterTypes":["long","long"] },
+{"name":"putLong","parameterTypes":["java.lang.Object","long","long"] },
+{"name":"putObject","parameterTypes":["java.lang.Object","long","java.lang.Object"] }
+]
+},
+{
+"name":"sun.misc.VM",
+"methods":[{"name":"maxDirectMemory","parameterTypes":[] }]
+},
+{
+"name":"sun.nio.ch.SelectorImpl",
+"fields":[
+{"name":"publicSelectedKeys"},
+{"name":"selectedKeys"}
+]
+},
+{
+"name":"sun.security.provider.NativePRNG",
+"methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+"name":"sun.security.provider.SHA",
+"methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+"name":"sun.security.provider.Sun",
+"methods":[{"name":"<init>","parameterTypes":[] }]
 }
 ]

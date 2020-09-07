@@ -20,6 +20,8 @@ import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import com.google.gson.Gson;
+
 /**
  * A broker between JAR methods and the function RPC. It can load methods using
  * reflection, and invoke them at runtime. Thread-Safety: Multiple thread.
@@ -53,7 +55,11 @@ public class JavaFunctionBroker {
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
-
+		Gson gson = new Gson();
+		String json = gson.toJson(dataStore);
+		System.out.println("**************************** JavaFunctionsBroker invokeMethodDump");
+		System.out.println(json);
+		System.out.println("**************************** end of JavaFunctionBroker");
 		executor.execute(dataStore);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
@@ -99,7 +105,8 @@ public class JavaFunctionBroker {
 	void registerWithClassLoaderProviderWorkerLibOnly() {
 		try {
 			if(SystemUtils.IS_JAVA_1_8 && !isTesting()) {
-				String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
+				 // String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
+				 String workerLibPath = "/azure-functions-host/workers/java/lib"; // TODO remove this.
 				File workerLib = new File(workerLibPath);
 				verifyLibrariesExist (workerLib, workerLibPath);
 				classLoaderProvider.addDirectory(workerLib);
@@ -121,7 +128,8 @@ public class JavaFunctionBroker {
 	void registerWithClassLoaderProvider(File libDirectory) {
 		try {
 			if(SystemUtils.IS_JAVA_1_8) {
-				String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
+				// String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
+				String workerLibPath = "/azure-functions-host/workers/java/lib"; // TODO remove this.
 				File workerLib = new File(workerLibPath);
 				verifyLibrariesExist (workerLib, workerLibPath);
 

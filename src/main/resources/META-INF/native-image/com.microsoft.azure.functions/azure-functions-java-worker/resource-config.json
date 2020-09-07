@@ -1,8 +1,10 @@
 {
   "resources":[
-    {"pattern":"\\QMETA-INF/services/com.microsoft.azure.functions.shaded.io.grpc.LoadBalancerProvider\\E"}, 
-    {"pattern":"\\QMETA-INF/services/com.microsoft.azure.functions.shaded.io.grpc.ManagedChannelProvider\\E"}, 
-    {"pattern":"\\QMETA-INF/services/com.microsoft.azure.functions.shaded.io.grpc.NameResolverProvider\\E"}
+    {"pattern":"\\QMETA-INF/services/io.grpc.LoadBalancerProvider\\E"},
+    {"pattern":"\\QMETA-INF/services/io.grpc.ManagedChannelProvider\\E"},
+    {"pattern":"\\QMETA-INF/services/io.grpc.NameResolverProvider\\E"},
+    {"pattern":"\\QMETA-INF/services/jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory\\E"},
+    {"pattern":"\\QMETA-INF/services/jdk.vm.ci.services.JVMCIServiceLocator\\E"}
   ],
   "bundles":[]
 }

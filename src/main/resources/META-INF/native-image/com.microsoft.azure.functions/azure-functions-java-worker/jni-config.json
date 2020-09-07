@@ -1,28 +1,24 @@
 [
-{
-  "name":"java.lang.ClassLoader",
-  "methods":[
-    {"name":"getPlatformClassLoader","parameterTypes":[] }, 
-    {"name":"loadClass","parameterTypes":["java.lang.String"] }
-  ]
-},
-{
-  "name":"java.lang.ClassNotFoundException"
-},
-{
-  "name":"java.lang.NoSuchMethodError"
-},
-{
-  "name":"sun.management.VMManagementImpl",
-  "fields":[
-    {"name":"compTimeMonitoringSupport"}, 
-    {"name":"currentThreadCpuTimeSupport"}, 
-    {"name":"objectMonitorUsageSupport"}, 
-    {"name":"otherThreadCpuTimeSupport"}, 
-    {"name":"remoteDiagnosticCommandsSupport"}, 
-    {"name":"synchronizerUsageSupport"}, 
-    {"name":"threadAllocatedMemorySupport"}, 
-    {"name":"threadContentionMonitoringSupport"}
-  ]
-}
+  {
+    "name":"java.lang.ClassLoader",
+    "methods":[{"name":"loadClass","parameterTypes":["java.lang.String"] }]
+  },
+  {
+    "name":"java.lang.ClassNotFoundException"
+  },
+  {
+    "name":"sun.management.VMManagementImpl",
+    "fields":[
+      {"name":"bootClassPathSupport"},
+      {"name":"compTimeMonitoringSupport"},
+      {"name":"currentThreadCpuTimeSupport"},
+      {"name":"gcNotificationSupport"},
+      {"name":"objectMonitorUsageSupport"},
+      {"name":"otherThreadCpuTimeSupport"},
+      {"name":"remoteDiagnosticCommandsSupport"},
+      {"name":"synchronizerUsageSupport"},
+      {"name":"threadAllocatedMemorySupport"},
+      {"name":"threadContentionMonitoringSupport"}
+    ]
+  }
 ]

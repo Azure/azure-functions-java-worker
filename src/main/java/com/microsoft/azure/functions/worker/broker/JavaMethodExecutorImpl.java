@@ -22,12 +22,21 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
 
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
         this.overloadResolver = new ParameterResolver();
+        System.out.println("**************************************** JavaMethodExecutorImpl");
+        System.out.println("containingClass: " + this.containingClass.getTypeName());
 
         for (Method method : this.containingClass.getMethods()) {
+            System.out.println("methodName: "+ method.getName() + " descriptor.getMethodName: "+ descriptor.getMethodName());
+
             if (method.getName().equals(descriptor.getMethodName())) {
+                for(Parameter param : method.getParameters()) {
+                    System.out.println("Param.name :" + param.getName());
+                    System.out.println("Param.type :" + param.getType().getTypeName());
+                }
                 this.overloadResolver.addCandidate(method);
             }
         }
+        System.out.println("************************************************************ end of JavaMethodExecutorImpl");
 
         if (!this.overloadResolver.hasCandidates()) {
             throw new NoSuchMethodException("There are no methods named \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");

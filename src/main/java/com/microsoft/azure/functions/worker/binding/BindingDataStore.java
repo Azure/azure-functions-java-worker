@@ -52,7 +52,8 @@ public final class BindingDataStore {
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
-    	return this.inputSources.get(name).computeByName(name, target);
+        System.out.println("***&&&&&&********** getDataByName: name: " + name + " target: " + target.getTypeName());
+        return this.inputSources.get(name).computeByName(name, target);
     }
     
     public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {    	
