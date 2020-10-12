@@ -75,7 +75,7 @@ The following extensions should be installed if using Visual Studio Code for deb
     | FUNCTIONS_WORKER_RUNTIME       | java |
     | languageWorkers:java:arguments | -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 |
     | AZURE_FUNCTIONS_ENVIRONMENT    | Development |
-    | AzureWebJobsScriptRoot         | <a path to your azure function target folder> i.e. ~/<path>/target/azure-functions/<azure-function-name-####> |
+    | AzureWebJobsScriptRoot         | a path to your azure function target folder,i.e. ~/<your-folder-path>/target/azure-functions/<azure-function-name-####> |
     
     >> Note: In macOS, you might need to add JAVA_HOME as a debugging environment variable. 
 
