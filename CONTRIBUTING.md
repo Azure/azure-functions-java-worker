@@ -112,6 +112,6 @@ This project uses a combination of Azure DevOps and GitHub Actions for CI/CD.
  - Leave comments on your PR and @username for attention
 
 ### Requesting a release
-- If you need a release into maven central, request it by raising an issue and tagging @anthonychu or @davidmrdavid
+- If you need a release into maven central, request it by raising an issue and tagging @TsuyoshiUshio and @amamounelsayed
 
 
