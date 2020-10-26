@@ -3,13 +3,19 @@ Thank you for taking the time to contribute to Azure Functions in [Java](https:/
 
 ## Table of Contents
 
-- [What should I know before I get started?](#what-should-i-know-before-i-get-started)
-- [Pre-requisites](#pre-requisites)
-- [Pull Request Change Flow](#pull-request-change-flow)
-- [Development Setup](#development-setup)
-- [Pre Commit Tasks](#pre-commit-tasks)
-- [Continuous Integration Guidelines & Conventions](#continuous-integration-guidelines-&-conventions)
-- [Getting Help](#getting-help)
+- [Contributor Onboarding](#contributor-onboarding)
+  - [Table of Contents](#table-of-contents)
+  - [What should I know before I get started](#what-should-i-know-before-i-get-started)
+  - [Pre-requisites](#pre-requisites)
+  - [Pull Request Change flow](#pull-request-change-flow)
+  - [Development Setup](#development-setup)
+    - [Visual Studio Code Extensions](#visual-studio-code-extensions)
+    - [Setting up the  end-to-end debugging environment](#setting-up-the-end-to-end-debugging-environment)
+  - [Pre Commit Tasks](#pre-commit-tasks)
+    - [Running unit tests](#running-unit-tests)
+  - [Continuous Integration Guidelines & Conventions](#continuous-integration-guidelines--conventions)
+  - [Getting help](#getting-help)
+    - [Requesting a release](#requesting-a-release)
 
 ## What should I know before I get started
 - [Azure Functions Java Overview](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-java)
@@ -20,7 +26,6 @@ Thank you for taking the time to contribute to Azure Functions in [Java](https:/
 - OS
     - MacOS, Ubuntu (or) Windows10
 - Language Runtimes
-    - .NET Core 2.0
     -  Java 1.8
 
 - IDE
@@ -28,7 +33,7 @@ Thank you for taking the time to contribute to Azure Functions in [Java](https:/
    - [Java extension in VS Code](https://code.visualstudio.com/docs/languages/java)
 - Java Tools 
     - [Maven](https://maven.apache.org/install.html)
-    - [JDK (openJDK)  8 and/or 11](https://openjdk.java.net/install/)
+    - [JDK (Azul Zulu for Azure) 8 and/or 11](https://www.azul.com/downloads/azure-only/zulu/?version=java-8-lts&architecture=x86-64-bit&package=jdk)
 - Azure Tools
     - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (or) [Create a storage account in Azure](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
     - [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) v2.7.x and above.
