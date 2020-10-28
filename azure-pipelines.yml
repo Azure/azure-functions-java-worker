@@ -10,7 +10,9 @@ trigger:
       - dev
       - master
 pr:
-- dev
+  branches:
+    include:
+      - dev
 
 steps:
 - task: NuGetToolInstaller@0
