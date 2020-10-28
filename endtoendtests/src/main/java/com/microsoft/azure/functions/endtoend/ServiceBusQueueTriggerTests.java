@@ -8,15 +8,25 @@ import java.util.*;
  * Azure Functions with Azure Service Bus Queue.
  */
 public class ServiceBusQueueTriggerTests {
-    /**
-     * This function will be invoked when a new message is received. The message contents are provided as input to this function.
-     */
+
     @FunctionName("ServiceBusQueueTrigger")
     public void serviceBusQueueTrigger(
-        @ServiceBusQueueTrigger(name = "message", queueName = "%SBQueueName%", connection = "AzureWebJobsServiceBus") String message,
+        @ServiceBusQueueTrigger(name = "message", queueName = "SBQueueNameSingle", connection = "AzureWebJobsServiceBus") String message,
+        @QueueOutput(name = "output", queueName = "test-servicebusqueuesingle-java", connection = "AzureWebJobsStorage") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Service Bus Queue trigger function processed a message: " + message);
+        output.setValue(message);
+    }
+
+    @FunctionName("ServiceBusQueueBatchTrigger")
+    public void serviceBusQueueBatchTrigger(
+            @ServiceBusQueueTrigger(name = "message", queueName = "SBQueueNameBatch", connection = "AzureWebJobsServiceBus", cardinality = Cardinality.MANY, dataType = "String") String[] messages,
+            @QueueOutput(name = "output", queueName = "test-servicebusqueuebatch-java", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+            final ExecutionContext context
+    ) {
+        context.getLogger().info("Java Service Bus Queue trigger function processed a message: " + messages[0]);
+        output.setValue(messages[0]);
     }
 
     /**

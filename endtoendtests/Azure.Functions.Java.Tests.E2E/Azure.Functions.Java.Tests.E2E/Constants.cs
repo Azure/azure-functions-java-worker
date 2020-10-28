@@ -59,11 +59,25 @@ namespace Azure.Functions.Java.Tests.E2E
         // EventGrid
         public static string EventGridStorageOutputBindingQueueName = "test-eventgrid-output-binding-queue-java";
 
+        //ServiceBusQueue
+        public static string ServiceBusQueueTriggerQueueName = "test-servicebusqueuesingle-java";
+        public static string ServiceBusQueueTriggerServiceBusName = "SBQueueNameSingle";
+        public static string serviceBusTopicBatchTriggerQueueName = "test-servicebusqueuebatch-java";
+        public static string serviceBusTopicBatchTriggerServiceBusName = "SBQueueNameBatch";
+
+        //ServiceBusTopic
+        public static string ServiceBusQueueTriggerTopicQueueName = "test-servicebusqueuesingle-java";
+        public static string ServiceBusQueueTriggerServiceBusTopicName = "SBQueueNameSingle";
+        public static string serviceBusTopicBatchTriggerQueueTopicName = "test-servicebusqueuebatch-java";
+        public static string serviceBusTopicBatchTriggerServiceBusTopicName = "SBQueueNameBatch";
+
         // Settings
         public static string EventHubsConnectionStringSenderSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
         public static string EventHubsConnectionStringSenderSetting2 = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender_2");
 
         public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
+
+        public static string ServiceBusConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsServiceBus");
 
         // Xunit Fixtures and Collections
         public const string FunctionAppCollectionName = "FunctionAppCollection";
