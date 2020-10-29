@@ -18,7 +18,7 @@ Thank you for taking the time to contribute to Azure Functions in [Java](https:/
     - [Requesting a release](#requesting-a-release)
 
 ## What should I know before I get started
-- [Azure Functions Java Overview](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-java)
+- [Azure Functions Java Quickstart](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-java)
 - [Azure Function Java developer guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-java?tabs=consumption)
 
 ## Pre-requisites
@@ -33,7 +33,7 @@ Thank you for taking the time to contribute to Azure Functions in [Java](https:/
    - [Java extension in VS Code](https://code.visualstudio.com/docs/languages/java)
 - Java Tools 
     - [Maven](https://maven.apache.org/install.html)
-    - [JDK (Azul Zulu for Azure) 8 and/or 11](https://www.azul.com/downloads/azure-only/zulu/?version=java-8-lts&architecture=x86-64-bit&package=jdk)
+    - [JDK (Azul Zulu for Azure) 8](https://www.azul.com/downloads/azure-only/zulu/?version=java-8-lts&architecture=x86-64-bit&package=jdk)
 - Azure Tools
     - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (or) [Create a storage account in Azure](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
     - [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) v2.7.x and above.
@@ -85,6 +85,8 @@ The following extensions should be installed if using Visual Studio Code for deb
     >> Note: In macOS, you might need to add JAVA_HOME as a debugging environment variable. 
 
 5. Run the host in a debugging mood
+   
+   >> Note: Make sure that WebJobs.Script.WebHost is set as a Startup Project
 
 6. Git clone your fork for [azure function worker](https://github.com/helayoty/azure-functions-java-worker) and open it in the IDE.
 
