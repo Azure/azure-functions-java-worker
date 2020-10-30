@@ -69,36 +69,40 @@ The following extensions should be installed if using Visual Studio Code for deb
 
 ### Setting up the  end-to-end debugging environment
 
-1. Install [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) 
+1. Use any starter sample from this [folder] in your fork (https://github.com/Azure/azure-functions-host/tree/dev/sample/Java) and run *`mvn clean package`*
 
-2. Git clone the [Azure function host](https://github.com/Azure/azure-functions-host) code base open it using Visual Studio 2019
+2. Install [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) 
+
+3. Git clone the [Azure function host](https://github.com/Azure/azure-functions-host) code base open it using Visual Studio 2019
+
+4. Navigate to `WebJobs.Script.WebHost` project
  
-3. Use any starter sample from this [folder] in your fork (https://github.com/Azure/azure-functions-host/tree/dev/sample/Java) and run *`mvn clean package`*
-
-4. Add the following environment variables into your debugging configuration:
+5. Right click on `WebJobs.Script.WebHost` project and add the following environment variables into your debugging configuration:
     
     | Variable   |  Value    |
     | :--------: | :------:  |
     | FUNCTIONS_WORKER_RUNTIME       | java |
     | languageWorkers:java:arguments | -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 |
     | AZURE_FUNCTIONS_ENVIRONMENT    | Development |
-    | AzureWebJobsScriptRoot         | a path to your azure function target folder,i.e. ~/< your-folder-path >/target/azure-functions/<azure-function-name-####> |
+    | AzureWebJobsScriptRoot         | a path to your azure function target folder from step 3,i.e. ~/< your-folder-path >/target/azure-functions/<azure-function-name-####> |
     
     >> Note: In macOS, you might need to add JAVA_HOME as a debugging environment variable. 
 
-5. Run the host in a debugging mood
+6. Navigate to WorkerProcess class and add breakpoint at `_process.Start()`. Run the host in a debugging mood
    
    >> Note: Make sure that WebJobs.Script.WebHost is set as a Startup Project
 
-6. Git clone your fork for [azure function worker](https://github.com/helayoty/azure-functions-java-worker) and open it in the IDE.
+7. Git clone your fork for [azure function worker](https://github.com/helayoty/azure-functions-java-worker) and open it in the IDE.
 
-7. Add new remote debugging configuration as show below
+8. In case you need to test a new version from Java worker code, you'll need to:
+    a. Go to target folder and rename `azure-functions-java-worker-1.8.0.jar` to `azure-functions-java-worker.jar`
+    b. Copy this jar file and paste it in the debug folder in the host code base(<Azure_Function_Host_Path>/azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp3.1/workers/java)
+    
+9. Add new remote debugging configuration as show below
 
 ![](tools/.images/worker-debug-configuration.png)
 
-8. Run the worker in the debugging mode 
-    
-7. Set breakpoints and click Run -> Start Debugging in VS Code. This should internally start the Azure Function using `func host start` command.
+10. Navigate to `JavaWorkerManager.java` and add a breakpoint in the constructor. Run the worker in the debugging mode. This should internally start the Azure Function using `func host start` command.
 
 ## Pre Commit Tasks
 
