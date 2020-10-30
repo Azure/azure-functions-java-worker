@@ -69,7 +69,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 
 ### Setting up the  end-to-end debugging environment
 
-1. Use any starter sample from this [folder] in your fork (https://github.com/Azure/azure-functions-host/tree/dev/sample/Java) and run *`mvn clean package`*
+1. Use any Java Azure Function starter sample and run *`mvn clean package`*
 
 2. Install [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) 
 
@@ -84,7 +84,7 @@ The following extensions should be installed if using Visual Studio Code for deb
     | FUNCTIONS_WORKER_RUNTIME       | java |
     | languageWorkers:java:arguments | -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 |
     | AZURE_FUNCTIONS_ENVIRONMENT    | Development |
-    | AzureWebJobsScriptRoot         | a path to your azure function target folder from step 3,i.e. ~/< your-folder-path >/target/azure-functions/<azure-function-name-####> |
+    | AzureWebJobsScriptRoot         | a path to your azure function target folder from step 1,i.e. ~/< your-folder-path >/target/azure-functions/<azure-function-name-####> |
     
     >> Note: In macOS, you might need to add JAVA_HOME as a debugging environment variable. 
 
