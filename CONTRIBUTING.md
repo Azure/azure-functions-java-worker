@@ -1,4 +1,5 @@
 # Contributor Onboarding
+
 Thank you for taking the time to contribute to Azure Functions in [Java](https://go.java/)
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -20,28 +21,25 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
     - [Requesting a release](#requesting-a-release)
 
 ## What should I know before I get started
+
 - [Azure Functions Java Quickstart](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-java)
 - [Azure Function Java developer guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-java?tabs=consumption)
 
 ## Pre-requisites
 
 - OS
-    - MacOS, Ubuntu (or) Windows10
-- Language Runtimes
-    -  Java 1.8
-
+  - MacOS, Ubuntu (or) Windows10
 - IDE
-   - [IntelliJ](https://www.jetbrains.com/idea/download)
-   - [Java extension in VS Code](https://code.visualstudio.com/docs/languages/java)
-- Java Tools 
-    - [Maven](https://maven.apache.org/install.html)
-    - [JDK (Azul Zulu for Azure) 8](https://www.azul.com/downloads/azure-only/zulu/?version=java-8-lts&architecture=x86-64-bit&package=jdk)
+  - [IntelliJ](https://www.jetbrains.com/idea/download)
+  - [Java extension in VS Code](https://code.visualstudio.com/docs/languages/java)
+- Java Tools
+  - [Maven](https://maven.apache.org/install.html)
+  - [JDK (Azul Zulu for Azure) 8](https://www.azul.com/downloads/azure-only/zulu/?version=java-8-lts&architecture=x86-64-bit&package=jdk) - this also installs Java 1.8 JRE
 - Azure Tools
-    - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (or) [Create a storage account in Azure](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
-    - [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) v2.7.x and above.
-    - [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/)
+  - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (or) [Create a storage account in Azure](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
+  - [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) v2.7.x and above.
+  - [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/)
   
-
 ## Pull Request Change flow
 
 The general flow for making a change to the library is:
@@ -66,47 +64,81 @@ The following extensions should be installed if using Visual Studio Code for deb
 - [Java debugging for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-debug) (Java for VSCode extension)
 - Azure Functions Extensions for Visual Studio Code v0.19.1 and above.
 
+### Setting up the end-to-end development environment
 
-### Setting up the  end-to-end debugging environment
+The following steps outline an end to end development environment to enable developers to debug all the way from the Azure Functions Host to the Java Worker when a Java Azure Function is invoked:
 
-1. Use any Java Azure Function starter sample and run *`mvn clean package`*
+1. Use any [Java Azure Function starter sample](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-java) and run *`mvn clean package`* to produce the target executable of a Java Azure Function.
 
-2. Install [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) 
+1. Git clone the [Azure function host](https://github.com/Azure/azure-functions-host) code base open it using your favorite IDE.
 
-3. Git clone the [Azure function host](https://github.com/Azure/azure-functions-host) code base open it using Visual Studio 2019
+1. Navigate to `WebJobs.Script.WebHost` project
 
-4. Navigate to `WebJobs.Script.WebHost` project
- 
-5. Right click on `WebJobs.Script.WebHost` project and add the following environment variables into your debugging configuration:
-    
+1. Right click on `WebJobs.Script.WebHost` project and add the following environment variables into your debugging configuration:
+
     | Variable   |  Value    |
     | :--------: | :------:  |
     | FUNCTIONS_WORKER_RUNTIME       | java |
     | languageWorkers:java:arguments | -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 |
     | AZURE_FUNCTIONS_ENVIRONMENT    | Development |
     | AzureWebJobsScriptRoot         | a path to your azure function target folder from step 1,i.e. ~/< your-folder-path >/target/azure-functions/<azure-function-name-####> |
-    
-    >> Note: In macOS, you might need to add JAVA_HOME as a debugging environment variable. 
 
-6. Navigate to WorkerProcess class and add breakpoint at `_process.Start()`. Run the host in a debugging mood
-   
+    >> Notes
+    - In macOS, you might need to add JAVA_HOME as a debugging environment variable.
+    - If using Visual Studio Code, then add these environment variables in the launch.json in the `env` object under `configurations`.
+
+    Here is a sample configuration for Visual Studio Code
+
+    ```json
+      "env" : {
+        "JAVA_HOME" : "/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home",
+        "FUNCTIONS_WORKER_RUNTIME":"java",
+
+        "languageWorkers:java:arguments": "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+
+        "AZURE_FUNCTIONS_ENVIRONMENT": "Development",
+
+        "AzureWebJobsScriptRoot" : "<path_to_java_function>/java-functions-di/java-starter/functions-di/target/azure-functions/functions-di-20201102134253063"
+      }
+    ```
+
+1. Navigate to `azure-functions-host/src/WebJobs.Script/Workers/ProcessManagement/WorkerProcess.cs` class and add breakpoint at `_process.Start()`.
+
    >> Note: Make sure that WebJobs.Script.WebHost is set as a Startup Project
 
-7. Git clone your fork for [azure function worker](https://github.com/helayoty/azure-functions-java-worker) and open it in the IDE.
+1. Now in another IDE instance, git clone your fork for [azure function worker](https://github.com/helayoty/azure-functions-java-worker) and open it.
 
-8. In case you need to test a new version from Java worker code, you'll need to:
-    a. Go to target folder and rename `azure-functions-java-worker-1.8.0.jar` to `azure-functions-java-worker.jar`
-    b. Copy this jar file and paste it in the debug folder in the host code base(<Azure_Function_Host_Path>/azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp3.1/workers/java)
-    
-9. Add new remote debugging configuration as show below
+1. Add new remote debugging configuration. 
 
-![](tools/.images/worker-debug-configuration.png)
+  Here is a sample configuration for IntelliJ IDEA 
 
-10. Navigate to `JavaWorkerManager.java` and add a breakpoint in the constructor. Run the worker in the debugging mode. This should internally start the Azure Function using `func host start` command.
+![IntelliJ IDEA Remote Configuration](tools/.images/worker-debug-configuration.png)
 
-## Pre Commit Tasks
+![IntelliJ IDEA Config Values](tools/.images/remote-config.png)
 
->>TODO
+With this you have completed the setup for Azure Functions Host and the Azure Functions Java Worker Development.
+
+### Start Debugging
+
+1. Run the azure-functions-host from Step 5 in debugging mode (.NET Core Launch Debug). Wait until it stops at the `_process.Start()` breakpoint. At this point, the host is started and the java language worker needs to connect to the host.
+
+1. Navigate to `azure-functions-java-worker/src/main/java/com/microsoft/azure/functions/worker/JavaWorkerClient.java` and add a breakpoint in the constructor. Click the Remote Debugging configured in Step 7. This connects the worker process to the host and runs worker in debugging mode.
+
+1. Run through the breakpoint in the host until it hits the breakpoint in `JavaWorkerClient.java`. At this point the worker and host are up and running with your function app (this was configured as part of the environment variables above)
+
+1. Open a browser and invoke the HTTP Trigger and it will reach the `execute` method in `azure-functions-java-worker/src/main/java/com/microsoft/azure/functions/worker/broker/JavaMethodExecutorImpl.java` and can then follow along the execution of the function from here.
+
+### Testing a new version of the Java Worker
+
+- In case you need to test a new version from Java worker code, you'll need to:
+
+  - Compile the worker `mvn clean package -Dmaven.javadoc.skip=true -Dmaven.test.skip -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B`
+
+  - Navigate to target folder and rename `azure-functions-java-worker-1.8.0.jar` to `azure-functions-java-worker.jar`
+
+  - Copy the jar file to the debug folder in the host code base(<Azure_Function_Host_Path>/azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp3.1/workers/java)
+
+  - Restart host debugger
 
 ### Running unit tests
 
@@ -122,9 +154,8 @@ This project uses a combination of Azure DevOps and GitHub Actions for CI/CD.
 
 ## Getting help
 
- - Leave comments on your PR and @username for attention
+- Leave comments on your PR and @username for attention
 
 ### Requesting a release
+
 - If you need a release into maven central, request it by raising an issue and tagging @TsuyoshiUshio and @amamounelsayed
-
-
