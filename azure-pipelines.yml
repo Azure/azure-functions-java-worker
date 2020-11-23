@@ -13,7 +13,7 @@ pr:
 - dev
 
 steps:
-- task: NuGetToolInstaller@0
+- task: NuGetToolInstaller@1
   inputs:
    checkLatest: true
 - pwsh: |
