@@ -111,7 +111,7 @@ namespace Azure.Functions.Java.Tests.E2E
             await Utilities.RetryAsync(async () =>
             {
                return await cloudBlockBlob.ExistsAsync();
-            }, pollingInterval: 6000);
+            }, pollingInterval: 4000, timeout: 120 * 1000);
             await cloudBlockBlob.DownloadToFileAsync(destinationFile, FileMode.Create);
             return File.ReadAllText(destinationFile);
         }
