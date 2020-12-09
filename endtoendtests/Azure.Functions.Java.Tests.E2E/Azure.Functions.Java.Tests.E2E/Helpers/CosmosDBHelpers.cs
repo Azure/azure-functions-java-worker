@@ -59,7 +59,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 {
                     return false;
                 }
-            }, 120000, 4000);
+            }, 240000, 4000);
             return retrievedDocument.Id;
         }
 
