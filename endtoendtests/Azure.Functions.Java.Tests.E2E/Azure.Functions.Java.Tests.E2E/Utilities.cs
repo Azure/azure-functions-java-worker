@@ -39,7 +39,6 @@ namespace Azure.Functions.Java.Tests.E2E
 
         public static async Task<bool> InvokeHttpTrigger(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedMessage, int expectedCode = 0)
         {
-            Console.WriteLine($"************************* FunctionsHostUrl: {Constants.FunctionsHostUrl}");
             string uri = $"{Constants.FunctionsHostUrl}/api/{functionName}{queryString}";
             using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
             {
