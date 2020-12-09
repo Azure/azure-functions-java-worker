@@ -64,7 +64,6 @@ steps:
     AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
     AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
     AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-    FunctionAppUrl: "localhost:7071"
     SBTopicName: $(SBTopicName)
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
@@ -90,7 +89,6 @@ steps:
     AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
     AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
     AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-    FunctionAppUrl: "localhost:7071"
     SBTopicName: $(SBTopicName)
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
@@ -127,7 +125,6 @@ steps:
     AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
     AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
     AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-    FunctionAppUrl: "localhost:7071"
     SBTopicName: $(SBTopicName)
     SBTopicSubName: $(SBTopicSubName)
     CosmosDBDatabaseName: $(CosmosDBDatabaseName)
