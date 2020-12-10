@@ -102,6 +102,37 @@ The following steps outline an end to end development environment to enable deve
       }
     ```
 
+    - Also add the following in the tasks.json file to point to your azure functions folder. Here is a sample tasks.json file
+
+    ```json
+    {
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "<path_to_host_cloned_repo>/azure-functions-host/src/WebJobs.Script.WebHost/WebJobs.Script.WebHost.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "func",
+            "command": "host start",
+            "problemMatcher": "$func-watch",
+            "isBackground": true,
+            "options": {
+                "cwd": "<path_to_java_function>/java-functions-di/java-starter/functions-di/target/azure-functions/functions-di-20201102134253063"
+            }
+        }
+      ]
+    }
+    ```
+
 1. Navigate to `azure-functions-host/src/WebJobs.Script/Workers/ProcessManagement/WorkerProcess.cs` class and add breakpoint at `_process.Start()`.
 
    >> Note: Make sure that WebJobs.Script.WebHost is set as a Startup Project
