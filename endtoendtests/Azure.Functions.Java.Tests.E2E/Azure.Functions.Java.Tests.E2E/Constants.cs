@@ -20,9 +20,9 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string TestQueueMessage = "Hello, World";
 
         //Blob tests
-        public static string TriggerInputBindingBlobContainer = "test-triggerinput-java";
-        public static string InputBindingBlobContainer = "test-input-java";
-        public static string OutputBindingBlobContainer = "test-output-java";
+        public static string TriggerInputBindingBlobContainer = "test-triggerinput-java-new";
+        public static string InputBindingBlobContainer = "test-input-java-new";
+        public static string OutputBindingBlobContainer = "test-output-java-new";
 
         // CosmosDB tests
         public static string CosmosDBConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsCosmosDBConnectionString");

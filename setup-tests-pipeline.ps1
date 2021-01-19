@@ -17,13 +17,18 @@ if(!$skipCliDownload)
 
   Write-Host "Downloading Functions Core Tools...."
   Invoke-RestMethod -Uri 'https://functionsclibuilds.blob.core.windows.net/builds/3/latest/version.txt' -OutFile version.txt
-  Write-Host "Using Functions Core Tools version: pgopa-CLI"
   $version = "$(Get-Content -Raw version.txt)"
   Remove-Item version.txt
 
-  if ($version -and $version.trim())
+  if (-not($version -and $version.trim()))
   {
     $env:CORE_TOOLS_URL = "https://pgopafunctestv2storage.blob.core.windows.net/cli/pgopa-cli.zip"
+    Write-Host "Using Functions Core Tools version: pgopa-CLI"
+  }
+  else
+  {
+    $env:CORE_TOOLS_URL = "https://functionsclibuilds.blob.core.windows.net/builds/3/latest/Azure.Functions.Cli.win-x64.zip"
+    Write-Host "Using Functions Core Tools latest version"
   }
   Write-Host "CORE_TOOLS_URL: $env:CORE_TOOLS_URL"
   $output = "$currDir\Azure.Functions.Cli.zip"

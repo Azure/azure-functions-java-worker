@@ -23,6 +23,10 @@ namespace Azure.Functions.Java.Tests.E2E
         [InlineData("HttpTriggerJavaMetadata", "?&firstName=John&lastName=Doe", HttpStatusCode.OK, "JohnDoe")]
         [InlineData("HttpTriggerJavaThrows", "", HttpStatusCode.InternalServerError, "")]
         [InlineData("HttpTriggerJava", "", HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")]
+        [InlineData("HttpExample-retry", "?&name=Test", HttpStatusCode.OK, "Test")]
+        [InlineData("HttpExample-runRetryFail", "", HttpStatusCode.InternalServerError, "")]
+        [InlineData("HttpExample-runExponentialBackoffRetryFail",  "", HttpStatusCode.InternalServerError, "")]
+        [InlineData("HttpExample-runExponentialBackoffRetry", "?&name=Test", HttpStatusCode.OK, "Test")]
         public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
         {
             // TODO: Verify exception on 500 after https://github.com/Azure/azure-functions-host/issues/3589
