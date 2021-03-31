@@ -15,8 +15,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<azure.functions.maven.plugin.version>1.10.0-SNAPSHOT</azure.functions.maven.plugin.version>
-		<azure.functions.java.library.version>1.4.2-SNAPSHOT</azure.functions.java.library.version>
+		<azure.functions.maven.plugin.version>1.10.0</azure.functions.maven.plugin.version>
+		<azure.functions.java.library.version>1.4.2</azure.functions.java.library.version>
 		<functionAppName>azure-functions-java-endtoendtests</functionAppName>
 		<functionAppRegion>westus</functionAppRegion>
 		<functionResourceGroup>java-functions-group</functionResourceGroup>
@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.1-jre</version>
+			<version>30.0-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
