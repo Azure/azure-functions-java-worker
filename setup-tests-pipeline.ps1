@@ -1,44 +1,56 @@
-Write-Host "$args[0]"
-Write-Host $args[0]
+#
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for full license information.
+#
+param
+(
+    [Switch]
+    $UseCoreToolsBuildFromIntegrationTests
+)
 
-$skipCliDownload = $false
-if($args[0])
+$FUNC_RUNTIME_VERSION = '3'
+$arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+$os = if ($IsWindows) { "win" } else { if ($IsMacOS) { "osx" } else { "linux" } }
+
+$env:CORE_TOOLS_URL = $null
+$coreToolsUrl = $null
+if ($UseCoreToolsBuildFromIntegrationTests.IsPresent)
 {
-  $skipCliDownload = $args[0]
+    Write-Host "Install the Core Tools for Integration Tests..."
+    $env:CORE_TOOLS_URL = "https://functionsintegclibuilds.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest/Azure.Functions.Cli.$os-$arch.zip"
+    $coreToolsUrl = "https://functionsintegclibuilds.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest"
 }
-Write-Host $skipCliDownload
-
-$currDir =  Get-Location
-if(!$skipCliDownload)
+else
 {
-  Write-Host "Deleting Functions Core Tools if exists...."
-  Remove-Item -Force ./Azure.Functions.Cli.zip -ErrorAction Ignore
-  Remove-Item -Recurse -Force ./Azure.Functions.Cli -ErrorAction Ignore
-
-  Write-Host "Downloading Functions Core Tools...."
-  Invoke-RestMethod -Uri 'https://functionsclibuilds.blob.core.windows.net/builds/3/latest/version.txt' -OutFile version.txt
-  $version = "$(Get-Content -Raw version.txt)"
-  Remove-Item version.txt
-
-  if (-not($version -and $version.trim()))
-  {
-    $env:CORE_TOOLS_URL = "https://pgopafunctestv2storage.blob.core.windows.net/cli/pgopa-cli.zip"
-    Write-Host "Using Functions Core Tools version: pgopa-CLI"
-  }
-  else
-  {
-    $env:CORE_TOOLS_URL = "https://functionsclibuilds.blob.core.windows.net/builds/3/latest/Azure.Functions.Cli.win-x64.zip"
-    Write-Host "Using Functions Core Tools latest version"
-  }
-  Write-Host "CORE_TOOLS_URL: $env:CORE_TOOLS_URL"
-  $output = "$currDir\Azure.Functions.Cli.zip"
-  $wc = New-Object System.Net.WebClient
-  $wc.DownloadFile($env:CORE_TOOLS_URL, $output)
-
-  Write-Host "Extracting Functions Core Tools...."
-  Expand-Archive ".\Azure.Functions.Cli.zip" -DestinationPath ".\Azure.Functions.Cli"
+    Write-Host "Install the Core Tools..."
+    $env:CORE_TOOLS_URL = "https://functionsclibuilds.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest/Azure.Functions.Cli.$os-$arch.zip"
+    $coreToolsUrl = "https://functionsclibuilds.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest"
 }
-Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
-Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar','*tests.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
-Copy-Item ".\worker.config.json" ".\Azure.Functions.Cli\workers\java"
-Copy-Item ".\lib_worker_1.6.2" ".\Azure.Functions.Cli\workers\java\lib" -Recurse
+
+$FUNC_CLI_DIRECTORY = Join-Path $PSScriptRoot 'Azure.Functions.Cli'
+
+Write-Host 'Deleting the Core Tools if exists...'
+Remove-Item -Force "$FUNC_CLI_DIRECTORY.zip" -ErrorAction Ignore
+Remove-Item -Recurse -Force $FUNC_CLI_DIRECTORY -ErrorAction Ignore
+
+$version = Invoke-RestMethod -Uri "$coreToolsUrl/version.txt"
+Write-Host "Downloading the Core Tools (Version: $version)..."
+
+$output = "$FUNC_CLI_DIRECTORY.zip"
+Write-Host "Downloading the Core Tools from url: $env:CORE_TOOLS_URL"
+Invoke-RestMethod -Uri $env:CORE_TOOLS_URL -OutFile $output
+
+Write-Host 'Extracting Core Tools...'
+Expand-Archive $output -DestinationPath $FUNC_CLI_DIRECTORY
+
+if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
+{
+    Write-Host "Replacing Java worker binaries in the Core Tools..."
+    Get-ChildItem -Path "$PSScriptRoot/target/*" -Include 'azure*' -Exclude '*shaded.jar','*tests.jar' | ForEach-Object {
+      Copy-Item $_.FullName "$FUNC_CLI_DIRECTORY/workers/java/azure-functions-java-worker.jar" -Force -Verbose
+    }
+
+    Write-Host "Copying worker.config.json and lib_worker_1.6.2 to worker directory"
+    Copy-Item "$PSScriptRoot/worker.config.json" "$FUNC_CLI_DIRECTORY/workers/java" -Force -Verbose
+    Copy-Item "$PSScriptRoot/lib_worker_1.6.2" "$FUNC_CLI_DIRECTORY/workers/java/lib" -Recurse -Verbose
+}

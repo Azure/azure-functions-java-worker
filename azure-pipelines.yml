@@ -25,12 +25,12 @@ steps:
       $buildNumber = 0      
       if($env:APPVEYOR_REPO_TAG -eq "true") {
        $buildNumber = $(Build.SourceBranchName)
-       Write-Host “Found git tag."
+       Write-Host "Found git tag."
       } 
       else {
        $buildNumber = "1.8.2-$(Build.BuildId)"
-       Write-Host “git tag not found. Setting package suffix to '$buildNumber'"
-      }     
+       Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+      }
       .\package-pipeline.ps1 -buildNumber $buildNumber
   displayName: 'Executing build script'
 - task: CopyFiles@2
@@ -42,7 +42,7 @@ steps:
   displayName: 'Copying files for artifacts'
 - pwsh: |
       .\setup-tests-pipeline.ps1
-  displayName: 'Setting tests'
+  displayName: 'Setup test environment -- Install the Core Tools'
 
 - pwsh: |
       $currDir =  Get-Location
@@ -52,7 +52,6 @@ steps:
       cd ./endtoendtests
       mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
       Copy-Item "confluent_cloud_cacert.pem" ".\target\azure-functions\azure-functions-java-endtoendtests"
-
   displayName: 'Package Java for E2E'
 - task: DotNetCoreCLI@2
   inputs:
@@ -145,18 +144,8 @@ steps:
     publishLocation: 'Container'
   displayName: 'Publishing build artifacts'
 
-- pwsh: |
-    $uploadPackage = $null
-    if (-not ([bool]::TryParse($env:UPLOADPACKAGETOPRERELEASEFEED, [ref] $uploadPackage)))
-    {
-      throw "UploadPackageToPreReleaseFeed can only be set to True or False. Current value is set to $env:UPLOADPACKAGETOPRERELEASEFEED"
-    }
-    Write-Host "##vso[task.setvariable variable=UploadPackage]$uploadPackage"
-    Write-Host "UploadPackage: $uploadPackage"
-  displayName: 'Set UploadPackage variable'
-
 - task: NuGetCommand@2
-  condition: eq(variables.UploadPackage, true)
+  condition: eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], 'True')
   inputs:
     command: 'push'
     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
