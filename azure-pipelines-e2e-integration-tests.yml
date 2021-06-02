@@ -1,0 +1,115 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+
+pr: none
+trigger: none
+
+pool:
+  vmImage: 'windows-2019'
+
+steps:
+- task: NuGetToolInstaller@1
+  inputs:
+   checkLatest: true
+- pwsh: |
+     Get-Command mvn
+  displayName: 'Check Maven is installed'
+
+- pwsh: |
+      .\setup-tests-pipeline.ps1 -UseCoreToolsBuildFromIntegrationTests
+  displayName: 'Setup test environment -- Install the Core Tools'
+
+- pwsh: |
+      $currDir =  Get-Location
+      $Env:Path = $Env:Path+";$currDir\Azure.Functions.Cli"
+      ls $currDir\Azure.Functions.Cli
+      func --version
+      cd ./endtoendtests
+      mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+      Copy-Item "confluent_cloud_cacert.pem" ".\target\azure-functions\azure-functions-java-endtoendtests"
+  displayName: 'Package Java for E2E'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'test'
+    projects: |
+      endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
+  env:
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
+  displayName: 'Build & Run tests for java 8'
+  continueOnError: false
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'test'
+    projects: |
+      endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
+  env:
+    FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS: 'True'
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
+  displayName: 'Build & Run tests for java 8 Customer jar loaded first'
+  continueOnError: false
+- pwsh: |
+    $JAVA_VERSION="zulu11.33.15-ca-jdk11.0.4-win_x64"
+    Invoke-WebRequest "https://cdn.azul.com/zulu/bin/$JAVA_VERSION.zip" -O "$JAVA_VERSION.zip"
+    Expand-Archive -Force "$JAVA_VERSION.zip" .
+    cd $JAVA_VERSION
+    $current = get-location | select -ExpandProperty Path
+    cd ..
+    Write-Host "##vso[task.setvariable variable=Java11Home;]$current"
+  displayName: 'Setup Java 11 SDK'
+  continueOnError: false
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'test'
+    projects: |
+      endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
+  env:
+    JAVA_HOME: $(Java11Home)
+    AzureWebJobsStorage: $(AzureWebJobsStorage)
+    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
+    AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
+    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
+    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
+    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
+    SBTopicName: $(SBTopicName)
+    SBTopicSubName: $(SBTopicSubName)
+    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
+    SBQueueName: $(SBQueueName)
+    BrokerList": $(BrokerList)
+    ConfluentCloudUsername: $(ConfluentCloudUsername)
+    ConfluentCloudPassword: $(ConfluentCloudPassword)
+    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
+    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
+  displayName: 'Build & Run tests for java 11'
+  continueOnError: false
