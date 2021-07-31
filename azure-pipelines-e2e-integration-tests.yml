@@ -17,7 +17,7 @@ steps:
   displayName: 'Check Maven is installed'
 
 - pwsh: |
-      .\setup-tests-pipeline.ps1 -UseCoreToolsBuildFromIntegrationTests
+      .\setup-tests-pipeline.ps1
   displayName: 'Setup test environment -- Install the Core Tools'
 
 - pwsh: |
