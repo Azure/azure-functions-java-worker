@@ -43,6 +43,7 @@ Invoke-RestMethod -Uri $env:CORE_TOOLS_URL -OutFile $output
 Write-Host 'Extracting Core Tools...'
 Expand-Archive $output -DestinationPath $FUNC_CLI_DIRECTORY
 
+<#
 if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
 {
     Write-Host "Replacing Java worker binaries in the Core Tools..."
@@ -54,3 +55,4 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
     Copy-Item "$PSScriptRoot/worker.config.json" "$FUNC_CLI_DIRECTORY/workers/java" -Force -Verbose
     Copy-Item "$PSScriptRoot/lib_worker_1.6.2" "$FUNC_CLI_DIRECTORY/workers/java/lib" -Recurse -Verbose
 }
+#>
