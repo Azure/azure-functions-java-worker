@@ -224,6 +224,7 @@
 									<pattern>google</pattern>
 									<shadedPattern>com.microsoft.azure.functions.shaded.google</shadedPattern>
 								</relocation>
+								
 								<relocation combine.children="append">
 									<pattern>identity</pattern>
 									<shadedPattern>com.microsoft.azure.functions.shaded.identity</shadedPattern>
