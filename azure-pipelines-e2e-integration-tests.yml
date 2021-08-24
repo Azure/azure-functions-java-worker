@@ -53,7 +53,7 @@ steps:
     AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
   displayName: 'Build & Run tests for java 8'
   continueOnError: false
-
+  
 - task: DotNetCoreCLI@2
   inputs:
     command: 'test'

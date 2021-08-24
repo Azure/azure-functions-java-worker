@@ -44,7 +44,6 @@ if(!$skipCliDownload)
 Write-Host "Copying azure-functions-java-worker to  Functions Host workers directory...."
 Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar','*tests.jar' | %{ Copy-Item $_.FullName ".\Azure.Functions.Cli\workers\java\azure-functions-java-worker.jar" }
 Copy-Item ".\worker.config.json" ".\Azure.Functions.Cli\workers\java"
-Copy-Item ".\lib_worker_1.6.2" ".\Azure.Functions.Cli\workers\java\lib" -Recurse
 
 Write-Host "Building endtoendtests...."
 $Env:Path = $Env:Path+";$currDir\Azure.Functions.Cli"
