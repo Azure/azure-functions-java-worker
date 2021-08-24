@@ -2,11 +2,11 @@
 
 In order for the Java Worker to get loaded into the runtime, today we use a NuGet to package the jars for deployment.
 
-## AppVeyor
+## Azure Pipelines
 
-We're using App Veyor for CI. It builds the Java Core and Worker modules and then packages them into a NuGet for consumption by the Azure Functions Script Host.
+We're using Azure Pipelines for CI. It builds the Java Core and Worker modules and then packages them into a NuGet for consumption by the Azure Functions Script Host.
 
-CI runs on every PR and nightly on `dev` and `master`
+CI runs on every PR and nightly on 'dev' and 'v3.x' branches.
 
 ## Local
 
