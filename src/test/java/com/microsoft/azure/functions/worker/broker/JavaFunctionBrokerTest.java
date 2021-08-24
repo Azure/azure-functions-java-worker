@@ -124,10 +124,4 @@ public class JavaFunctionBrokerTest {
         File file = new File(path);
         broker.verifyLibrariesExist (file, path);
     }
-
-    @Test(expected = FileNotFoundException.class)
-    public void registerWithClassLoaderProviderWorkerLibOnly_Exception() throws Exception {
-        JavaFunctionBroker broker = new JavaFunctionBroker(null);
-        broker.registerWithClassLoaderProviderWorkerLibOnly();
-    }
 }

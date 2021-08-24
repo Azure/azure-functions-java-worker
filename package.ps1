@@ -23,7 +23,6 @@ Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar' | %{ Cop
 StopOnFailedExecution
 copy-item ./worker.config.json pkg
 copy-item ./tools/AzureFunctionsJavaWorker.nuspec pkg/
-Copy-Item ".\lib_worker_1.6.2" pkg\lib -Recurse
 set-location pkg
 nuget pack -Properties version=$buildNumber
 set-location ..

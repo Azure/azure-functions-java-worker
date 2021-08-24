@@ -54,31 +54,6 @@ steps:
   displayName: 'Build & Run tests for java 8'
   continueOnError: false
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'test'
-    projects: |
-      endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
-  env:
-    FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS: 'True'
-    AzureWebJobsStorage: $(AzureWebJobsStorage)
-    AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
-    AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
-    AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
-    AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
-    AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
-    AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-    SBTopicName: $(SBTopicName)
-    SBTopicSubName: $(SBTopicSubName)
-    CosmosDBDatabaseName: $(CosmosDBDatabaseName)
-    SBQueueName: $(SBQueueName)
-    BrokerList": $(BrokerList)
-    ConfluentCloudUsername: $(ConfluentCloudUsername)
-    ConfluentCloudPassword: $(ConfluentCloudPassword)
-    AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
-    AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
-  displayName: 'Build & Run tests for java 8 Customer jar loaded first'
-  continueOnError: false
 - pwsh: |
     $JAVA_VERSION="zulu11.33.15-ca-jdk11.0.4-win_x64"
     Invoke-WebRequest "https://cdn.azul.com/zulu/bin/$JAVA_VERSION.zip" -O "$JAVA_VERSION.zip"
