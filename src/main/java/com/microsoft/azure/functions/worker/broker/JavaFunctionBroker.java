@@ -89,11 +89,10 @@ public class JavaFunctionBroker {
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
 		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
 		classLoaderProvider.addUrl(jarUrl);
-		if(function.getLibDirectory().isPresent()) {
-			registerWithClassLoaderProvider(function.getLibDirectory().get());
-		} else {
-			registerWithClassLoaderProviderWorkerLibOnly();
+		if(!function.getLibDirectory().isPresent()) {
+			throw new IllegalArgumentException("Customer lib directory is not set");
 		}
+		registerWithClassLoaderProvider(function.getLibDirectory().get());
 	}
 
 	void registerWithClassLoaderProviderWorkerLibOnly() {
@@ -120,23 +119,7 @@ public class JavaFunctionBroker {
 
 	void registerWithClassLoaderProvider(File libDirectory) {
 		try {
-			if(SystemUtils.IS_JAVA_1_8) {
-				String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
-				File workerLib = new File(workerLibPath);
-				verifyLibrariesExist (workerLib, workerLibPath);
-
-				if(Helper.isLoadAppLibsFirst()) {
-					// load client app jars first.
-					classLoaderProvider.addDirectory(libDirectory);
-					classLoaderProvider.addDirectory(workerLib);
-				} else {
-					// Default load worker jars first.
-					classLoaderProvider.addDirectory(workerLib);
-					classLoaderProvider.addDirectory(libDirectory);
-				}
-			} else {
-				classLoaderProvider.addDirectory(libDirectory);
-			}
+			classLoaderProvider.addDirectory(libDirectory);
 		} catch (Exception ex) {
 			ExceptionUtils.rethrow(ex);
 		}
