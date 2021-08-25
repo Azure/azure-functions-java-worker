@@ -9,10 +9,12 @@ trigger:
     include:
       - dev
       - master
+      - v4
 pr:
   branches:
     include:
       - dev
+      - v4
 
 steps:
 - task: NuGetToolInstaller@1
