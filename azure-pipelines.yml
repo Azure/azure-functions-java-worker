@@ -4,12 +4,13 @@
 
 pool:
   vmImage: 'windows-2019'
-trigger:
-  branches:
-    include:
-      - dev
-      - master
-      - v4
+#trigger:
+#  branches:
+#    include:
+#      - dev
+#      - master
+#      - v4
+
 pr:
   branches:
     include:
