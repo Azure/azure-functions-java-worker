@@ -30,7 +30,8 @@ jobs:
 
   variables:
     ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-      isTag: true
+      isTagTemp: true
+    isTag: $[variables.isTagTemp]
 
   steps:
   - task: NuGetToolInstaller@1
