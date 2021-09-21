@@ -29,9 +29,7 @@ jobs:
     vmImage: 'windows-2019'
 
   variables:
-    ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-      isTagTemp: true
-    isTag: $[variables.isTagTemp]
+    isTag: ${{ contains(variables['Build.SourceBranch'], '/tags/' ) }}
 
   steps:
   - task: NuGetToolInstaller@1
