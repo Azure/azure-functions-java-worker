@@ -162,3 +162,15 @@ jobs:
       ArtifactName: 'drop'
       publishLocation: 'Container'
     displayName: 'Publishing build artifacts'
+
+  - task: NuGetCommand@2
+    condition: eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], 'True')
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: 'e6a70c92-4128-439f-8012-382fe78d6396/f37f760c-aebd-443e-9714-ce725cd427df'
+      allowPackageConflicts: true
+    displayName: 'Push NuGet package to the AzureFunctionsPreRelease feed'
+
+
