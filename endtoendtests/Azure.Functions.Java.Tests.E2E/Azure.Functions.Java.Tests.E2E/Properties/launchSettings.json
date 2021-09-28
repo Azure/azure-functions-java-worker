@@ -1,7 +1,10 @@
 {
   "profiles": {
     "Azure.Functions.Java.Tests.E2E": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "FUNCTIONS_WORKER_JAVA_V3_SINGLE_CLASSLOADER": "1"
+      }
     }
   }
 }
