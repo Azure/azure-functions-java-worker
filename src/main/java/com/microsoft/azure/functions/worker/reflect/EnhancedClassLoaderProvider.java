@@ -19,12 +19,18 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
      */
     @Override
     public ClassLoader createClassLoader() {
-        URL[] urlsForClassLoader = new URL[urls.size()];
-        urls.toArray(urlsForClassLoader);
-
-        URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
-        loadDrivers(classLoader);
-        return classLoader;
+        if (classLoaderInstance == null) {
+            synchronized (lock) {
+                if (classLoaderInstance == null) {
+                    URL[] urlsForClassLoader = new URL[urls.size()];
+                    urls.toArray(urlsForClassLoader);
+                    URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
+                    loadDrivers(loader);
+                    classLoaderInstance = loader;
+                }
+            }
+        }
+        return classLoaderInstance;
     }
 
     private void loadDrivers(URLClassLoader classLoader) {
@@ -73,4 +79,6 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
         urls.add(url);
     }
     private final Set<URL> urls;
+    private final Object lock = new Object();
+    private static volatile URLClassLoader classLoaderInstance;
 }
