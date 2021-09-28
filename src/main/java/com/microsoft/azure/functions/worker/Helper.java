@@ -6,4 +6,8 @@ public class Helper {
         String javaReverseLibLoading = System.getenv(Constants.FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS);
         return Util.isTrue(javaReverseLibLoading);
     }
+    public static boolean isCustomURLClassLoader() {
+        String customURLClassLoader = System.getenv(Constants.FUNCTIONS_WORKER_JAVA_V3_SINGLE_CLASSLOADER);
+        return Util.isTrue(customURLClassLoader);
+    }
 }

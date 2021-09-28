@@ -59,5 +59,19 @@ namespace Azure.Functions.Java.Tests.E2E
                 Assert.True(await Utilities.InvokeHttpTrigger("HttpTriggerJavaClassLoader", "?&name=Test", HttpStatusCode.InternalServerError, ""));
             }
         }
+
+        [Fact]
+        public async void HttpTriggerJavaStatic()
+        {
+            String value = Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_JAVA_V3_SINGLE_CLASSLOADER");
+            String java_home = Environment.GetEnvironmentVariable("JAVA_HOME");
+            if (java_home.Contains("1.8") || (value != null && (value.ToLower().Equals("true") || value.ToLower().Equals("1"))))
+            {
+                await HttpTriggerTests("HttpTriggerJavaStatic1", "", HttpStatusCode.OK, "1");
+                await HttpTriggerTests("HttpTriggerJavaStatic2", "", HttpStatusCode.OK, "2");
+                await HttpTriggerTests("HttpTriggerJavaStatic1", "", HttpStatusCode.OK, "3");
+                await HttpTriggerTests("HttpTriggerJavaStatic2", "", HttpStatusCode.OK, "4");
+            }
+        }
     }
 }

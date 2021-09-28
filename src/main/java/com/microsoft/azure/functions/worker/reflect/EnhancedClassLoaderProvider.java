@@ -19,9 +19,31 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
      */
     @Override
     public ClassLoader createClassLoader() {
+        if(Helper.isCustomURLClassLoader()) {
+            return getURLClassLoaderInstance();
+        }else {
+            return createURLClassLoaderInstance();
+        }
+    }
+
+    /**
+     * Create and return a singleton URL classloader
+     * @return instance of URLClassLoader
+     */
+    private URLClassLoader getURLClassLoaderInstance() {
+        if (classLoaderInstance == null) {
+            synchronized (lock) {
+                if (classLoaderInstance == null) {
+                    classLoaderInstance = createURLClassLoaderInstance();
+                }
+            }
+        }
+        return classLoaderInstance;
+    }
+
+    private URLClassLoader createURLClassLoaderInstance(){
         URL[] urlsForClassLoader = new URL[urls.size()];
         urls.toArray(urlsForClassLoader);
-
         URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
         loadDrivers(classLoader);
         return classLoader;
@@ -73,4 +95,6 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
         urls.add(url);
     }
     private final Set<URL> urls;
+    private final Object lock = new Object();
+    private static volatile URLClassLoader classLoaderInstance;
 }
