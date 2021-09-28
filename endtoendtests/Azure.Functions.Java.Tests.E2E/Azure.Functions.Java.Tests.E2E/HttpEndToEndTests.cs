@@ -46,5 +46,14 @@ namespace Azure.Functions.Java.Tests.E2E
             Assert.True(await Utilities.InvokeHttpTrigger("HttpTriggerJavaClassLoader", "?&name=Test", HttpStatusCode.OK, "Test"));
 
         }
+
+        [Fact]
+        public async void HttpTriggerJavaStatic()
+        {
+            await HttpTriggerTests("HttpTriggerJavaStatic1", "", HttpStatusCode.OK, "1");
+            await HttpTriggerTests("HttpTriggerJavaStatic2", "", HttpStatusCode.OK, "2");
+            await HttpTriggerTests("HttpTriggerJavaStatic1", "", HttpStatusCode.OK, "3");
+            await HttpTriggerTests("HttpTriggerJavaStatic2", "", HttpStatusCode.OK, "4");
+        }
     }
 }

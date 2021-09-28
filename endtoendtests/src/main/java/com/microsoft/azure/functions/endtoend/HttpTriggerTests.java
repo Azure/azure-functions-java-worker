@@ -237,4 +237,32 @@ public class HttpTriggerTests {
             return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
         }
     }
+
+    private static int flag = 0;
+
+    @FunctionName("HttpTriggerJavaStatic1")
+    public HttpResponseMessage HttpTriggerJavaStatic1(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET, HttpMethod.POST},
+                    authLevel = AuthorizationLevel.ANONYMOUS)
+                    HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context) {
+        context.getLogger().info("Java HTTP trigger - static processed a request.");
+        flag++;
+        return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(flag)).build();
+    }
+
+    @FunctionName("HttpTriggerJavaStatic2")
+    public HttpResponseMessage HttpTriggerJavaStatic2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET, HttpMethod.POST},
+                    authLevel = AuthorizationLevel.ANONYMOUS)
+                    HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context) {
+        context.getLogger().info("Java HTTP trigger - static processed a request.");
+        flag++;
+        return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(flag)).build();
+    }
 }
