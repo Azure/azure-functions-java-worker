@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure.functions</groupId>
 	<artifactId>azure-functions-java-worker</artifactId>
-	<version>1.8.2</version>
+	<version>4.0.0</version>
 	<packaging>jar</packaging>
 	<parent>
 		<groupId>com.microsoft.maven</groupId>
