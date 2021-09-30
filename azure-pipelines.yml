@@ -45,7 +45,7 @@ jobs:
         Write-Host "Found git tag."
       }
       else {
-        $buildNumber="3.0.0-$(Build.BuildNumber)"
+        $buildNumber="1.9.0-$(Build.BuildNumber)"
         Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
       }
       .\package-pipeline.ps1 -buildNumber $buildNumber
