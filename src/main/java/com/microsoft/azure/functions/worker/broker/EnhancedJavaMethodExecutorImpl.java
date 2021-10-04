@@ -23,7 +23,7 @@ public class EnhancedJavaMethodExecutorImpl implements JavaMethodExecutor {
         this.overloadResolver = new ParameterResolver();
 
         for (Method method : this.containingClass.getMethods()) {
-            if (method.getName().equals(descriptor.getMethodName())) {
+            if (method.getDeclaringClass().getName().equals(descriptor.getFullClassName()) && method.getName().equals(descriptor.getMethodName())) {
                 this.overloadResolver.addCandidate(method);
             }
         }
