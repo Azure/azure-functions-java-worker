@@ -89,3 +89,8 @@ This repo contains several Java Azure Functions samples for different events.
         "metadataVersion": "1"
     }]
     ```
+   
+### Notes for ExtensionBundle
+1. In the host file, the extensionBundle part is important, if this part is not there, then when running end2end test, there will be all resources (eventhub, evnetgrid, servicebus…) not registered exception. Also, make sure the version of extensionBundle is always up-to-date. 
+2. Another option to replace extensionBundle is to have file extensions.csproj, if you have this file, then the extensionbundle part can be removed from host.json. What this file do is to create a bin folder under /home/site/wwwroot with all the extensions you are going to need to work with those resources.
+   Notes: make sure the version of the ExtensionsMetadataGenerator in extensions.csproj is update-to-date. 
