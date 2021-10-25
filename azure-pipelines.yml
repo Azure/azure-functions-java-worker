@@ -164,7 +164,7 @@ jobs:
         displayName: 'Publishing build artifacts'
 
       - task: NuGetCommand@2
-        condition: eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], 'True')
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], true))
         inputs:
           command: 'push'
           packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
