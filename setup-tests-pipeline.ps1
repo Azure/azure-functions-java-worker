@@ -8,6 +8,10 @@ param
     $UseCoreToolsBuildFromIntegrationTests
 )
 
+Write-Host "Installing .NET 6..."
+Invoke-WebRequest 'https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
+./dotnet-install.ps1 -InstallDir "$env:ProgramFiles/dotnet" -Version "6.0.100-preview.7.21379.14" -Channel 'release'
+
 $FUNC_RUNTIME_VERSION = '4'
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
 $os = if ($IsWindows) { "win" } else { if ($IsMacOS) { "osx" } else { "linux" } }
