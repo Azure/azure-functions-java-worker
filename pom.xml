@@ -85,7 +85,7 @@
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
-			<artifactId>grpc-netty</artifactId>
+			<artifactId>grpc-netty-shaded</artifactId>
 			<version>1.20.0</version>
 		</dependency>
 		<dependency>
@@ -247,6 +247,16 @@
 								<relocation combine.children="append">
 									<pattern>io.grpc</pattern>
 									<shadedPattern>com.microsoft.azure.functions.shaded.io.grpc</shadedPattern>
+									<excludes>
+										<exclude>io.grpc.netty.shaded.io.grpc.netty.*</exclude>
+									</excludes>
+								</relocation>
+								<relocation>
+									<pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
+									<shadedPattern>com.microsoft.azure.functions.shaded.io.grpc.netty.shaded.io.grpc.netty</shadedPattern>
+									<includes>
+										<include>io.grpc.netty.shaded.io.grpc.netty.*</include>
+									</includes>
 								</relocation>
 								<relocation combine.children="append">
 									<pattern>javax.annotation</pattern>
