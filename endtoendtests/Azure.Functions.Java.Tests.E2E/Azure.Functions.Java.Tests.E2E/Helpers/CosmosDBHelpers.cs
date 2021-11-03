@@ -55,7 +55,7 @@ namespace Azure.Functions.Java.Tests.E2E
                     retrievedDocument = await _docDbClient.ReadDocumentAsync(docUri);
                     return true;
                 }
-                catch (DocumentClientException ex) when (ex.Error.Code == "NotFound")
+                catch (DocumentClientException ex) when (ex.Error.Code == "NotFound" || ex.Error.Code == "Not Found")
                 {
                     return false;
                 }
