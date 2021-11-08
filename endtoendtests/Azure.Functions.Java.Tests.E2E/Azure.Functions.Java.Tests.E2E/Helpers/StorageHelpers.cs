@@ -135,13 +135,15 @@ namespace Azure.Functions.Java.Tests.E2E
             BlobContinuationToken blobContinuationToken = null;
             do
             {
+                if (!await cloudBlobContainer.ExistsAsync()) { continue; }
                 var results = await cloudBlobContainer.ListBlobsSegmentedAsync(null, blobContinuationToken);
                 // Get the value of the continuation token returned by the listing call.
                 blobContinuationToken = results.ContinuationToken;
                 foreach (IListBlobItem item in results.Results)
                 {
                     Console.WriteLine(item.Uri);
-                    CloudBlob cloudBlob = cloudBlobContainer.GetBlobReference(item.Uri.ToString());
+                    String blobName = System.IO.Path.GetFileName(item.Uri.AbsolutePath);
+                    CloudBlob cloudBlob = cloudBlobContainer.GetBlobReference(blobName);
                     await cloudBlob.DeleteIfExistsAsync();
                 }
             } while (blobContinuationToken != null); // Loop while the continuation token is not null.             
