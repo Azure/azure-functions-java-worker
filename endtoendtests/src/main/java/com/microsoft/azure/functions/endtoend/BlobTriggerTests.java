@@ -23,7 +23,7 @@ public class BlobTriggerTests {
         @BlobOutput(name = "outputBlob", path = "test-output-java-new/{name}", dataType = "binary") OutputBinding<byte[]> outputBlob,
         final ExecutionContext context
     ) {
-        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Size: " + triggerBlob.length + " Bytes");        
+        context.getLogger().info("Java Blob trigger function BlobTriggerToBlobTest processed a blob.\n Name: " + fileName + "\n Size: " + triggerBlob.length + " Bytes");
         outputBlob.setValue(inputBlob);
     }   
     
@@ -38,7 +38,7 @@ public class BlobTriggerTests {
         @BlobOutput(name = "outputBlob", path = "test-outputpojo-java/{name}") OutputBinding<TestBlobData> outputBlob,
         final ExecutionContext context
     ) {
-        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText.blobText);        
+        context.getLogger().info("Java Blob trigger function BlobTriggerPOJOTest processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText.blobText);
         outputBlob.setValue(triggerBlobText);
     }
     
@@ -53,7 +53,7 @@ public class BlobTriggerTests {
         @BlobOutput(name = "outputBlob", path = "test-outputstring-java/{name}") OutputBinding<String> outputBlob,
         final ExecutionContext context
     ) {
-        context.getLogger().info("Java Blob trigger function processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText);        
+        context.getLogger().info("Java Blob trigger function BlobTriggerStringTest processed a blob.\n Name: " + fileName + "\n Content: " + triggerBlobText);
         outputBlob.setValue(triggerBlobText);
     }
     
