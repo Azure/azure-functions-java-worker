@@ -21,7 +21,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * Thread-safety: Single thread.
  */
 public final class BindingDataStore {
-    public BindingDataStore() {        
+    public BindingDataStore() {
         this.targets = new HashMap<>();
         this.inputSources = new HashMap<>();
         this.otherSources = new HashMap<>();
@@ -34,33 +34,40 @@ public final class BindingDataStore {
     public void addParameterSources(List<ParameterBinding> parameters) {
         assert parameters != null;
         for (ParameterBinding parameter : parameters) {
-        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);            
+        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);
             this.inputSources.put(parameter.getName(), inputValue);
         }
     }
 
-    public void addTriggerMetadataSource(Map<String, TypedData> metadata) {        
+    public void addTriggerMetadataSource(Map<String, TypedData> metadata) {
         for (Map.Entry<String,TypedData> entry : metadata.entrySet())
         {
-        	DataSource<?> inputValue = rpcSourceFromTypedData(entry.getKey(), entry.getValue());            
-            this.metadataSources.put(entry.getKey(), inputValue);        	
-        }            
+        	DataSource<?> inputValue = rpcSourceFromTypedData(entry.getKey(), entry.getValue());
+            this.metadataSources.put(entry.getKey(), inputValue);
+        }
     }
 
-    public void addExecutionContextSource(String invocationId, String funcname, String traceParent, String traceState, Map<String, String> attributes) {        
-        otherSources.put(ExecutionContext.class, new ExecutionContextDataSource(invocationId, funcname, new ExecutionTraceContext(traceParent, traceState, attributes)));
+    public void addExecutionContextSource(String invocationId, String funcname, ExecutionTraceContext traceContext, ExecutionRetryContext retryContext) {
+        otherSources.put(ExecutionContext.class,
+                new ExecutionContextDataSource(
+                        invocationId,
+                        funcname,
+                        traceContext,
+                        retryContext
+                )
+        );
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
     	return this.inputSources.get(name).computeByName(name, target);
     }
-    
-    public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {    	
+
+    public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {
     	return this.metadataSources.get(name).computeByName(name, target);
     }
-    
+
     public Optional<BindingData> getDataByType(Type target) {
-    	return this.otherSources.get(ExecutionContext.class).computeByType(target);        
+    	return this.otherSources.get(ExecutionContext.class).computeByType(target);
     }
 
     static DataSource<?> rpcSourceFromTypedData(String name, TypedData data) {
