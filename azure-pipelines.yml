@@ -26,7 +26,8 @@ jobs:
   - job: "Build_And_Test_Java_Worker_Windows"
     pool:
       name: '1ES-Hosted-AzFunc'
-      vmImage: 'MMS2019TLS'  #for Windows2019 or MMSUbuntu20.04TLS for ubuntu
+      demands:
+        - ImageOverride -equals MMS2019TLS
 
     variables:
       ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
