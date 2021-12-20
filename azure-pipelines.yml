@@ -25,7 +25,9 @@ pr:
 jobs:
 - job: "Build_And_Test_Java_Worker_Windows"
   pool:
-    vmImage: 'windows-2019'
+    name: '1ES-Hosted-AzFunc'
+    demands:
+      - ImageOverride -equals MMS2019TLS
 
   variables:
     ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
