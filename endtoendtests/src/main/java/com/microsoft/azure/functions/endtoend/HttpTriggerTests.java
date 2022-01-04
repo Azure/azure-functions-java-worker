@@ -265,4 +265,37 @@ public class HttpTriggerTests {
         flag++;
         return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(flag)).build();
     }
+
+    @FunctionName("HttpTriggerRetryContextCount")
+    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
+    public HttpResponseMessage HttpTriggerRetryContext(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET, HttpMethod.POST},
+                    authLevel = AuthorizationLevel.ANONYMOUS)
+                    HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context) throws Exception {
+        context.getLogger().info("Java HTTP trigger processed a request.");
+
+        if(context.getRetryContext().getRetrycount() == 0){
+            throw new Exception("error");
+        }
+        return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(context.getRetryContext().getRetrycount())).build();
+    }
+
+
+    @FunctionName("HttpTriggerMaxRetryContextCount")
+    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
+    public HttpResponseMessage HttpTriggerMaxRetryContextCount(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET, HttpMethod.POST},
+                    authLevel = AuthorizationLevel.ANONYMOUS)
+                    HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context) throws Exception {
+        context.getLogger().info("Java HTTP trigger processed a request.");
+
+        return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(context.getRetryContext().getMaxretrycount())).build();
+    }
+
 }

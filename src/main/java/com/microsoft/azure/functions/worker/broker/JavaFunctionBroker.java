@@ -13,6 +13,8 @@ import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.Helper;
 import com.microsoft.azure.functions.worker.Util;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
+import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
+import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
 
@@ -52,7 +54,10 @@ public class JavaFunctionBroker {
 		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
-		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
+		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
+		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(), request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
+
+		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 
 		executor.execute(dataStore);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
