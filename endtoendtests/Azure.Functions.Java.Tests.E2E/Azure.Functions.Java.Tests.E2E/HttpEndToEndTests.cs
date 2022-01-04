@@ -27,6 +27,8 @@ namespace Azure.Functions.Java.Tests.E2E
         [InlineData("HttpExample-runRetryFail", "", HttpStatusCode.InternalServerError, "")]
         [InlineData("HttpExample-runExponentialBackoffRetryFail",  "", HttpStatusCode.InternalServerError, "")]
         [InlineData("HttpExample-runExponentialBackoffRetry", "?&name=Test", HttpStatusCode.OK, "Test")]
+        [InlineData("HttpTriggerRetryContextCount", "?&name=Test", HttpStatusCode.OK, "1")]
+        [InlineData("HttpTriggerMaxRetryContextCount", "?&name=Test", HttpStatusCode.OK, "3")]
         public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
         {
             // TODO: Verify exception on 500 after https://github.com/Azure/azure-functions-host/issues/3589

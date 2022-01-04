@@ -47,8 +47,15 @@ public final class BindingDataStore {
         }            
     }
 
-    public void addExecutionContextSource(String invocationId, String funcname, String traceParent, String traceState, Map<String, String> attributes) {        
-        otherSources.put(ExecutionContext.class, new ExecutionContextDataSource(invocationId, funcname, new ExecutionTraceContext(traceParent, traceState, attributes)));
+    public void addExecutionContextSource(String invocationId, String funcname, ExecutionTraceContext traceContext, ExecutionRetryContext retryContext) {
+        otherSources.put(ExecutionContext.class,
+                new ExecutionContextDataSource(
+                        invocationId,
+                        funcname,
+                        traceContext,
+                        retryContext
+                )
+        );
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
