@@ -22,7 +22,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<azure.functions.java.library.version>1.5.0-SNAPSHOT</azure.functions.java.library.version>
+		<azure.functions.java.core.library.version>1.0.0-SNAPSHOT</azure.functions.java.core.library.version>
+		<azure.functions.java.library.version>2.0.0-SNAPSHOT</azure.functions.java.library.version>
 	</properties>
 
 	<licenses>
@@ -65,8 +66,14 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.microsoft.azure.functions</groupId>
+			<artifactId>azure-functions-java-core-library</artifactId>
+			<version>${azure.functions.java.core.library.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft.azure.functions</groupId>
 			<artifactId>azure-functions-java-library</artifactId>
 			<version>${azure.functions.java.library.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.protobuf</groupId>

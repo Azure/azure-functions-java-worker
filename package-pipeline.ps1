@@ -24,6 +24,7 @@ StopOnFailedExecution
 copy-item ./worker.config.json pkg
 copy-item ./tools/AzureFunctionsJavaWorker.nuspec pkg/
 Copy-Item ".\lib_worker_1.6.2" pkg\lib -Recurse
+Copy-Item ".\annotationLib" pkg\annotationLib -Recurse
 set-location pkg
 nuget pack -Properties version=$buildNumber
 set-location ..

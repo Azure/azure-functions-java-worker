@@ -12,6 +12,7 @@ import com.microsoft.azure.functions.worker.*;
 public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
     public EnhancedClassLoaderProvider() {
         urls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
+        workerAnnotationLibUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
     }
 
     /*
@@ -42,11 +43,13 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
     }
 
     private URLClassLoader createURLClassLoaderInstance(){
-        URL[] urlsForClassLoader = new URL[urls.size()];
-        urls.toArray(urlsForClassLoader);
-        URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
-        loadDrivers(classLoader);
-        return classLoader;
+        List<URL> urlsList = new ArrayList<>();
+        urlsList.addAll(urls);
+        urlsList.addAll(workerAnnotationLibUrls);
+        URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
+        URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
+        loadDrivers(loader);
+        return loader;
     }
 
     private void loadDrivers(URLClassLoader classLoader) {
@@ -66,35 +69,27 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
         }
     }
 
-    @Override
-    public void addDirectory(File directory) throws MalformedURLException, IOException {
-        if (!directory.exists()) {
-            return;
-        }
-
-        File[] jarFiles = directory.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isFile() && file.getName().endsWith(".jar");
-            }
-        });
-
-        for (File file : jarFiles) {
-            addUrl(file.toURI().toURL());
-        }
-    }
 
     @Override
-    public void addUrl(URL url) throws IOException {
+    public void addNonAnnotationLibsUrl(URL url) throws IOException {
         if (urls.contains(url)) {
             return;
         }
-
-        WorkerLogManager.getSystemLogger().info("Loading file URL: " + url);
-
+        WorkerLogManager.getSystemLogger().info("Loading non java annotation library file URL: " + url);
         urls.add(url);
     }
+
+    @Override
+    public void addWorkerAnnotationLibUrl(URL url) throws IOException {
+        if (workerAnnotationLibUrls.contains(url)) {
+            return;
+        }
+        WorkerLogManager.getSystemLogger().info("Loading java annotation library file URL: " + url);
+        workerAnnotationLibUrls.add(url);
+    }
+
     private final Set<URL> urls;
+    private final Set<URL> workerAnnotationLibUrls;
     private final Object lock = new Object();
     private static volatile URLClassLoader classLoaderInstance;
 }
