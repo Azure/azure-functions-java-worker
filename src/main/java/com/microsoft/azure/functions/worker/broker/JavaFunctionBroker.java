@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.Helper;
-import com.microsoft.azure.functions.worker.Util;
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
@@ -93,7 +93,7 @@ public class JavaFunctionBroker {
 
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
 		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
-		classLoaderProvider.addUrl(jarUrl);
+		classLoaderProvider.addNonAnnotationLibsUrl(jarUrl);
 		if(function.getLibDirectory().isPresent()) {
 			registerWithClassLoaderProvider(function.getLibDirectory().get());
 		} else {
@@ -103,11 +103,14 @@ public class JavaFunctionBroker {
 
 	void registerWithClassLoaderProviderWorkerLibOnly() {
 		try {
-			if(SystemUtils.IS_JAVA_1_8 && !isTesting()) {
+			if (isTesting()) return;
+			if(SystemUtils.IS_JAVA_1_8) {
 				String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
 				File workerLib = new File(workerLibPath);
 				verifyLibrariesExist (workerLib, workerLibPath);
-				classLoaderProvider.addDirectory(workerLib);
+				addDirectory(workerLib, false);
+			}else{
+				registerJavaLibrary();
 			}
 		} catch (Exception ex) {
 			ExceptionUtils.rethrow(ex);
@@ -132,19 +135,51 @@ public class JavaFunctionBroker {
 
 				if(Helper.isLoadAppLibsFirst()) {
 					// load client app jars first.
-					classLoaderProvider.addDirectory(libDirectory);
-					classLoaderProvider.addDirectory(workerLib);
+					addDirectory(libDirectory, false);
+					addDirectory(workerLib, true);
 				} else {
 					// Default load worker jars first.
-					classLoaderProvider.addDirectory(workerLib);
-					classLoaderProvider.addDirectory(libDirectory);
+					addDirectory(workerLib, false);
+					addDirectory(libDirectory, true);
 				}
 			} else {
-				classLoaderProvider.addDirectory(libDirectory);
+				addDirectory(libDirectory, false);
 			}
 		} catch (Exception ex) {
 			ExceptionUtils.rethrow(ex);
 		}
+	}
+
+	void addDirectory(File directory, boolean skipJavaAnnotation) throws IOException {
+		if (!directory.exists()) {
+			return;
+		}
+		File[] jarFiles = directory.listFiles(file -> file.isFile() && file.getName().endsWith(".jar"));
+		for (File file : jarFiles){
+			classLoaderProvider.addNonAnnotationLibsUrl(file.toURI().toURL());
+		}
+		if (!skipJavaAnnotation){
+			addJavaAnnotationLibrary();
+		}
+	}
+
+	void registerJavaLibrary(){
+		try {
+			addJavaAnnotationLibrary();
+		} catch (Exception ex) {
+			ExceptionUtils.rethrow(ex);
+		}
+	}
+
+	public void addJavaAnnotationLibrary() throws IOException {
+		WorkerLogManager.getSystemLogger().warning("Customer is not providing java annotation files, they may not use the latest version of java library and maven plugin.");
+		String javaLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + Constants.JAVA_LIBRARY_DIRECTORY;
+		File javaLib = new File(javaLibPath);
+		if (!javaLib.exists()) throw new FileNotFoundException("Error loading java annotation library jar, location doesn't exist: " + javaLibPath);
+		File[] files = javaLib.listFiles(file -> file.getName().contains(Constants.JAVA_LIBRARY_ARTIFACT_ID) && file.getName().endsWith(".jar"));
+		if (files.length == 0) throw new FileNotFoundException("Error loading java annotation library jar, no jar find from path:  " + javaLibPath);
+		if (files.length > 1) throw new FileNotFoundException("Error loading java annotation library jar, multiple jars find from path:  " + javaLibPath);
+		classLoaderProvider.addWorkerAnnotationLibUrl(files[0].toURI().toURL());
 	}
 
 	void verifyLibrariesExist (File workerLib, String workerLibPath) throws FileNotFoundException{

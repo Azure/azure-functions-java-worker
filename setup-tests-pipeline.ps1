@@ -50,7 +50,10 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
       Copy-Item $_.FullName "$FUNC_CLI_DIRECTORY/workers/java/azure-functions-java-worker.jar" -Force -Verbose
     }
 
-    Write-Host "Copying worker.config.json and lib_worker_1.6.2 to worker directory"
+    Write-Host "Copying worker.config.json to worker directory"
     Copy-Item "$PSScriptRoot/worker.config.json" "$FUNC_CLI_DIRECTORY/workers/java" -Force -Verbose
+    Write-Host "Copying and lib_worker_1.6.2 to worker directory"
     Copy-Item "$PSScriptRoot/lib_worker_1.6.2" "$FUNC_CLI_DIRECTORY/workers/java/lib" -Recurse -Verbose
+    Write-Host "Copying annotationLib to worker directory"
+    Copy-Item "$PSScriptRoot/annotationLib" "$FUNC_CLI_DIRECTORY/workers/java/annotationLib" -Recurse -Verbose
 }

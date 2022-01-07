@@ -3,18 +3,13 @@ package com.microsoft.azure.functions.worker.broker;
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
-import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
-import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 import mockit.*;
 import org.junit.Test;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class JavaFunctionBrokerTest {
 

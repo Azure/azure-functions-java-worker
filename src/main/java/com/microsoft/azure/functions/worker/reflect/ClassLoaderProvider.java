@@ -6,15 +6,15 @@ import java.net.*;
 public interface ClassLoaderProvider {
     
     /*
-     * Adds a search path to be used by the provided class loader
+     * Adds a customer search path to be used by the provided class loader
      */
-    void addUrl(URL url) throws IOException;
-    
+    void addNonAnnotationLibsUrl(URL url) throws IOException;
+
     /*
-     * Adds all jar-files found in a directory (NOT recursive)
+     * Adds a worker search path to be used by the provided class loader
      */
-    void addDirectory(File directory) throws MalformedURLException, IOException;
-    
+    void addWorkerAnnotationLibUrl(URL url) throws IOException;
+
     /*
      * Create the class loader with the required search paths
      */

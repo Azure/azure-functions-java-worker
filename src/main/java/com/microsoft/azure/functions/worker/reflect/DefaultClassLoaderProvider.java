@@ -6,8 +6,6 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.apache.commons.lang3.exception.*;
-
 import com.microsoft.azure.functions.worker.*;
 
 /**
@@ -16,6 +14,7 @@ import com.microsoft.azure.functions.worker.*;
 public class DefaultClassLoaderProvider implements ClassLoaderProvider {
   public DefaultClassLoaderProvider() {
     urls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
+    workerAnnotationLibUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
   }
 
   /*
@@ -23,44 +22,32 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
    */
   @Override
   public ClassLoader createClassLoader() {
-    URL[] urlsForClassLoader = new URL[urls.size()];
-    urls.toArray(urlsForClassLoader);
-
+    List<URL> urlList = new ArrayList<>();
+    urlList.addAll(urls);
+    urlList.addAll(workerAnnotationLibUrls);
+    URL[] urlsForClassLoader = urlList.toArray(new URL[0]);
     URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
     Thread.currentThread().setContextClassLoader(classLoader);
-
     return classLoader;
   }
 
   @Override
-  public void addDirectory(File directory) throws MalformedURLException, IOException {
-    if (!directory.exists()) {
-      return;
-    }
-
-    File[] jarFiles = directory.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        return file.isFile() && file.getName().endsWith(".jar");
-      }
-    });
-
-    for (File file : jarFiles) {
-      addUrl(file.toURI().toURL());
-    }
-  }
-
-  @Override
-  public void addUrl(URL url) throws IOException {
+  public void addNonAnnotationLibsUrl(URL url) throws IOException {
     if (urls.contains(url)) {
       return;
     }
-    
-    WorkerLogManager.getSystemLogger().info("Loading file URL: " + url);    
-
+    WorkerLogManager.getSystemLogger().info("Loading non java annotation library file URL: " + url);
     urls.add(url);
+    addUrlToSystemClassLoader(url);
+  }
 
-
+  @Override
+  public void addWorkerAnnotationLibUrl(URL url) throws IOException {
+    if (workerAnnotationLibUrls.contains(url)) {
+      return;
+    }
+    WorkerLogManager.getSystemLogger().info("Loading java annotation library file URL: " + url);
+    workerAnnotationLibUrls.add(url);
     addUrlToSystemClassLoader(url);
   }
 
@@ -87,4 +74,5 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
   private static final String SYS_LOADER_ADDURL_METHOD_NAME = "addURL";
   private static final Class<?>[] parameters = new Class[] { URL.class };
   private final Set<URL> urls;
+  private final Set<URL> workerAnnotationLibUrls;
 }
