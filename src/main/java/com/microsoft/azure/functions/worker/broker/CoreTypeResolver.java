@@ -4,7 +4,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.microsoft.azure.functions.*;
-import com.microsoft.azure.functions.annotation.*;
 
 public class CoreTypeResolver {
 	private static boolean isOutputParameter(Type target) {
@@ -52,12 +51,24 @@ public class CoreTypeResolver {
 			if (annotation.toString().contains("com.microsoft.azure.functions.annotation")) {
 				annotationName = getBindingNameFromAnnotation(annotation);
 			}
+
 			if (annotationName == null) {
-				CustomBinding customBindingAnnotation = annotation.annotationType().getAnnotation(CustomBinding.class);
+				Annotation customBindingAnnotation = null;
+				for (Annotation item : annotation.annotationType().getAnnotations()){
+					if (item.annotationType().getName().equals("com.microsoft.azure.functions.annotation.CustomBinding")) {
+						customBindingAnnotation = item;
+						break;
+					}
+				}
 				if (customBindingAnnotation != null) {
 					annotationName = getBindingNameFromAnnotation(annotation);
 					if (annotationName == null) {
-						annotationName = getBindingNameFromCustomBindingAnnotation(customBindingAnnotation);
+						try {
+							Method name = customBindingAnnotation.annotationType().getMethod("name");
+							annotationName = getBindingNameFromCustomBindingAnnotation(customBindingAnnotation, name);
+						} catch (NoSuchMethodException ex) {
+							// Ignore
+						}
 					}
 				}
 			}
@@ -79,9 +90,9 @@ public class CoreTypeResolver {
 		return null;
 	}
 
-	private static String getBindingNameFromCustomBindingAnnotation(CustomBinding customBindingAnnotation) {
+	private static String getBindingNameFromCustomBindingAnnotation(Annotation customBindingAnnotation, Method name) {
 		try {
-			return customBindingAnnotation.name();
+			return (String) name.invoke(customBindingAnnotation);
 		} catch (Exception ex) {
 			// Ignore
 			return null;
@@ -89,9 +100,22 @@ public class CoreTypeResolver {
 	}
 
 	static String getBindingNameAnnotation(Parameter param) {
-		BindingName paramAnnotation = param.getDeclaredAnnotation(BindingName.class);
-		if (paramAnnotation != null) {
-			return paramAnnotation.value();
+		Annotation bindingNameAnnotation = null;
+		for (Annotation item : param.getAnnotations()){
+			if (item.annotationType().getName().equals("com.microsoft.azure.functions.annotation.BindingName")){
+				bindingNameAnnotation = item;
+				break;
+			}
+		}
+		if (bindingNameAnnotation != null) {
+			String returnValue = null;
+			try {
+				Method value = bindingNameAnnotation.annotationType().getMethod("value");
+				returnValue = (String) value.invoke(bindingNameAnnotation);
+			} catch (Exception ex) {
+				// Ignore
+			}
+			return returnValue;
 		}
 		return new String("");
 	}
