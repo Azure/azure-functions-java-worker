@@ -76,5 +76,11 @@ namespace Azure.Functions.Java.Tests.E2E
                 await HttpTriggerTests("HttpTriggerJavaStatic2", "", HttpStatusCode.OK, "4");
             }
         }
+
+        [Fact]
+        public async Task HttpTrigger_BindingName()
+        {
+            Assert.True(await Utilities.InvokeHttpTrigger("BindingName", "/testMessage", HttpStatusCode.OK, "testMessage"));
+        }
     }
 }
