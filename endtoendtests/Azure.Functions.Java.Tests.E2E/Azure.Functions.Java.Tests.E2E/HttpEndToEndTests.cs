@@ -31,6 +31,7 @@ namespace Azure.Functions.Java.Tests.E2E
         [InlineData("HttpTriggerNotifyMethod", "?&name=Test", HttpStatusCode.OK, "Test")]
         [InlineData("HttpTriggerRetryContextCount", "?&name=Test", HttpStatusCode.OK, "1")]
         [InlineData("HttpTriggerMaxRetryContextCount", "?&name=Test", HttpStatusCode.OK, "3")]
+        [InlineData("HttpTriggerJavaVersion", "", HttpStatusCode.OK, "HttpTriggerJavaVersion")]
         public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
         {
             // TODO: Verify exception on 500 after https://github.com/Azure/azure-functions-host/issues/3589
