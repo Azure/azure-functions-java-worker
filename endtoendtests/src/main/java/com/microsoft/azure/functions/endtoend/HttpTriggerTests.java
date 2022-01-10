@@ -298,4 +298,22 @@ public class HttpTriggerTests {
         return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(context.getRetryContext().getMaxretrycount())).build();
     }
 
+    @FunctionName("HttpTriggerJavaVersion")
+    public static HttpResponseMessage HttpTriggerJavaVersion(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET, HttpMethod.POST},
+                    authLevel = AuthorizationLevel.ANONYMOUS)
+                    HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context
+    ) {
+        context.getLogger().info("Java HTTP trigger processed a request.");
+        final String javaVersion = getJavaVersion();
+        context.getLogger().info("Function - HttpTriggerJavaVersion" + javaVersion);
+        return request.createResponseBuilder(HttpStatus.OK).body("HttpTriggerJavaVersion").build();
+    }
+
+    public static String getJavaVersion() {
+        return String.join(" - ", System.getProperty("java.home"), System.getProperty("java.version"));
+    }
 }
