@@ -51,24 +51,6 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
     }
 
     @Override
-    public void addDirectory(File directory) throws MalformedURLException, IOException {
-        if (!directory.exists()) {
-            return;
-        }
-
-        File[] jarFiles = directory.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isFile() && file.getName().endsWith(".jar");
-            }
-        });
-
-        for (File file : jarFiles) {
-            addUrl(file.toURI().toURL());
-        }
-    }
-
-    @Override
     public void addUrl(URL url) throws IOException {
         if (urls.contains(url)) {
             return;

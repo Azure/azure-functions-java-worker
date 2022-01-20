@@ -94,14 +94,61 @@ public class JavaFunctionBroker {
 		classLoaderProvider.addUrl(jarUrl);
 		if(function.getLibDirectory().isPresent()) {
 			registerWithClassLoaderProvider(function.getLibDirectory().get());
+		}else{
+			registerJavaLibrary();
 		}
 	}
 
 	void registerWithClassLoaderProvider(File libDirectory) {
 		try {
-			classLoaderProvider.addDirectory(libDirectory);
+			addDirectory(libDirectory);
 		} catch (Exception ex) {
 			ExceptionUtils.rethrow(ex);
+		}
+	}
+
+	void registerJavaLibrary(){
+		try {
+			if (!isTesting()){
+				addJavaAnnotationLibrary();
+			}
+		} catch (Exception ex) {
+			ExceptionUtils.rethrow(ex);
+		}
+	}
+
+	void addDirectory(File directory) throws IOException {
+		if (!directory.exists()) {
+			return;
+		}
+
+		File[] jarFiles = directory.listFiles(file -> file.isFile() && file.getName().endsWith(".jar"));
+
+		boolean isJavaLibraryExists = false;
+		for (File file : jarFiles){
+			if (file.getName().contains(Constants.JAVA_LIBRARY_ARTIFACT_ID)) isJavaLibraryExists = true;
+			classLoaderProvider.addUrl(file.toURI().toURL());
+		}
+		if (!isJavaLibraryExists){
+			addJavaAnnotationLibrary();
+		}
+	}
+
+	public void addJavaAnnotationLibrary() throws IOException {
+		String javaLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + Constants.JAVA_LIBRARY_DIRECTORY;
+		File javaLib = new File(javaLibPath);
+		File[] files = javaLib.listFiles(file -> file.getName().contains(Constants.JAVA_LIBRARY_ARTIFACT_ID));
+		if (files.length == 0) throw new FileNotFoundException("Error loading java annotation library jar, no jar find from path:  " + javaLibPath);
+		if (files.length > 1) throw new FileNotFoundException("Error loading java annotation library jar, multiple jars find from path:  " + javaLibPath);
+		classLoaderProvider.addUrl(files[0].toURI().toURL());
+	}
+
+	private boolean isTesting(){
+		if(System.getProperty("azure.functions.worker.java.skip.testing") != null
+				&& System.getProperty("azure.functions.worker.java.skip.testing").equals("true")) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 
