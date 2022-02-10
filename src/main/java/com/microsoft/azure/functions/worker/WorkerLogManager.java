@@ -1,6 +1,7 @@
 package com.microsoft.azure.functions.worker;
 
 import java.io.*;
+import java.util.Locale;
 import java.util.logging.*;
 
 import org.apache.commons.lang3.*;
@@ -42,7 +43,13 @@ public class WorkerLogManager {
         Logger logger = Logger.getAnonymousLogger();
         logger.setLevel(Level.ALL);
         addHostClientHandlers(logger, invocationId);
+        addInvocationLoggerFilter(logger);
         return logger;
+    }
+
+    private void addInvocationLoggerFilter(Logger logger) {
+        InvocationLoggerFilter invocationLoggerFilter = new InvocationLoggerFilter();
+        logger.setFilter(invocationLoggerFilter);
     }
 
     private static void clearHandlers(Logger logger) {
@@ -118,4 +125,13 @@ class HostLoggerListener extends Handler {
 
     private final JavaWorkerClient client;
     private final String invocationId;
+}
+
+class InvocationLoggerFilter implements Filter{
+    @Override
+    public boolean isLoggable(LogRecord record) {
+        String agentEnabled = System.getenv(Constants.APPLICATIONINSIGHTS_ENABLE_AGENT);
+        if (agentEnabled != null && agentEnabled.toLowerCase(Locale.ROOT).equals("true")) return false;
+        return true;
+    }
 }
