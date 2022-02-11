@@ -130,8 +130,8 @@ class HostLoggerListener extends Handler {
 class InvocationLoggerFilter implements Filter{
     @Override
     public boolean isLoggable(LogRecord record) {
-        String agentEnabled = System.getenv(Constants.APPLICATIONINSIGHTS_ENABLE_AGENT);
-        if (agentEnabled != null && agentEnabled.toLowerCase(Locale.ROOT).equals("true")) return false;
+        Boolean agentEnabled = Boolean.parseBoolean(System.getenv(Constants.APPLICATIONINSIGHTS_ENABLE_AGENT));
+        if (agentEnabled != null && agentEnabled) return false;
         return true;
     }
 }
