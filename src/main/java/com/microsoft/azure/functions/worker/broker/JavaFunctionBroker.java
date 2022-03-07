@@ -92,7 +92,7 @@ public class JavaFunctionBroker {
 
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
 		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
-		classLoaderProvider.addUrl(jarUrl);
+		classLoaderProvider.addCustomerUrl(jarUrl);
 		if(function.getLibDirectory().isPresent()) {
 			registerWithClassLoaderProvider(function.getLibDirectory().get());
 		}else{
@@ -122,17 +122,11 @@ public class JavaFunctionBroker {
 		if (!directory.exists()) {
 			return;
 		}
-
 		File[] jarFiles = directory.listFiles(file -> file.isFile() && file.getName().endsWith(".jar"));
-
-		boolean isJavaLibraryExists = false;
 		for (File file : jarFiles){
-			if (file.getName().contains(Constants.JAVA_LIBRARY_ARTIFACT_ID)) isJavaLibraryExists = true;
-			classLoaderProvider.addUrl(file.toURI().toURL());
+			classLoaderProvider.addCustomerUrl(file.toURI().toURL());
 		}
-		if (!isJavaLibraryExists){
-			addJavaAnnotationLibrary();
-		}
+		addJavaAnnotationLibrary();
 	}
 
 	public void addJavaAnnotationLibrary() throws IOException {
@@ -143,7 +137,7 @@ public class JavaFunctionBroker {
 		File[] files = javaLib.listFiles(file -> file.getName().contains(Constants.JAVA_LIBRARY_ARTIFACT_ID) && file.getName().endsWith(".jar"));
 		if (files.length == 0) throw new FileNotFoundException("Error loading java annotation library jar, no jar find from path:  " + javaLibPath);
 		if (files.length > 1) throw new FileNotFoundException("Error loading java annotation library jar, multiple jars find from path:  " + javaLibPath);
-		classLoaderProvider.addUrl(files[0].toURI().toURL());
+		classLoaderProvider.addWorkerUrl(files[0].toURI().toURL());
 	}
 
 	private boolean isTesting(){

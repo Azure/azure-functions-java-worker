@@ -6,9 +6,14 @@ import java.net.*;
 public interface ClassLoaderProvider {
     
     /*
-     * Adds a search path to be used by the provided class loader
+     * Adds a customer search path to be used by the provided class loader
      */
-    void addUrl(URL url) throws IOException;
+    void addCustomerUrl(URL url) throws IOException;
+
+    /*
+     * Adds a worker search path to be used by the provided class loader
+     */
+    void addWorkerUrl(URL url) throws IOException;
 
     /*
      * Create the class loader with the required search paths
