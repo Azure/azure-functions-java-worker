@@ -13,7 +13,8 @@ import com.microsoft.azure.functions.worker.*;
  */
 public class DefaultClassLoaderProvider implements ClassLoaderProvider {
   public DefaultClassLoaderProvider() {
-    urls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
+    customerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
+    workerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
   }
 
   /*
@@ -21,26 +22,32 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
    */
   @Override
   public ClassLoader createClassLoader() {
-    URL[] urlsForClassLoader = new URL[urls.size()];
-    urls.toArray(urlsForClassLoader);
-
+    List<URL> urlsList = new ArrayList<>();
+    urlsList.addAll(customerUrls);
+    urlsList.addAll(workerUrls);
+    URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
     URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
     Thread.currentThread().setContextClassLoader(classLoader);
-
     return classLoader;
   }
 
   @Override
-  public void addUrl(URL url) throws IOException {
-    if (urls.contains(url)) {
+  public void addCustomerUrl(URL url) throws IOException {
+    if (customerUrls.contains(url)) {
       return;
     }
-    
-    WorkerLogManager.getSystemLogger().info("Loading file URL: " + url);    
+    WorkerLogManager.getSystemLogger().info("Loading customer file URL: " + url);
+    customerUrls.add(url);
+    addUrlToSystemClassLoader(url);
+  }
 
-    urls.add(url);
-
-
+  @Override
+  public void addWorkerUrl(URL url) throws IOException {
+    if (workerUrls.contains(url)) {
+      return;
+    }
+    WorkerLogManager.getSystemLogger().info("Loading worker file URL: " + url);
+    workerUrls.add(url);
     addUrlToSystemClassLoader(url);
   }
 
@@ -66,5 +73,6 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
 
   private static final String SYS_LOADER_ADDURL_METHOD_NAME = "addURL";
   private static final Class<?>[] parameters = new Class[] { URL.class };
-  private final Set<URL> urls;
+  private final Set<URL> customerUrls;
+  private final Set<URL> workerUrls;
 }

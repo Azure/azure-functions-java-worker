@@ -11,7 +11,8 @@ import com.microsoft.azure.functions.worker.*;
 
 public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
     public EnhancedClassLoaderProvider() {
-        urls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
+        customerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
+        workerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
     }
 
     /*
@@ -22,8 +23,10 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
         if (classLoaderInstance == null) {
             synchronized (lock) {
                 if (classLoaderInstance == null) {
-                    URL[] urlsForClassLoader = new URL[urls.size()];
-                    urls.toArray(urlsForClassLoader);
+                    List<URL> urlsList = new ArrayList<>();
+                    urlsList.addAll(customerUrls);
+                    urlsList.addAll(workerUrls);
+                    URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
                     URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
                     loadDrivers(loader);
                     classLoaderInstance = loader;
@@ -51,16 +54,24 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
     }
 
     @Override
-    public void addUrl(URL url) throws IOException {
-        if (urls.contains(url)) {
+    public void addCustomerUrl(URL url) throws IOException {
+        if (customerUrls.contains(url)) {
             return;
         }
-
-        WorkerLogManager.getSystemLogger().info("Loading file URL: " + url);
-
-        urls.add(url);
+        WorkerLogManager.getSystemLogger().info("Loading customer file URL: " + url);
+        customerUrls.add(url);
     }
-    private final Set<URL> urls;
+
+    @Override
+    public void addWorkerUrl(URL url) throws IOException {
+        if (workerUrls.contains(url)) {
+            return;
+        }
+        WorkerLogManager.getSystemLogger().info("Loading worker file URL: " + url);
+        workerUrls.add(url);
+    }
+    private final Set<URL> customerUrls;
+    private final Set<URL> workerUrls;
     private final Object lock = new Object();
     private static volatile URLClassLoader classLoaderInstance;
 }
