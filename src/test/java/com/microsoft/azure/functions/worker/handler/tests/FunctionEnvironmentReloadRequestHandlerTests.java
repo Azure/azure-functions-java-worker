@@ -7,17 +7,17 @@ import static org.junit.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.microsoft.azure.functions.worker.reflect.JavaClassLoaderProvider;
 import org.junit.Test;
 
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.handler.FunctionEnvironmentReloadRequestHandler;
-import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 
 public class FunctionEnvironmentReloadRequestHandlerTests {
 
 	@Test
 	public void SetEnv_Succeeds() throws Exception {
-		DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
+		JavaClassLoaderProvider classLoader = new JavaClassLoaderProvider();
 		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
@@ -35,7 +35,7 @@ public class FunctionEnvironmentReloadRequestHandlerTests {
 
 	@Test
 	public void SetEnv_Null_Succeeds() throws Exception {
-		DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
+		JavaClassLoaderProvider classLoader = new JavaClassLoaderProvider();
 		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 

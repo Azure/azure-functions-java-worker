@@ -18,7 +18,7 @@ public class JavaMethodExecutorTests {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, new FactoryClassLoader().createClassLoaderProvider());
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, new JavaClassLoaderProvider());
 		assertTrue(executor.getOverloadResolver().hasCandidates());
 		assertFalse(executor.getOverloadResolver().hasMultipleCandidates());
     }
@@ -28,7 +28,7 @@ public class JavaMethodExecutorTests {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger1","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger1","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, new FactoryClassLoader().createClassLoaderProvider());
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, new JavaClassLoaderProvider());
 		
     }
 	
@@ -37,7 +37,7 @@ public class JavaMethodExecutorTests {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTriggerOverload","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTriggerOverload","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, new FactoryClassLoader().createClassLoaderProvider());
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, new JavaClassLoaderProvider());
     }
 
 	@Test
@@ -46,7 +46,7 @@ public class JavaMethodExecutorTests {
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
 		System.setProperty("java.specification.version", "11");
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, new FactoryClassLoader().createClassLoaderProvider());
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, new JavaClassLoaderProvider());
 		assertTrue(executor.getOverloadResolver().hasCandidates());
 		assertFalse(executor.getOverloadResolver().hasMultipleCandidates());
 	}
@@ -57,7 +57,7 @@ public class JavaMethodExecutorTests {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger1","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger1","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, new FactoryClassLoader().createClassLoaderProvider());
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, new JavaClassLoaderProvider());
 
 	}
 
@@ -67,6 +67,6 @@ public class JavaMethodExecutorTests {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTriggerOverload","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTriggerOverload","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, new FactoryClassLoader().createClassLoaderProvider());
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, new JavaClassLoaderProvider());
 	}
 }

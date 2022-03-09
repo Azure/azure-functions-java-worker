@@ -9,8 +9,8 @@ import java.util.concurrent.*;
 
 import com.microsoft.azure.functions.worker.*;
 
-public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
-    public EnhancedClassLoaderProvider() {
+public class JavaClassLoaderProvider implements ClassLoaderProvider {
+    public JavaClassLoaderProvider() {
         urls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
     }
 
