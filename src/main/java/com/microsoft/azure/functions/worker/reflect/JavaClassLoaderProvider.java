@@ -25,11 +25,29 @@ public class JavaClassLoaderProvider implements ClassLoaderProvider {
                     URL[] urlsForClassLoader = new URL[urls.size()];
                     urls.toArray(urlsForClassLoader);
                     URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
+                    loadDrivers(loader);
                     classLoaderInstance = loader;
                 }
             }
         }
         return classLoaderInstance;
+    }
+
+    private void loadDrivers(URLClassLoader classLoader) {
+        Thread.currentThread().setContextClassLoader(classLoader);
+        try {
+            ServiceLoader<Driver> loadedDrivers = ServiceLoader.load(Driver.class);
+            Iterator<Driver> driversIterator = loadedDrivers.iterator();
+            try {
+                while (driversIterator.hasNext()) {
+                    driversIterator.next();
+                }
+            } catch (Throwable t) {
+                // Do nothing
+            }
+        } finally {
+            Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+        }
     }
 
     @Override
