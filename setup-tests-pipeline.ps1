@@ -29,6 +29,9 @@ else
 
 $FUNC_CLI_DIRECTORY = Join-Path $PSScriptRoot 'Azure.Functions.Cli'
 
+$ApplicationInsightsAgentVersion = '3.2.8'
+$ApplicationInsightsAgentUrl = "https://github.com/microsoft/ApplicationInsights-Java/releases/download/$ApplicationInsightsAgentVersion/applicationinsights-agent-$ApplicationInsightsAgentVersion.jar"
+
 Write-Host 'Deleting the Core Tools if exists...'
 Remove-Item -Force "$FUNC_CLI_DIRECTORY.zip" -ErrorAction Ignore
 Remove-Item -Recurse -Force $FUNC_CLI_DIRECTORY -ErrorAction Ignore
@@ -54,5 +57,9 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
     Copy-Item "$PSScriptRoot/worker.config.json" "$FUNC_CLI_DIRECTORY/workers/java" -Force -Verbose
     Write-Host "Copying worker.config.json and annotationLib to worker directory"
     Copy-Item "$PSScriptRoot/annotationLib" "$FUNC_CLI_DIRECTORY/workers/java/annotationLib" -Recurse -Verbose
-
+    mkdir "$FUNC_CLI_DIRECTORY/workers/java/agent"
+    Write-Host "Downloading Application Insights Agent (Version: $ApplicationInsightsAgentVersion) from url($ApplicationInsightsAgentUrl) to worker directory"
+    Invoke-RestMethod -Uri $ApplicationInsightsAgentUrl -OutFile "$FUNC_CLI_DIRECTORY/workers/java/agent/applicationinsights-agent.jar"
+    Write-Host "Creating the functions.codeless file"
+    New-Item -path "$FUNC_CLI_DIRECTORY/workers/java/agent" -type file -name "functions.codeless"
 }

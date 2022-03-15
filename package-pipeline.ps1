@@ -9,6 +9,10 @@ function StopOnFailedExecution {
     exit $LastExitCode 
   }
 }
+
+$ApplicationInsightsAgentVersion = '3.2.8'
+$ApplicationInsightsAgentUrl = "https://github.com/microsoft/ApplicationInsights-Java/releases/download/$ApplicationInsightsAgentVersion/applicationinsights-agent-$ApplicationInsightsAgentVersion.jar"
+
 Write-Host "Building azure-functions-java-worker" 
 cmd.exe /c '.\mvnBuild.bat'
 StopOnFailedExecution
@@ -24,6 +28,11 @@ StopOnFailedExecution
 copy-item ./worker.config.json pkg
 copy-item ./tools/AzureFunctionsJavaWorker.nuspec pkg/
 copy-item ./annotationLib pkg/annotationLib -Recurse
+mkdir pkg/agent
+Write-Host "Downloading Application Insights Agent (Version: $ApplicationInsightsAgentVersion) from url($ApplicationInsightsAgentUrl)..."
+Invoke-RestMethod -Uri $ApplicationInsightsAgentUrl -OutFile pkg/agent/applicationinsights-agent.jar
+Write-Host "Creating the functions.codeless file"
+New-Item -path pkg/agent -type file -name "functions.codeless"
 set-location pkg
 nuget pack -Properties version=$buildNumber
 set-location ..
