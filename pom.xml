@@ -78,22 +78,27 @@
 		<dependency>
 			<groupId>com.google.protobuf</groupId>
 			<artifactId>protobuf-java</artifactId>
-			<version>3.16.1</version>
+			<version>3.19.4</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-protobuf</artifactId>
-			<version>1.20.0</version>
+			<version>1.45.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-stub</artifactId>
-			<version>1.20.0</version>
+			<version>1.45.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-netty-shaded</artifactId>
-			<version>1.20.0</version>
+			<version>1.45.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.9.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -268,10 +273,6 @@
 								<relocation combine.children="append">
 									<pattern>javax.annotation</pattern>
 									<shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
-								</relocation>
-								<relocation combine.children="append">
-									<pattern>io.opencensus</pattern>
-									<shadedPattern>com.microsoft.azure.functions.shaded.io.opencensus</shadedPattern>
 								</relocation>
 							</relocations>
 						</configuration>
