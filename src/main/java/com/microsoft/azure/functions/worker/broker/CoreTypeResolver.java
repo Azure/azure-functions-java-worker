@@ -95,4 +95,25 @@ public class CoreTypeResolver {
 		}
 		return new String("");
 	}
+
+	static boolean checkHasImplicitOutput(Parameter parameter){
+		try {
+			Annotation[] annotations = parameter.getAnnotations();
+			for (Annotation annotation : annotations) {
+				//TODO: we need to make sure the method name "hasImplicitOutput"
+				// is unique and not present in annotations outside azure functions,
+				// also do we need to restrict the annotations we checked here to scope of azure functions,
+				// if yes how can we do that, since in future the annotations will be defined at extension side
+				// and extension owner can define the qualified name for annotations as they like
+				Method hasImplicitOutput = annotation.annotationType().getMethod("hasImplicitOutput");
+				if (hasImplicitOutput == null) continue;
+				boolean isImplicitOutput = (boolean) hasImplicitOutput.invoke(annotation);
+				if (isImplicitOutput) return true;
+			}
+			return false;
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			//do nothing
+		}
+		return false;
+	}
 }
