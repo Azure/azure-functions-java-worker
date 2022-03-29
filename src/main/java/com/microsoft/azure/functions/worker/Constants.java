@@ -9,6 +9,5 @@ public final class Constants {
     public final static String FUNCTIONS_WORKER_DIRECTORY = "FUNCTIONS_WORKER_DIRECTORY";
     public final static String JAVA_LIBRARY_DIRECTORY = "/annotationLib";
     public final static String JAVA_LIBRARY_ARTIFACT_ID = "azure-functions-java-library";
-    public final static String JAVA_LIBRARY_PACKAGE_PREFIX = "com.microsoft.azure.functions";
-    public final static String JAVA_LIBRARY_PACKAGE_SUFFIX = "annotation";
+    public final static String HAS_IMPLICIT_OUTPUT_QUALIFIED_NAME = "com.microsoft.azure.functions.annotation.HasImplicitOutput";
 }

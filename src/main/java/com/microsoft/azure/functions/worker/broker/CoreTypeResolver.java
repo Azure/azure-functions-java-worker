@@ -121,21 +121,26 @@ public class CoreTypeResolver {
 		return new String("");
 	}
 
-    static boolean checkHasImplicitOutput(Parameter parameter){
-        try {
-            Annotation[] annotations = parameter.getAnnotations();
-            for (Annotation annotation : annotations) {
-				String packageName = annotation.annotationType().getPackage().getName();
-				if (!packageName.contains(Constants.JAVA_LIBRARY_PACKAGE_PREFIX) || !packageName.endsWith(Constants.JAVA_LIBRARY_PACKAGE_SUFFIX)) continue;
-                Method hasImplicitOutput = annotation.annotationType().getMethod("hasImplicitOutput");
-                if (hasImplicitOutput == null) continue;
-                boolean isImplicitOutput = (boolean) hasImplicitOutput.invoke(annotation);
-                if (isImplicitOutput) return true;
-            }
-            return false;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            //do nothing
-        }
-        return false;
-    }
+	static boolean checkHasImplicitOutput(Parameter parameter) {
+		Annotation[] annotations = parameter.getAnnotations();
+		for (Annotation annotation : annotations) {
+			for (Annotation item : annotation.annotationType().getAnnotations()) {
+				if (item.annotationType().getName().equals(Constants.HAS_IMPLICIT_OUTPUT_QUALIFIED_NAME)) {
+					if (hasImplicitOutput(item)) return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	static boolean hasImplicitOutput(Annotation annotation){
+		try {
+			Method hasImplicitOutputMethod = annotation.annotationType().getMethod("value");
+			boolean hasImplicitOutput = (boolean) hasImplicitOutputMethod.invoke(annotation);
+			return hasImplicitOutput;
+		} catch (Exception e) {
+			//do nothing
+		}
+		return false;
+	}
 }
