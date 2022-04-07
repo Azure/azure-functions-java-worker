@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure.functions</groupId>
 	<artifactId>azure-functions-java-worker</artifactId>
-	<version>1.10.0-SNAPSHOT</version>
+	<version>1.11.0</version>
 	<packaging>jar</packaging>
 	<parent>
 		<groupId>com.microsoft.maven</groupId>
@@ -23,7 +23,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<azure.functions.java.core.library.version>1.0.0</azure.functions.java.core.library.version>
-		<azure.functions.java.library.version>2.0.0</azure.functions.java.library.version>
+		<azure.functions.java.library.version>2.0.1-SNAPSHOT</azure.functions.java.library.version>
 	</properties>
 
 	<licenses>
