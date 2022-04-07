@@ -53,7 +53,7 @@ public class ParameterResolver {
             for (ParamBindInfo param : method.params) {
                 Optional<BindingData> argument = null;
                 if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
-                    argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type);
+                    argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type, false);
                 }                
                 else if (param.name != null && !param.name.isEmpty()) {
                     argument = dataStore.getDataByName(param.name, param.type);
@@ -68,7 +68,7 @@ public class ParameterResolver {
                 invokeInfo.appendArgument(actualArg.getValue());
             }
             if (!method.entry.getReturnType().equals(void.class) && !method.entry.getReturnType().equals(Void.class)) {
-                dataStore.getOrAddDataTarget(invokeInfo.outputsId, BindingDataStore.RETURN_NAME, method.entry.getReturnType());
+                dataStore.getOrAddDataTarget(invokeInfo.outputsId, BindingDataStore.RETURN_NAME, method.entry.getReturnType(), method.hasImplicitOutput);
             }
             return invokeInfo;
         } catch (Exception ex) {
@@ -86,9 +86,19 @@ public class ParameterResolver {
         MethodBindInfo(Method m) {
             this.entry = m;
             this.params = Arrays.stream(this.entry.getParameters()).map(ParamBindInfo::new).toArray(ParamBindInfo[]::new);
+            this.hasImplicitOutput = checkHasImplicitOutput();
         }
+
+        private boolean checkHasImplicitOutput(){
+            for (ParamBindInfo paramBindInfo : this.params){
+                if (paramBindInfo.hasImplicitOutput) return true;
+            }
+            return false;
+        }
+
         private final Method entry;
-        private final ParamBindInfo[] params;        
+        private final ParamBindInfo[] params;
+        private final boolean hasImplicitOutput;
     }
 
     private final class ParamBindInfo {
@@ -96,10 +106,12 @@ public class ParameterResolver {
             this.name = CoreTypeResolver.getAnnotationName(param);
             this.type = param.getParameterizedType();
             this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
+            this.hasImplicitOutput = CoreTypeResolver.checkHasImplicitOutput(param);
         }        
         
         private final String name;
         private final Type type;
+        private final boolean hasImplicitOutput;
         private String bindingNameAnnotation = new String("");
     }
 
