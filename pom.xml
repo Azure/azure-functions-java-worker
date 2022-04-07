@@ -22,8 +22,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<azure.functions.java.core.library.version>1.0.0-SNAPSHOT</azure.functions.java.core.library.version>
-		<azure.functions.java.library.version>2.0.0-SNAPSHOT</azure.functions.java.library.version>
+		<azure.functions.java.core.library.version>1.0.0</azure.functions.java.core.library.version>
+		<azure.functions.java.library.version>2.0.0</azure.functions.java.library.version>
 	</properties>
 
 	<licenses>
