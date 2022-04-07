@@ -122,7 +122,7 @@ public final class BindingDataStore {
         DataTarget output = null;
         if (this.isDataTargetValid(name, target)) {
             output = this.getTarget(outputId).get(name);
-            if (output == null && this.isDefinitionOutput(name) || hasImplicitOutput) {
+            if (output == null && (this.isDefinitionOutput(name) || hasImplicitOutput)) {
                 this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
             }
         }
