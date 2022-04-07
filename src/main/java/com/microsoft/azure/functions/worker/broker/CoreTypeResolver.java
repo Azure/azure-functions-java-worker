@@ -4,6 +4,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.microsoft.azure.functions.*;
+import com.microsoft.azure.functions.worker.Constants;
 
 public class CoreTypeResolver {
 	private static boolean isOutputParameter(Type target) {
@@ -118,5 +119,28 @@ public class CoreTypeResolver {
 			return returnValue;
 		}
 		return new String("");
+	}
+
+	static boolean checkHasImplicitOutput(Parameter parameter) {
+		Annotation[] annotations = parameter.getAnnotations();
+		for (Annotation annotation : annotations) {
+			for (Annotation item : annotation.annotationType().getAnnotations()) {
+				if (item.annotationType().getName().equals(Constants.HAS_IMPLICIT_OUTPUT_QUALIFIED_NAME)) {
+					if (hasImplicitOutput(item)) return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	static boolean hasImplicitOutput(Annotation annotation){
+		try {
+			Method hasImplicitOutputMethod = annotation.annotationType().getMethod("value");
+			boolean hasImplicitOutput = (boolean) hasImplicitOutputMethod.invoke(annotation);
+			return hasImplicitOutput;
+		} catch (Exception e) {
+			//do nothing
+		}
+		return false;
 	}
 }
