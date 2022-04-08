@@ -2,8 +2,8 @@
 
 |Branch|Status|
 |---|---|
-|master|[![Build status](https://dev.azure.com/azfunc/Azure%20Functions/_apis/build/status/Azure.azure-functions-java-worker?branchName=master)](https://dev.azure.com/azfunc/Azure%20Functions/_build/latest?definitionId=20&branchName=master)|
-|dev|[![Build status](https://dev.azure.com/azfunc/Azure%20Functions/_apis/build/status/Azure.azure-functions-java-worker?branchName=dev)](https://dev.azure.com/azfunc/Azure%20Functions/_build/latest?definitionId=20&branchName=dev)|
+|Dev|[![Build status](https://dev.azure.com/azfunc/Azure%20Functions/_apis/build/status/Azure.azure-functions-java-worker?branchName=dev)](https://dev.azure.com/azfunc/Azure%20Functions/_build/latest?definitionId=20&branchName=dev)|
+|v3|[![Build status](https://dev.azure.com/azfunc/Azure%20Functions/_apis/build/status/Azure.azure-functions-java-worker?branchName=v3.x)](https://dev.azure.com/azfunc/Azure%20Functions/_build/latest?definitionId=20&branchName=v3.x)|
 
 # Contributing
 
