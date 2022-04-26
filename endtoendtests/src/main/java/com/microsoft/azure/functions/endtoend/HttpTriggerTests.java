@@ -2,8 +2,6 @@ package com.microsoft.azure.functions.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
-
-import java.awt.*;
 import java.util.*;
 
 import com.google.gson.Gson;
@@ -353,34 +351,5 @@ public class HttpTriggerTests {
 
     public static String getJavaVersion() {
         return String.join(" - ", System.getProperty("java.home"), System.getProperty("java.version"));
-    }
-
-    //Issue Fix: https://github.com/Azure/azure-functions-docker/pull/668
-    @FunctionName("FontTypeSupport")
-    public HttpResponseMessage FontTypeSupport(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.GET, HttpMethod.POST},
-                    authLevel = AuthorizationLevel.ANONYMOUS)
-                    HttpRequestMessage<Optional<String>> request,
-            final ExecutionContext context) {
-        context.getLogger().info("Java HTTP trigger processed a request.");
-
-        // Parse query parameter
-        final String query = request.getQueryParameters().get("name");
-        final String name = request.getBody().orElse(query);
-
-        String[] libNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-        StringBuilder sb = new StringBuilder();
-        for (String libName : libNames) {
-            sb.append(libName).append("--");
-        }
-        context.getLogger().info("Font libs are: " + sb);
-
-        if (name == null) {
-            return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
-        } else {
-            return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
-        }
     }
 }

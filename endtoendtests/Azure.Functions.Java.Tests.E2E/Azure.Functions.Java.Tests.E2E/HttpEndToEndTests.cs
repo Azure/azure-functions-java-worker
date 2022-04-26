@@ -20,7 +20,6 @@ namespace Azure.Functions.Java.Tests.E2E
 
         [Theory]
         [InlineData("HttpTriggerJava", "?&name=Test", HttpStatusCode.OK, "Test")]
-        [InlineData("FontTypeSupport", "?&name=Test", HttpStatusCode.OK, "Test")]
         [InlineData("HttpTriggerJavaMetadata", "?&firstName=John&lastName=Doe", HttpStatusCode.OK, "JohnDoe")]
         [InlineData("HttpTriggerJavaThrows", "", HttpStatusCode.InternalServerError, "")]
         [InlineData("HttpTriggerJava", "", HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")]

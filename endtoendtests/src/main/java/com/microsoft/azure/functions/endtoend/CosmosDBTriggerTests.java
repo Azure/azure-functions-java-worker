@@ -134,7 +134,7 @@ public class CosmosDBTriggerTests {
         outPutItem.setValue(testDoc);
     }
 
-    public class Document {
+    public static class Document {
         public String id;
         public String name;
         public String Description;        
