@@ -21,4 +21,14 @@ public class UtilTests {
     public void isTrueValueTrue() {
         assertTrue(Util.isTrue("True"));
     }
+
+    @Test
+    public void isDigitOneValueTrue() {
+        assertTrue(Util.isTrue("1"));
+    }
+
+    @Test
+    public void isDigitZeroValueTrue() {
+        assertTrue(Util.isTrue("0"));
+    }
 }

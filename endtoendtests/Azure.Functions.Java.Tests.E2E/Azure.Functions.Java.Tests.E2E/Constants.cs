@@ -74,9 +74,6 @@ namespace Azure.Functions.Java.Tests.E2E
         // Settings
         public static string EventHubsConnectionStringSenderSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
         public static string EventHubsConnectionStringSenderSetting2 = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender_2");
-
-        public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
-
         public static string ServiceBusConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsServiceBus");
 
         // Xunit Fixtures and Collections
