@@ -156,7 +156,7 @@ public class EventHubTriggerTests {
     @FunctionName("EventHubTriggerMaxRetryContextCount")
     @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
     public void EventHubTriggerMaxRetryContextCount(
-            @EventHubTrigger(name = "message", eventHubName = "max-retry-count", connection = "AzureWebJobsEventHubSender", cardinality = Cardinality.ONE) String message,
+            @EventHubTrigger(name = "message", eventHubName = "max-retry-count", connection = "AzureWebJobsEventHubSender_2", cardinality = Cardinality.ONE) String message,
             @QueueOutput(name = "output", queueName = "max-retry-count", connection = "AzureWebJobsStorage") OutputBinding<String> output,
             final ExecutionContext context
     ) throws Exception {
