@@ -229,7 +229,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await SetupQueue(Constants.MaxRetryCount);
 
                 // Need to setup EventHubs: test-input-java and test-output-java
-                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.MaxRetryCount, Constants.EventHubsConnectionStringSenderSetting);
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.MaxRetryCount, Constants.EventHubsConnectionStringSenderSetting2);
 
                 //Verify
                 var queueMessage = await StorageHelpers.ReadFromQueue(Constants.MaxRetryCount);
