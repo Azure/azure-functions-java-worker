@@ -29,6 +29,6 @@ public class UtilTests {
 
     @Test
     public void isDigitZeroValueTrue() {
-        assertTrue(Util.isTrue("0"));
+        assertFalse(Util.isTrue("0"));
     }
 }
