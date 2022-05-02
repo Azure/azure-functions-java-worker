@@ -134,35 +134,6 @@ public class HttpTriggerTests {
     public static int countFail = 1;
     public static int countExpFail = 1;
 
-    //TODO: remove this test, retry policy in GA only support Timer trigger and Eventhub Trigger,
-    // added replacement in eventhub test cases
-//    @FunctionName("HttpExample-retry")
-//    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
-//    public HttpResponseMessage runRetry(
-//            @HttpTrigger(
-//                    name = "req",
-//                    methods = {HttpMethod.GET, HttpMethod.POST},
-//                    authLevel = AuthorizationLevel.ANONYMOUS)
-//                    HttpRequestMessage<Optional<String>> request,
-//            final ExecutionContext context) throws Exception {
-//        context.getLogger().info("Java HTTP trigger processed a request.");
-//
-//        if(count<3) {
-//            count ++;
-//            throw new Exception("error");
-//        }
-//
-//        // Parse query parameter
-//        final String query = request.getQueryParameters().get("name");
-//        final String name = request.getBody().orElse(query);
-//
-//        if (name == null) {
-//            return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
-//        } else {
-//            return request.createResponseBuilder(HttpStatus.OK).body(name).build();
-//        }
-//    }
-
     //TODO: write new cases for replacement
 //    @FunctionName("HttpExample-runRetryFail")
 //    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
@@ -187,35 +158,6 @@ public class HttpTriggerTests {
 //            return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
 //        } else {
 //            return request.createResponseBuilder(HttpStatus.OK).body("Hello, " + name).build();
-//        }
-//    }
-
-    //TODO: remove this test, retry policy in GA only support Timer trigger and Eventhub Trigger,
-    // added replacement in eventhub test cases
-//    @FunctionName("HttpExample-runExponentialBackoffRetry")
-//    @ExponentialBackoffRetry(maxRetryCount = 3, minimumInterval = "00:00:01", maximumInterval = "00:00:03")
-//    public HttpResponseMessage runRetryExponentialBackoffRetry(
-//            @HttpTrigger(
-//                    name = "req",
-//                    methods = {HttpMethod.GET, HttpMethod.POST},
-//                    authLevel = AuthorizationLevel.ANONYMOUS)
-//                    HttpRequestMessage<Optional<String>> request,
-//            final ExecutionContext context) throws Exception {
-//        context.getLogger().info("Java HTTP trigger processed a request.");
-//
-//        if(countExp<3) {
-//            countExp ++;
-//            throw new Exception("error");
-//        }
-//
-//        // Parse query parameter
-//        final String query = request.getQueryParameters().get("name");
-//        final String name = request.getBody().orElse(query);
-//
-//        if (name == null) {
-//            return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
-//        } else {
-//            return request.createResponseBuilder(HttpStatus.OK).body(name).build();
 //        }
 //    }
 
@@ -309,42 +251,6 @@ public class HttpTriggerTests {
             return request.createResponseBuilder(HttpStatus.OK).body(name).build();
         }
     }
-
-    //TODO: remove this test, retry policy in GA only support Timer trigger and Eventhub Trigger,
-    // added replacement in eventhub test cases
-//    @FunctionName("HttpTriggerRetryContextCount")
-//    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
-//    public HttpResponseMessage HttpTriggerRetryContext(
-//            @HttpTrigger(
-//                    name = "req",
-//                    methods = {HttpMethod.GET, HttpMethod.POST},
-//                    authLevel = AuthorizationLevel.ANONYMOUS)
-//                    HttpRequestMessage<Optional<String>> request,
-//            final ExecutionContext context) throws Exception {
-//        context.getLogger().info("Java HTTP trigger processed a request.");
-//
-//        if(context.getRetryContext().getRetrycount() == 0){
-//            throw new Exception("error");
-//        }
-//        return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(context.getRetryContext().getRetrycount())).build();
-//    }
-
-
-    //TODO: remove this test, retry policy in GA only support Timer trigger and Eventhub Trigger,
-    // added replacement in eventhub test cases
-//    @FunctionName("HttpTriggerMaxRetryContextCount")
-//    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
-//    public HttpResponseMessage HttpTriggerMaxRetryContextCount(
-//            @HttpTrigger(
-//                    name = "req",
-//                    methods = {HttpMethod.GET, HttpMethod.POST},
-//                    authLevel = AuthorizationLevel.ANONYMOUS)
-//                    HttpRequestMessage<Optional<String>> request,
-//            final ExecutionContext context) throws Exception {
-//        context.getLogger().info("Java HTTP trigger processed a request.");
-//
-//        return request.createResponseBuilder(HttpStatus.OK).body(String.valueOf(context.getRetryContext().getMaxretrycount())).build();
-//    }
 
     @FunctionName("HttpTriggerJavaVersion")
     public static HttpResponseMessage HttpTriggerJavaVersion(
