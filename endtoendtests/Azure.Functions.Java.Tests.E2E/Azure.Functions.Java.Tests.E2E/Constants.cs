@@ -10,6 +10,7 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string FunctionsHostUrl = Environment.GetEnvironmentVariable("FunctionAppUrl") ?? "http://localhost:7071";
         public static string StorageConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
 
+
         //Queue tests
         public static string OutputBindingQueueName = "test-output-java";
         public static string InputBindingQueueName = "test-input-java";
@@ -37,12 +38,15 @@ namespace Azure.Functions.Java.Tests.E2E
         // EventHubs
         public static string OutputEventHubQueueName = "test-eventhuboutput-java";
         public static string InputEventHubName = "test-input-java";
+        public static string OutputEventHubName = "test-output-java";
 
         public static string OutputJsonEventHubQueueName = "test-eventhuboutputjson-java";
         public static string InputJsonEventHubName = "test-inputjson-java";
+        public static string OutputJsonEventHubName = "test-outputjson-java";
 
         public static string OutputOneEventHubQueueName = "test-eventhuboutputone-java";
         public static string InputCardinalityOneEventHubName = "test-inputOne-java";
+        public static string OutputCardinalityOneEventHubName = "test-outputone-java";
 
         public static string OutputBinaryOneQueueName = "test-binary-output-cardinality-one-java";
         public static string InputBinaryOneEventHubQueueName = "test-binary-input-cardinality-one-java";
@@ -74,9 +78,6 @@ namespace Azure.Functions.Java.Tests.E2E
         // Settings
         public static string EventHubsConnectionStringSenderSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
         public static string EventHubsConnectionStringSenderSetting2 = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender_2");
-
-        public static string EventHubsConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsEventHubSender");
-
         public static string ServiceBusConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsServiceBus");
 
         // Xunit Fixtures and Collections
