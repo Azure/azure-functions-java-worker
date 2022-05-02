@@ -22,7 +22,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
-        public async Task EventHubTriggerAndOutputJSON_Succeeds()
+        public async Task EventHubTriggerAndOutputJSON_EventHubOutputJson_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
@@ -30,7 +30,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await SetupQueue(Constants.OutputJsonEventHubQueueName);
 
                 // Need to setup EventHubs: test-inputjson-java and test-outputjson-java
-                await EventHubsHelpers.SendJSONMessagesAsync(expectedEventId, Constants.EventHubsConnectionStringSenderSetting);
+                await EventHubQueueHelpers.SendJSONMessagesAsync(expectedEventId, Constants.EventHubsConnectionStringSenderSetting);
 
                 //Verify
                 var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputJsonEventHubQueueName);
@@ -45,7 +45,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
-        public async Task EventHubTriggerAndOutputString_Succeeds()
+        public async Task EventHubTriggerAndOutputString_EventHubOutput_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
@@ -53,7 +53,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await SetupQueue(Constants.OutputEventHubQueueName);
 
                 // Need to setup EventHubs: test-input-java and test-output-java
-                await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputEventHubName, Constants.EventHubsConnectionStringSenderSetting);
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.InputEventHubName, Constants.EventHubsConnectionStringSenderSetting);
 
                 //Verify
                 var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputEventHubQueueName);
@@ -67,7 +67,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
-        public async Task EventHubTriggerCardinalityOne_Succeeds()
+        public async Task EventHubTriggerCardinalityOne_EventHubOutputInputOne_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
@@ -75,7 +75,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await SetupQueue(Constants.OutputOneEventHubQueueName);
 
                 // Need to setup EventHubs: test-inputOne-java and test-outputone-java
-                await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputCardinalityOneEventHubName, Constants.EventHubsConnectionStringSenderSetting);
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.InputCardinalityOneEventHubName, Constants.EventHubsConnectionStringSenderSetting);
 
                 //Verify
                 IEnumerable<string> queueMessages = await StorageHelpers.ReadMessagesFromQueue(Constants.OutputOneEventHubQueueName);
@@ -88,16 +88,16 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
-        /*
+        
         [Fact]
-        public async Task EventHubTriggerAndOutputBinaryListMany_Succeeds()
+        public async Task EventHubTriggerAndOutputBinaryCardinalityManyListBinary_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
             {
                 await SetupQueue(Constants.OutputBinaryManyQueueName);
 
-                await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryManyEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryManyEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
 
                 //Verify
                 var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBinaryManyQueueName);
@@ -109,16 +109,16 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
-        */
+        
         [Fact]
-       public async Task EventHubTriggerAndOutputBinaryOne_Succeeds()
+       public async Task EventHubTriggerAndOutputBinaryCardinalityOne_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
             {
                 await SetupQueue(Constants.OutputBinaryOneQueueName);
 
-                await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryOneEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryOneEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
 
                 //Verify
                 var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBinaryOneQueueName);
@@ -130,16 +130,16 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
-        /*
+        
         [Fact]
-        public async Task EventHubTriggerAndOutputBinaryArrayMany_Succeeds()
+        public async Task EventHubTriggerAndOutputBinaryCardinalityManyArrayBinary_Succeeds()
         {
             string expectedEventId = Guid.NewGuid().ToString();
             try
             {
                 await SetupQueue(Constants.OutputBinaryArrayManyQueueName);
 
-                await EventHubsHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryManyArrayEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.InputBinaryManyArrayEventHubQueueName, Constants.EventHubsConnectionStringSenderSetting2);
 
                 //Verify
                 var queueMessage = await StorageHelpers.ReadFromQueue(Constants.OutputBinaryArrayManyQueueName);
@@ -151,9 +151,7 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
-        */
        
-
         private static async Task SetupQueue(string queueName)
         {
             //Clear queue

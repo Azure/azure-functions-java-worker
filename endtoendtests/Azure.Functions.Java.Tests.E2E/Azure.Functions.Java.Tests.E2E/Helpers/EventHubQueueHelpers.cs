@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
-    public class EventHubsHelpers
+    public class EventHubQueueHelpers
     {
         public static async Task SendJSONMessagesAsync(string eventId, string connectionString)
         {
