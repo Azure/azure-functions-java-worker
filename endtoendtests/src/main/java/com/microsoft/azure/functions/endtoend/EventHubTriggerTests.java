@@ -107,6 +107,61 @@ public class EventHubTriggerTests {
         output.setValue(messages[0]);
     }
 
+    public static int count = 1;
+    public static int countExp = 1;
+
+    @FunctionName("EventHubOutputFixedDelayRetry")
+    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
+    public void EventHubOutputFixedDelayRetry(
+            @EventHubTrigger(name = "message", eventHubName = "fixed-retry", connection = "AzureWebJobsEventHubSender", cardinality = Cardinality.ONE) String message,
+            @QueueOutput(name = "output", queueName = "fixed-retry", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+            final ExecutionContext context
+    ) throws Exception {
+        if(count<3) {
+            count ++;
+            throw new Exception("error");
+        }
+        context.getLogger().info("Java Event Hub Output function processed a message: " + message);
+        output.setValue(message);
+    }
+
+    @FunctionName("EventHubOutputExponentialBackoffRetry")
+    @ExponentialBackoffRetry(maxRetryCount = 3, minimumInterval = "00:00:01", maximumInterval = "00:00:03")
+    public void EventHubOutputExponentialBackoffRetry(
+            @EventHubTrigger(name = "message", eventHubName = "exponential-retry", connection = "AzureWebJobsEventHubSender", cardinality = Cardinality.ONE) String message,
+            @QueueOutput(name = "output", queueName = "exponential-retry", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+            final ExecutionContext context) throws Exception {
+        if(countExp<3) {
+            countExp ++;
+            throw new Exception("error");
+        }
+        context.getLogger().info("Java Event Hub Output function processed a message: " + message);
+        output.setValue(message);
+    }
+
+    @FunctionName("EventHubTriggerRetryContextCount")
+    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
+    public void EventHubTriggerRetryContextCount(
+            @EventHubTrigger(name = "message", eventHubName = "retry-count", connection = "AzureWebJobsEventHubSender", cardinality = Cardinality.ONE) String message,
+            @QueueOutput(name = "output", queueName = "retry-count", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+            final ExecutionContext context) throws RuntimeException {
+        if(context.getRetryContext().getRetrycount() == 0){
+            throw new RuntimeException("EventHubTriggerRetryContextCount error threw");
+        }
+        context.getLogger().info("Java Event Hub Output function processed a message: " + message);
+        output.setValue(String.valueOf(context.getRetryContext().getRetrycount()));
+    }
+
+    @FunctionName("EventHubTriggerMaxRetryContextCount")
+    @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:05")
+    public void EventHubTriggerMaxRetryContextCount(
+            @EventHubTrigger(name = "message", eventHubName = "max-retry-count", connection = "AzureWebJobsEventHubSender_2", cardinality = Cardinality.ONE) String message,
+            @QueueOutput(name = "output", queueName = "max-retry-count", connection = "AzureWebJobsStorage") OutputBinding<String> output,
+            final ExecutionContext context) {
+        context.getLogger().info("Java Event Hub Output function processed a message: " + message);
+        output.setValue(String.valueOf(context.getRetryContext().getMaxretrycount()));
+    }
+
     public static class SystemProperty {
       public String SequenceNumber;
       public String Offset;
