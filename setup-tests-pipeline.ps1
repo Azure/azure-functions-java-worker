@@ -107,7 +107,7 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
     
     $agent = new-item -type directory -force $PSScriptRoot\agent
     $filename = "applicationinsights-agent.jar"
-    $result = [System.IO.Path]::Combine($output, $filename)
+    $result = [System.IO.Path]::Combine($agent, $filename)
     echo "re-jar $filename"
 
     cd -Path $extract -PassThru
