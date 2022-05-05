@@ -19,8 +19,6 @@
 		<functionAppName>azure-functions-java-endtoendtests</functionAppName>
 		<functionAppRegion>westus</functionAppRegion>
 		<functionResourceGroup>java-functions-group</functionResourceGroup>
-<!--		<stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>-->
-<!--		<allowTelemetry>false</allowTelemetry>-->
 	</properties>
 
 	<repositories>
