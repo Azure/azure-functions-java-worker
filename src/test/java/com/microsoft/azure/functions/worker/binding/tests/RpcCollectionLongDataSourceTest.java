@@ -4,6 +4,7 @@ import com.microsoft.azure.functions.rpc.messages.CollectionSInt64;
 import com.microsoft.azure.functions.rpc.messages.CollectionSInt64.Builder;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionLongDataSource;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
@@ -96,7 +97,7 @@ public class  RpcCollectionLongDataSourceTest{
         RpcCollectionLongDataSource stringData = new RpcCollectionLongDataSource(sourceKey, typedDataCollectionLong);
 
 
-        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(Long.class));
+        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TypeUtils.parameterize(List.class, Long.class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Long> actualLongList  = (List) actualArg.getValue();
         Long actualLong = actualLongList.get(0);
