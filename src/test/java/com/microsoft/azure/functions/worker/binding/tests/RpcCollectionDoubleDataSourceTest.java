@@ -4,6 +4,7 @@ package com.microsoft.azure.functions.worker.binding.tests;
 import com.microsoft.azure.functions.rpc.messages.CollectionDouble;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionDoubleDataSource;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
@@ -95,7 +96,7 @@ public class RpcCollectionDoubleDataSourceTest {
 
         RpcCollectionDoubleDataSource data = new RpcCollectionDoubleDataSource(sourceKey, typedDataCollectionDouble);
 
-        Optional<BindingData> actualBindingData = data.computeByName(sourceKey, Utility.getActualType(Double.class));
+        Optional<BindingData> actualBindingData = data.computeByName(sourceKey, TypeUtils.parameterize(List.class, Double.class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Double> actualDoubleList  = (List) actualArg.getValue();
         Double actualLong = actualDoubleList.get(0);
