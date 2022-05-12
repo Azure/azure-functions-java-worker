@@ -151,7 +151,97 @@ namespace Azure.Functions.Java.Tests.E2E
                 await StorageHelpers.ClearQueue(Constants.OutputEventHubQueueName);
             }
         }
-       
+
+        [Fact]
+        public async Task EventHubOutputFixedDelayRetry()
+        {
+            string expectedEventId = Guid.NewGuid().ToString();
+            try
+            {
+                await SetupQueue(Constants.FixedDelayRetry);
+
+                //send message to eventhub
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.FixedDelayRetry, Constants.EventHubsConnectionStringSenderSetting);
+
+                //Verify
+                var queueMessage = await StorageHelpers.ReadFromQueue(Constants.FixedDelayRetry);
+                Assert.Contains(expectedEventId, queueMessage);
+            }
+            finally
+            {
+                //Clear queue
+                await StorageHelpers.ClearQueue(Constants.FixedDelayRetry);
+            }
+        }
+
+        [Fact]
+        public async Task EventHubOutputExponentialBackoffRetry()
+        {
+            string expectedEventId = Guid.NewGuid().ToString();
+            try
+            {
+                await SetupQueue(Constants.ExponentialBackoffRetry);
+
+                // Need to setup EventHubs: test-input-java and test-output-java
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.ExponentialBackoffRetry, Constants.EventHubsConnectionStringSenderSetting);
+
+                //Verify
+                var queueMessage = await StorageHelpers.ReadFromQueue(Constants.ExponentialBackoffRetry);
+                Assert.Contains(expectedEventId, queueMessage);
+            }
+            finally
+            {
+                //Clear queue
+                await StorageHelpers.ClearQueue(Constants.ExponentialBackoffRetry);
+            }
+        }
+
+        [Fact]
+        public async Task EventHubTriggerRetryContextCount()
+        {
+            string expectedRetryCount = "1";
+            string expectedEventId = Guid.NewGuid().ToString();
+            try
+            {
+                await SetupQueue(Constants.RetryCount);
+
+                // Need to setup EventHubs: test-input-java and test-output-java
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.RetryCount, Constants.EventHubsConnectionStringSenderSetting);
+
+                //Verify
+                var queueMessage = await StorageHelpers.ReadFromQueue(Constants.RetryCount);
+                Assert.Equal(expectedRetryCount, queueMessage);
+            }
+            finally
+            {
+                //Clear queue
+                await StorageHelpers.ClearQueue(Constants.RetryCount);
+            }
+        }
+
+        [Fact]
+        public async Task EventHubTriggerMaxRetryContextCount()
+        {
+            string expectedMaxRetryCount = "3";
+            string expectedEventId = Guid.NewGuid().ToString();
+            try
+            {
+                await SetupQueue(Constants.MaxRetryCount);
+
+                // Need to setup EventHubs: test-input-java and test-output-java
+                await EventHubQueueHelpers.SendMessagesAsync(expectedEventId, Constants.MaxRetryCount, Constants.EventHubsConnectionStringSenderSetting2);
+
+                //Verify
+                var queueMessage = await StorageHelpers.ReadFromQueue(Constants.MaxRetryCount);
+                Assert.Equal(expectedMaxRetryCount, queueMessage);
+            }
+            finally
+            {
+                //Clear queue
+                await StorageHelpers.ClearQueue(Constants.MaxRetryCount);
+            }
+        }
+
         private static async Task SetupQueue(string queueName)
         {
             //Clear queue
