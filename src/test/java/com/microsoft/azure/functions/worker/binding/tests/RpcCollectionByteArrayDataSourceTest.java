@@ -7,9 +7,12 @@ import com.microsoft.azure.functions.rpc.messages.CollectionBytes;
 import com.microsoft.azure.functions.rpc.messages.CollectionBytes.Builder;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -106,7 +109,7 @@ public class RpcCollectionByteArrayDataSourceTest {
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
-        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(byte[].class));
+        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TypeUtils.parameterize(List.class, byte[].class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<byte[]> actualBytes = (List) actualArg.getValue();
         String actualString = new String(actualBytes.get(0));
@@ -130,7 +133,7 @@ public class RpcCollectionByteArrayDataSourceTest {
 
         RpcCollectionByteArrayDataSource stringData = new RpcCollectionByteArrayDataSource(sourceKey, typedDataCollectionBytes);
 
-        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(Byte[].class));
+        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TypeUtils.parameterize(List.class, Byte[].class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Byte[]> actualBytes = (List) actualArg.getValue();
         String actualString = new String(ArrayUtils.toPrimitive(actualBytes.get(0)));
