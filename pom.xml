@@ -22,6 +22,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<azure.functions.java.core.library.version>1.0.0</azure.functions.java.core.library.version>
 		<azure.functions.java.library.version>2.0.1-SNAPSHOT</azure.functions.java.library.version>
 	</properties>
@@ -141,6 +143,7 @@
 			</extension>
 		</extensions>
 		<plugins>
+			<!-- This plugin generates Java source files from .proto files -->
 			<plugin>
 				<groupId>org.xolstice.maven.plugins</groupId>
 				<artifactId>protobuf-maven-plugin</artifactId>
@@ -160,6 +163,8 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- This plugin enforces that maven plugin must above 3.2.0 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
@@ -180,9 +185,15 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- This plugin configures the basic requirements for compilation -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
 			</plugin>
+
+			<!-- This plugin is used to shaded jars -->
 			<plugin>
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.2.4</version>
@@ -278,10 +289,8 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-			</plugin>
+
+			<!-- This plugin is used to generated test jar which contains all test classes -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -295,6 +304,8 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- This plugin adds generated grpc class files to source directory -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
@@ -314,7 +325,11 @@
 					</execution>
 				</executions>
 			</plugin>
+
+
+			<!-- This plugin helps to config and run unit tests -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.22.2</version> <!-- or some other version -->
 				<configuration>
