@@ -28,7 +28,7 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
                     urlsList.addAll(workerUrls);
                     URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
                     URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
-                    loadDrivers(loader);
+//                    loadDrivers(loader);
                     classLoaderInstance = loader;
                 }
             }
