@@ -4,6 +4,7 @@ import com.microsoft.azure.functions.rpc.messages.CollectionString.Builder;
 import com.microsoft.azure.functions.rpc.messages.CollectionString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionStringDataSource;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
@@ -73,7 +74,7 @@ public class RpcCollectionStringDataSourceTest {
 
         RpcCollectionStringDataSource stringData = new RpcCollectionStringDataSource(sourceKey, typedDataCollectionString);
 
-        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, Utility.getActualType(String.class));
+        Optional<BindingData> actualBindingData = stringData.computeByName(sourceKey, TypeUtils.parameterize(List.class, String.class));
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
