@@ -172,7 +172,6 @@ public class JavaFunctionBroker {
 	}
 
 	public void addJavaAnnotationLibrary() throws IOException {
-		WorkerLogManager.getSystemLogger().warning("Customer is not providing java annotation files, they may not use the latest version of java library and maven plugin.");
 		String javaLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + Constants.JAVA_LIBRARY_DIRECTORY;
 		File javaLib = new File(javaLibPath);
 		if (!javaLib.exists()) throw new FileNotFoundException("Error loading java annotation library jar, location doesn't exist: " + javaLibPath);
