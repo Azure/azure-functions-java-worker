@@ -45,7 +45,10 @@ public class FunctionEnvironmentReloadRequestHandler
 		}
 		
 		// Update Environment variables in the JVM
-		try {			
+		// The JVM creates a copy of the environment variables when it starts.
+		// This will edit that copy, not the environment variables for the parent process that started the JVM
+		try {
+			// update env variable for running JVM on Windows
 			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
 			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
 			theEnvironmentField.setAccessible(true);
@@ -61,6 +64,7 @@ public class FunctionEnvironmentReloadRequestHandler
 			WorkerLogManager.getSystemLogger().log(Level.INFO,
 					"Finished resetting environment variables in the JVM");
 		} catch (NoSuchFieldException e) {
+			// update env variable for running JVM on Linux
 			Class[] classes = Collections.class.getDeclaredClasses();
 			Map<String, String> env = System.getenv();
 			for (Class cl : classes) {
