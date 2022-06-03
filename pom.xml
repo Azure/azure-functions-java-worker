@@ -186,13 +186,6 @@
 				</executions>
 			</plugin>
 
-			<!-- This plugin configures the basic requirements for compilation -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
-			</plugin>
-
 			<!-- This plugin is used to shaded jars -->
 			<plugin>
 				<artifactId>maven-shade-plugin</artifactId>
