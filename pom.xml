@@ -186,6 +186,23 @@
 				</executions>
 			</plugin>
 
+			<!-- basic compile settings-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<configuration>
+							<excludes>
+								<!-- module-info.java is compiled using ModiTect -->
+								<exclude>module-info.java</exclude>
+							</excludes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!-- This plugin is used to shaded jars -->
 			<plugin>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -278,6 +295,46 @@
 									<shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
 								</relocation>
 							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.moditect</groupId>
+				<artifactId>moditect-maven-plugin</artifactId>
+				<version>1.0.0.RC2</version>
+				<executions>
+					<execution>
+						<id>add-module-info-11</id>
+						<phase>package</phase>
+						<goals>
+							<goal>add-module-info</goal>
+						</goals>
+						<configuration>
+							<jvmVersion>11</jvmVersion>
+							<module>
+								<moduleInfoFile>${project.build.sourceDirectory}/module-info.java</moduleInfoFile>
+								<mainClass>com.microsoft.azure.functions.worker.Application</mainClass>
+							</module>
+							<!-- Overwrite the previously generated JAR file, if any -->
+							<overwriteExistingFiles>true</overwriteExistingFiles>
+						</configuration>
+					</execution>
+					<execution>
+						<id>add-module-info-17</id>
+						<phase>package</phase>
+						<goals>
+							<goal>add-module-info</goal>
+						</goals>
+						<configuration>
+							<jvmVersion>17</jvmVersion>
+							<module>
+								<moduleInfoFile>${project.build.sourceDirectory}/module-info.java</moduleInfoFile>
+								<mainClass>com.microsoft.azure.functions.worker.Application</mainClass>
+							</module>
+							<!-- Overwrite the previously generated JAR file, if any -->
+							<overwriteExistingFiles>true</overwriteExistingFiles>
 						</configuration>
 					</execution>
 				</executions>
