@@ -212,6 +212,7 @@
 										<Implementation-Title>${project.name}</Implementation-Title>
 										<Implementation-Version>${project.version}</Implementation-Version>
 										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+										<Add-Opens>java.base/java.lang</Add-Opens>
 									</manifestEntries>
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
@@ -335,6 +336,7 @@
 				<configuration>
 					<argLine>
 						-javaagent:"${settings.localRepository}"\org\jmockit\jmockit\1.49\jmockit-1.49.jar
+						--add-opens java.base/java.lang=ALL-UNNAMED
 					</argLine>
 				</configuration>
 			</plugin>
