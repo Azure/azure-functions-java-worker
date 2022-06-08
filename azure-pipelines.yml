@@ -44,7 +44,7 @@ jobs:
         displayName: 'Check Maven is installed'
       - pwsh: |
           java -version
-        displayName: 'Check default java version on the vm'
+        displayName: 'Check default java version'
       - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"

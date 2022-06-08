@@ -336,7 +336,6 @@
 				<configuration>
 					<argLine>
 						-javaagent:"${settings.localRepository}"\org\jmockit\jmockit\1.49\jmockit-1.49.jar
-						--add-opens java.base/java.lang=ALL-UNNAMED
 					</argLine>
 				</configuration>
 			</plugin>
