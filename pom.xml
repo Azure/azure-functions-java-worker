@@ -191,6 +191,32 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
+				<executions>
+					<execution>
+						<id>compile-java-8</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<source>1.8</source>
+							<target>1.8</target>
+						</configuration>
+					</execution>
+					<execution>
+						<id>compile-java-9</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<release>11</release>
+							<compileSourceRoots>
+								<compileSourceRoot>${project.basedir}/src/main/java11</compileSourceRoot>
+							</compileSourceRoots>
+							<multiReleaseOutput>true</multiReleaseOutput>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<!-- This plugin is used to shaded jars -->
@@ -212,6 +238,7 @@
 										<Implementation-Title>${project.name}</Implementation-Title>
 										<Implementation-Version>${project.version}</Implementation-Version>
 										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+										<Multi-Release>true</Multi-Release>
 									</manifestEntries>
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
@@ -335,6 +362,7 @@
 				<configuration>
 					<argLine>
 						-javaagent:"${settings.localRepository}"\org\jmockit\jmockit\1.49\jmockit-1.49.jar
+						--add-opens java.base/java.lang=ALL-UNNAMED
 					</argLine>
 				</configuration>
 			</plugin>
