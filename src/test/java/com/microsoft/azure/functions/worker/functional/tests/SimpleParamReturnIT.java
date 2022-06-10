@@ -9,8 +9,9 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.Parameter;
 import static org.junit.Assert.*;
 
+
 @RunWith(Parameterized.class)
-public class SimpleParamReturnTest extends FunctionsTestBase {
+public class SimpleParamReturnIT extends FunctionsTestBase {
 
 	@Parameters
 	public static Object[] data() {

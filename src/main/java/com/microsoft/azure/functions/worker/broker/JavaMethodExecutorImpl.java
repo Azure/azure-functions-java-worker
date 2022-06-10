@@ -4,6 +4,7 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.*;
 import com.microsoft.azure.functions.worker.description.*;
 import com.microsoft.azure.functions.worker.reflect.*;
@@ -17,6 +18,8 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
     public JavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException
     {
+        WorkerLogManager.getSystemLogger().info("Initializing JavaMethodExecutorImpl from java8");
+        System.out.println("Initializing JavaMethodExecutorImpl from java8");
         descriptor.validateMethodInfo();
 
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
