@@ -307,7 +307,7 @@
 			</plugin>
 
 			<!-- This plugin adds generated grpc class files to source directory -->
-			<plugin>
+<!-- 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.8</version>
@@ -325,7 +325,7 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 
 
 			<!-- This plugin helps to config and run unit tests -->
