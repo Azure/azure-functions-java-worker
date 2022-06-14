@@ -78,7 +78,13 @@ message StreamingMessage {
 
     // Worker indexing message types
     FunctionsMetadataRequest functions_metadata_request = 29;
-    FunctionMetadataResponses function_metadata_responses = 30;
+    FunctionMetadataResponse function_metadata_response = 30;
+
+    // Host sends required metadata to worker to load functions
+    FunctionLoadRequestCollection function_load_request_collection = 31;
+
+    // Host gets the list of function load responses
+    FunctionLoadResponseCollection function_load_response_collection = 32;
   }
 }
 
@@ -107,6 +113,9 @@ message WorkerInitRequest {
 
   // Full path of worker.config.json location
   string worker_directory = 4;
+
+  // base directory for function app
+  string function_app_directory = 5;
 }
 
 // Worker responds with the result of initializing itself
@@ -220,7 +229,17 @@ message CloseSharedMemoryResourcesResponse {
   map<string, bool> close_map_results = 1;
 }
 
-// Host tells the worker to load a Function
+// Host tells the worker to load a list of Functions
+message FunctionLoadRequestCollection {
+  repeated FunctionLoadRequest function_load_requests = 1;
+}
+
+// Host gets the list of function load responses
+message FunctionLoadResponseCollection {
+  repeated FunctionLoadResponse function_load_responses = 1;
+}
+
+// Load request of a single Function
 message FunctionLoadRequest {
   // unique function identifier (avoid name collisions, facilitate reload case)
   string function_id = 1;
@@ -273,6 +292,12 @@ message RpcFunctionMetadata {
 
   // Raw binding info
   repeated string raw_bindings = 10;
+
+  // unique function identifier (avoid name collisions, facilitate reload case)
+  string function_id = 13;
+
+  // A flag indicating if managed dependency is enabled or not
+  bool managed_dependency_enabled = 14;
 }
 
 // Host tells worker it is ready to receive metadata
@@ -282,12 +307,15 @@ message FunctionsMetadataRequest {
 }
 
 // Worker sends function metadata back to host
-message FunctionMetadataResponses {
+message FunctionMetadataResponse {
   // list of function indexing responses
-  repeated FunctionLoadRequest function_load_requests_results = 1;
+  repeated RpcFunctionMetadata function_metadata_results = 1;
 
   // status of overall metadata request
   StatusResult result = 2;
+
+  // if set to true then host will perform indexing
+  bool use_default_metadata_indexing = 3;
 }
 
 // Host requests worker to invoke a Function
@@ -384,8 +412,8 @@ enum RpcDataType {
   bytes = 3;
   stream = 4;
   http = 5;
-  int_x = 6;
-  double_x = 7;
+  int = 6;
+  double = 7;
   collection_bytes = 8;
   collection_string = 9;
   collection_double = 10;
@@ -525,6 +553,14 @@ message RpcException {
 
   // Textual message describing the exception
   string message = 2;
+
+  // Worker specifies whether exception is a user exception, 
+  // for purpose of application insights logging. Defaults to false. 
+  optional bool is_user_exception = 4;
+
+  // Type of exception. If it's a user exception, the type is passed along to app insights.
+  // Otherwise, it's ignored for now.
+  optional string type = 5; 
 }
 
 // Http cookie type. Note that only name and value are used for Http requests
