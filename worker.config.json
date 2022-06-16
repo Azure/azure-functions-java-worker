@@ -5,5 +5,37 @@
         "defaultExecutablePath": "%JAVA_HOME%/bin/java",
         "defaultWorkerPath": "azure-functions-java-worker.jar",
         "arguments": ["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPv4Stack=true -jar", "%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
-    }
+    },
+    "profiles":
+    [
+        {
+            "profileName":"AppInsightsConsumptionOptOut",
+            "conditions":[
+                {"conditionType":"environment","conditionName":"languageWorkers:java:arguments","conditionExpression":"-DaiAgentOptOut"},
+                {"conditionType":"hostProperty","conditionName":"sku","conditionExpression":"Dynamic"}
+            ],
+            "description":{
+                "arguments": ["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPv4Stack=true -jar", "%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
+            }
+        },
+        {
+            "profileName":"AppInsightsConsumption",
+            "conditions":[
+                {"conditionType":"hostProperty","conditionName":"sku","conditionExpression":"Dynamic"}
+            ],
+            "description":{
+                "arguments":["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPv4Stack=true -javaagent:\"{workerDirectoryPath}/agent/applicationinsights-agent.jar\" -DLazySetOptIn=false -jar", "%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
+            }
+        },
+        {
+            "profileName":"AppInsightsEnabledDedicated",
+            "conditions":[
+                {"conditionType":"environment","conditionName":"APPLICATIONINSIGHTS_ENABLE_AGENT","conditionExpression":"true"},
+                {"conditionType":"hostProperty","conditionName":"sku","conditionExpression":"(Standard|ElasticPremium)"}
+            ],
+            "description":{
+                "arguments": ["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPv4Stack=true -javaagent:\"{workerDirectoryPath}/agent/applicationinsights-agent.jar\" -jar", "%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
+            }
+        }
+    ]
 }
