@@ -384,6 +384,14 @@
 <!--&lt;!&ndash;						&#45;&#45;add-opens java.base/java.lang=ALL-UNNAMED&ndash;&gt;-->
 <!--					</argLine>-->
 				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
