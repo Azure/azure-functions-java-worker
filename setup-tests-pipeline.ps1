@@ -78,6 +78,20 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
     if (Test-Path -Path $oldExtract) {
         Remove-Item -Path $oldExtract -Recurse
     }
+
+    echo "Start downloading '$ApplicationInsightsAgentUrl' to '$PSScriptRoot'"
+    try {
+        Invoke-WebRequest -Uri $ApplicationInsightsAgentUrl -OutFile $ApplicationInsightsAgentFile
+    } catch {
+        echo "An error occurred. Download fails" $ApplicationInsightsAgentFile
+        echo "Exiting"
+        exit 1
+    }
+
+    if (-not(Test-Path -Path $ApplicationInsightsAgentFile)) {
+        echo "$ApplicationInsightsAgentFile do not exist."
+        exit 1
+    }
     
     $extract = new-item -type directory -force $PSScriptRoot\extract
     if (-not(Test-Path -Path $extract)) { 

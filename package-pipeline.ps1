@@ -56,6 +56,20 @@ if (-not(Test-Path -Path $extract)) {
     exit 1
 }
 
+echo "Start downloading '$ApplicationInsightsAgentUrl' to '$PSScriptRoot'"
+try {
+    Invoke-WebRequest -Uri $ApplicationInsightsAgentUrl -OutFile $ApplicationInsightsAgentFile
+} catch {
+    echo "An error occurred. Download fails" $ApplicationInsightsAgentFile
+    echo "Exiting"
+    exit 1
+}
+
+if (-not(Test-Path -Path $ApplicationInsightsAgentFile)) {
+    echo "$ApplicationInsightsAgentFile do not exist."
+    exit 1
+}
+
 echo "Start extracting content from $ApplicationInsightsAgentFilename to extract folder"
 cd -Path $extract -PassThru
 jar xf $ApplicationInsightsAgentFile
@@ -91,7 +105,8 @@ if (-not(Test-Path -Path $result)) {
 Write-Host "Creating the functions.codeless file"
 New-Item -path $PSScriptRoot\agent -type file -name "functions.codeless"
 
-Copy-Item "$PSScriptRoot/agent" "pkg/agent" -Recurse -Verbose
+cd $PSScriptRoot
+Copy-Item $PSScriptRoot/agent $PSScriptRoot/pkg/agent -Recurse -Verbose
 
 set-location pkg
 nuget pack -Properties version=$buildNumber
