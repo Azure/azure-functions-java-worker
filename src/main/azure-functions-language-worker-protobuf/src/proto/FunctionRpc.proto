@@ -440,8 +440,8 @@ enum RpcDataType {
   bytes = 3;
   stream = 4;
   http = 5;
-  int = 6;
-  double = 7;
+  int_x = 6;
+  double_x = 7;
   collection_bytes = 8;
   collection_string = 9;
   collection_double = 10;
