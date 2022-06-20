@@ -168,7 +168,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.0.0-M2</version>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<id>enforce-maven</id>
@@ -295,7 +295,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.2.2</version>
 				<executions>
 					<execution>
 						<phase>test-compile</phase>
@@ -305,28 +305,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
-			<!-- This plugin adds generated grpc class files to source directory -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>add-source</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>${project.build.directory}/generated-sources/protobuf/java/</source>
-							</sources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
 
 			<!-- This plugin helps to config and run unit tests -->
 			<plugin>
