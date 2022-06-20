@@ -212,6 +212,7 @@
 										<Implementation-Title>${project.name}</Implementation-Title>
 										<Implementation-Version>${project.version}</Implementation-Version>
 										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+										<Add-Opens>java.base/java.lang java.base/java.util</Add-Opens>
 									</manifestEntries>
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>

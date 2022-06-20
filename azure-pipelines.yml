@@ -38,9 +38,13 @@ jobs:
       - task: NuGetToolInstaller@1
         inputs:
           checkLatest: true
+        displayName: 'Install NuGet Tool'
       - pwsh: |
           Get-Command mvn
         displayName: 'Check Maven is installed'
+      - pwsh: |
+          java -version
+        displayName: 'Check default java version'
       - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
