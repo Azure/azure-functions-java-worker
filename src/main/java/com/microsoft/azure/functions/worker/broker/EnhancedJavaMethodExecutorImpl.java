@@ -60,7 +60,7 @@ public class EnhancedJavaMethodExecutorImpl implements JavaMethodExecutor {
     }
 
     private Class<?> getContainingClass(String className) throws ClassNotFoundException {
-        return Class.forName(className, true, this.classLoader);
+        return Class.forName(className, false, this.classLoader);
     }
 
     private final Class<?> containingClass;
