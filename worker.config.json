@@ -21,7 +21,7 @@
         {
             "profileName":"AppInsightsOptOutLinux",
             "conditions":[
-                {"conditionType":"environment","conditionName":"languageWorkers_java_arguments","conditionExpression":".*-DaiAgentOptOut.*"},
+                {"conditionType":"environment","conditionName":"languageWorkers__java__arguments","conditionExpression":".*-DaiAgentOptOut.*"},
                 {"conditionType":"hostProperty","conditionName":"platform","conditionExpression":"LINUX"}
             ],
             "description":{
