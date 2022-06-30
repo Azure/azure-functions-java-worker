@@ -40,7 +40,7 @@
         {
             "profileName":"AppInsightsNoPlaceholder",
             "conditions":[
-                {"conditionType":"environment","conditionName":"APPLICATIONINSIGHTS_ENABLE_AGENT","conditionExpression":"true"}
+                {"conditionType":"environment","conditionName":"APPLICATIONINSIGHTS_ENABLE_AGENT","conditionExpression":"(?i)true$"}
             ],
             "description":{
                 "arguments": ["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPv4Stack=true -javaagent:\"{workerDirectoryPath}/agent/applicationinsights-agent.jar\" -jar", "%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
