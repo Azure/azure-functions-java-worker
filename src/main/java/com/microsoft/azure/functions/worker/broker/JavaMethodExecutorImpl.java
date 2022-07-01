@@ -15,7 +15,9 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Thread-Safety: Multiple thread.
  */
 public class JavaMethodExecutorImpl implements JavaMethodExecutor {
-    public JavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+
+
+    protected JavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException
     {
         WorkerLogManager.getSystemLogger().info("Initializing JavaMethodExecutorImpl from java8");

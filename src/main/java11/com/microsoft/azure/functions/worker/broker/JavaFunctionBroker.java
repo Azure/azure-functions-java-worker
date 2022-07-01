@@ -1,14 +1,10 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.microsoft.azure.functions.rpc.messages.*;
+import com.kc.DepTool;
+import com.microsoft.azure.functions.rpc.messages.BindingInfo;
+import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
+import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
+import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
@@ -16,9 +12,22 @@ import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * A broker between JAR methods and the function RPC. It can load methods using
@@ -26,6 +35,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
  */
 public class JavaFunctionBroker {
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
+		WorkerLogManager.getSystemLogger().info("this is java11 JavaFunctionBroker.class" + DepTool.printVersion());
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
 	}
@@ -35,7 +45,9 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 
 		addSearchPathsToClassLoader(descriptor);
-		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
+//		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
+
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider, this.cxModule);
 
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
 	}
@@ -91,6 +103,7 @@ public class JavaFunctionBroker {
 	}
 
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
+		createCxModuleLayer(function);
 		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
 		classLoaderProvider.addCustomerUrl(jarUrl);
 		if(function.getLibDirectory().isPresent()) {
@@ -98,6 +111,27 @@ public class JavaFunctionBroker {
 		}else{
 			registerJavaLibrary();
 		}
+	}
+
+	private void createCxModuleLayer(FunctionMethodDescriptor function) {
+		Path jarPath = Paths.get(function.getJarPath());
+		ModuleFinder jarFinder = ModuleFinder.of(jarPath);
+
+		Set<ModuleReference> moduleSet = jarFinder.findAll();
+		this.cxModuleName = moduleSet.iterator().next().descriptor().name();
+
+		Path libPath = Paths.get(function.getLibDirectory().get().getAbsolutePath());
+		ModuleFinder libFinder = ModuleFinder.of(libPath);
+		ModuleFinder beforeFinder = ModuleFinder.compose(jarFinder, libFinder);
+		Set<ModuleReference> all = beforeFinder.findAll();
+		Set<String> root = all.stream().map(reference -> reference.descriptor().name()).collect(Collectors.toSet());
+		ModuleLayer parentLayer = ModuleLayer.boot();
+		Configuration parentConfig = parentLayer.configuration();
+		Configuration configuration = parentConfig.resolve(beforeFinder, ModuleFinder.of(), root);
+		this.cxModuleLayer = parentLayer.defineModulesWithOneLoader(configuration, classLoaderProvider.createClassLoader());
+
+		Optional<Module> module = this.cxModuleLayer.findModule(this.cxModuleName);
+		this.cxModule = module.orElseThrow(() -> new RuntimeException("cx module not found"));
 	}
 
 	void registerWithClassLoaderProvider(File libDirectory) {
@@ -166,4 +200,7 @@ public class JavaFunctionBroker {
 
 	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
+	private ModuleLayer cxModuleLayer;
+	private String cxModuleName;
+	private Module cxModule;
 }

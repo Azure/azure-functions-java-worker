@@ -14,7 +14,7 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Thread-Safety: Multiple thread.
  */
 public class JavaMethodExecutorImpl implements JavaMethodExecutor {
-    public JavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+    protected JavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider, Module cxModule)
             throws ClassNotFoundException, NoSuchMethodException
     {
         WorkerLogManager.getSystemLogger().info("Initializing JavaMethodExecutorImpl from java11");
@@ -23,7 +23,7 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
         descriptor.validateMethodInfo();
 
         this.classLoader = classLoaderProvider.createClassLoader();
-        this.containingClass = getContainingClass(descriptor.getFullClassName());
+        this.containingClass = getContainingClass(descriptor.getFullClassName(), cxModule);
         this.overloadResolver = new ParameterResolver();
 
         for (Method method : this.containingClass.getMethods()) {
@@ -63,8 +63,8 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
         }
     }
 
-    private Class<?> getContainingClass(String className) throws ClassNotFoundException {
-        return Class.forName(className, true, this.classLoader);
+    private Class<?> getContainingClass(String className, Module cxModule) throws ClassNotFoundException {
+        return Class.forName(className, true, cxModule.getClassLoader());
     }
 
     private final Class<?> containingClass;
