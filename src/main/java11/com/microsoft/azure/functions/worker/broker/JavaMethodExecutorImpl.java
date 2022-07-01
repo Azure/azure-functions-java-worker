@@ -22,7 +22,7 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
 
         descriptor.validateMethodInfo();
 
-        this.classLoader = classLoaderProvider.createClassLoader();
+        this.classLoader = cxModule.getClassLoader();
         this.containingClass = getContainingClass(descriptor.getFullClassName(), cxModule);
         this.overloadResolver = new ParameterResolver();
 
@@ -64,7 +64,7 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
     }
 
     private Class<?> getContainingClass(String className, Module cxModule) throws ClassNotFoundException {
-        return Class.forName(className, true, cxModule.getClassLoader());
+        return Class.forName(className, true, this.classLoader);
     }
 
     private final Class<?> containingClass;
