@@ -47,7 +47,7 @@ public class JavaFunctionBroker {
 		addSearchPathsToClassLoader(descriptor);
 //		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
 
-		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider, this.cxModule);
+		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
 
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
 	}
@@ -103,7 +103,6 @@ public class JavaFunctionBroker {
 	}
 
 	private void addSearchPathsToClassLoader(FunctionMethodDescriptor function) throws IOException {
-		createCxModuleLayer(function);
 		URL jarUrl = new File(function.getJarPath()).toURI().toURL();
 		classLoaderProvider.addCustomerUrl(jarUrl);
 		if(function.getLibDirectory().isPresent()) {
@@ -111,27 +110,31 @@ public class JavaFunctionBroker {
 		}else{
 			registerJavaLibrary();
 		}
+		createCxModuleLayer(function);
 	}
 
 	private void createCxModuleLayer(FunctionMethodDescriptor function) {
 		Path jarPath = Paths.get(function.getJarPath());
 		ModuleFinder jarFinder = ModuleFinder.of(jarPath);
-
 		Set<ModuleReference> moduleSet = jarFinder.findAll();
 		this.cxModuleName = moduleSet.iterator().next().descriptor().name();
-
 		Path libPath = Paths.get(function.getLibDirectory().get().getAbsolutePath());
 		ModuleFinder libFinder = ModuleFinder.of(libPath);
 		ModuleFinder beforeFinder = ModuleFinder.compose(jarFinder, libFinder);
+
+		//TODO: should we find all cx dependencies or just gson in cx module Layer?
+//		Path gsonPath = Paths.get(function.getLibDirectory().get().getAbsolutePath() + "/com.google.gson");
+//		ModuleFinder gsonFinder = ModuleFinder.of(gsonPath);
+//		ModuleFinder beforeFinder = ModuleFinder.compose(jarFinder, gsonFinder);
+
 		Set<ModuleReference> all = beforeFinder.findAll();
 		Set<String> root = all.stream().map(reference -> reference.descriptor().name()).collect(Collectors.toSet());
 		ModuleLayer parentLayer = ModuleLayer.boot();
 		Configuration parentConfig = parentLayer.configuration();
 		Configuration configuration = parentConfig.resolve(beforeFinder, ModuleFinder.of(), root);
-		this.cxModuleLayer = parentLayer.defineModulesWithOneLoader(configuration, classLoaderProvider.createClassLoader());
-
-		Optional<Module> module = this.cxModuleLayer.findModule(this.cxModuleName);
-		this.cxModule = module.orElseThrow(() -> new RuntimeException("cx module not found"));
+//		this.cxModuleLayer = parentLayer.defineModulesWithOneLoader(configuration, classLoaderProvider.createClassLoader());
+		this.cxModuleLayer = parentLayer.defineModules(configuration, s -> classLoaderProvider.createClassLoader());
+		if (this.cxModuleLayer == null) throw new RuntimeException("cx module layer created failed.");
 	}
 
 	void registerWithClassLoaderProvider(File libDirectory) {
@@ -202,5 +205,4 @@ public class JavaFunctionBroker {
 	private final ClassLoaderProvider classLoaderProvider;
 	private ModuleLayer cxModuleLayer;
 	private String cxModuleName;
-	private Module cxModule;
 }
