@@ -113,6 +113,7 @@ public class JavaFunctionBroker {
 		createCxModuleLayer(function);
 	}
 
+	//Create a module layer for customer so that customer code and dependencies are isolated from boot layer (where our code running on)
 	private void createCxModuleLayer(FunctionMethodDescriptor function) {
 		Path jarPath = Paths.get(function.getJarPath());
 		ModuleFinder jarFinder = ModuleFinder.of(jarPath);
