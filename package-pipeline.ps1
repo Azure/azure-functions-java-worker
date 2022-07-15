@@ -77,7 +77,7 @@ if (Test-Path -Path $oldExtract) {
 # }
 
 $agent = new-item -type directory -force $PSScriptRoot\agent
-# $filename = "applicationinsights-agent.jar"
+$filename = "applicationinsights-agent.jar"
 $result = [System.IO.Path]::Combine($agent, $filename)
 # echo "re-jar $filename"
 
