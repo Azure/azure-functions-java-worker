@@ -12,7 +12,7 @@ function StopOnFailedExecution {
 
 # $ApplicationInsightsAgentVersion = '3.3.0'
 # $ApplicationInsightsAgentFilename = "applicationinsights-agent-${ApplicationInsightsAgentVersion}.jar"
-$ApplicationInsightsAgentUrl = "https://kcnormal.blob.core.windows.net/ai-agent-jars/applicationinsights-agent-3.3.1-SNAPSHOT.jar"
+$ApplicationInsightsAgentUrl = "https://kcnormal.blob.core.windows.net/fix-agent/applicationinsights-agent-3.3.1-SNAPSHOT.jar"
 
 Write-Host "Building azure-functions-java-worker" 
 cmd.exe /c '.\mvnBuild.bat'
