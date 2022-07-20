@@ -49,6 +49,8 @@ public class JavaFunctionBroker {
 
 		JavaMethodExecutor executor = new JavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
 
+
+
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
 	}
 
@@ -117,8 +119,6 @@ public class JavaFunctionBroker {
 	private void createCxModuleLayer(FunctionMethodDescriptor function) {
 		Path jarPath = Paths.get(function.getJarPath());
 		ModuleFinder jarFinder = ModuleFinder.of(jarPath);
-		Set<ModuleReference> moduleSet = jarFinder.findAll();
-		this.cxModuleName = moduleSet.iterator().next().descriptor().name();
 		Path libPath = Paths.get(function.getLibDirectory().get().getAbsolutePath());
 		ModuleFinder libFinder = ModuleFinder.of(libPath);
 		ModuleFinder beforeFinder = ModuleFinder.compose(jarFinder, libFinder);
@@ -205,5 +205,4 @@ public class JavaFunctionBroker {
 	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private ModuleLayer cxModuleLayer;
-	private String cxModuleName;
 }
