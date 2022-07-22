@@ -18,6 +18,12 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("WorkerStatus", "WorkerStatus");
         response.putCapabilities("RpcHttpBodyOnly", "RpcHttpBodyOnly");
         response.putCapabilities("RpcHttpTriggerMetadataRemoved", "RpcHttpTriggerMetadataRemoved");
+        WorkerMetadata.Builder workerMetadataBuilder = WorkerMetadata.newBuilder();
+        workerMetadataBuilder.setRuntimeName("Java");
+        workerMetadataBuilder.setRuntimeVersion(System.getProperty("java.version"));
+        workerMetadataBuilder.setWorkerVersion(Application.version());
+        workerMetadataBuilder.setWorkerBitness(System.getProperty("os.arch"));
+        response.setWorkerMetadata(workerMetadataBuilder);
         return "Worker initialized";
     }
 }
