@@ -13,6 +13,7 @@ trigger:
       - v3.x
       - release/3.x
       - release/main
+      - shreyasg/pipeline-linux
 pr:
   branches:
     include:
@@ -23,11 +24,46 @@ pr:
 
 
 jobs:
-  - job: "Build_And_Test_Java_Worker_Windows"
+  - job: "Build"
+    displayName: 'Build and test java worker'
+    strategy:
+      maxParallel: 1
+      matrix:
+        open-jdk-8-linux:
+          imageName: 'MMSUbuntu20.04TLS'
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_linux_hotspot_8u322b06.tar.gz'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
+          JDK_PATH: 'jdk8u322-b06'
+        open-jdk-8-windows:
+          imageName: 'MMS2019TLS'
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u322b06.zip'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
+          JDK_PATH: 'jdk8u322-b06'
+        microsoft-open-jdk-11-linux:
+          imageName: 'MMSUbuntu20.04TLS'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-linux-x64'
+          JDK_PATH: 'jdk-11.0.13+8'
+        microsoft-open-jdk-11-windows:
+          imageName: 'MMS2019TLS'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-windows-x64'
+          JDK_PATH: 'jdk-11.0.13+8'
+        microsoft-open-jdk-17-linux:
+          imageName: 'MMSUbuntu20.04TLS'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-17.0.3-linux-x64'
+          JDK_PATH: 'jdk-17.0.3+7'
+        microsoft-open-jdk-17-windows:
+          imageName: 'MMS2019TLS'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
+          JDK_PATH: 'jdk-17.0.3+7'
+    
     pool:
       name: '1ES-Hosted-AzFunc'
       demands:
-        - ImageOverride -equals MMS2019TLS
+        - ImageOverride -equals $(imageName)
 
     variables:
       ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
@@ -42,6 +78,11 @@ jobs:
       - pwsh: |
           Get-Command mvn
         displayName: 'Check Maven is installed'
+      - task: JavaToolInstaller@0
+        inputs:
+          versionSpec: '8'
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
       - pwsh: |
           java -version
         displayName: 'Check default java version'
@@ -73,25 +114,53 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.sh | bash /dev/stdin -v '6.0.100-rc.2.21505.57' -c 'release' --install-dir /usr/share/dotnet
         displayName: 'Install the .Net version used by the Core Tools for Linux'
         condition: eq( variables['Agent.OS'], 'Linux' )
+      - pwsh: |
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).zip"
+          Expand-Archive -Force "$(JAVA_VERSION).zip" .
+        displayName: 'Download Java for Windows'
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+      - pwsh: |
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
+          tar -xvzf "$(JAVA_VERSION).tar.gz"
+        displayName: 'Download Java for Linux'
+        condition: eq( variables['Agent.OS'], 'Linux' )
+      - pwsh: |
+          cd $(JDK_PATH)
+          $current = get-location | select -ExpandProperty Path
+          cd ..
+          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
+        displayName: 'Setup Java'
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        continueOnError: false
 
       - pwsh: |
           .\setup-tests-pipeline.ps1
         displayName: 'Setup test environment -- Install the Core Tools'
       - pwsh: |
           $currDir =  Get-Location
-          $Env:Path = $Env:Path+";$currDir\Azure.Functions.Cli"
-          ls $currDir\Azure.Functions.Cli
+          $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
+          ls $currDir/Azure.Functions.Cli
           func --version
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+      - bash: |
+          chmod +x ./Azure.Functions.Cli/func
+          chmod +x ./Azure.Functions.Cli/gozip
+          ls ./Azure.Functions.Cli
+          export PATH=$PATH:./Azure.Functions.Cli
+          func --version
+        condition: eq( variables['Agent.OS'], 'Linux' )
+      - pwsh: |
           cd ./endtoendtests
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
-          Copy-Item "confluent_cloud_cacert.pem" ".\target\azure-functions\azure-functions-java-endtoendtests"
+          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-endtoendtests"
         displayName: 'Package Java for E2E'
       - task: DotNetCoreCLI@2
         inputs:
           command: 'test'
           projects: |
-            endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
+            endtoendtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
         env:
+          JAVA_HOME: $(JavaHome)
           AzureWebJobsStorage: $(AzureWebJobsStorage)
           AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
           AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
@@ -108,7 +177,7 @@ jobs:
           ConfluentCloudPassword: $(ConfluentCloudPassword)
           AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
           AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
-        displayName: 'Build & Run tests for java 8'
+        displayName: 'Build & Run tests'
         continueOnError: false
 
       - task: DotNetCoreCLI@2
@@ -117,6 +186,7 @@ jobs:
           projects: |
             endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
         env:
+          JAVA_HOME: $(JavaHome)
           FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS: 'True'
           AzureWebJobsStorage: $(AzureWebJobsStorage)
           AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
@@ -135,84 +205,19 @@ jobs:
           AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
           AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
         displayName: 'Build & Run tests for java 8 Customer jar loaded first'
+        condition: eq( variables['JDK_PATH'], 'jdk8u322-b06' )
         continueOnError: false
 
-      - pwsh: |
-          $JAVA_VERSION="microsoft-jdk-11.0.13.8.1-windows-x64"
-          $JDK_PATH="jdk-11.0.13+8"
-          Invoke-WebRequest "https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-windows-x64.zip" -O "$JAVA_VERSION.zip"
-          Expand-Archive -Force "$JAVA_VERSION.zip" .
-          cd $JDK_PATH
-          $current = get-location | select -ExpandProperty Path
-          cd ..
-          Write-Host "##vso[task.setvariable variable=Java11Home;]$current"
-        displayName: 'Setup Java 11 SDK'
-        continueOnError: false
+  - job: "Publish"
+    displayName: 'Publish build artifacts'
+    dependsOn: Build
 
-      - task: DotNetCoreCLI@2
-        inputs:
-          command: 'test'
-          projects: |
-            endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
-        env:
-          JAVA_HOME: $(Java11Home)
-          AzureWebJobsStorage: $(AzureWebJobsStorage)
-          AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
-          AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
-          AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
-          AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
-          AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
-          AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-          SBTopicName: $(SBTopicName)
-          SBTopicSubName: $(SBTopicSubName)
-          CosmosDBDatabaseName: $(CosmosDBDatabaseName)
-          SBQueueName: $(SBQueueName)
-          BrokerList": $(BrokerList)
-          ConfluentCloudUsername: $(ConfluentCloudUsername)
-          ConfluentCloudPassword: $(ConfluentCloudPassword)
-          AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
-          AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
-        displayName: 'Build & Run tests for java 11'
-        continueOnError: false
+    pool:
+      name: '1ES-Hosted-AzFunc'
+      demands:
+        - ImageOverride -equals MMS2019TLS
 
-      - pwsh: |
-          $JAVA_VERSION="microsoft-jdk-17.0.3-windows-x64"
-          $JDK_PATH="jdk-17.0.3+7"
-          Invoke-WebRequest "https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip" -O "$JAVA_VERSION.zip"
-          Expand-Archive -Force "$JAVA_VERSION.zip" .
-          cd $JDK_PATH
-          $current = get-location | select -ExpandProperty Path
-          cd ..
-          Write-Host "##vso[task.setvariable variable=Java17Home;]$current"
-        displayName: 'Setup Java 17 SDK'
-        continueOnError: false
-
-      - task: DotNetCoreCLI@2
-        inputs:
-          command: 'test'
-          projects: |
-            endtoendtests\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E\Azure.Functions.Java.Tests.E2E.csproj
-        env:
-          JAVA_HOME: $(Java17Home)
-          AzureWebJobsStorage: $(AzureWebJobsStorage)
-          AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
-          AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
-          AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
-          AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
-          AzureWebJobsEventHubSender: $(AzureWebJobsEventHubSender)
-          AzureWebJobsEventHubPath: $(AzureWebJobsEventHubPath)
-          SBTopicName: $(SBTopicName)
-          SBTopicSubName: $(SBTopicSubName)
-          CosmosDBDatabaseName: $(CosmosDBDatabaseName)
-          SBQueueName: $(SBQueueName)
-          BrokerList": $(BrokerList)
-          ConfluentCloudUsername: $(ConfluentCloudUsername)
-          ConfluentCloudPassword: $(ConfluentCloudPassword)
-          AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
-          AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
-        displayName: 'Build & Run tests for java 17'
-        continueOnError: false
-
+    steps:
       - task: ManifestGeneratorTask@0
         displayName: 'SBOM Generation Task'
         inputs:
