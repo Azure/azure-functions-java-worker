@@ -15,7 +15,7 @@ $ApplicationInsightsAgentFilename = "applicationinsights-agent-${ApplicationInsi
 $ApplicationInsightsAgentUrl = "https://repo1.maven.org/maven2/com/microsoft/azure/applicationinsights-agent/${ApplicationInsightsAgentVersion}/${ApplicationInsightsAgentFilename}"
 
 Write-Host "Building azure-functions-java-worker" 
-cmd.exe /c '.\mvnBuild.bat'
+mvn clean package --no-transfer-progress -B
 StopOnFailedExecution
 
 Write-Host "Creating nuget package Microsoft.Azure.Functions.JavaWorker" 
