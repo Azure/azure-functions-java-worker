@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Azure.Functions.Java.Tests.E2E
 {
