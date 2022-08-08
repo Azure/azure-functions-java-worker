@@ -214,7 +214,7 @@ jobs:
           projects: |
             endtoendtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
         env:
-          JAVA_HOME: $(JAVA_HOME)
+          JAVA_HOME: $(JavaHome)
           AzureWebJobsStorage: $(AzureWebJobsStorage)
           AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
           AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
