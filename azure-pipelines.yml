@@ -139,7 +139,7 @@ jobs:
           java -version
         displayName: 'Check default java version'
       - pwsh: |
-          .\package-pipeline.ps1 -buildNumber $(buildNumber)
+          .\package-pipeline.ps1 -buildNumber 12345
         displayName: 'Executing build script'
       - pwsh: |
           Invoke-WebRequest 'https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
