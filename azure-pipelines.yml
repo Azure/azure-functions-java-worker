@@ -127,12 +127,13 @@ jobs:
       - pwsh: |
           Get-Command mvn
         displayName: 'Check Maven is installed'
-      - task: JavaToolInstaller@0
+      - task: JavaToolInstaller@0 # This step is necessary as Linux image has Java 11 as default
         inputs:
           versionSpec: '8'
           jdkArchitectureOption: 'x64'
           jdkSourceOption: 'PreInstalled'
         condition: eq( variables['Agent.OS'], 'Linux' )
+        displayName: 'Setup Java for Linux'
       - pwsh: |
           java -version
         displayName: 'Check default java version'
