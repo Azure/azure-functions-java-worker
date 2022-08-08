@@ -10,7 +10,7 @@ function StopOnFailedExecution {
   }
 }
 Write-Host "Building azure-functions-java-worker" 
-cmd.exe /c '.\mvnBuild.bat'
+mvn clean package --no-transfer-progress -B
 StopOnFailedExecution
 
 Write-Host "Creating nuget package Microsoft.Azure.Functions.JavaWorker" 
