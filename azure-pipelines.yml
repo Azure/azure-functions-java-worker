@@ -76,8 +76,8 @@ pr:
   - job: "Test"
     displayName: 'Test java worker'
 #    dependsOn: Build
-    variables:
-      buildNumber: $[ dependencies.Build.outputs['output.buildNumber'] ]
+#    variables:
+#      buildNumber: $[ dependencies.Build.outputs['output.buildNumber'] ]
     strategy:
       maxParallel: 1
       matrix:
