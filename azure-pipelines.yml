@@ -13,6 +13,7 @@ trigger:
       - v3.x
       - release/3.x
       - release/main
+      - shreyasg/pipeline-linux-test
 pr:
   branches:
     include:
@@ -22,59 +23,59 @@ pr:
       - release/main
 
 jobs:
-  - job: "Build"
-    displayName: 'Build java worker'
-
-    pool:
-      name: '1ES-Hosted-AzFunc'
-      demands:
-        - ImageOverride -equals MMS2019TLS
-
-    variables:
-      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-        isTagTemp: true
-      isTag: $[variables.isTagTemp]
-
-    steps:
-      - task: NuGetToolInstaller@1
-        inputs:
-          checkLatest: true
-        displayName: 'Install NuGet Tool'
-      - pwsh: |
-          Get-Command mvn
-        displayName: 'Check Maven is installed'
-      - pwsh: |
-          java -version
-        displayName: 'Check default java version'
-      - pwsh: |
-          if ("$(isTag)"){
-            $buildNumber="$(Build.SourceBranchName)"
-            Write-Host "Found git tag."
-          }
-          else {
-            $buildNumber="2.3.1-$(Build.BuildNumber)"
-            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
-          }
-          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
-          .\package-pipeline.ps1 -buildNumber $buildNumber
-        name: output
-        displayName: 'Executing build script'
-      - task: CopyFiles@2
-        inputs:
-          SourceFolder: '$(Build.Repository.LocalPath)/pkg'
-          Contents: '*.nupkg'
-          TargetFolder: '$(Build.ArtifactStagingDirectory)'
-          CleanTargetFolder: true
-        displayName: 'Copying files for artifacts'
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'buildDrop'
-        displayName: 'Upload build artifacts'
+#  - job: "Build"
+#    displayName: 'Build java worker'
+#
+#    pool:
+#      name: '1ES-Hosted-AzFunc'
+#      demands:
+#        - ImageOverride -equals MMS2019TLS
+#
+#    variables:
+#      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+#        isTagTemp: true
+#      isTag: $[variables.isTagTemp]
+#
+#    steps:
+#      - task: NuGetToolInstaller@1
+#        inputs:
+#          checkLatest: true
+#        displayName: 'Install NuGet Tool'
+#      - pwsh: |
+#          Get-Command mvn
+#        displayName: 'Check Maven is installed'
+#      - pwsh: |
+#          java -version
+#        displayName: 'Check default java version'
+#      - pwsh: |
+#          if ("$(isTag)"){
+#            $buildNumber="$(Build.SourceBranchName)"
+#            Write-Host "Found git tag."
+#          }
+#          else {
+#            $buildNumber="2.3.1-$(Build.BuildNumber)"
+#            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+#          }
+#          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+#          .\package-pipeline.ps1 -buildNumber $buildNumber
+#        name: output
+#        displayName: 'Executing build script'
+#      - task: CopyFiles@2
+#        inputs:
+#          SourceFolder: '$(Build.Repository.LocalPath)/pkg'
+#          Contents: '*.nupkg'
+#          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+#          CleanTargetFolder: true
+#        displayName: 'Copying files for artifacts'
+#      - task: PublishBuildArtifacts@1
+#        inputs:
+#          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#          ArtifactName: 'buildDrop'
+#        displayName: 'Upload build artifacts'
 
   - job: "Test"
     displayName: 'Test java worker'
-    dependsOn: Build
+#    dependsOn: Build
     variables:
       buildNumber: $[ dependencies.Build.outputs['output.buildNumber'] ]
     strategy:
@@ -86,33 +87,33 @@ jobs:
           JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
           JDK_PATH: 'jdk8u322-b06'
           JAVA_VERSION_SPEC: '8'
-        open-jdk-8-windows:
-          imageName: 'MMS2019TLS'
-          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u322b06.zip'
-          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
-          JDK_PATH: 'jdk8u322-b06'
-        microsoft-open-jdk-11-linux:
-          imageName: 'MMSUbuntu20.04TLS'
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-linux-x64'
-          JDK_PATH: 'jdk-11.0.13+8'
-          JAVA_VERSION_SPEC: '11'
-        microsoft-open-jdk-11-windows:
-          imageName: 'MMS2019TLS'
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-windows-x64.zip'
-          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-windows-x64'
-          JDK_PATH: 'jdk-11.0.13+8'
-        microsoft-open-jdk-17-linux:
-          imageName: 'MMSUbuntu20.04TLS'
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-17.0.3-linux-x64'
-          JDK_PATH: 'jdk-17.0.3+7'
-          JAVA_VERSION_SPEC: '17'
-        microsoft-open-jdk-17-windows:
-          imageName: 'MMS2019TLS'
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
-          JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
-          JDK_PATH: 'jdk-17.0.3+7'
+#        open-jdk-8-windows:
+#          imageName: 'MMS2019TLS'
+#          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u322b06.zip'
+#          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
+#          JDK_PATH: 'jdk8u322-b06'
+#        microsoft-open-jdk-11-linux:
+#          imageName: 'MMSUbuntu20.04TLS'
+#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-linux-x64.tar.gz'
+#          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-linux-x64'
+#          JDK_PATH: 'jdk-11.0.13+8'
+#          JAVA_VERSION_SPEC: '11'
+#        microsoft-open-jdk-11-windows:
+#          imageName: 'MMS2019TLS'
+#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-windows-x64.zip'
+#          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-windows-x64'
+#          JDK_PATH: 'jdk-11.0.13+8'
+#        microsoft-open-jdk-17-linux:
+#          imageName: 'MMSUbuntu20.04TLS'
+#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-linux-x64.tar.gz'
+#          JAVA_VERSION: 'microsoft-jdk-17.0.3-linux-x64'
+#          JDK_PATH: 'jdk-17.0.3+7'
+#          JAVA_VERSION_SPEC: '17'
+#        microsoft-open-jdk-17-windows:
+#          imageName: 'MMS2019TLS'
+#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
+#          JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
+#          JDK_PATH: 'jdk-17.0.3+7'
 
     pool:
       name: '1ES-Hosted-AzFunc'
@@ -168,9 +169,12 @@ jobs:
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
           tar -xvzf "$(JAVA_VERSION).tar.gz"
           cd $(JDK_PATH)
+          ls -ll
           $current = get-location | select -ExpandProperty Path
           $env:JAVA_HOME = $pwd
+          echo $env:JAVA_HOME
           $env:PATH = "$env:JAVA_HOME/bin:" + $env:PATH
+          echo $env:PATH
           cd ..
           Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
         displayName: 'Download and setup Java for Linux'
@@ -223,43 +227,43 @@ jobs:
         displayName: 'Build & Run tests'
         continueOnError: false
 
-  - job: "Publish"
-    displayName: 'Publish build artifacts'
-    dependsOn: Test
-
-    pool:
-      name: '1ES-Hosted-AzFunc'
-      demands:
-        - ImageOverride -equals MMS2019TLS
-
-    steps:
-      - task: DownloadBuildArtifacts@0
-        inputs:
-          buildType: 'current'
-          downloadType: 'single'
-          artifactName: 'buildDrop'
-          downloadPath: '$(Build.ArtifactStagingDirectory)'
-        displayName: 'Download build artifacts'
-      - pwsh: |
-          Move-Item -Path "$(Build.ArtifactStagingDirectory)/buildDrop/*.nupkg" -Destination $(Build.ArtifactStagingDirectory)
-          Remove-Item "$(Build.ArtifactStagingDirectory)/buildDrop" -Recurse
-      - task: ManifestGeneratorTask@0
-        inputs:
-          BuildDropPath: '$(Build.ArtifactStagingDirectory)'
-          Verbosity: 'Information'
-        displayName: 'SBOM Generation Task'
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'drop'
-          publishLocation: 'Container'
-        displayName: 'Publishing build artifacts'
-      - task: NuGetCommand@2
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], true))
-        inputs:
-          command: 'push'
-          packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
-          nuGetFeedType: 'internal'
-          publishVstsFeed: 'e6a70c92-4128-439f-8012-382fe78d6396/f37f760c-aebd-443e-9714-ce725cd427df'
-          allowPackageConflicts: true
-        displayName: 'Push NuGet package to the AzureFunctionsPreRelease feed'
+#  - job: "Publish"
+#    displayName: 'Publish build artifacts'
+#    dependsOn: Test
+#
+#    pool:
+#      name: '1ES-Hosted-AzFunc'
+#      demands:
+#        - ImageOverride -equals MMS2019TLS
+#
+#    steps:
+#      - task: DownloadBuildArtifacts@0
+#        inputs:
+#          buildType: 'current'
+#          downloadType: 'single'
+#          artifactName: 'buildDrop'
+#          downloadPath: '$(Build.ArtifactStagingDirectory)'
+#        displayName: 'Download build artifacts'
+#      - pwsh: |
+#          Move-Item -Path "$(Build.ArtifactStagingDirectory)/buildDrop/*.nupkg" -Destination $(Build.ArtifactStagingDirectory)
+#          Remove-Item "$(Build.ArtifactStagingDirectory)/buildDrop" -Recurse
+#      - task: ManifestGeneratorTask@0
+#        inputs:
+#          BuildDropPath: '$(Build.ArtifactStagingDirectory)'
+#          Verbosity: 'Information'
+#        displayName: 'SBOM Generation Task'
+#      - task: PublishBuildArtifacts@1
+#        inputs:
+#          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#          ArtifactName: 'drop'
+#          publishLocation: 'Container'
+#        displayName: 'Publishing build artifacts'
+#      - task: NuGetCommand@2
+#        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], true))
+#        inputs:
+#          command: 'push'
+#          packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+#          nuGetFeedType: 'internal'
+#          publishVstsFeed: 'e6a70c92-4128-439f-8012-382fe78d6396/f37f760c-aebd-443e-9714-ce725cd427df'
+#          allowPackageConflicts: true
+#        displayName: 'Push NuGet package to the AzureFunctionsPreRelease feed'
