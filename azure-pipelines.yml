@@ -177,10 +177,14 @@ jobs:
           $env:PATH = "$env:JAVA_HOME/bin:" + $env:PATH
           cd ..
           Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
-          echo $(JavaHome)
         displayName: 'Download and setup Java for Linux'
         condition: eq( variables['Agent.OS'], 'Linux' )
-
+      - pwsh: |
+          Write-Host $(JavaHome)
+        displayName: 'Print out JavaHome pwsh'
+      - script: |
+          echo $(JavaHome)
+        displayName: 'Print out JavaHome script'
       - pwsh: |
           .\setup-tests-pipeline.ps1
         displayName: 'Setup test environment -- Install the Core Tools'
