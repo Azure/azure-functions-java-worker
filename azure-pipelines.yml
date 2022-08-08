@@ -75,7 +75,7 @@ pr:
 
   - job: "Test"
     displayName: 'Test java worker'
-    dependsOn: Build
+#    dependsOn: Build
     variables:
       buildNumber: $[ dependencies.Build.outputs['output.buildNumber'] ]
     strategy:
