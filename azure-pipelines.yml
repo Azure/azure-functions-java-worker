@@ -22,7 +22,7 @@ pr:
       - release/3.x
       - release/main
 
-#jobs:
+jobs:
 #  - job: "Build"
 #    displayName: 'Build java worker'
 #
