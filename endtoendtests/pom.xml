@@ -26,6 +26,7 @@
 		<functionAppName>azure-functions-java-endtoendtests</functionAppName>
 		<functionAppRegion>westus</functionAppRegion>
 		<functionResourceGroup>java-functions-group</functionResourceGroup>
+		<start-class>com.microsoft.azure.functions.endtoend.springcloud.Config</start-class>
 	</properties>
 
 	<repositories>
