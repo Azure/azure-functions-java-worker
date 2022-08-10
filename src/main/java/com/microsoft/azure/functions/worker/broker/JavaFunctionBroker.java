@@ -130,7 +130,7 @@ public class JavaFunctionBroker {
 	}
 
 	public void addJavaAnnotationLibrary() throws IOException {
-		String javaLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + Constants.JAVA_LIBRARY_DIRECTORY;
+		String javaLibPath = workerDirectory + Constants.JAVA_LIBRARY_DIRECTORY;
 		File javaLib = new File(javaLibPath);
 		if (!javaLib.exists()) throw new FileNotFoundException("Error loading java annotation library jar, location doesn't exist: " + javaLibPath);
 		File[] files = javaLib.listFiles(file -> file.getName().contains(Constants.JAVA_LIBRARY_ARTIFACT_ID) && file.getName().endsWith(".jar"));
@@ -164,6 +164,11 @@ public class JavaFunctionBroker {
 		}
 	}
 
+	public void setWorkerDirectory(String workerDirectory) {
+		this.workerDirectory = workerDirectory;
+	}
+
 	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
+	private String workerDirectory;
 }
