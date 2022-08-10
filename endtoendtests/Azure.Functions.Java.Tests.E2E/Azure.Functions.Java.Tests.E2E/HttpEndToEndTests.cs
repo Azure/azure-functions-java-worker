@@ -30,6 +30,8 @@ namespace Azure.Functions.Java.Tests.E2E
         [InlineData("HttpTriggerWaitMethod", "?&name=Test", HttpStatusCode.OK, "Test")]
         [InlineData("HttpTriggerNotifyMethod", "?&name=Test", HttpStatusCode.OK, "Test")]
         [InlineData("HttpTriggerJavaVersion", "", HttpStatusCode.OK, "HttpTriggerJavaVersion")]
+        [InlineData("echo", "springcloudfunctionecho", HttpStatusCode.OK, "springcloudfunctionecho")]
+        [InlineData("uppercase", "springcloudfunctionuppercase", HttpStatusCode.OK, "SPRINGCLOUDFUNCTIONUPPERCASE")]
         public async Task HttpTriggerTests(string functionName, string queryString, HttpStatusCode expectedStatusCode, string expectedErrorMessage)
         {
             // TODO: Verify exception on 500 after https://github.com/Azure/azure-functions-host/issues/3589
