@@ -5,22 +5,25 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.Helper;
-import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
-
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  * A broker between JAR methods and the function RPC. It can load methods using
@@ -129,7 +132,7 @@ public class JavaFunctionBroker {
 	void registerWithClassLoaderProvider(File libDirectory) {
 		try {
 			if(SystemUtils.IS_JAVA_1_8) {
-				String workerLibPath = System.getenv(Constants.FUNCTIONS_WORKER_DIRECTORY) + "/lib";
+				String workerLibPath = workerDirectory + "/lib";
 				File workerLib = new File(workerLibPath);
 				verifyLibrariesExist (workerLib, workerLibPath);
 
@@ -197,6 +200,11 @@ public class JavaFunctionBroker {
 		}
 	}
 
+	public void setWorkerDirectory(String workerDirectory) {
+		this.workerDirectory = workerDirectory;
+	}
+
 	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
+	private String workerDirectory;
 }
