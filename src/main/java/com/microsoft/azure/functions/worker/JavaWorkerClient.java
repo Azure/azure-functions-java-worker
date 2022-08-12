@@ -28,7 +28,7 @@ public class JavaWorkerClient implements AutoCloseable {
         this.channel = chanBuilder.build();
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
-        this.classPathProvider =  new FunctionClassLoaderProvider();
+        this.classPathProvider = new FactoryClassLoader().createClassLoaderProvider();
         
         this.addHandlers();
     }
