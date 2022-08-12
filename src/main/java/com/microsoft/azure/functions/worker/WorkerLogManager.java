@@ -13,7 +13,8 @@ public class WorkerLogManager {
     public static Logger getInvocationLogger(String invocationId) { return INSTANCE.getInvocationLoggerImpl(invocationId); }
 
     static void initialize(JavaWorkerClient client, boolean logToConsole) { INSTANCE.initializeImpl(client, logToConsole); }
-    static void deinitialize() { INSTANCE.deinitializempl(); }
+    static void deinitialize() { INSTANCE.deinitializImpl(); }
+    public static void flushLogs() { INSTANCE.flushLogsImpl(); }
 
     private WorkerLogManager() {
         this.client = null;
@@ -28,20 +29,33 @@ public class WorkerLogManager {
         assert this.client == null && client != null;
         this.client = client;
         this.logToConsole = logToConsole;
-        addHostClientHandlers(this.hostLogger, null);
+        addHandlers(this.hostLogger, null);
     }
 
-    private void deinitializempl() {
+    private void deinitializImpl() {
         assert this.client != null;
         clearHandlers(this.hostLogger);
         this.logToConsole = false;
         this.client = null;
     }
 
+    private void flushLogsImpl() {
+        flush(emptyLogger);
+        flush(systemLogger);
+        flush(hostLogger);
+    }
+
+    private static void flush(Logger logger) {
+        Handler[] handlers = logger.getHandlers();
+        for (Handler handler : handlers) {
+            handler.flush();
+        }
+    }
+
     private Logger getInvocationLoggerImpl(String invocationId) {
         Logger logger = Logger.getAnonymousLogger();
         logger.setLevel(Level.ALL);
-        addHostClientHandlers(logger, invocationId);
+        addHandlers(logger, invocationId);
         return logger;
     }
 
@@ -58,7 +72,7 @@ public class WorkerLogManager {
         logger.addHandler(new SystemLoggerListener());
     }
 
-    private void addHostClientHandlers(Logger logger, String invocationId) {
+    private void addHandlers(Logger logger, String invocationId) {
         assert this.client != null;
         clearHandlers(logger);
         logger.addHandler(new HostLoggerListener(this.client, invocationId));

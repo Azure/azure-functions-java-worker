@@ -1,6 +1,5 @@
 package com.microsoft.azure.functions.worker.handler;
 
-import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.logging.*;
 
