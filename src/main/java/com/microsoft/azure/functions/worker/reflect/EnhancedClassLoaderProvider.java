@@ -2,7 +2,6 @@ package com.microsoft.azure.functions.worker.reflect;
 
 import java.io.*;
 import java.net.*;
-import java.sql.Driver;
 import java.util.*;
 import java.util.concurrent.*;
 
