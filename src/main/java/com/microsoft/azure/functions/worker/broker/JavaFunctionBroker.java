@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
@@ -34,7 +35,7 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 
 		addSearchPathsToClassLoader(descriptor);
-		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
+		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
 
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
 	}

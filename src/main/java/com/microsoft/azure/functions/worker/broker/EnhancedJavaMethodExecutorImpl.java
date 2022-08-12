@@ -12,8 +12,8 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Used to executor of arbitrary Java method in any JAR using reflection.
  * Thread-Safety: Multiple thread.
  */
-public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
-    public FunctionMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+public class EnhancedJavaMethodExecutorImpl implements JavaMethodExecutor {
+    public EnhancedJavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws ClassNotFoundException, NoSuchMethodException
     {
         descriptor.validateMethodInfo();
