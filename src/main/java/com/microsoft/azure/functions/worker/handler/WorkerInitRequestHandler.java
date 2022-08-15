@@ -4,6 +4,8 @@ import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 
+import java.util.logging.Level;
+
 public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, WorkerInitResponse.Builder> {
     public WorkerInitRequestHandler(JavaFunctionBroker broker) {
         super(StreamingMessage::getWorkerInitRequest,
@@ -15,6 +17,7 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
 
     @Override
     String execute(WorkerInitRequest request, WorkerInitResponse.Builder response) {
+        WorkerLogManager.getSystemLogger().log(Level.INFO, "WorkerInitRequest received by the Java worker");
         broker.setWorkerDirectory(request.getWorkerDirectory());
         response.setWorkerVersion(Application.version());
         response.putCapabilities("TypedDataCollection", "TypedDataCollection");
