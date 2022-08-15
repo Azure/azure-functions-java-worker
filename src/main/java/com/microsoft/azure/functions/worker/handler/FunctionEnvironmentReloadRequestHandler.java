@@ -25,6 +25,7 @@ public class FunctionEnvironmentReloadRequestHandler
 
 	@Override
 	String execute(FunctionEnvironmentReloadRequest request, Builder response) throws Exception {
+		WorkerLogManager.getSystemLogger().log(Level.INFO, "FunctionEnvironmentReloadRequest received by the Java worker");
 		EnvironmentVariables = request.getEnvironmentVariablesMap();
 		if (EnvironmentVariables == null || EnvironmentVariables.isEmpty()) {
 			return String

@@ -7,4 +7,8 @@ public class Util {
         }
         return false;
     }
+
+    public static String getJavaVersion() {
+        return String.join(" - ", System.getProperty("java.home"), System.getProperty("java.version"));
+    }
 }
