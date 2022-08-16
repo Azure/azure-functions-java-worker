@@ -167,7 +167,8 @@ jobs:
           jdkArchitectureOption: 'x64'
           jdkSourceOption: LocalDirectory
           jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
-          jdkDestinationDirectory: $(downloadPath)
+          jdkDestinationDirectory: "$(downloadPath)"
+          cleanDestinationDirectory: true
         condition: eq( variables['Agent.OS'], 'Linux' )
         displayName: 'Download and setup Java for Linux'
       - pwsh: Write-Host $(JAVA_HOME)
