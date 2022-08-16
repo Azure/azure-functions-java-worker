@@ -246,43 +246,43 @@ jobs:
         displayName: 'Build & Run tests'
         continueOnError: false
 
-  - job: "Publish"
-    displayName: 'Publish build artifacts'
-    dependsOn: Test
-
-    pool:
-      name: '1ES-Hosted-AzFunc'
-      demands:
-        - ImageOverride -equals MMS2019TLS
-
-    steps:
-      - task: DownloadBuildArtifacts@0
-        inputs:
-          buildType: 'current'
-          downloadType: 'single'
-          artifactName: 'buildDrop'
-          downloadPath: '$(Build.ArtifactStagingDirectory)'
-        displayName: 'Download build artifacts'
-      - pwsh: |
-          Move-Item -Path "$(Build.ArtifactStagingDirectory)/buildDrop/*.nupkg" -Destination $(Build.ArtifactStagingDirectory)
-          Remove-Item "$(Build.ArtifactStagingDirectory)/buildDrop" -Recurse
-      - task: ManifestGeneratorTask@0
-        inputs:
-          BuildDropPath: '$(Build.ArtifactStagingDirectory)'
-          Verbosity: 'Information'
-        displayName: 'SBOM Generation Task'
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'drop'
-          publishLocation: 'Container'
-        displayName: 'Publishing build artifacts'
-      - task: NuGetCommand@2
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], true))
-        inputs:
-          command: 'push'
-          packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
-          nuGetFeedType: 'internal'
-          publishVstsFeed: 'e6a70c92-4128-439f-8012-382fe78d6396/f37f760c-aebd-443e-9714-ce725cd427df'
-          allowPackageConflicts: true
-        displayName: 'Push NuGet package to the AzureFunctionsPreRelease feed'
+#  - job: "Publish"
+#    displayName: 'Publish build artifacts'
+#    dependsOn: Test
+#
+#    pool:
+#      name: '1ES-Hosted-AzFunc'
+#      demands:
+#        - ImageOverride -equals MMS2019TLS
+#
+#    steps:
+#      - task: DownloadBuildArtifacts@0
+#        inputs:
+#          buildType: 'current'
+#          downloadType: 'single'
+#          artifactName: 'buildDrop'
+#          downloadPath: '$(Build.ArtifactStagingDirectory)'
+#        displayName: 'Download build artifacts'
+#      - pwsh: |
+#          Move-Item -Path "$(Build.ArtifactStagingDirectory)/buildDrop/*.nupkg" -Destination $(Build.ArtifactStagingDirectory)
+#          Remove-Item "$(Build.ArtifactStagingDirectory)/buildDrop" -Recurse
+#      - task: ManifestGeneratorTask@0
+#        inputs:
+#          BuildDropPath: '$(Build.ArtifactStagingDirectory)'
+#          Verbosity: 'Information'
+#        displayName: 'SBOM Generation Task'
+#      - task: PublishBuildArtifacts@1
+#        inputs:
+#          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#          ArtifactName: 'drop'
+#          publishLocation: 'Container'
+#        displayName: 'Publishing build artifacts'
+#      - task: NuGetCommand@2
+#        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], true))
+#        inputs:
+#          command: 'push'
+#          packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+#          nuGetFeedType: 'internal'
+#          publishVstsFeed: 'e6a70c92-4128-439f-8012-382fe78d6396/f37f760c-aebd-443e-9714-ce725cd427df'
+#          allowPackageConflicts: true
+#        displayName: 'Push NuGet package to the AzureFunctionsPreRelease feed'
