@@ -159,16 +159,16 @@ jobs:
       - pwsh: Write-Host "test $(downloadPath)"
       - script: echo "test $(downloadPath)"
       - bash: echo "test $(downloadPath)"
-#      - task: JavaToolInstaller@0
-#        inputs:
-#          versionSpec: $(JAVA_VERSION_SPEC)
-#          jdkArchitectureOption: 'x64'
-#          jdkSourceOption: LocalDirectory
-#          jdkFile: "${()}"
-#          jdkDestinationDirectory: "/builds/binaries/externals"
-#          cleanDestinationDirectory: true
-#        condition: eq( variables['Agent.OS'], 'Linux' )
-#        displayName: 'Download and setup Java for Linux'
+      - task: JavaToolInstaller@0
+        inputs:
+          versionSpec: $(JAVA_VERSION_SPEC)
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: LocalDirectory
+          jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+          jdkDestinationDirectory: "/builds/binaries/externals"
+          cleanDestinationDirectory: true
+        condition: eq( variables['Agent.OS'], 'Linux' )
+        displayName: 'Download and setup Java for Linux'
       - pwsh: Write-Host $(JAVA_HOME)
       - script: echo $(JAVA_HOME)
       - bash: echo $(JAVA_HOME)
