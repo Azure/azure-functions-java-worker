@@ -212,7 +212,7 @@ jobs:
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-endtoendtests"
         displayName: 'Package Java for E2E'
-      - bash: echo "##vso[task.setvariable variable=JavaHome]secondValue"
+#      - bash: echo "##vso[task.setvariable variable=JavaHome]secondValue"
       - script: echo $(JavaHome)
       - bash: echo $(JavaHome)
       - pwsh: Write-Host $(JavaHome)
