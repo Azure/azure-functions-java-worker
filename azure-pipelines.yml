@@ -153,15 +153,16 @@ jobs:
       - pwsh: | # TODO: Java home in Linux is not updated by these steps. Update these once microsoft JDK available in MMSUbuntu20.04TLS
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
           $current = get-location | select -ExpandProperty Path
+          ls -ll $current
           Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
         displayName: 'Download and setup Java for Linux'
         condition: eq( variables['Agent.OS'], 'Linux' )
-      - pwsh: Write-Host "test $(downloadPath)"
-      - script: echo "test $(downloadPath)"
-      - bash: echo "test $(downloadPath)"
+      - pwsh: Write-Host "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+      - script: echo "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+      - bash: echo "$(downloadPath)/$(JAVA_VERSION).tar.gz"
       - task: JavaToolInstaller@0
         inputs:
-          versionSpec: $(JAVA_VERSION_SPEC)
+          versionSpec: 8
           jdkArchitectureOption: 'x64'
           jdkSourceOption: LocalDirectory
           jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
