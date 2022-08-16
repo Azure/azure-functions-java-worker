@@ -1,10 +1,12 @@
 package com.microsoft.azure.functions.worker.handler;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.logging.*;
 
 import com.google.protobuf.*;
+import com.microsoft.azure.functions.worker.exception.UserFunctionException;
 import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.exception.*;
 
@@ -46,10 +48,17 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
             if (statusMessage != null) {
                 this.getLogger().info(statusMessage);
             }
+        } catch (UserFunctionException ex) {
+            status = StatusResult.Status.Failure;
+            statusMessage = ExceptionUtils.getRootCauseMessage(ex);
+            rpcException = RpcException.newBuilder().setMessage(statusMessage).setIsUserException(true)
+                    .setType(ExceptionUtils.getRootCause(ex).getClass().getName())
+                    .setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
         } catch (Exception ex) {
             status = StatusResult.Status.Failure;
             statusMessage = ExceptionUtils.getRootCauseMessage(ex);
-            rpcException = RpcException.newBuilder().setMessage(statusMessage).setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
+            rpcException = RpcException.newBuilder().setMessage(statusMessage)
+                    .setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
         }
         if (this.responseStatusMarshaller != null) {
             StatusResult.Builder result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage);
