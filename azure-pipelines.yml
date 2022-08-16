@@ -168,6 +168,9 @@ jobs:
           jdkSourceOption: 'PreInstalled'
         condition: eq( variables['Agent.OS'], 'Linux' )
         displayName: 'Download and setup Java for Linux'
+      - pwsh: Write-Host $(JAVA_HOME)
+      - script: echo $(JAVA_HOME)
+      - bash: echo $(JAVA_HOME)
       - pwsh: |
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).zip"
           Expand-Archive -Force "$(JAVA_VERSION).zip" .
