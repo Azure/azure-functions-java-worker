@@ -19,7 +19,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         // TODO: remove commented test cases
-//        [Theory]
+        [Theory]
 //        [InlineData("HttpTriggerJava", "?&name=Test", HttpStatusCode.OK, "Test")]
 //        [InlineData("FontTypeSupport", "?&name=Test", HttpStatusCode.OK, "Test")]
 //        [InlineData("HttpTriggerJavaMetadata", "?&firstName=John&lastName=Doe", HttpStatusCode.OK, "JohnDoe")]
