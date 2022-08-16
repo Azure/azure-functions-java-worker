@@ -157,7 +157,7 @@ jobs:
         condition: eq( variables['Agent.OS'], 'Linux' )
       - task: JavaToolInstaller@0 # Install JDK downloaded from previous task
         inputs:
-          versionSpec: 8
+          versionSpec: $(JAVA_VERSION_SPEC)
           jdkArchitectureOption: 'x64'
           jdkSourceOption: LocalDirectory
           jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
