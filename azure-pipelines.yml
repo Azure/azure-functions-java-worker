@@ -177,17 +177,17 @@ jobs:
           Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
         displayName: 'Download and setup Java for Windows'
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
-#      - pwsh: | # TODO: Java home in Linux is not updated by these steps. Update these once microsoft JDK available in MMSUbuntu20.04TLS
-#          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
-#          tar -xvzf "$(JAVA_VERSION).tar.gz"
-#          cd $(JDK_PATH)
-#          $current = get-location | select -ExpandProperty Path
-#          $env:JAVA_HOME = $pwd
-#          $env:PATH = "$env:JAVA_HOME/bin:" + $env:PATH
-#          cd ..
-#          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
-#        displayName: 'Download and setup Java for Linux'
-#        condition: eq( variables['Agent.OS'], 'Linux' )
+      - pwsh: | # TODO: Java home in Linux is not updated by these steps. Update these once microsoft JDK available in MMSUbuntu20.04TLS
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
+          tar -xvzf "$(JAVA_VERSION).tar.gz"
+          cd $(JDK_PATH)
+          $current = get-location | select -ExpandProperty Path
+          $env:JAVA_HOME = $pwd
+          $env:PATH = "$env:JAVA_HOME/bin:" + $env:PATH
+          cd ..
+          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
+        displayName: 'Download and setup Java for Linux'
+        condition: eq( variables['Agent.OS'], 'Linux' )
 
       - pwsh: |
           .\setup-tests-pipeline.ps1
