@@ -149,13 +149,22 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.sh | bash /dev/stdin -v '6.0.100-rc.2.21505.57' -c 'release' --install-dir /usr/share/dotnet
         displayName: 'Install the .Net version used by the Core Tools for Linux'
         condition: eq( variables['Agent.OS'], 'Linux' )
-      - task: JavaToolInstaller@0
-        inputs:
-          versionSpec: $(JAVA_VERSION_SPEC)
-          jdkArchitectureOption: 'x64'
-          jdkSourceOption: 'PreInstalled'
+      - pwsh: | # Download JDK for later installation 
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
+          $current = get-location | select -ExpandProperty Path
+          Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
+        displayName: 'Download jdk for Linux'
         condition: eq( variables['Agent.OS'], 'Linux' )
-        displayName: 'Download and setup Java for Linux'
+      - task: JavaToolInstaller@0 # Install JDK downloaded from previous task
+        inputs:
+          versionSpec: 8
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: LocalDirectory
+          jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+          jdkDestinationDirectory: "$(downloadPath)/externals"
+          cleanDestinationDirectory: true
+        condition: eq( variables['Agent.OS'], 'Linux' )
+        displayName: 'Setup Java for Linux'
       - pwsh: |
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).zip"
           Expand-Archive -Force "$(JAVA_VERSION).zip" .
@@ -165,17 +174,6 @@ jobs:
           Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
         displayName: 'Download and setup Java for Windows'
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
-#      - pwsh: | # TODO: Java home in Linux is not updated by these steps. Update these once microsoft JDK available in MMSUbuntu20.04TLS
-#          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
-#          tar -xvzf "$(JAVA_VERSION).tar.gz"
-#          cd $(JDK_PATH)
-#          $current = get-location | select -ExpandProperty Path
-#          $env:JAVA_HOME = $pwd
-#          $env:PATH = "$env:JAVA_HOME/bin:" + $env:PATH
-#          cd ..
-#          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
-#        displayName: 'Download and setup Java for Linux'
-#        condition: eq( variables['Agent.OS'], 'Linux' )
 
       - pwsh: |
           .\setup-tests-pipeline.ps1
