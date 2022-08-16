@@ -161,13 +161,13 @@ jobs:
 #          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
 #        displayName: 'Download and setup Java for Linux'
 #        condition: eq( variables['Agent.OS'], 'Linux' )
-      - task: JavaToolInstaller@0
-        inputs:
-          versionSpec: $(JAVA_VERSION_SPEC)
-          jdkArchitectureOption: 'x64'
-          jdkSourceOption: 'PreInstalled'
-        condition: eq( variables['Agent.OS'], 'Linux' )
-        displayName: 'Download and setup Java for Linux'
+#      - task: JavaToolInstaller@0
+#        inputs:
+#          versionSpec: $(JAVA_VERSION_SPEC)
+#          jdkArchitectureOption: 'x64'
+#          jdkSourceOption: 'PreInstalled'
+#        condition: eq( variables['Agent.OS'], 'Linux' )
+#        displayName: 'Download and setup Java for Linux'
       - pwsh: Write-Host $(JAVA_HOME)
       - script: echo $(JAVA_HOME)
       - bash: echo $(JAVA_HOME)
