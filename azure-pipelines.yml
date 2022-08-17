@@ -129,6 +129,12 @@ jobs:
       - pwsh: |
           .\package-pipeline.ps1 -buildNumber $(buildNumber)
         displayName: 'Executing build script'
+      - pwsh: | # Download JDK for later installation
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
+          $current = get-location | select -ExpandProperty Path
+          Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
+        displayName: 'Download jdk for Linux'
+        condition: eq( variables['Agent.OS'], 'Linux' )
       - task: JavaToolInstaller@0 # Install JDK downloaded from previous task
         inputs:
           versionSpec: $(JAVA_VERSION_SPEC)
