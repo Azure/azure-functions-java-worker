@@ -102,17 +102,6 @@ jobs:
           JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-windows-x64.zip'
           JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-windows-x64'
           JDK_PATH: 'jdk-11.0.13+8'
-        microsoft-open-jdk-17-linux:
-          imageName: 'MMSUbuntu20.04TLS'
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-17.0.3-linux-x64'
-          JDK_PATH: 'jdk-17.0.3+7'
-          JAVA_VERSION_SPEC: '17'
-        microsoft-open-jdk-17-windows:
-          imageName: 'MMS2019TLS'
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
-          JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
-          JDK_PATH: 'jdk-17.0.3+7'
 
     pool:
       name: '1ES-Hosted-AzFunc'
