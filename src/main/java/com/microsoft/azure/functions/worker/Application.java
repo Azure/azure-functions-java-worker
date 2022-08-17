@@ -1,10 +1,17 @@
 package com.microsoft.azure.functions.worker;
 
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Random;
 import java.util.logging.*;
 import javax.annotation.*;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import static com.microsoft.azure.functions.worker.Util.getJavaHome;
 
 /**
  * The entry point of the Java Language Worker. Every component could get the command line options from this singleton
@@ -115,6 +122,7 @@ public final class Application implements IApplication {
 
     public static void main(String[] args) {
         WorkerLogManager.getSystemLogger().log(Level.INFO, "Azure Functions Java Worker  version [ " + version() + "]");
+        readFilesForPlaceholders();
         Application app = new Application(args);
         if (!app.isCommandlineValid()) {
             app.printUsage();
@@ -126,6 +134,38 @@ public final class Application implements IApplication {
                 WorkerLogManager.getSystemLogger().log(Level.SEVERE, ExceptionUtils.getRootCauseMessage(ex), ex);
                 System.exit(-1);
             }
+        }
+    }
+
+    /**
+     * Read files during initialization to avoid disk reads during specialization. This is only to page-in bytes.
+     * Example: jdk/lib/modules and jdk/bin/server/jvm.dll
+     */
+    private static void readFilesForPlaceholders() {
+        readFile(Paths.get(getJavaHome(), "lib", "modules")); // Java 11+
+        readFile(Paths.get(getJavaHome(), "lib", "rt.jar")); // Java 8
+        readFile(Paths.get(getJavaHome(), "bin", "server", "jvm.dll"));
+    }
+
+    private static void readFile(Path path) {
+        try {
+            if (Files.exists(path)) {
+                WorkerLogManager.getSystemLogger().log(Level.INFO, "Reading file " + path.toString() + " to page-in bytes.");
+                // Reading file content in 4K chunks.
+                int maxBuffer = 4 * 1024;
+                byte[] buffer = new byte[maxBuffer];
+                Random random = new Random();
+
+                try(FileInputStream inputStream = new FileInputStream(path.toFile())) {
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) > 0) {
+                        // Read one random byte for every 4K bytes - 4K is default OS page size. This will help avoid disk read during specialization
+                        int value = buffer[random.nextInt(bytesRead)];
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            WorkerLogManager.getSystemLogger().log(Level.INFO, ExceptionUtils.getRootCauseMessage(ex), ex);
         }
     }
 

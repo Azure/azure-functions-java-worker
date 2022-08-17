@@ -9,6 +9,10 @@ public class Util {
     }
 
     public static String getJavaVersion() {
-        return String.join(" - ", System.getProperty("java.home"), System.getProperty("java.version"));
+        return String.join(" - ", getJavaHome(), System.getProperty("java.version"));
+    }
+
+    public static String getJavaHome() {
+        return System.getProperty("java.home");
     }
 }
