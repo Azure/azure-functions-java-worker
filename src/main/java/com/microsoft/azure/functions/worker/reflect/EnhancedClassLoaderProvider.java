@@ -2,7 +2,6 @@ package com.microsoft.azure.functions.worker.reflect;
 
 import java.io.*;
 import java.net.*;
-import java.sql.Driver;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -28,29 +27,11 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
                     urlsList.addAll(workerUrls);
                     URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
                     URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
-                    loadDrivers(loader);
                     classLoaderInstance = loader;
                 }
             }
         }
         return classLoaderInstance;
-    }
-
-    private void loadDrivers(URLClassLoader classLoader) {
-        Thread.currentThread().setContextClassLoader(classLoader);
-        try {
-            ServiceLoader<Driver> loadedDrivers = ServiceLoader.load(Driver.class);
-            Iterator<Driver> driversIterator = loadedDrivers.iterator();
-            try {
-                while (driversIterator.hasNext()) {
-                    driversIterator.next();
-                }
-            } catch (Throwable t) {
-                // Do nothing
-            }
-        } finally {
-            Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
-        }
     }
 
     @Override

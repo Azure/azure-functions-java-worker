@@ -25,6 +25,7 @@ public class FunctionEnvironmentReloadRequestHandler
 
 	@Override
 	String execute(FunctionEnvironmentReloadRequest request, Builder response) throws Exception {
+		WorkerLogManager.getSystemLogger().log(Level.INFO, "FunctionEnvironmentReloadRequest received by the Java worker");
 		EnvironmentVariables = request.getEnvironmentVariablesMap();
 		if (EnvironmentVariables == null || EnvironmentVariables.isEmpty()) {
 			return String
@@ -81,6 +82,4 @@ public class FunctionEnvironmentReloadRequestHandler
 	}
 
 	private final JavaFunctionBroker broker;
-	public final String WebsitePlaceholderMode = "WEBSITE_PLACEHOLDER_MODE";
-	public final String AzureWebsiteInstanceId = "WEBSITE_INSTANCE_ID";
 }
