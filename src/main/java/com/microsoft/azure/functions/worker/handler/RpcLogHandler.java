@@ -18,6 +18,18 @@ public class RpcLogHandler extends OutboundMessageHandler<RpcLog.Builder> {
 
     private static RpcLog.Builder generateRpcLog(LogRecord record, String invocationId) {
         RpcLog.Builder log = RpcLog.newBuilder();
+        /**
+         * Check if the logging namespace belongs to system logsq, invocation log should be categorized to user type (default), others should
+         * be categorized to system type.
+         *
+         *              local_console   customer_app_insight    functions_kusto_table
+         * system_log   false,           false,                   true
+         * user_log     true,            true,                    false
+         */
+        if (invocationId == null){
+            log.setLogCategory(RpcLog.RpcLogCategory.System);
+            log.setCategory(WorkerLogManager.SYSTEM_LOG_PREFIX);
+        }
         Optional.ofNullable(invocationId).ifPresent(log::setInvocationId);
         Optional.ofNullable(record.getLoggerName()).ifPresent(log::setCategory);
         Optional.ofNullable(mapLogLevel(record.getLevel())).ifPresent(log::setLevel);

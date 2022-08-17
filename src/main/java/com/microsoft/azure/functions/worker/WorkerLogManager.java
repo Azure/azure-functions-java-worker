@@ -69,6 +69,7 @@ public class WorkerLogManager {
     private boolean logToConsole;
     private final Logger emptyLogger, systemLogger, hostLogger;
     private final static WorkerLogManager INSTANCE = new WorkerLogManager();
+    public final static String SYSTEM_LOG_PREFIX = "azure_functions_java_worker";
 }
 
 class SystemLoggerListener extends Handler {
