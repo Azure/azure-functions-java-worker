@@ -81,6 +81,4 @@ public class FunctionEnvironmentReloadRequestHandler
 	}
 
 	private final JavaFunctionBroker broker;
-	public final String WebsitePlaceholderMode = "WEBSITE_PLACEHOLDER_MODE";
-	public final String AzureWebsiteInstanceId = "WEBSITE_INSTANCE_ID";
 }
