@@ -52,7 +52,7 @@ jobs:
             Write-Host "Found git tag."
           }
           else {
-            $buildNumber="2.4.0-$(Build.BuildNumber)"
+            $buildNumber="$(Build.BuildNumber)-v4"
             Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
           }
           Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
