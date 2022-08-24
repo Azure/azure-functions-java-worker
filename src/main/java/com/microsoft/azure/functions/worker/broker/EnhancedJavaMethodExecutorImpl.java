@@ -3,6 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 import com.microsoft.azure.functions.worker.binding.*;
 import com.microsoft.azure.functions.worker.description.*;
 import com.microsoft.azure.functions.worker.reflect.*;
@@ -47,9 +48,10 @@ public class EnhancedJavaMethodExecutorImpl implements JavaMethodExecutor {
 
     public ParameterResolver getOverloadResolver() { return this.overloadResolver; }
 
-    public void execute(BindingDataStore dataStore) throws Exception {
+    public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
+            BindingDataStore dataStore = executionContextDataSource.getDataStore();
             Object retValue = this.overloadResolver.resolve(dataStore)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     .invoke(() -> this.containingClass.newInstance());

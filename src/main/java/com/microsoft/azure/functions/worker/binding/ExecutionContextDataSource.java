@@ -7,8 +7,8 @@ import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.TraceContext;
 import com.microsoft.azure.functions.RetryContext;
 
-final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
-    ExecutionContextDataSource(String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
+public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
+    public ExecutionContextDataSource(String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -37,10 +37,20 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
     private final TraceContext traceContext;
     private final RetryContext retryContext;
     private final Logger logger;
-    private final String funcname;    
+    private final String funcname;
+
+    private BindingDataStore dataStore;
+
+    public BindingDataStore getDataStore() {
+        return dataStore;
+    }
+
+    public void setDataStore(BindingDataStore dataStore) {
+        this.dataStore = dataStore;
+    }
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
         EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
-    }    
+    }
 }

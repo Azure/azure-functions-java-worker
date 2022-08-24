@@ -27,7 +27,7 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
     urlsList.addAll(workerUrls);
     URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
     URLClassLoader classLoader = new URLClassLoader(urlsForClassLoader);
-    Thread.currentThread().setContextClassLoader(classLoader);
+//    Thread.currentThread().setContextClassLoader(classLoader);
     return classLoader;
   }
 
