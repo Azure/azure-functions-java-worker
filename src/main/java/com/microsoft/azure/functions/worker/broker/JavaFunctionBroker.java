@@ -64,7 +64,7 @@ public class JavaFunctionBroker {
 		}
 	}
 
-	private synchronized void loadFunctionExecutionMiddleWare() {
+	private void loadFunctionExecutionMiddleWare() {
 		this.functionWorkerPipelineBuilder.use(new FunctionExecutionMiddleware());
 	}
 
@@ -174,22 +174,6 @@ public class JavaFunctionBroker {
 			return false;
 		}
 	}
-
-//	void verifyLibrariesExist (File workerLib, String workerLibPath) throws FileNotFoundException{
-//		if(!workerLib.exists()) {
-//			throw new FileNotFoundException("Error loading worker jars, from path:  " + workerLibPath);
-//		} else {
-//			File[] jarFiles = workerLib.listFiles(new FileFilter() {
-//				@Override
-//				public boolean accept(File file) {
-//					return file.isFile() && file.getName().endsWith(".jar");
-//				}
-//			});
-//			if(jarFiles.length == 0) {
-//				throw new FileNotFoundException("Error loading worker jars, from path:  " + workerLibPath + ". Jars size is zero");
-//			}
-//		}
-//	}
 
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
