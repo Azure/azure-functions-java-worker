@@ -49,9 +49,7 @@ public class JavaFunctionBroker {
 					try {
 						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
 						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
-						Iterator<FunctionWorkerMiddleware> iterator = middlewareServiceLoader.iterator();
-						while (iterator.hasNext()){
-							FunctionWorkerMiddleware middleware = iterator.next();
+						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
 							this.functionWorkerPipelineBuilder.use(middleware);
 						}
 					} finally {
