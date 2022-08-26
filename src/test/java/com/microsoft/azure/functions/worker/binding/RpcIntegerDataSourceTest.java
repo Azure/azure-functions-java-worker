@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.binding.tests;
+package com.microsoft.azure.functions.worker.binding;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,10 +7,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-import com.microsoft.azure.functions.worker.binding.BindingData;
-import com.microsoft.azure.functions.worker.binding.RpcIntegerDataSource;
-
-public class RpcIntegerDataSourceTests {
+public class RpcIntegerDataSourceTest {
 
 	@Test
 	public void rpcIntegerDataSource_To_Integer() {

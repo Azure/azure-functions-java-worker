@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.handler.tests;
+package com.microsoft.azure.functions.worker.handler;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -11,9 +11,8 @@ import com.microsoft.azure.functions.worker.reflect.FunctionClassLoaderProvider;
 import org.junit.Test;
 
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
-import com.microsoft.azure.functions.worker.handler.FunctionEnvironmentReloadRequestHandler;
 
-public class FunctionEnvironmentReloadRequestHandlerTests {
+public class FunctionEnvironmentReloadRequestHandlerTest {
 
 	@Test
 	public void SetEnv_Succeeds() throws Exception {

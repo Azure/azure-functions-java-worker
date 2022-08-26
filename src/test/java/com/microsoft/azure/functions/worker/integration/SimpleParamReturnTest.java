@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.functional.tests;
+package com.microsoft.azure.functions.worker.integration;
 
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.test.utilities.*;

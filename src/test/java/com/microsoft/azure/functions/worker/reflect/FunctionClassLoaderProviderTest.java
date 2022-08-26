@@ -1,7 +1,7 @@
-package com.microsoft.azure.functions.worker.reflect.tests;
+package com.microsoft.azure.functions.worker.reflect;
 
 import static org.junit.Assert.*;
-import com.microsoft.azure.functions.worker.reflect.FunctionClassLoaderProvider;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.*;
@@ -12,7 +12,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 
 @RunWith(Parameterized.class)
-public class FunctionClassLoaderProviderTests {
+public class FunctionClassLoaderProviderTest {
 
 	@Parameters
 	public static Object[] data() {

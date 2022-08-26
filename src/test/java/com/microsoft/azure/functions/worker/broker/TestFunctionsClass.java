@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.broker.tests;
+package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.*;
 import java.util.*;
@@ -7,6 +7,7 @@ import com.microsoft.azure.functions.*;
 
 /**
  * Azure Functions with HTTP Trigger.
+ * This is the class file in TestFunctionsClass.jar file which is used in unit test JavaMethodExecutorTest
  */
 public class TestFunctionsClass
 {

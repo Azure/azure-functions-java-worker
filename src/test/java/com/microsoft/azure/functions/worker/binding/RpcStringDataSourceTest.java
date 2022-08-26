@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.binding.tests;
+package com.microsoft.azure.functions.worker.binding;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -14,11 +14,8 @@ import java.util.Optional;
 import org.junit.Test;
 
 import com.google.gson.JsonSyntaxException;
-import com.microsoft.azure.functions.worker.binding.BindingData;
-import com.microsoft.azure.functions.worker.binding.RpcJsonDataSource;
-import com.microsoft.azure.functions.worker.binding.RpcStringDataSource;
 
-public class RpcStringDataSourceTests {
+public class RpcStringDataSourceTest {
 
 	public static class TestPOJO {
 		public Integer id;
@@ -151,8 +148,8 @@ public class RpcStringDataSourceTests {
 	}
 
 	private static Type getParameterType(String functionName) {
-		RpcStringDataSourceTests stringDataSourceTests = new RpcStringDataSourceTests();
-		Class<? extends RpcStringDataSourceTests> stringDataSourceTestsClass = stringDataSourceTests.getClass();
+		RpcStringDataSourceTest stringDataSourceTests = new RpcStringDataSourceTest();
+		Class<? extends RpcStringDataSourceTest> stringDataSourceTestsClass = stringDataSourceTests.getClass();
 		Method[] methods = stringDataSourceTestsClass.getMethods();
 		Method functionWithStringListInputMethod = null;
 		for (Method method : methods) {

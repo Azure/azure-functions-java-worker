@@ -1,13 +1,10 @@
-package com.microsoft.azure.functions.worker.broker.tests;
+package com.microsoft.azure.functions.worker.broker;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
-import com.microsoft.azure.functions.worker.binding.tests.RpcHttpRequestDataSourceTests;
-import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
@@ -16,7 +13,7 @@ import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.getRu
 import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.isValidOutputType;
 import static org.junit.Assert.*;
 
-public class CoreTypeResolverTests {
+public class CoreTypeResolverTest {
 
 	public void CustomBinding_Valid(
 			@HttpTrigger(name = "req", methods = { HttpMethod.GET,
@@ -125,7 +122,7 @@ public class CoreTypeResolverTests {
 	}
 
 	private Type returnTypeOf(String type) throws NoSuchMethodException {
-		Method m = CoreTypeResolverTests.class.getDeclaredMethod(type);
+		Method m = CoreTypeResolverTest.class.getDeclaredMethod(type);
 		m.setAccessible(true);
 		return m.getGenericReturnType();
 	}
@@ -153,8 +150,8 @@ public class CoreTypeResolverTests {
 	}
 
 	private Method getFunctionMethod(String methodName) {
-		CoreTypeResolverTests coreTypeResolverTests = new CoreTypeResolverTests();
-		Class<? extends CoreTypeResolverTests> testsClass = coreTypeResolverTests.getClass();
+		CoreTypeResolverTest coreTypeResolverTest = new CoreTypeResolverTest();
+		Class<? extends CoreTypeResolverTest> testsClass = coreTypeResolverTest.getClass();
 		Method[] methods = testsClass.getMethods();
 		Method functionMethod = null;
 		for (Method method : methods) {

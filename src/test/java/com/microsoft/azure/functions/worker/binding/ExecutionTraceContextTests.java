@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.test;
+package com.microsoft.azure.functions.worker.binding;
 
 import static org.junit.Assert.assertEquals;
 
