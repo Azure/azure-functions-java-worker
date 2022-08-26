@@ -18,11 +18,9 @@ public class JavaMethodExecutorTest {
 
 	@BeforeClass
 	public static void setClassLoaderProvider() throws Exception {
-		String baseDir = System.getProperty("user.dir");
-		File surefireTestJar = new File(baseDir + "/test-classes/TestFunctionsClass.jar");
-		File testJar = new File(baseDir + "/target/test-classes/TestFunctionsClass.jar");
+		String targetPath = JavaMethodExecutorTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
-		functionClassLoaderProvider.addCustomerUrl(surefireTestJar.toURI().toURL());
 	}
 	
 	@Test    
