@@ -1,5 +1,6 @@
 package com.microsoft.azure.functions.worker.broker;
 
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import org.junit.*;
 
 import static junit.framework.TestCase.*;
@@ -21,7 +22,10 @@ public class JavaMethodExecutorTest {
 		String targetPath = JavaMethodExecutorTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
 		boolean exists = testJar.exists();
-		if (!exists) throw new RuntimeException("TestFunctionsClass.jar not exist");
+		if (!exists) {
+			WorkerLogManager.getSystemLogger().severe(testJar + "doesn't exist");
+			throw new RuntimeException("TestFunctionsClass.jar not exist");
+		}
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
 	}
 	
