@@ -14,11 +14,10 @@ import com.microsoft.azure.functions.worker.reflect.*;
 
 public class JavaMethodExecutorTest {
 
-	private FunctionClassLoaderProvider functionClassLoaderProvider;
+	private static FunctionClassLoaderProvider functionClassLoaderProvider = new FunctionClassLoaderProvider();
 
-	@Before
-	public void setClassLoaderProvider() throws Exception {
-		functionClassLoaderProvider = new FunctionClassLoaderProvider();
+	@BeforeClass
+	public static void setClassLoaderProvider() throws Exception {
 		String baseDir = System.getProperty("user.dir");
 		File surefireTestJar = new File(baseDir + "/test-classes/TestFunctionsClass.jar");
 		File testJar = new File(baseDir + "/target/test-classes/TestFunctionsClass.jar");
@@ -51,10 +50,4 @@ public class JavaMethodExecutorTest {
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
     }
-
-	@Test
-	public void test(){
-		ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-		System.out.println(1);
-	}
 }
