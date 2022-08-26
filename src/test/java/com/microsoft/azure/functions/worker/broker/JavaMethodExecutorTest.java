@@ -20,6 +20,8 @@ public class JavaMethodExecutorTest {
 	public static void setClassLoaderProvider() throws Exception {
 		String targetPath = JavaMethodExecutorTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
+		boolean exists = testJar.exists();
+		if (!exists) throw new RuntimeException("TestFunctionsClass.jar not exist");
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
 	}
 	
