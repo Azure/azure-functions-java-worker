@@ -43,7 +43,7 @@ public class JavaFunctionBrokerTest {
         when(bindingData.getString()).thenReturn(expectedData);
         when(binding.getName()).thenReturn(expectedName);
         when(binding.getData()).thenReturn(bindingData);
-        when(request.getInputDataList()).thenReturn(Arrays.asList(binding));
+        when(request.getInputDataList()).thenReturn(Collections.singletonList(binding));
 
         lenient().when(name.getString()).thenReturn("string: \"John\"\n");
         lenient().when(query.getString()).thenReturn("json: \"{\"name\":\"ushio\"}\"");
@@ -74,7 +74,7 @@ public class JavaFunctionBrokerTest {
         lenient().when(bindingData.getString()).thenReturn(data);
         lenient().when(binding.getName()).thenReturn(name);
         when(binding.getData()).thenReturn(bindingData);
-        when(request.getInputDataList()).thenReturn(Arrays.asList(binding));
+        when(request.getInputDataList()).thenReturn(Collections.singletonList(binding));
 
         lenient().when(queueTrigger.getString()).thenReturn("string: \"hello queue\"\n");
         lenient().when(dequeueCount.getString()).thenReturn("json: \"1\"\n");
