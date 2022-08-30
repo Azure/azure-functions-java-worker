@@ -35,7 +35,7 @@ public class DefaultInvocationPipelineBuilder implements FunctionWorkerChain {
     public void setFunctionExecutionMiddleware(JavaMethodExecutor executor){
         if (middlewareCollections.size() > 0){
             FunctionExecutionMiddleware functionExecutionMiddleware = (FunctionExecutionMiddleware) this.middlewareCollections.get(this.middlewareCollections.size() - 1);
-            functionExecutionMiddleware.setFunctionExecutor(executor);
+//            functionExecutionMiddleware.setFunctionExecutor(executor);
         } else {
             throw new RuntimeException("There is no middleware in the invocation pipeline");
         }

@@ -1,66 +1,71 @@
 package com.microsoft.azure.functions.worker.broker;
 
+import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 
+import com.microsoft.azure.functions.OutputBinding;
 import com.microsoft.azure.functions.worker.binding.*;
 import com.microsoft.azure.functions.worker.description.*;
 import com.microsoft.azure.functions.worker.reflect.*;
 import com.microsoft.azure.functions.rpc.messages.*;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * Used to executor of arbitrary Java method in any JAR using reflection.
  * Thread-Safety: Multiple thread.
  */
 public class JavaMethodExecutorImpl implements JavaMethodExecutor {
-    public JavaMethodExecutorImpl(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
-            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException
-    {
-        descriptor.validateMethodInfo();
-
-        this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
-        this.overloadResolver = new ParameterResolver();
-
-        for (Method method : this.containingClass.getMethods()) {
-            if (method.getDeclaringClass().getName().equals(descriptor.getFullClassName()) && method.getName().equals(descriptor.getMethodName())) {
-                this.overloadResolver.addCandidate(method);
-            }
-        }
-
-        if (!this.overloadResolver.hasCandidates()) {
-            throw new NoSuchMethodException("There are no methods named \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
-        }
-
-        if (this.overloadResolver.hasMultipleCandidates()) {
-            throw new UnsupportedOperationException("Found more than one function with method name \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
-        }
-
-        this.bindingDefinitions = new HashMap<>();
-
-        for (Map.Entry<String, BindingInfo> entry : bindingInfos.entrySet()) {
-            this.bindingDefinitions.put(entry.getKey(), new BindingDefinition(entry.getKey(), entry.getValue()));
-        }
-    }
-
-    public Map<String, BindingDefinition> getBindingDefinitions() { return this.bindingDefinitions; }
-
-    public ParameterResolver getOverloadResolver() { return this.overloadResolver; }
 
     public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
-        BindingDataStore dataStore = executionContextDataSource.getDataStore();
-        Object retValue = this.overloadResolver.resolve(dataStore)
+        Object retValue = this.resolve(executionContextDataSource)
                 .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
-                .invoke(() -> this.containingClass.newInstance());
-        dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
+                .invoke(() -> executionContextDataSource.getContainingClass().newInstance());
+        executionContextDataSource.getDataStore().setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
     }
 
-    private Class<?> getContainingClass(String className, ClassLoaderProvider classLoaderProvider) throws ClassNotFoundException {
-        ClassLoader classLoader = classLoaderProvider.createClassLoader();
-        return Class.forName(className, true, classLoader);
+    private synchronized Optional<JavaMethodInvokeInfo> resolve(ExecutionContextDataSource executionContextDataSource) {
+        BindingDataStore dataStore = executionContextDataSource.getDataStore();
+        ParameterResolver.InvokeInfoBuilder invoker = this.resolve(executionContextDataSource.getMethodBindInfo(), dataStore);
+        if (invoker != null) {
+            dataStore.promoteDataTargets(invoker.getOutputsId());
+            return Optional.of(invoker.build());
+        }
+        return Optional.empty();
     }
 
-    private Class<?> containingClass;
-    private final ParameterResolver overloadResolver;
-    private final Map<String, BindingDefinition> bindingDefinitions;
+    private ParameterResolver.InvokeInfoBuilder resolve(MethodBindInfo method, BindingDataStore dataStore) {
+        try {
+            final ParameterResolver.InvokeInfoBuilder invokeInfo = new ParameterResolver.InvokeInfoBuilder(method);
+            for (ParamBindInfo param : method.getParams()) {
+                String paramName = param.getName();
+                Type paramType = param.getType();
+                String paramBindingNameAnnotation = param.getBindingNameAnnotation();
+                Optional<BindingData> argument;
+                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(paramType, null))) {
+                    argument = dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), paramName, paramType, false);
+                }
+                else if (paramName != null && !paramName.isEmpty()) {
+                    argument = dataStore.getDataByName(paramName, paramType);
+                }
+                else if (paramName == null && !paramBindingNameAnnotation.isEmpty()) {
+                    argument = dataStore.getTriggerMetatDataByName(paramBindingNameAnnotation, paramType);
+                }
+                else {
+                    argument = dataStore.getDataByType(paramType);
+                }
+                BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
+                invokeInfo.appendArgument(actualArg.getValue());
+            }
+            if (!method.getEntry().getReturnType().equals(void.class) && !method.getEntry().getReturnType().equals(Void.class)) {
+                dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), BindingDataStore.RETURN_NAME, method.getEntry().getReturnType(), method.isHasImplicitOutput());
+            }
+            return invokeInfo;
+        } catch (Exception ex) {
+            ExceptionUtils.rethrow(ex);
+            return null;
+        }
+    }
 }

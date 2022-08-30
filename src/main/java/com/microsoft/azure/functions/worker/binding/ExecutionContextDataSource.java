@@ -6,8 +6,21 @@ import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.TraceContext;
 import com.microsoft.azure.functions.RetryContext;
+import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
 
 public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
+
+    private final String invocationId;
+    private final TraceContext traceContext;
+    private final RetryContext retryContext;
+    private final Logger logger;
+    private final String funcname;
+    private BindingDataStore dataStore;
+    private MethodBindInfo methodBindInfo;
+
+    private Class<?> containingClass;
+
+
     public ExecutionContextDataSource(String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
@@ -16,6 +29,11 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.logger = WorkerLogManager.getInvocationLogger(invocationId);
         this.funcname = funcname;
         this.setValue(this);
+    }
+
+    private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
+    static {
+        EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 
     @Override
@@ -32,14 +50,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     @Override
     public String getFunctionName() { return this.funcname; }
-   
-    private final String invocationId;
-    private final TraceContext traceContext;
-    private final RetryContext retryContext;
-    private final Logger logger;
-    private final String funcname;
-
-    private BindingDataStore dataStore;
 
     public BindingDataStore getDataStore() {
         return dataStore;
@@ -49,8 +59,19 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore = dataStore;
     }
 
-    private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
-    static {
-        EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
+    public void setMethodBindInfo(MethodBindInfo methodBindInfo) {
+        this.methodBindInfo = methodBindInfo;
+    }
+
+    public MethodBindInfo getMethodBindInfo() {
+        return methodBindInfo;
+    }
+
+    public Class<?> getContainingClass() {
+        return containingClass;
+    }
+
+    public void setContainingClass(Class<?> containingClass) {
+        this.containingClass = containingClass;
     }
 }

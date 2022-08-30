@@ -10,10 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
-import com.microsoft.azure.functions.worker.binding.BindingDataStore;
-import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
-import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
-import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.binding.*;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.pipeline.DefaultInvocationPipelineBuilder;
 import com.microsoft.azure.functions.worker.pipeline.FunctionExecutionMiddleware;
@@ -37,9 +34,10 @@ public class JavaFunctionBroker {
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
+//		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
+		FunctionExecutionPayLoad functionExecutionPayLoad = new FunctionExecutionPayLoad(descriptor, bindings, classLoaderProvider);
 		loadMiddleware();
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
-		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
+		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionExecutionPayLoad));
 	}
 
 	private void loadMiddleware() {
@@ -68,13 +66,13 @@ public class JavaFunctionBroker {
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
-		ImmutablePair<String, JavaMethodExecutor> methodEntry = this.methods.get(id);
-		JavaMethodExecutor executor = methodEntry.right;
-		if (executor == null) {
+		ImmutablePair<String, FunctionExecutionPayLoad> methodEntry = this.methods.get(id);
+		FunctionExecutionPayLoad payLoad = methodEntry.right;
+		if (payLoad == null) {
 			throw new NoSuchMethodException("Cannot find method with ID \"" + id + "\"");
 		}
 		final BindingDataStore dataStore = new BindingDataStore();
-		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
+		dataStore.setBindingDefinitions(payLoad.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
@@ -82,7 +80,8 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		executionContextDataSource.setDataStore(dataStore);
-		this.functionWorkerPipelineBuilder.setFunctionExecutionMiddleware(executor);
+		executionContextDataSource.setMethodBindInfo(payLoad.getOverloadResolver().getMethodBindInfo());
+		executionContextDataSource.setContainingClass(payLoad.getContainingClass());
 		this.functionWorkerPipelineBuilder.build().doNext(executionContextDataSource);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
@@ -177,10 +176,15 @@ public class JavaFunctionBroker {
 		this.workerDirectory = workerDirectory;
 	}
 
-	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
+	private final Map<String, ImmutablePair<String, FunctionExecutionPayLoad>> methods;
+//	private Map<String, String> methodNames;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
 
 	private final DefaultInvocationPipelineBuilder functionWorkerPipelineBuilder;
 	private volatile boolean loadMiddleware = true;
+
+	private Class<?> containingClass;
+	private ParameterResolver overloadResolver;
+	private Map<String, BindingDefinition> bindingDefinitions;
 }

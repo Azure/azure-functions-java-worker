@@ -11,10 +11,10 @@ import java.util.Map;
 
 public class FactoryJavaMethodExecutor {
     public JavaMethodExecutor getJavaMethodExecutor(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings, ClassLoaderProvider classLoaderProvider)
-            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException {
+            throws ClassNotFoundException, NoSuchMethodException {
         if(SystemUtils.IS_JAVA_1_8) {
             WorkerLogManager.getSystemLogger().info("Loading JavaMethodExecutorImpl");
-            return new JavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
+            return new JavaMethodExecutorImpl();
         } else {
             WorkerLogManager.getSystemLogger().info("Loading EnhancedJavaMethodExecutorImpl");
             return new EnhancedJavaMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
