@@ -6,9 +6,20 @@ import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.TraceContext;
 import com.microsoft.azure.functions.RetryContext;
+import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
 
-final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
-    ExecutionContextDataSource(String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
+public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
+
+    private final String invocationId;
+    private final TraceContext traceContext;
+    private final RetryContext retryContext;
+    private final Logger logger;
+    private final String funcname;
+    private BindingDataStore dataStore;
+    private MethodBindInfo methodBindInfo;
+    private Class<?> containingClass;
+
+    public ExecutionContextDataSource(String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -32,12 +43,30 @@ final class ExecutionContextDataSource extends DataSource<ExecutionContext> impl
 
     @Override
     public String getFunctionName() { return this.funcname; }
-   
-    private final String invocationId;
-    private final TraceContext traceContext;
-    private final RetryContext retryContext;
-    private final Logger logger;
-    private final String funcname;    
+
+    public BindingDataStore getDataStore() {
+        return dataStore;
+    }
+
+    public void setDataStore(BindingDataStore dataStore) {
+        this.dataStore = dataStore;
+    }
+
+    public void setMethodBindInfo(MethodBindInfo methodBindInfo) {
+        this.methodBindInfo = methodBindInfo;
+    }
+
+    public MethodBindInfo getMethodBindInfo() {
+        return methodBindInfo;
+    }
+
+    public Class<?> getContainingClass() {
+        return containingClass;
+    }
+
+    public void setContainingClass(Class<?> containingClass) {
+        this.containingClass = containingClass;
+    }
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {

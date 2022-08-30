@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
+import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
@@ -34,30 +35,37 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 
 		addSearchPathsToClassLoader(descriptor);
-		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
+//		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
+		FunctionExecutionPayLoad functionExecutionPayLoad = new FunctionExecutionPayLoad(descriptor, bindings, classLoaderProvider);
 
-		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
+
+		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionExecutionPayLoad));
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
-		ImmutablePair<String, JavaMethodExecutor> methodEntry = this.methods.get(id);
-		JavaMethodExecutor executor = methodEntry.right;
-		if (executor == null) {
+		ImmutablePair<String, FunctionExecutionPayLoad> methodEntry = this.methods.get(id);
+		FunctionExecutionPayLoad payLoad = methodEntry.right;
+		if (payLoad == null) {
 			throw new NoSuchMethodException("Cannot find method with ID \"" + id + "\"");
 		}
 
 		BindingDataStore dataStore = new BindingDataStore();
-		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
+		dataStore.setBindingDefinitions(payLoad.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(), request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
-
+		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
+		executionContextDataSource.setDataStore(dataStore);
+		executionContextDataSource.setMethodBindInfo(payLoad.getOverloadResolver().getMethodBindInfo());
+		executionContextDataSource.setContainingClass(payLoad.getContainingClass());
 
-		executor.execute(dataStore);
+		FunctionMethodExecutorImpl executorSingleton = FunctionMethodExecutorImpl.getInstance();
+		executorSingleton.setClassLoader(this.classLoaderProvider.createClassLoader());
+		executorSingleton.execute(executionContextDataSource);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
@@ -167,7 +175,7 @@ public class JavaFunctionBroker {
 		this.workerDirectory = workerDirectory;
 	}
 
-	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
+	private final Map<String, ImmutablePair<String, FunctionExecutionPayLoad>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
 }
