@@ -46,7 +46,7 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
 
     private synchronized Optional<JavaMethodInvokeInfo> resolve(ExecutionContextDataSource executionContextDataSource) {
         BindingDataStore dataStore = executionContextDataSource.getDataStore();
-        ParameterResolver.InvokeInfoBuilder invoker = this.resolve(executionContextDataSource.getMethodBindInfo(), dataStore);
+        InvokeInfoBuilder invoker = this.resolve(executionContextDataSource.getMethodBindInfo(), dataStore);
         if (invoker != null) {
             dataStore.promoteDataTargets(invoker.getOutputsId());
             return Optional.of(invoker.build());
@@ -54,9 +54,9 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
         return Optional.empty();
     }
 
-    private ParameterResolver.InvokeInfoBuilder resolve(MethodBindInfo method, BindingDataStore dataStore) {
+    private InvokeInfoBuilder resolve(MethodBindInfo method, BindingDataStore dataStore) {
         try {
-            final ParameterResolver.InvokeInfoBuilder invokeInfo = new ParameterResolver.InvokeInfoBuilder(method);
+            final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
             for (ParamBindInfo param : method.getParams()) {
                 String paramName = param.getName();
                 Type paramType = param.getType();

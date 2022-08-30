@@ -60,7 +60,7 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 		executionContextDataSource.setDataStore(dataStore);
-		executionContextDataSource.setMethodBindInfo(payLoad.getOverloadResolver().getMethodBindInfo());
+		executionContextDataSource.setMethodBindInfo(payLoad.getMethodBindInfo());
 		executionContextDataSource.setContainingClass(payLoad.getContainingClass());
 
 		FunctionMethodExecutorImpl executorSingleton = FunctionMethodExecutorImpl.getInstance();
