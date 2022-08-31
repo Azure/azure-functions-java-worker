@@ -6,6 +6,8 @@ import org.junit.*;
 import static junit.framework.TestCase.*;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -39,6 +41,33 @@ public class JavaMethodExecutorTest {
 //		Class<?> aClass = Class.forName("com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass", false, urlClassLoader);
 //		Object o = aClass.newInstance();
 //		aClass.getDeclaredMethod()
+	}
+
+	@Test
+	public void testUrlClassLoader() throws Exception {
+		String targetPath = JavaMethodExecutorTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
+		URL[] urls = new URL[1];
+		urls[0] = testJar.toURI().toURL();
+		URLClassLoader urlClassLoader = new URLClassLoader(urls);
+		Class<?> containingClass = Class.forName("com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass", false, urlClassLoader);
+		List<Method> res = new ArrayList<>();
+
+		for (Method method : containingClass.getMethods()) {
+			if (method.getDeclaringClass().getName().equals("com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass") && method.getName().equals("TestHttpTrigger")) {
+				res.add(method);
+			}
+		}
+
+		if (res.isEmpty()) {
+			throw new NoSuchMethodException("There are no methods named TestHttpTrigger in class TestFunctionsClass");
+		}
+
+		if (res.size() > 1) {
+			throw new UnsupportedOperationException("Found more than one function with method name TestHttpTrigger in class TestFunctionsClass");
+		}
+
+		System.out.println("Method numbers in method list: " + res.size());
 	}
 
 	@Test
