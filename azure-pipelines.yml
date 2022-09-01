@@ -126,6 +126,7 @@ jobs:
         displayName: 'Install NuGet Tool'
       - pwsh: |
           Get-Command mvn
+          mvn -version
         displayName: 'Check Maven is installed'
       - task: JavaToolInstaller@0 # This step is necessary as Linux image has Java 11 as default
         inputs:

@@ -63,7 +63,9 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
 
     private Class<?> getContainingClass(String className) throws ClassNotFoundException {
         URLClassLoader classLoader1 = (URLClassLoader) this.classLoader;
-        for (URL url : classLoader1.getURLs()) {
+        URL[] urLs = classLoader1.getURLs();
+        System.out.println("**before load class with url size: " + urLs.length);
+        for (URL url : urLs) {
             System.out.println("**Before load the classes: " + url);
         }
         return Class.forName(className, false, this.classLoader);
