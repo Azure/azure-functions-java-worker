@@ -29,6 +29,7 @@ public class JavaMethodExecutorTest {
 	public static void setClassLoaderProvider() throws Exception {
 		String targetPath = JavaMethodExecutorTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
+		System.out.println("@@Jar file location: " + testJar);
 		boolean exists = testJar.exists();
 		if (!exists) {
 			WorkerLogManager.getSystemLogger().severe(testJar + "doesn't exist");

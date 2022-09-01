@@ -27,6 +27,10 @@ public class FunctionClassLoaderProvider implements ClassLoaderProvider {
                     urlsList.addAll(workerUrls);
                     URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
                     URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
+                    URL[] urLs = loader.getURLs();
+                    for (URL urL : urLs) {
+                        System.out.println("##URL: " + urL.toString());
+                    }
                     classLoaderInstance = loader;
                 }
             }

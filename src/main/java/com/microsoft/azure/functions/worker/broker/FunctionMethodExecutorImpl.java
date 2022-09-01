@@ -1,6 +1,8 @@
 package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.reflect.*;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 import com.microsoft.azure.functions.worker.binding.*;
@@ -60,6 +62,10 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
     }
 
     private Class<?> getContainingClass(String className) throws ClassNotFoundException {
+        URLClassLoader classLoader1 = (URLClassLoader) this.classLoader;
+        for (URL url : classLoader1.getURLs()) {
+            System.out.println("**Before load the classes: " + url);
+        }
         return Class.forName(className, false, this.classLoader);
     }
 
