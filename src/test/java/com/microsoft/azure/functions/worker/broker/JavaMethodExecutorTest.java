@@ -36,6 +36,7 @@ public class JavaMethodExecutorTest {
 			throw new RuntimeException("TestFunctionsClass.jar not exist");
 		}
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
+		System.out.println(functionClassLoaderProvider);
 //		URL[] urls = new URL[1];
 //		urls[0] = testJar.toURI().toURL();
 //		URLClassLoader urlClassLoader = new URLClassLoader(urls);
@@ -76,6 +77,7 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
+		System.out.println(functionClassLoaderProvider);
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
 		assertTrue(executor.getOverloadResolver().hasCandidates());
 		assertFalse(executor.getOverloadResolver().hasMultipleCandidates());
@@ -86,6 +88,7 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger1","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger1","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
+		System.out.println(functionClassLoaderProvider);
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
     }
 	
@@ -94,6 +97,7 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTriggerOverload","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTriggerOverload","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
+		System.out.println(functionClassLoaderProvider);
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
     }
 }
