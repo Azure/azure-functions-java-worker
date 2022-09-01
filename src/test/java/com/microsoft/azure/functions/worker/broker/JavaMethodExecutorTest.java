@@ -24,7 +24,13 @@ public class JavaMethodExecutorTest {
 		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
 		System.out.println(functionClassLoaderProvider);
-//		System.out.println(functionClassLoaderProvider.createClassLoader());
+		URLClassLoader classLoader = (URLClassLoader) functionClassLoaderProvider.createClassLoader();
+		System.out.println(functionClassLoaderProvider.createClassLoader());
+		URL[] urLs = classLoader.getURLs();
+		System.out.println("begin url size: " + urLs.length);
+		for (URL urL : urLs) {
+			System.out.println("Before CLass url: " + urL);
+		}
 	}
 
 	@Test
