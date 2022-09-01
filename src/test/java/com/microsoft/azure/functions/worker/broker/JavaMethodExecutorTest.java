@@ -24,6 +24,7 @@ public class JavaMethodExecutorTest {
 		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
 		System.out.println(functionClassLoaderProvider);
+//		System.out.println(functionClassLoaderProvider.createClassLoader());
 	}
 
 	@Test
@@ -62,6 +63,7 @@ public class JavaMethodExecutorTest {
 		URLClassLoader classLoader = (URLClassLoader) functionClassLoaderProvider.createClassLoader();
 		System.out.println("ClassLoader: " + classLoader);
 		URL[] urLs = classLoader.getURLs();
+		System.out.println("URL in classloader: " + urLs.length);
 		for (URL urL : urLs) {
 			System.out.println("@@URL: " + urL);
 		}
