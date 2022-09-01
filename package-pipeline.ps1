@@ -13,6 +13,10 @@ Write-Host "Building azure-functions-java-worker"
 mvn clean package --no-transfer-progress -B
 StopOnFailedExecution
 
+Write-Host "Running Integration tests of azure-functions-java-worker"
+mvn failsafe:integration-test --no-transfer-progress -B
+StopOnFailedExecution
+
 Write-Host "Creating nuget package Microsoft.Azure.Functions.JavaWorker" 
 Write-Host "buildNumber: " $buildNumber
 Get-Command nuget
