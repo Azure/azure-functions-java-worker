@@ -1,13 +1,10 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import com.microsoft.azure.functions.worker.WorkerLogManager;
 import org.junit.*;
 
 import static junit.framework.TestCase.*;
 
 import java.io.File;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -34,24 +31,39 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
+		System.out.println("Provider" + functionClassLoaderProvider);
+		printClassLoader(functionClassLoaderProvider);
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
 		assertTrue(executor.getOverloadResolver().hasCandidates());
 		assertFalse(executor.getOverloadResolver().hasMultipleCandidates());
     }
-	
-	@Test(expected = NoSuchMethodException.class)   
+
+	@Test(expected = NoSuchMethodException.class)
     public void functionMethodLoadFails_DoesnotExist() throws Exception {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger1","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger1","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
+		System.out.println("Provider" + functionClassLoaderProvider);
+		printClassLoader(functionClassLoaderProvider);
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
     }
-	
-	@Test(expected = UnsupportedOperationException.class)   
+
+	@Test(expected = UnsupportedOperationException.class)
     public void functionMethodLoadFails_DuplicateAnnotations() throws Exception {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTriggerOverload","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTriggerOverload","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
+		System.out.println("Provider" + functionClassLoaderProvider);
+		printClassLoader(functionClassLoaderProvider);
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
     }
+
+	private void printClassLoader(FunctionClassLoaderProvider functionClassLoaderProvider) {
+		URLClassLoader classLoader = (URLClassLoader) functionClassLoaderProvider.createClassLoader();
+		System.out.println("ClassLoader: " + classLoader);
+		URL[] urLs = classLoader.getURLs();
+		for (URL urL : urLs) {
+			System.out.println("@@URL: " + urL);
+		}
+	}
 }
