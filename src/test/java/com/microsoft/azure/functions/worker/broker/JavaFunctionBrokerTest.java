@@ -102,18 +102,4 @@ public class JavaFunctionBrokerTest {
         // In case of non-http request, it will not modify the triggerMetadata
         assertEquals(expectedCount, actualTriggerMetadata.size());
     }
-
-    @Test(expected = FileNotFoundException.class)
-    public void checkLibFolderNoWorkerLib() throws Exception {
-        JavaFunctionBroker broker = new JavaFunctionBroker(null);
-        broker.verifyLibrariesExist (new File(""), null);
-    }
-
-    @Test(expected = FileNotFoundException.class)
-    public void checkLibFolderNoJarsInLib() throws Exception {
-        JavaFunctionBroker broker = new JavaFunctionBroker(null);
-        String path = "../";
-        File file = new File(path);
-        broker.verifyLibrariesExist (file, path);
-    }
 }
