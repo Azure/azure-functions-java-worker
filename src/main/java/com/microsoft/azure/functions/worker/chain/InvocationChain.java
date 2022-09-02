@@ -13,17 +13,16 @@ public class InvocationChain implements FunctionWorkerChain {
 
     private final Iterator<FunctionWorkerMiddleware> middlewareIterator;
 
-    public InvocationChain(Iterator<FunctionWorkerMiddleware> middlewareIterator) {
-        this.middlewareIterator = middlewareIterator;
+    public InvocationChain(List<FunctionWorkerMiddleware> middlewareList) {
+        this.middlewareIterator = middlewareList.iterator();
     }
 
     @Override
-    public void doNext(ExecutionContext context) {
+    public void doNext(ExecutionContext context) throws Exception{
         while (middlewareIterator.hasNext()) {
             middlewareIterator.next().invoke(context, this);
         }
     }
-
 
     public static class InvocationChainBuilder {
 
@@ -38,9 +37,9 @@ public class InvocationChain implements FunctionWorkerChain {
         }
 
         public FunctionWorkerChain build(JavaMethodExecutor executor){
-            List<FunctionWorkerMiddleware> list = new ArrayList<>(middlewareCollections);
-            list.add(new FunctionExecutionMiddleware(executor));
-            return new InvocationChain(list.iterator());
+            List<FunctionWorkerMiddleware> middlewares = new ArrayList<>(middlewareCollections);
+            middlewares.add(new FunctionExecutionMiddleware(executor));
+            return new InvocationChain(middlewares);
         }
     }
 }

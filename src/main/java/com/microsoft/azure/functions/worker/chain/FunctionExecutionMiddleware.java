@@ -16,11 +16,7 @@ public class FunctionExecutionMiddleware implements FunctionWorkerMiddleware {
     }
 
     @Override
-    public void invoke(ExecutionContext context, FunctionWorkerChain next) {
-        try {
+    public void invoke(ExecutionContext context, FunctionWorkerChain next) throws Exception{
             this.functionExecutor.execute((ExecutionContextDataSource) context);
-        } catch (Exception e) {
-            ExceptionUtils.rethrow(e);
-        }
     }
 }

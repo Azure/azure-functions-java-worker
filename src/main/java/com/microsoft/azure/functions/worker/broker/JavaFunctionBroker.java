@@ -33,7 +33,6 @@ public class JavaFunctionBroker {
 	private final InvocationChain.InvocationChainBuilder invocationChainBuilder;
 	private volatile boolean loadMiddleware = true;
 
-
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider, InvocationChain.InvocationChainBuilder invocationChainBuilder) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
@@ -43,11 +42,9 @@ public class JavaFunctionBroker {
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
-
 		addSearchPathsToClassLoader(descriptor);
 		loadMiddleware();
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
-
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
 	}
 
