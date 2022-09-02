@@ -1,8 +1,6 @@
 package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.reflect.*;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 
 import com.microsoft.azure.functions.worker.binding.*;

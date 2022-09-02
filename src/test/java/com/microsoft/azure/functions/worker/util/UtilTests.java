@@ -1,6 +1,5 @@
 package com.microsoft.azure.functions.worker.util;
 
-import com.microsoft.azure.functions.worker.util.Util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;

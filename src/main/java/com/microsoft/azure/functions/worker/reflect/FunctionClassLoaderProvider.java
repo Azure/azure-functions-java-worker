@@ -37,7 +37,6 @@ public class FunctionClassLoaderProvider implements ClassLoaderProvider {
     @Override
     public void addCustomerUrl(URL url) throws IOException {
         if (customerUrls.contains(url)) {
-            System.out.println("??");
             return;
         }
         WorkerLogManager.getSystemLogger().info("Loading customer file URL: " + url);
