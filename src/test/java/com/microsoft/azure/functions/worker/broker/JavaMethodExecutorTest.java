@@ -5,6 +5,7 @@ import org.junit.*;
 import static junit.framework.TestCase.*;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -20,6 +21,9 @@ public class JavaMethodExecutorTest {
 
 	@BeforeClass
 	public static void setClassLoaderProvider() throws Exception {
+		Field classLoaderInstance = FunctionClassLoaderProvider.class.getDeclaredField("classLoaderInstance");
+		classLoaderInstance.setAccessible(true);
+		classLoaderInstance.set(null, null);
 		String targetPath = JavaMethodExecutorTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 		File testJar = new File(targetPath + "/TestFunctionsClass.jar");
 		functionClassLoaderProvider.addCustomerUrl(testJar.toURI().toURL());
