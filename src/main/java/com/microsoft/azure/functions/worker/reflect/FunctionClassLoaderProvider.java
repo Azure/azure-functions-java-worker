@@ -24,15 +24,8 @@ public class FunctionClassLoaderProvider implements ClassLoaderProvider {
                 if (classLoaderInstance == null) {
                     List<URL> urlsList = new ArrayList<>();
                     urlsList.addAll(customerUrls);
-                    System.out.println("customerUrls size 2: " + customerUrls.size());
-                    for (URL customerUrl : customerUrls) {
-                        System.out.println("customerUrls: " + customerUrl);
-                    }
                     urlsList.addAll(workerUrls);
                     URL[] urlsForClassLoader = urlsList.toArray(new URL[0]);
-                    for (URL url : urlsForClassLoader) {
-                        System.out.println("urlsForClassLoader before creat classloader: " + url);
-                    }
                     URLClassLoader loader = new URLClassLoader(urlsForClassLoader);
                     classLoaderInstance = loader;
                 }
@@ -49,7 +42,6 @@ public class FunctionClassLoaderProvider implements ClassLoaderProvider {
         }
         WorkerLogManager.getSystemLogger().info("Loading customer file URL: " + url);
         customerUrls.add(url);
-        System.out.println("customerUrls size 1: " + customerUrls.size());
     }
 
     @Override
