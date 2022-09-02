@@ -24,6 +24,7 @@ public class FunctionClassLoaderProvider implements ClassLoaderProvider {
                 if (classLoaderInstance == null) {
                     List<URL> urlsList = new ArrayList<>();
                     urlsList.addAll(customerUrls);
+                    System.out.println("customerUrls size 2: " + customerUrls.size());
                     for (URL customerUrl : customerUrls) {
                         System.out.println("customerUrls: " + customerUrl);
                     }
@@ -43,10 +44,12 @@ public class FunctionClassLoaderProvider implements ClassLoaderProvider {
     @Override
     public void addCustomerUrl(URL url) throws IOException {
         if (customerUrls.contains(url)) {
+            System.out.println("??");
             return;
         }
         WorkerLogManager.getSystemLogger().info("Loading customer file URL: " + url);
         customerUrls.add(url);
+        System.out.println("customerUrls size 1: " + customerUrls.size());
     }
 
     @Override
