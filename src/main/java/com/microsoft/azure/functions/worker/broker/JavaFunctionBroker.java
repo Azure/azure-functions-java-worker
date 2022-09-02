@@ -15,8 +15,7 @@ import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
-import com.microsoft.azure.functions.worker.pipeline.DefaultInvocationPipelineBuilder;
-import com.microsoft.azure.functions.worker.pipeline.FunctionExecutionMiddleware;
+import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -27,10 +26,10 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
  * reflection, and invoke them at runtime. Thread-Safety: Multiple thread.
  */
 public class JavaFunctionBroker {
-	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider, DefaultInvocationPipelineBuilder functionWorkerPipelineBuilder) {
+	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider, InvocationChain.InvocationChainBuilder invocationChainBuilder) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
-		this.functionWorkerPipelineBuilder = functionWorkerPipelineBuilder;
+		this.invocationChainBuilder = invocationChainBuilder;
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -50,20 +49,15 @@ public class JavaFunctionBroker {
 						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
 						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
 						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
-							this.functionWorkerPipelineBuilder.use(middleware);
+							this.invocationChainBuilder.use(middleware);
 						}
 					} finally {
 						Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 					}
-					loadFunctionExecutionMiddleWare();
 					loadMiddleware = false;
 				}
 			}
 		}
-	}
-
-	private void loadFunctionExecutionMiddleWare() {
-		this.functionWorkerPipelineBuilder.use(new FunctionExecutionMiddleware());
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
@@ -82,8 +76,7 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		executionContextDataSource.setDataStore(dataStore);
-		this.functionWorkerPipelineBuilder.setFunctionExecutionMiddleware(executor);
-		this.functionWorkerPipelineBuilder.build().doNext(executionContextDataSource);
+		this.invocationChainBuilder.build(executor).doNext(executionContextDataSource);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
@@ -181,6 +174,6 @@ public class JavaFunctionBroker {
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
 
-	private final DefaultInvocationPipelineBuilder functionWorkerPipelineBuilder;
+	private final InvocationChain.InvocationChainBuilder invocationChainBuilder;
 	private volatile boolean loadMiddleware = true;
 }

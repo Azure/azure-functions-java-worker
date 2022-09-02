@@ -7,7 +7,7 @@ import java.util.function.*;
 import java.util.logging.*;
 import javax.annotation.*;
 
-import com.microsoft.azure.functions.worker.pipeline.DefaultInvocationPipelineBuilder;
+import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import io.grpc.*;
 import io.grpc.stub.*;
 
@@ -36,8 +36,8 @@ public class JavaWorkerClient implements AutoCloseable {
 
     @PostConstruct
     private void addHandlers() {
-        DefaultInvocationPipelineBuilder functionWorkerPipelineBuilder = new DefaultInvocationPipelineBuilder();
-        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider, functionWorkerPipelineBuilder);
+        InvocationChain.InvocationChainBuilder invocationChainBuilder = new InvocationChain.InvocationChainBuilder();
+        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider, invocationChainBuilder);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_ENVIRONMENT_RELOAD_REQUEST, () -> new FunctionEnvironmentReloadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));

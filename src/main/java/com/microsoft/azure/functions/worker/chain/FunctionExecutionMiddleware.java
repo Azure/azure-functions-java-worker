@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.pipeline;
+package com.microsoft.azure.functions.worker.chain;
 
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.middleware.FunctionWorkerChain;
@@ -9,7 +9,11 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public class FunctionExecutionMiddleware implements FunctionWorkerMiddleware {
 
-    private JavaMethodExecutor functionExecutor;
+    private final JavaMethodExecutor functionExecutor;
+
+    public FunctionExecutionMiddleware(JavaMethodExecutor functionExecutor) {
+        this.functionExecutor = functionExecutor;
+    }
 
     @Override
     public void invoke(ExecutionContext context, FunctionWorkerChain next) {
@@ -18,9 +22,5 @@ public class FunctionExecutionMiddleware implements FunctionWorkerMiddleware {
         } catch (Exception e) {
             ExceptionUtils.rethrow(e);
         }
-    }
-
-    public void setFunctionExecutor(JavaMethodExecutor functionExecutor) {
-        this.functionExecutor = functionExecutor;
     }
 }

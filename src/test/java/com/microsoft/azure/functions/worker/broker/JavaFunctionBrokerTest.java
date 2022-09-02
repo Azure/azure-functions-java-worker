@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
-import com.microsoft.azure.functions.worker.pipeline.DefaultInvocationPipelineBuilder;
+import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,7 +56,7 @@ public class JavaFunctionBrokerTest {
         triggerMetadata.put("sys", sys);
         when(request.getTriggerMetadataMap()).thenReturn(Collections.unmodifiableMap(triggerMetadata));
 
-        JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider(), new DefaultInvocationPipelineBuilder());
+        JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider(), new InvocationChain.InvocationChainBuilder());
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         TypedData actual = actualTriggerMetadata.get("$request");
         assertEquals(actual.getString(), expectedData);
@@ -96,7 +96,7 @@ public class JavaFunctionBrokerTest {
         when(request.getTriggerMetadataMap()).thenReturn(Collections.unmodifiableMap(triggerMetadata));
 
         int expectedCount = request.getTriggerMetadataMap().size();
-        JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider(), new DefaultInvocationPipelineBuilder());
+        JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider(), new InvocationChain.InvocationChainBuilder());
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         // In case of non-http request, it will not modify the triggerMetadata
         assertEquals(expectedCount, actualTriggerMetadata.size());
