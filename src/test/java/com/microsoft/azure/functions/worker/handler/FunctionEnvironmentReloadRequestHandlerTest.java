@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import com.microsoft.azure.functions.worker.reflect.FunctionClassLoaderProvider;
 import org.junit.Test;
 
@@ -17,7 +18,7 @@ public class FunctionEnvironmentReloadRequestHandlerTest {
 	@Test
 	public void SetEnv_Succeeds() throws Exception {
 		FunctionClassLoaderProvider classLoader = new FunctionClassLoaderProvider();
-		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
+		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader, new InvocationChain.InvocationChainBuilder());
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
 		String testSetting = System.getenv("testSetting");
@@ -35,7 +36,7 @@ public class FunctionEnvironmentReloadRequestHandlerTest {
 	@Test
 	public void SetEnv_Null_Succeeds() throws Exception {
 		FunctionClassLoaderProvider classLoader = new FunctionClassLoaderProvider();
-		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
+		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader, new InvocationChain.InvocationChainBuilder());
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
 		Map<String, String> newEnvVariables = null;

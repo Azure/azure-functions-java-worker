@@ -14,5 +14,5 @@ public interface JavaMethodExecutor {
 
     ParameterResolver getOverloadResolver();
 
-    void execute(BindingDataStore dataStore) throws Exception;
+    void execute(ExecutionContextDataSource executionContextDataSource) throws Exception;
 }

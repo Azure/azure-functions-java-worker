@@ -47,9 +47,10 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
 
     public ParameterResolver getOverloadResolver() { return this.overloadResolver; }
 
-    public void execute(BindingDataStore dataStore) throws Exception {
+    public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
+            BindingDataStore dataStore = executionContextDataSource.getDataStore();
             Object retValue = this.overloadResolver.resolve(dataStore)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     .invoke(() -> this.containingClass.newInstance());

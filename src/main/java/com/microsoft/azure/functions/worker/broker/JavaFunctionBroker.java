@@ -1,18 +1,20 @@
 package com.microsoft.azure.functions.worker.broker;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
+import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
 
@@ -24,9 +26,18 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
  * reflection, and invoke them at runtime. Thread-Safety: Multiple thread.
  */
 public class JavaFunctionBroker {
-	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
+
+	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
+	private final ClassLoaderProvider classLoaderProvider;
+	private String workerDirectory;
+	private final InvocationChain.InvocationChainBuilder invocationChainBuilder;
+	private volatile boolean loadMiddleware = true;
+
+
+	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider, InvocationChain.InvocationChainBuilder invocationChainBuilder) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
+		this.invocationChainBuilder = invocationChainBuilder;
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -34,9 +45,29 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 
 		addSearchPathsToClassLoader(descriptor);
+		loadMiddleware();
 		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, classLoaderProvider);
 
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
+	}
+
+	private void loadMiddleware() {
+		if (loadMiddleware) {
+			synchronized (JavaFunctionBroker.class){
+				if (loadMiddleware) {
+					try {
+						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
+						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
+							this.invocationChainBuilder.use(middleware);
+						}
+					} finally {
+						Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+					}
+					loadMiddleware = false;
+				}
+			}
+		}
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
@@ -46,18 +77,16 @@ public class JavaFunctionBroker {
 		if (executor == null) {
 			throw new NoSuchMethodException("Cannot find method with ID \"" + id + "\"");
 		}
-
-		BindingDataStore dataStore = new BindingDataStore();
+		final BindingDataStore dataStore = new BindingDataStore();
 		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
-
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(), request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
-
-		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
-
-		executor.execute(dataStore);
+		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
+		dataStore.addExecutionContextSource(executionContextDataSource);
+		executionContextDataSource.setDataStore(dataStore);
+		this.invocationChainBuilder.build(executor).doNext(executionContextDataSource);
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
@@ -150,8 +179,4 @@ public class JavaFunctionBroker {
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
 	}
-
-	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
-	private final ClassLoaderProvider classLoaderProvider;
-	private String workerDirectory;
 }
