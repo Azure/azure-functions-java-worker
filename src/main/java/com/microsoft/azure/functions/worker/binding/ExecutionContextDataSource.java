@@ -82,8 +82,8 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     @Override
-    public void setMiddlewareOutput(Object implicitOutput) {
-        this.middlewareOutput = implicitOutput;
+    public void setMiddlewareOutput(Object middlewareOutput) {
+        this.middlewareOutput = middlewareOutput;
     }
 
     public void addParams(ParamBindInfo[] params) {
