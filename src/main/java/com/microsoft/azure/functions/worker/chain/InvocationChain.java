@@ -28,8 +28,8 @@ public class InvocationChain implements FunctionWorkerChain {
 
         private final List<FunctionWorkerMiddleware> middlewareCollections;
 
-        public InvocationChainBuilder() {
-            middlewareCollections = new ArrayList<>();
+        public InvocationChainBuilder(List<FunctionWorkerMiddleware> middlewareCollections) {
+            this.middlewareCollections = middlewareCollections;
         }
 
         public void use(FunctionWorkerMiddleware functionWorkerMiddleware){

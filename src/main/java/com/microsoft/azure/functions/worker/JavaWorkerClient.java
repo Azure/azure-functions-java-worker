@@ -36,9 +36,7 @@ public class JavaWorkerClient implements AutoCloseable {
 
     @PostConstruct
     private void addHandlers() {
-        InvocationChain.InvocationChainBuilder invocationChainBuilder = new InvocationChain.InvocationChainBuilder();
-        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider, invocationChainBuilder);
-        
+        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_ENVIRONMENT_RELOAD_REQUEST, () -> new FunctionEnvironmentReloadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));

@@ -58,7 +58,7 @@ public class JavaFunctionBrokerTest {
         triggerMetadata.put("sys", sys);
         when(request.getTriggerMetadataMap()).thenReturn(Collections.unmodifiableMap(triggerMetadata));
 
-        JavaFunctionBroker broker = new JavaFunctionBroker(new FunctionClassLoaderProvider(), new InvocationChain.InvocationChainBuilder());
+        JavaFunctionBroker broker = new JavaFunctionBroker(new FunctionClassLoaderProvider());
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         TypedData actual = actualTriggerMetadata.get("$request");
         assertEquals(actual.getString(), expectedData);
@@ -98,7 +98,7 @@ public class JavaFunctionBrokerTest {
         when(request.getTriggerMetadataMap()).thenReturn(Collections.unmodifiableMap(triggerMetadata));
 
         int expectedCount = request.getTriggerMetadataMap().size();
-        JavaFunctionBroker broker = new JavaFunctionBroker(new FunctionClassLoaderProvider(), new InvocationChain.InvocationChainBuilder());
+        JavaFunctionBroker broker = new JavaFunctionBroker(new FunctionClassLoaderProvider());
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         // In case of non-http request, it will not modify the triggerMetadata
         assertEquals(expectedCount, actualTriggerMetadata.size());

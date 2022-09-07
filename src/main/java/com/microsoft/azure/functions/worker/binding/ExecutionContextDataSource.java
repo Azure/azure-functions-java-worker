@@ -26,7 +26,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private BindingDataStore dataStore;
     //TODO: can we combine below two fields?
     private Object returnValue;
-    private Object implicitOutput;
+    private Object middlewareOutput;
     private final Map<String, Parameter> paramInfoMap;
     private final Map<String, Object> inputArgumentMap;
     private final Map<String, String> argumentPayloadMap;
@@ -81,12 +81,9 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.returnValue = returnValue;
     }
 
-    public Object getImplicitOutput() {
-        return implicitOutput;
-    }
-
-    public void setImplicitOutput(Object implicitOutput) {
-        this.implicitOutput = implicitOutput;
+    @Override
+    public void setMiddlewareOutput(Object implicitOutput) {
+        this.middlewareOutput = implicitOutput;
     }
 
     public void addParams(ParamBindInfo[] params) {
@@ -123,6 +120,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return this.argumentPayloadMap;
     }
 
+    //TODO: how to serialize the payload for middlware to consume
     private String convertPayloadToString(TypedData data) {
         switch (data.getDataCase()) {
             case INT:    return String.valueOf(data.getInt());
@@ -141,7 +139,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     public void buildOutput() {
-        if (this.implicitOutput == null) return;
-        this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.implicitOutput);
+        if (this.middlewareOutput == null) return;
+        this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.middlewareOutput);
     }
 }

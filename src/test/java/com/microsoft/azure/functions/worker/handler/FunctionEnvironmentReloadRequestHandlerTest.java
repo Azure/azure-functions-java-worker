@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public class FunctionEnvironmentReloadRequestHandlerTest {
 	@Test
 	public void SetEnv_Succeeds() throws Exception {
 		FunctionClassLoaderProvider classLoader = new FunctionClassLoaderProvider();
-		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader, new InvocationChain.InvocationChainBuilder());
+		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
 		String testSetting = System.getenv("testSetting");
@@ -36,7 +37,7 @@ public class FunctionEnvironmentReloadRequestHandlerTest {
 	@Test
 	public void SetEnv_Null_Succeeds() throws Exception {
 		FunctionClassLoaderProvider classLoader = new FunctionClassLoaderProvider();
-		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader, new InvocationChain.InvocationChainBuilder());
+		JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
 		FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
 
 		Map<String, String> newEnvVariables = null;

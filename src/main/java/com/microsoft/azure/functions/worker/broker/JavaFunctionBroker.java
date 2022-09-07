@@ -30,13 +30,12 @@ public class JavaFunctionBroker {
 	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
-	private final InvocationChain.InvocationChainBuilder invocationChainBuilder;
+	private volatile InvocationChain.InvocationChainBuilder invocationChainBuilder;
 	private volatile boolean loadMiddleware = true;
 
-	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider, InvocationChain.InvocationChainBuilder invocationChainBuilder) {
+	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
-		this.invocationChainBuilder = invocationChainBuilder;
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -52,15 +51,17 @@ public class JavaFunctionBroker {
 		if (loadMiddleware) {
 			synchronized (JavaFunctionBroker.class){
 				if (loadMiddleware) {
+					List<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
 					try {
 						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
 						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
 						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
-							this.invocationChainBuilder.use(middleware);
+							middlewares.add(middleware);
 						}
 					} finally {
 						Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 					}
+					this.invocationChainBuilder = new InvocationChain.InvocationChainBuilder(middlewares);
 					loadMiddleware = false;
 				}
 			}
