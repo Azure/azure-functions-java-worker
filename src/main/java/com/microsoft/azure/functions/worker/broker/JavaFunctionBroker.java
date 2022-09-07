@@ -83,7 +83,12 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		executionContextDataSource.setDataStore(dataStore);
+		executionContextDataSource.buildArgumentPayLoad(request);
+		executionContextDataSource.addParams(executor.getMethodBindInfo().getParams());
 		this.invocationChainBuilder.build(executor).doNext(executionContextDataSource);
+		if (executor.getMethodBindInfo().isHasImplicitOutput()){
+			executionContextDataSource.buildOutput();
+		}
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}

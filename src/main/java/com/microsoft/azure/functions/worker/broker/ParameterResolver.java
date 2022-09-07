@@ -2,14 +2,9 @@ package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
+import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -22,6 +17,8 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
  * Thread-Safety: Multiple thread.
  */
 public class ParameterResolver {
+
+    private final List<MethodBindInfo> candidates;
     ParameterResolver() {
         this.candidates = new ArrayList<>();
     }
@@ -38,82 +35,103 @@ public class ParameterResolver {
         return this.candidates.size() > 1;
     }
 
-    synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
-        InvokeInfoBuilder invoker = this.resolve(this.candidates.get(0), dataStore);
+    public List<MethodBindInfo> getCandidates() {
+        return candidates;
+    }
+
+//    synchronized Optional<JavaMethodInvokeInfo> resolve(BindingDataStore dataStore) {
+//        InvokeInfoBuilder invoker = this.resolve(this.candidates.get(0), dataStore);
+//        if (invoker != null) {
+//            dataStore.promoteDataTargets(invoker.outputsId);
+//            return Optional.of(invoker.build());
+//        }
+//        return Optional.empty();
+//    }
+
+    synchronized Optional<JavaMethodInvokeInfo> resolve(ExecutionContextDataSource executionContextDataSource) {
+        InvokeInfoBuilder invoker = this.resolve(this.candidates.get(0), executionContextDataSource);
         if (invoker != null) {
-            dataStore.promoteDataTargets(invoker.outputsId);
+            executionContextDataSource.getDataStore().promoteDataTargets(invoker.outputsId);
             return Optional.of(invoker.build());
         }
         return Optional.empty();
     }
 
-    private InvokeInfoBuilder resolve(MethodBindInfo method, BindingDataStore dataStore) {
+//    private InvokeInfoBuilder resolve(MethodBindInfo method, BindingDataStore dataStore) {
+//        try {
+//            final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
+//            for (ParamBindInfo param : method.getParams()) {
+//                Optional<BindingData> argument = null;
+//                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.getType(), null))) {
+//                    argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.getName(), param.getType(), false);
+//                }
+//                else if (param.getName() != null && !param.getName().isEmpty()) {
+//                    argument = dataStore.getDataByName(param.getName(), param.getType());
+//                }
+//                else if (param.getName() == null && !param.getBindingNameAnnotation().isEmpty()) {
+//                	argument = dataStore.getTriggerMetatDataByName(param.getBindingNameAnnotation(), param.getType());
+//                }
+//                else {
+//                	argument = dataStore.getDataByType(param.getType());
+//                }
+//                BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
+//                invokeInfo.appendArgument(actualArg.getValue());
+//            }
+//            if (!method.getEntry().getReturnType().equals(void.class) && !method.getEntry().getReturnType().equals(Void.class)) {
+//                dataStore.getOrAddDataTarget(invokeInfo.outputsId, BindingDataStore.RETURN_NAME, method.getEntry().getReturnType(), method.isHasImplicitOutput());
+//            }
+//            return invokeInfo;
+//        } catch (Exception ex) {
+//        	ExceptionUtils.rethrow(ex);
+//            return null;
+//        }
+//    }
+
+    private InvokeInfoBuilder resolve(MethodBindInfo method, ExecutionContextDataSource executionContextDataSource) {
         try {
             final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
-            for (ParamBindInfo param : method.params) {
+            BindingDataStore dataStore = executionContextDataSource.getDataStore();
+            for (ParamBindInfo param : method.getParams()) {
                 Optional<BindingData> argument = null;
-                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.type, null))) {
-                    argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.name, param.type, false);
-                }                
-                else if (param.name != null && !param.name.isEmpty()) {
-                    argument = dataStore.getDataByName(param.name, param.type);
-                } 
-                else if (param.name == null && !param.bindingNameAnnotation.isEmpty()) {
-                	argument = dataStore.getTriggerMetatDataByName(param.bindingNameAnnotation, param.type);
+                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(param.getType(), null))) {
+                    argument = dataStore.getOrAddDataTarget(invokeInfo.outputsId, param.getName(), param.getType(), false);
+                }
+                else if (param.getName() != null && !param.getName().isEmpty()) {
+                    // Get middleware updated input first
+                    argument = buildArgumentFromInputMap(param.getName(), executionContextDataSource);
+                    // if nothing get from middleware, fallback to normal argument building logics.
+                    if (!argument.isPresent()){
+                        argument = dataStore.getDataByName(param.getName(), param.getType());
+                    }
+                }
+                else if (param.getName() == null && !param.getBindingNameAnnotation().isEmpty()) {
+                    argument = dataStore.getTriggerMetatDataByName(param.getBindingNameAnnotation(), param.getType());
                 }
                 else {
-                	argument = dataStore.getDataByType(param.type);
+                    argument = dataStore.getDataByType(param.getType());
                 }
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
                 invokeInfo.appendArgument(actualArg.getValue());
             }
-            if (!method.entry.getReturnType().equals(void.class) && !method.entry.getReturnType().equals(Void.class)) {
-                dataStore.getOrAddDataTarget(invokeInfo.outputsId, BindingDataStore.RETURN_NAME, method.entry.getReturnType(), method.hasImplicitOutput);
+            if (!method.getEntry().getReturnType().equals(void.class) && !method.getEntry().getReturnType().equals(Void.class)) {
+                dataStore.getOrAddDataTarget(invokeInfo.outputsId, BindingDataStore.RETURN_NAME, method.getEntry().getReturnType(), method.isHasImplicitOutput());
             }
             return invokeInfo;
         } catch (Exception ex) {
-        	ExceptionUtils.rethrow(ex);
+            ExceptionUtils.rethrow(ex);
             return null;
         }
-    }  
-  
-    private final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
-        InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.entry); }
+    }
+
+    private Optional<BindingData> buildArgumentFromInputMap(String name, ExecutionContextDataSource executionContextDataSource) {
+        Object inputByName = executionContextDataSource.getInputArgumentByName(name);
+        if (inputByName == null) return Optional.empty();
+        BindingData bindingData = new BindingData(inputByName);
+        return Optional.of(bindingData);
+    }
+
+    private static final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
+        InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getEntry()); }
         private final UUID outputsId = UUID.randomUUID();
     }
-
-    private final class MethodBindInfo {
-        MethodBindInfo(Method m) {
-            this.entry = m;
-            this.params = Arrays.stream(this.entry.getParameters()).map(ParamBindInfo::new).toArray(ParamBindInfo[]::new);
-            this.hasImplicitOutput = checkHasImplicitOutput();
-        }
-
-        private boolean checkHasImplicitOutput(){
-            for (ParamBindInfo paramBindInfo : this.params){
-                if (paramBindInfo.hasImplicitOutput) return true;
-            }
-            return false;
-        }
-
-        private final Method entry;
-        private final ParamBindInfo[] params;
-        private final boolean hasImplicitOutput;
-    }
-
-    private final class ParamBindInfo {
-        ParamBindInfo(Parameter param) {
-            this.name = CoreTypeResolver.getAnnotationName(param);
-            this.type = param.getParameterizedType();
-            this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
-            this.hasImplicitOutput = CoreTypeResolver.checkHasImplicitOutput(param);
-        }        
-        
-        private final String name;
-        private final Type type;
-        private String bindingNameAnnotation = new String("");
-        private final boolean hasImplicitOutput;
-    }
-
-    private final List<MethodBindInfo> candidates;
 }

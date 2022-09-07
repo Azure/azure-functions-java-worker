@@ -36,6 +36,8 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
             throw new UnsupportedOperationException("Found more than one function with method name \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
         }
 
+        this.methodBindInfo = this.overloadResolver.getCandidates().get(0);
+
         this.bindingDefinitions = new HashMap<>();
 
         for (Map.Entry<String, BindingInfo> entry : bindingInfos.entrySet()) {
@@ -51,10 +53,11 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
             BindingDataStore dataStore = executionContextDataSource.getDataStore();
-            Object retValue = this.overloadResolver.resolve(dataStore)
+            Object retValue = this.overloadResolver.resolve(executionContextDataSource)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     .invoke(() -> this.containingClass.newInstance());
             dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
+            executionContextDataSource.setReturnValue(retValue);
         } finally {
             Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
         }
@@ -64,8 +67,16 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
         return Class.forName(className, false, this.classLoader);
     }
 
+    @Override
+    public MethodBindInfo getMethodBindInfo() {
+        return methodBindInfo;
+    }
+
     private final Class<?> containingClass;
     private final ClassLoader classLoader;
     private final ParameterResolver overloadResolver;
     private final Map<String, BindingDefinition> bindingDefinitions;
+
+    private final MethodBindInfo methodBindInfo;
+
 }

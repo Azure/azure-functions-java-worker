@@ -2,7 +2,6 @@ package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
-
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.worker.Constants;
 
@@ -100,7 +99,7 @@ public class CoreTypeResolver {
 		}
 	}
 
-	static String getBindingNameAnnotation(Parameter param) {
+	public static String getBindingNameAnnotation(Parameter param) {
 		Annotation bindingNameAnnotation = null;
 		for (Annotation item : param.getAnnotations()){
 			if (item.annotationType().getName().equals("com.microsoft.azure.functions.annotation.BindingName")){
@@ -121,7 +120,7 @@ public class CoreTypeResolver {
 		return new String("");
 	}
 
-	static boolean checkHasImplicitOutput(Parameter parameter) {
+	public static boolean checkHasImplicitOutput(Parameter parameter) {
 		Annotation[] annotations = parameter.getAnnotations();
 		for (Annotation annotation : annotations) {
 			for (Annotation item : annotation.annotationType().getAnnotations()) {
