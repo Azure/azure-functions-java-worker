@@ -10,9 +10,5 @@ import com.microsoft.azure.functions.worker.binding.*;
  * Thread-Safety: Multiple thread.
  */
 public interface JavaMethodExecutor {
-    Map<String, BindingDefinition> getBindingDefinitions();
-
-    ParameterResolver getOverloadResolver();
-
-    void execute(BindingDataStore dataStore) throws Exception;
+    void execute(ExecutionContextDataSource executionContextDataSource) throws Exception;
 }

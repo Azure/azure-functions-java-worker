@@ -34,9 +34,9 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
-		assertTrue(executor.getOverloadResolver().hasCandidates());
-		assertFalse(executor.getOverloadResolver().hasMultipleCandidates());
+		FunctionExecutionDefinition funcDefinition = new FunctionExecutionDefinition(descriptor, bindings, functionClassLoaderProvider);
+		assertTrue(funcDefinition.hasCandidates());
+		assertFalse(funcDefinition.hasMultipleCandidates());
     }
 
 	@Test(expected = NoSuchMethodException.class)
@@ -44,7 +44,7 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTrigger1","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTrigger1","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
+		FunctionExecutionDefinition funcDefinition = new FunctionExecutionDefinition(descriptor, bindings, functionClassLoaderProvider);
     }
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -52,6 +52,6 @@ public class JavaMethodExecutorTest {
 		FunctionMethodDescriptor descriptor = new FunctionMethodDescriptor("testid", "TestHttpTriggerOverload","com.microsoft.azure.functions.worker.broker.tests.TestFunctionsClass.TestHttpTriggerOverload","TestFunctionsClass.jar");
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
-		JavaMethodExecutor executor = new FunctionMethodExecutorImpl(descriptor, bindings, functionClassLoaderProvider);
+		FunctionExecutionDefinition funcDefinition = new FunctionExecutionDefinition(descriptor, bindings, functionClassLoaderProvider);
     }
 }
