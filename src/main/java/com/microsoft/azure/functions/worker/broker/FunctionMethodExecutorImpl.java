@@ -53,11 +53,27 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
             BindingDataStore dataStore = executionContextDataSource.getDataStore();
             Object retValue = this.overloadResolver.resolve(dataStore)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
-                    .invoke(() -> this.containingClass.newInstance());
+                    .invoke(() -> {
+                        Object target = executionContextDataSource.getFunctionInstance();
+                        if (target == null) {
+                            target = this.containingClass.newInstance();
+                        }
+                        return target;
+                    });
             dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
         } finally {
             Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
         }
+    }
+
+    @Override
+    public Class<?> getContainingClass() {
+        return containingClass;
+    }
+
+    @Override
+    public ClassLoader getClassLoader() {
+        return classLoader;
     }
 
     private Class<?> getContainingClass(String className) throws ClassNotFoundException {

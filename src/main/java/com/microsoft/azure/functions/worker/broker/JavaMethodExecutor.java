@@ -15,4 +15,8 @@ public interface JavaMethodExecutor {
     ParameterResolver getOverloadResolver();
 
     void execute(ExecutionContextDataSource executionContextDataSource) throws Exception;
+
+    Class<?> getContainingClass();
+
+    ClassLoader getClassLoader();
 }

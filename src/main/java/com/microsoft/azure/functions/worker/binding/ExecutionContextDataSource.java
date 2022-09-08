@@ -3,11 +3,14 @@ package com.microsoft.azure.functions.worker.binding;
 import java.util.logging.Logger;
 
 import com.microsoft.azure.functions.ExecutionContext;
+import com.microsoft.azure.functions.middleware.MiddlewareExecutionContext;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.TraceContext;
 import com.microsoft.azure.functions.RetryContext;
+import com.microsoft.azure.functions.worker.broker.FunctionMethodExecutorImpl;
+import com.microsoft.azure.functions.worker.broker.JavaMethodExecutor;
 
-public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
+public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareExecutionContext {
 
     private final String invocationId;
     private final TraceContext traceContext;
@@ -15,14 +18,17 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final Logger logger;
     private final String funcname;
     private BindingDataStore dataStore;
+    private final JavaMethodExecutor executor;
+    private Object functionInstance;
 
-    public ExecutionContextDataSource(String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
+    public ExecutionContextDataSource(JavaMethodExecutor executor, String invocationId, String funcname, TraceContext traceContext, RetryContext retryContext) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
         this.retryContext = retryContext;
         this.logger = WorkerLogManager.getInvocationLogger(invocationId);
         this.funcname = funcname;
+        this.executor = executor;
         this.setValue(this);
     }
 
@@ -47,6 +53,26 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     public void setDataStore(BindingDataStore dataStore) {
         this.dataStore = dataStore;
+    }
+
+    @Override
+    public ClassLoader getFunctionClassLoader() {
+        return executor.getClassLoader();
+    }
+
+    @Override
+    public Class getFunctionClass() {
+        return executor.getContainingClass();
+    }
+
+    @Override
+    public Object getFunctionInstance() {
+        return functionInstance;
+    }
+
+    @Override
+    public void setFunctionInstance(Object obj) {
+        this.functionInstance = obj;
     }
 
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();

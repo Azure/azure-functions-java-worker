@@ -1,8 +1,8 @@
 package com.microsoft.azure.functions.worker.chain;
 
-import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.middleware.FunctionWorkerChain;
 import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
+import com.microsoft.azure.functions.middleware.MiddlewareExecutionContext;
 import com.microsoft.azure.functions.worker.broker.JavaMethodExecutor;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public class InvocationChain implements FunctionWorkerChain {
     }
 
     @Override
-    public void doNext(ExecutionContext context) throws Exception{
+    public void doNext(MiddlewareExecutionContext context) throws Exception{
         while (middlewareIterator.hasNext()) {
             middlewareIterator.next().invoke(context, this);
         }
