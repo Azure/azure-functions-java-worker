@@ -1,14 +1,13 @@
-package com.microsoft.azure.functions.worker.test;
+package com.microsoft.azure.functions.worker.binding;
 
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
 import com.microsoft.azure.functions.TraceContext;
-import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 
 import org.junit.Test;
 
-public class ExecutionTraceContextTests {
+public class ExecutionTraceContextTest {
 
     @Test
     public void TraceContext_test_getAndset_nonEmpty() {

@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.functional.tests;
+package com.microsoft.azure.functions.worker.integration;
 
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.test.utilities.*;
@@ -10,7 +10,7 @@ import org.junit.runners.Parameterized.Parameter;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class SimpleParamReturnTest extends FunctionsTestBase {
+public class SimpleParamReturnIT extends FunctionsTestBase {
 
 	@Parameters
 	public static Object[] data() {

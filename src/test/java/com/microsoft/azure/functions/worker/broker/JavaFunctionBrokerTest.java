@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
-import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
+import com.microsoft.azure.functions.worker.reflect.FunctionClassLoaderProvider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -43,7 +43,7 @@ public class JavaFunctionBrokerTest {
         when(bindingData.getString()).thenReturn(expectedData);
         when(binding.getName()).thenReturn(expectedName);
         when(binding.getData()).thenReturn(bindingData);
-        when(request.getInputDataList()).thenReturn(Arrays.asList(binding));
+        when(request.getInputDataList()).thenReturn(Collections.singletonList(binding));
 
         lenient().when(name.getString()).thenReturn("string: \"John\"\n");
         lenient().when(query.getString()).thenReturn("json: \"{\"name\":\"ushio\"}\"");
@@ -57,7 +57,7 @@ public class JavaFunctionBrokerTest {
         triggerMetadata.put("sys", sys);
         when(request.getTriggerMetadataMap()).thenReturn(Collections.unmodifiableMap(triggerMetadata));
 
-        JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider());
+        JavaFunctionBroker broker = new JavaFunctionBroker(new FunctionClassLoaderProvider());
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         TypedData actual = actualTriggerMetadata.get("$request");
         assertEquals(actual.getString(), expectedData);
@@ -74,7 +74,7 @@ public class JavaFunctionBrokerTest {
         lenient().when(bindingData.getString()).thenReturn(data);
         lenient().when(binding.getName()).thenReturn(name);
         when(binding.getData()).thenReturn(bindingData);
-        when(request.getInputDataList()).thenReturn(Arrays.asList(binding));
+        when(request.getInputDataList()).thenReturn(Collections.singletonList(binding));
 
         lenient().when(queueTrigger.getString()).thenReturn("string: \"hello queue\"\n");
         lenient().when(dequeueCount.getString()).thenReturn("json: \"1\"\n");
@@ -97,23 +97,9 @@ public class JavaFunctionBrokerTest {
         when(request.getTriggerMetadataMap()).thenReturn(Collections.unmodifiableMap(triggerMetadata));
 
         int expectedCount = request.getTriggerMetadataMap().size();
-        JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider());
+        JavaFunctionBroker broker = new JavaFunctionBroker(new FunctionClassLoaderProvider());
         Map<String, TypedData> actualTriggerMetadata = broker.getTriggerMetadataMap(request);
         // In case of non-http request, it will not modify the triggerMetadata
         assertEquals(expectedCount, actualTriggerMetadata.size());
-    }
-
-    @Test(expected = FileNotFoundException.class)
-    public void checkLibFolderNoWorkerLib() throws Exception {
-        JavaFunctionBroker broker = new JavaFunctionBroker(null);
-        broker.verifyLibrariesExist (new File(""), null);
-    }
-
-    @Test(expected = FileNotFoundException.class)
-    public void checkLibFolderNoJarsInLib() throws Exception {
-        JavaFunctionBroker broker = new JavaFunctionBroker(null);
-        String path = "../";
-        File file = new File(path);
-        broker.verifyLibrariesExist (file, path);
     }
 }

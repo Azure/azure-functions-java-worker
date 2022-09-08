@@ -1,5 +1,5 @@
 
-package com.microsoft.azure.functions.worker.binding.tests;
+package com.microsoft.azure.functions.worker.binding;
 
 import com.microsoft.azure.functions.rpc.messages.CollectionDouble;
 import com.microsoft.azure.functions.worker.binding.BindingData;

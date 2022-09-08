@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.binding.tests;
+package com.microsoft.azure.functions.worker.binding;
 
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
