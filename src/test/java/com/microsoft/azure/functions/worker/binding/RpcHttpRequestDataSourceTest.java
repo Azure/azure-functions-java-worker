@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.binding.tests;
+package com.microsoft.azure.functions.worker.binding;
 
 import static org.junit.Assert.assertEquals;
 
@@ -11,9 +11,8 @@ import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpStatus;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
-import com.microsoft.azure.functions.worker.binding.*;
 
-public class RpcHttpRequestDataSourceTests {
+public class RpcHttpRequestDataSourceTest {
 
   public void HttpRequestStringBody(HttpRequestMessage<String> request) {
   }
@@ -92,8 +91,8 @@ public class RpcHttpRequestDataSourceTests {
   }
 
   private Method getFunctionMethod(String methodName) {
-    RpcHttpRequestDataSourceTests httpDataSourceTests = new RpcHttpRequestDataSourceTests();
-    Class<? extends RpcHttpRequestDataSourceTests> httpDataSourceTestsClass = httpDataSourceTests
+    RpcHttpRequestDataSourceTest httpDataSourceTests = new RpcHttpRequestDataSourceTest();
+    Class<? extends RpcHttpRequestDataSourceTest> httpDataSourceTestsClass = httpDataSourceTests
         .getClass();
     Method[] methods = httpDataSourceTestsClass.getMethods();
     Method functionMethod = null;

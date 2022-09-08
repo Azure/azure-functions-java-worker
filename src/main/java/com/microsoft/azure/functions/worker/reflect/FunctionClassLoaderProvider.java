@@ -8,8 +8,8 @@ import java.util.concurrent.*;
 
 import com.microsoft.azure.functions.worker.*;
 
-public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
-    public EnhancedClassLoaderProvider() {
+public class FunctionClassLoaderProvider implements ClassLoaderProvider {
+    public FunctionClassLoaderProvider() {
         customerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
         workerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
     }
