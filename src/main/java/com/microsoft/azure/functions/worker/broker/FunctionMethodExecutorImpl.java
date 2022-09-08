@@ -28,7 +28,15 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     //TODO: Should we only create one instance at function load time, instead of create the new instance every invocation
                     // How does this affects DI framework
-                    .invoke(() -> executionContextDataSource.getContainingClass().newInstance());
+                    .invoke(() -> {
+                        //Load function instance set by middleware at first
+                        Object functionInstance = executionContextDataSource.getFunctionInstance();
+                        // if no middleware set function instance, fallback to old logics to create a new instance of the containing class
+                        if (functionInstance == null){
+                            functionInstance = executionContextDataSource.getContainingClass().newInstance();
+                        }
+                        return functionInstance;
+                    });
             executionContextDataSource.getDataStore().setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
             executionContextDataSource.setReturnValue(retValue);
         } finally {

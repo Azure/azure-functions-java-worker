@@ -87,7 +87,8 @@ public class JavaFunctionBroker {
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
-	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request) throws NoSuchMethodException {
+	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
+			throws NoSuchMethodException, InstantiationException, IllegalAccessException {
 		ImmutablePair<String, FunctionExecutionDefinition> methodEntry = this.methods.get(id);
 		FunctionExecutionDefinition payLoad = methodEntry.right;
 		if (payLoad == null) {
@@ -99,11 +100,12 @@ public class JavaFunctionBroker {
 		dataStore.addParameterSources(request.getInputDataList());
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(), request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
-		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
-		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
-		executionContextDataSource.setDataStore(dataStore);
-		executionContextDataSource.setMethodBindInfo(payLoad.getMethodBindInfo());
-		executionContextDataSource.setContainingClass(payLoad.getContainingClass());
+		ExecutionContextDataSource.Builder executionContextDataSourceBuilder = new ExecutionContextDataSource.Builder();
+		ExecutionContextDataSource executionContextDataSource = executionContextDataSourceBuilder
+				.invocationId(request.getInvocationId()).funcname(methodEntry.left).traceContext(traceContext)
+				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(payLoad.getMethodBindInfo())
+				.containingClass(payLoad.getContainingClass()).build();
+		dataStore.addExecutionContextSource(executionContextDataSource);
 		executionContextDataSource.buildParameterPayloadMap(request.getInputDataList());
 		return executionContextDataSource;
 	}
