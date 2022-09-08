@@ -40,7 +40,6 @@ public class WorkerLogManager {
     }
 
     private void flushLogsImpl() {
-        flush(emptyLogger);
         flush(systemLogger);
         flush(hostLogger);
     }
