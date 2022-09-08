@@ -11,11 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionExecutionDefinition {
+public class FunctionDefinition {
     private final Class<?> containingClass;
     private final Map<String, BindingDefinition> bindingDefinitions;
 
-    public FunctionExecutionDefinition(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
+    public FunctionDefinition(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws ClassNotFoundException, NoSuchMethodException
     {
         descriptor.validateMethodInfo();

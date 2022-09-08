@@ -28,7 +28,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
  */
 public class JavaFunctionBroker {
 
-	private final Map<String, ImmutablePair<String, FunctionExecutionDefinition>> methods;
+	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
 	private volatile boolean loadMiddleware = true;
@@ -44,8 +44,8 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
 		loadMiddleware();
-		FunctionExecutionDefinition functionExecutionDefinition = new FunctionExecutionDefinition(descriptor, bindings, classLoaderProvider);
-		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionExecutionDefinition));
+		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
+		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
 	private void loadMiddleware() {
@@ -88,14 +88,14 @@ public class JavaFunctionBroker {
 	}
 
 	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
-			throws NoSuchMethodException, InstantiationException, IllegalAccessException {
-		ImmutablePair<String, FunctionExecutionDefinition> methodEntry = this.methods.get(id);
-		FunctionExecutionDefinition payLoad = methodEntry.right;
-		if (payLoad == null) {
+			throws NoSuchMethodException {
+		ImmutablePair<String, FunctionDefinition> methodEntry = this.methods.get(id);
+		FunctionDefinition functionDefinition = methodEntry.right;
+		if (functionDefinition == null) {
 			throw new NoSuchMethodException("Cannot find method with ID \"" + id + "\"");
 		}
 		BindingDataStore dataStore = new BindingDataStore();
-		dataStore.setBindingDefinitions(payLoad.getBindingDefinitions());
+		dataStore.setBindingDefinitions(functionDefinition.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
@@ -103,8 +103,8 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource.Builder executionContextDataSourceBuilder = new ExecutionContextDataSource.Builder();
 		ExecutionContextDataSource executionContextDataSource = executionContextDataSourceBuilder
 				.invocationId(request.getInvocationId()).funcname(methodEntry.left).traceContext(traceContext)
-				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(payLoad.getMethodBindInfo())
-				.containingClass(payLoad.getContainingClass()).build();
+				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(functionDefinition.getMethodBindInfo())
+				.containingClass(functionDefinition.getContainingClass()).build();
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		executionContextDataSource.buildParameterPayloadMap(request.getInputDataList());
 		return executionContextDataSource;
