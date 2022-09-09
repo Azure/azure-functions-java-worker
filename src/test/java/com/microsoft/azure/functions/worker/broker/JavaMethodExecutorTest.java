@@ -33,8 +33,7 @@ public class JavaMethodExecutorTest {
 		Map<String, BindingInfo> bindings = new HashMap<>();
 		bindings.put("$return", BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).build());
 		FunctionDefinition funcDefinition = new FunctionDefinition(descriptor, bindings, functionClassLoaderProvider);
-		assertTrue(funcDefinition.hasCandidates());
-		assertFalse(funcDefinition.hasMultipleCandidates());
+		assertNotNull(funcDefinition.getCandidate());
     }
 
 	@Test(expected = NoSuchMethodException.class)

@@ -16,6 +16,7 @@ import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChain;
+import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
 
@@ -32,7 +33,7 @@ public class JavaFunctionBroker {
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
 	private volatile boolean loadMiddleware = true;
-	private volatile InvocationChain.InvocationChainBuilder invocationChainBuilder;
+	private volatile InvocationChainFactory invocationChainFactory;
 
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
@@ -72,13 +73,13 @@ public class JavaFunctionBroker {
 	private void loadFunctionExecutionMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
 		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(new FunctionMethodExecutorImpl(this.classLoaderProvider.createClassLoader()));
 		middlewares.add(functionExecutionMiddleware);
-		this.invocationChainBuilder = new InvocationChain.InvocationChainBuilder(middlewares);
+		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-		this.invocationChainBuilder.build().doNext(executionContextDataSource);
+		this.invocationChainFactory.create().doNext(executionContextDataSource);
 		//TODO: should we check if the function isImplicitOutput?
 		if (executionContextDataSource.getMethodBindInfo().isImplicitOutput()){
 			executionContextDataSource.updateOutputValue();
@@ -103,7 +104,7 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource.Builder executionContextDataSourceBuilder = new ExecutionContextDataSource.Builder();
 		ExecutionContextDataSource executionContextDataSource = executionContextDataSourceBuilder
 				.invocationId(request.getInvocationId()).funcname(methodEntry.left).traceContext(traceContext)
-				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(functionDefinition.getMethodBindInfo())
+				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(functionDefinition.getCandidate())
 				.containingClass(functionDefinition.getContainingClass()).build();
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		executionContextDataSource.buildParameterPayloadMap(request.getInputDataList());

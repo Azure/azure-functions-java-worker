@@ -11,11 +11,11 @@ public final class MethodBindInfo {
     MethodBindInfo(Method m) {
         this.entry = m;
         this.params = Arrays.stream(this.entry.getParameters()).map(ParamBindInfo::new).toArray(ParamBindInfo[]::new);
-        this.isImplicitOutput = checkImplicitOutput();
+        this.isImplicitOutput = checkImplicitOutput(params);
     }
 
-    private boolean checkImplicitOutput(){
-        for (ParamBindInfo paramBindInfo : this.params){
+    private static boolean checkImplicitOutput(ParamBindInfo[] params){
+        for (ParamBindInfo paramBindInfo : params){
             if (paramBindInfo.isImplicitOutput()) return true;
         }
         return false;

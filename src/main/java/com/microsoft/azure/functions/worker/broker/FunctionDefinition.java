@@ -14,28 +14,16 @@ import java.util.Map;
 public class FunctionDefinition {
     private final Class<?> containingClass;
     private final Map<String, BindingDefinition> bindingDefinitions;
+    private final MethodBindInfo candidate;
 
     public FunctionDefinition(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws ClassNotFoundException, NoSuchMethodException
     {
         descriptor.validateMethodInfo();
 
-        this.candidates = new ArrayList<>();
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
 
-        for (Method method : this.containingClass.getMethods()) {
-            if (method.getDeclaringClass().getName().equals(descriptor.getFullClassName()) && method.getName().equals(descriptor.getMethodName())) {
-                this.addCandidate(method);
-            }
-        }
-
-        if (!hasCandidates()) {
-            throw new NoSuchMethodException("There are no methods named \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
-        }
-
-        if (hasMultipleCandidates()) {
-            throw new UnsupportedOperationException("Found more than one function with method name \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
-        }
+        this.candidate = getCandidate(descriptor, containingClass);
 
         this.bindingDefinitions = new HashMap<>();
 
@@ -44,9 +32,28 @@ public class FunctionDefinition {
         }
     }
 
-    private Class<?> getContainingClass(String className, ClassLoaderProvider classLoaderProvider) throws ClassNotFoundException {
+    private static Class<?> getContainingClass(String className, ClassLoaderProvider classLoaderProvider) throws ClassNotFoundException {
         ClassLoader classLoader = classLoaderProvider.createClassLoader();
         return Class.forName(className, true, classLoader);
+    }
+
+    private static MethodBindInfo getCandidate(FunctionMethodDescriptor descriptor, Class<?> containingClass) throws NoSuchMethodException {
+        List<MethodBindInfo> candidates  = new ArrayList<>();
+        for (Method method : containingClass.getMethods()) {
+            if (method.getDeclaringClass().getName().equals(descriptor.getFullClassName()) && method.getName().equals(descriptor.getMethodName())) {
+                candidates.add(new MethodBindInfo(method));
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            throw new NoSuchMethodException("There are no methods named \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
+        }
+
+        if (candidates.size() > 1) {
+            throw new UnsupportedOperationException("Found more than one function with method name \"" + descriptor.getName() + "\" in class \"" + descriptor.getFullClassName() + "\"");
+        }
+
+        return candidates.get(0);
     }
 
     public Class<?> getContainingClass() {
@@ -57,21 +64,7 @@ public class FunctionDefinition {
         return bindingDefinitions;
     }
 
-
-    synchronized void addCandidate(Method method) {
-        this.candidates.add(new MethodBindInfo(method));
+    public MethodBindInfo getCandidate() {
+        return candidate;
     }
-
-    public synchronized boolean hasCandidates() {
-        return !this.candidates.isEmpty();
-    }
-
-    public synchronized boolean hasMultipleCandidates() {
-        return this.candidates.size() > 1;
-    }
-
-    public synchronized MethodBindInfo getMethodBindInfo() {
-        return this.candidates.get(0);
-    }
-    private final List<MethodBindInfo> candidates;
 }

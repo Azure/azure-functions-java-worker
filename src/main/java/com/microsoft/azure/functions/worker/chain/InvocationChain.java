@@ -10,7 +10,7 @@ import java.util.List;
 public class InvocationChain implements FunctionWorkerChain {
      private final Iterator<FunctionWorkerMiddleware> middlewareIterator;
 
-     private InvocationChain(List<FunctionWorkerMiddleware> middlewares){
+     public InvocationChain(List<FunctionWorkerMiddleware> middlewares){
          this.middlewareIterator = middlewares.iterator();
      }
 
@@ -18,19 +18,6 @@ public class InvocationChain implements FunctionWorkerChain {
     public void doNext(ExecutionContext context) throws Exception {
         while (middlewareIterator.hasNext()) {
             middlewareIterator.next().invoke(context, this);
-        }
-    }
-
-    public static class InvocationChainBuilder{
-
-        private final List<FunctionWorkerMiddleware> middlewares;
-
-        public InvocationChainBuilder(List<FunctionWorkerMiddleware> middlewares) {
-            this.middlewares = middlewares;
-        }
-
-        public FunctionWorkerChain build(){
-            return new InvocationChain(middlewares);
         }
     }
 }
