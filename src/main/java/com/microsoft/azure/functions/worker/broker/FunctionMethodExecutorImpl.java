@@ -77,12 +77,6 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
         }
     }
 
-    private Optional<BindingData> getMiddlewareInput(Map<String, Object> middlewareInputMap, String paramName) {
-        Object input = middlewareInputMap.get(paramName);
-        if (input == null) return Optional.empty();
-        return Optional.of(new BindingData(input));
-    }
-
     public static final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
         private InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getEntry()); }
         private final UUID outputsId = UUID.randomUUID();
