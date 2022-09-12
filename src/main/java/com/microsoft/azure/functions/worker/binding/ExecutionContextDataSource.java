@@ -27,7 +27,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final MethodBindInfo methodBindInfo;
     private final Class<?> containingClass;
 
-    public ExecutionContextDataSource(Builder builder){
+    ExecutionContextDataSource(Builder builder){
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = builder.invocationId;
         this.traceContext = builder.traceContext;

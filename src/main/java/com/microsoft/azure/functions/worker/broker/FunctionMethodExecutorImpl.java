@@ -82,4 +82,13 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
         if (input == null) return Optional.empty();
         return Optional.of(new BindingData(input));
     }
+
+    public static final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
+        private InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getEntry()); }
+        private final UUID outputsId = UUID.randomUUID();
+
+        private UUID getOutputsId() {
+            return outputsId;
+        }
+    }
 }
