@@ -24,7 +24,7 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
     public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
-            Object retValue = this.resolveWrapper(executionContextDataSource)
+            Object retValue = this.resolveArguments(executionContextDataSource)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     //TODO: Should we only create one instance at function load time, instead of create the new instance every invocation
                     // How does this affects DI framework
@@ -44,7 +44,7 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
         }
     }
 
-    private synchronized Optional<JavaMethodInvokeInfo> resolveWrapper(ExecutionContextDataSource executionContextDataSource) {
+    private synchronized Optional<JavaMethodInvokeInfo> resolveArguments(ExecutionContextDataSource executionContextDataSource) {
         InvokeInfoBuilder invoker = this.resolve(executionContextDataSource);
         if (invoker != null) {
             executionContextDataSource.getDataStore().promoteDataTargets(invoker.getOutputsId());

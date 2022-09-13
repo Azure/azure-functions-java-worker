@@ -46,7 +46,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.parameterMap = new HashMap<>();
         this.parameterPayloadMap = new HashMap<>();
         this.middlewareInputMap = new HashMap<>();
-        addParameters();
+        addParameters(this.methodBindInfo, this.parameterMap);
         this.setValue(this);
     }
 
@@ -83,9 +83,9 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return containingClass;
     }
 
-    private void addParameters(){
-        for (ParamBindInfo paramBindInfo : this.methodBindInfo.getParams()) {
-            this.parameterMap.put(paramBindInfo.getName(), paramBindInfo.getParameter());
+    private static void addParameters(MethodBindInfo methodBindInfo, Map<String, Parameter> parameterMap){
+        for (ParamBindInfo paramBindInfo : methodBindInfo.getParams()) {
+            parameterMap.put(paramBindInfo.getName(), paramBindInfo.getParameter());
         }
     }
 
