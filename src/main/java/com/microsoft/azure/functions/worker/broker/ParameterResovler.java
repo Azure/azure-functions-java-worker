@@ -20,6 +20,9 @@ public class ParameterResovler {
             BindingDataStore dataStore = executionContextDataSource.getDataStore();
             UUID outputId = UUID.randomUUID();
             executionContextDataSource.getDataStore().promoteDataTargets(outputId);
+            //Use Linked HashMap with Key refer to name field in parameter's annotation, this is a break change,
+            //it requires cx to have unique name for parameter that use annotation
+            // provide by azure-functions-java-library in their function app
             LinkedHashMap<String, ExecutionParameter> argumentsMap = new LinkedHashMap<>();
             for (ParamBindInfo param : method.getParams()) {
                 String paramName = param.getName();
