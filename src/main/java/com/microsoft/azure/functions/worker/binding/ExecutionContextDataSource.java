@@ -3,20 +3,17 @@ package com.microsoft.azure.functions.worker.binding;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.RetryContext;
 import com.microsoft.azure.functions.TraceContext;
-import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
-import com.microsoft.azure.functions.rpc.messages.TypedData;
+import com.microsoft.azure.functions.middleware.MiddlewareExecutionContext;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
+import com.microsoft.azure.functions.worker.binding.model.ExecutionParameter;
 import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
-import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
+
 
 import java.lang.reflect.Parameter;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
-public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements ExecutionContext {
+public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareExecutionContext {
 
     private final String invocationId;
     private final TraceContext traceContext;
@@ -26,9 +23,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final BindingDataStore dataStore;
     private final MethodBindInfo methodBindInfo;
     private final Class<?> containingClass;
-    private final Map<String, Parameter> parameterMap;
-    private final Map<String, String> parameterPayloadMap;
-    private final Map<String, Object> middlewareInputMap;
+    private LinkedHashMap<String, ExecutionParameter> argumentsMap;
     private Object returnValue;
     private Object middlewareOutput;
     private Object functionInstance;
@@ -43,10 +38,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore = builder.dataStore;
         this.methodBindInfo = builder.methodBindInfo;
         this.containingClass = builder.containingClass;
-        this.parameterMap = new HashMap<>();
-        this.parameterPayloadMap = new HashMap<>();
-        this.middlewareInputMap = new HashMap<>();
-        addParameters(this.methodBindInfo, this.parameterMap);
         this.setValue(this);
     }
 
@@ -83,54 +74,37 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return containingClass;
     }
 
-    private static void addParameters(MethodBindInfo methodBindInfo, Map<String, Parameter> parameterMap){
-        for (ParamBindInfo paramBindInfo : methodBindInfo.getParams()) {
-            parameterMap.put(paramBindInfo.getName(), paramBindInfo.getParameter());
+    //TODO: cannot guarantee this argumentsMap is immutable.
+    public void setArgumentsMap(LinkedHashMap<String, ExecutionParameter> argumentsMap) {
+        this.argumentsMap = argumentsMap;
+    }
+
+    public Object[] getArguments(){
+        if (this.argumentsMap == null || this.argumentsMap.isEmpty()) return new Object[0];
+        Object[] arguments = new Object[this.argumentsMap.size()];
+        int idx = 0;
+        for (Map.Entry<String, ExecutionParameter> entry : this.argumentsMap.entrySet()){
+            arguments[idx++] = entry.getValue().getPayload();
         }
+        return arguments;
     }
 
     @Override
-    public Map<String, Parameter> getParameterMap() {
-        return this.parameterMap;
+    public Map<String, Parameter> getParameterMap(){
+        Map<String, Parameter> map = new HashMap<>();
+        for (Map.Entry<String, ExecutionParameter> entry : this.argumentsMap.entrySet()){
+            map.put(entry.getKey(), entry.getValue().getParameter());
+        }
+        return map;
     }
 
     @Override
-    public Map<String, String> getParameterPayloadMap() {
-        return parameterPayloadMap;
+    public Object getParameterPayloadByName(String name){
+        return this.argumentsMap.get(name).getPayload();
     }
 
-    @Override
-    public void setMiddlewareInput(String key, Object value) {
-        this.middlewareInputMap.put(key, value);
-    }
-
-    public Map<String, Object> getMiddlewareInputMap(){
-        return this.middlewareInputMap;
-    }
-
-    public void buildParameterPayloadMap(List<ParameterBinding> inputDataList){
-        for (ParameterBinding parameterBinding : inputDataList) {
-            String serializedPayload = convertToString(parameterBinding.getData());
-            this.parameterPayloadMap.put(parameterBinding.getName(), serializedPayload);
-        }
-    }
-
-    // TODO: how to serialize the input binding payload for middleware to consume?
-    //  Right now for durable function middleware it only need String type
-    private String convertToString(TypedData data) {
-        switch (data.getDataCase()) {
-            case INT:    return String.valueOf(data.getInt());
-            case DOUBLE: return String.valueOf(data.getDouble());
-            case STRING: return data.getString();
-            case BYTES:  return data.getBytes().toString(StandardCharsets.UTF_8);
-            case JSON:   return data.getJson();
-            case HTTP:   return data.getHttp().toString();
-            case COLLECTION_STRING: data.getCollectionString().toString();
-            case COLLECTION_DOUBLE: data.getCollectionDouble().toString();
-            case COLLECTION_BYTES: data.getCollectionBytes().toString();
-            case COLLECTION_SINT64: data.getCollectionSint64().toString();
-            default: return null;
-        }
+    public void updateParameterPayloadByName(String name, Object payload){
+        this.argumentsMap.get(name).setPayload(payload);
     }
 
     public void setReturnValue(Object retValue) {

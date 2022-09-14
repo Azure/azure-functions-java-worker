@@ -1,13 +1,7 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.*;
-import java.util.*;
-
-import com.microsoft.azure.functions.OutputBinding;
 import com.microsoft.azure.functions.worker.binding.*;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * Used to executor of arbitrary Java method in any JAR using reflection.
@@ -24,77 +18,17 @@ public class FunctionMethodExecutorImpl implements JavaMethodExecutor {
     public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
-            Object retValue = this.resolveArguments(executionContextDataSource)
-                    .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
-                    //TODO: Should we only create one instance at function load time, instead of create the new instance every invocation
-                    // How does this affects DI framework
-                    .invoke(() -> {
-                        //Load function instance set by middleware at first
-                        Object functionInstance = executionContextDataSource.getFunctionInstance();
-                        // if no middleware set function instance, fallback to old logics to create a new instance of the containing class
-                        if (functionInstance == null){
-                            functionInstance = executionContextDataSource.getContainingClass().newInstance();
-                        }
-                        return functionInstance;
-                    });
-            executionContextDataSource.getDataStore().setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
-            executionContextDataSource.setReturnValue(retValue);
+            Object functionInstance = executionContextDataSource.getFunctionInstance();
+            if (functionInstance == null){
+                functionInstance = executionContextDataSource.getContainingClass().newInstance();
+            }
+            Method method = executionContextDataSource.getMethodBindInfo().getEntry();
+            Object instance = Modifier.isStatic(method.getModifiers()) ? null : functionInstance;
+            Object returnValue = method.invoke(instance, executionContextDataSource.getArguments());
+            executionContextDataSource.getDataStore().setDataTargetValue(BindingDataStore.RETURN_NAME, returnValue);
+            executionContextDataSource.setReturnValue(returnValue);
         } finally {
             Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
         }
-    }
-
-    private synchronized Optional<JavaMethodInvokeInfo> resolveArguments(ExecutionContextDataSource executionContextDataSource) {
-        InvokeInfoBuilder invoker = this.resolve(executionContextDataSource);
-        if (invoker != null) {
-            executionContextDataSource.getDataStore().promoteDataTargets(invoker.getOutputsId());
-            return Optional.of(invoker.build());
-        }
-        return Optional.empty();
-    }
-
-    private InvokeInfoBuilder resolve(ExecutionContextDataSource executionContextDataSource) {
-        try {
-            MethodBindInfo method = executionContextDataSource.getMethodBindInfo();
-            BindingDataStore dataStore = executionContextDataSource.getDataStore();
-            final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
-            for (ParamBindInfo param : method.getParams()) {
-                String paramName = param.getName();
-                Type paramType = param.getType();
-                String paramBindingNameAnnotation = param.getBindingNameAnnotation();
-                Optional<BindingData> argument;
-                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(paramType, null))) {
-                    argument = dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), paramName, paramType, false);
-                }
-                else if (paramName != null && !paramName.isEmpty()) {
-                    //check if middleware set input, if not fallback to normal logics for build the argument.
-                    argument = getMiddlewareInput(executionContextDataSource.getMiddlewareInputMap(), paramName);
-                    if (!argument.isPresent()){
-                        argument = dataStore.getDataByName(paramName, paramType);
-                    }
-                }
-                else if (paramName == null && !paramBindingNameAnnotation.isEmpty()) {
-                    argument = dataStore.getTriggerMetatDataByName(paramBindingNameAnnotation, paramType);
-                }
-                else {
-                    argument = dataStore.getDataByType(paramType);
-                }
-                BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
-                invokeInfo.appendArgument(actualArg.getValue());
-            }
-            if (!method.getEntry().getReturnType().equals(void.class) && !method.getEntry().getReturnType().equals(Void.class)) {
-                dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), BindingDataStore.RETURN_NAME, method.getEntry().getReturnType(), method.isImplicitOutput());
-            }
-            return invokeInfo;
-        } catch (Exception ex) {
-            ExceptionUtils.rethrow(ex);
-            return null;
-        }
-    }
-
-    private Optional<BindingData> getMiddlewareInput(Map<String, Object> middlewareInputMap, String paramName) {
-        Object input = middlewareInputMap.get(paramName);
-        if (input == null) return Optional.empty();
-        return Optional.of(new BindingData(input));
     }
 }

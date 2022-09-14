@@ -161,8 +161,14 @@ public class DataOperations<T, R> {
 				result = RpcJsonDataSource.convertToStringArrayOrList(sourceValue, targetType);
 			}
 			else {
-				throw ex;
+				//Instead of throw out exception, just use sourceValue as argument payload, so middleware can ge the raw input
+				//Break Change: cx not using middleware will not get JsonSyntaxException, they will get IllegalArgumentException because miss match
+				// on arguments type when invoke their method
+//				throw ex;
+				result = sourceValue;
 			}
+		} catch (Exception ex) {
+			result = sourceValue;
 		}
 		return (Optional<R>) Optional.ofNullable(result);
 	}

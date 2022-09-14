@@ -10,10 +10,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.chain.FunctionArgumentsResolverMiddleware;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
@@ -51,15 +53,20 @@ public class JavaFunctionBroker {
 
 	private void loadMiddleware() {
 		if (loadMiddleware) {
-			synchronized (JavaFunctionBroker.class){
+			synchronized (JavaFunctionBroker.class) {
 				if (loadMiddleware) {
 					ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
+					loadFunctionResolverMiddleWare(middlewares);
 					try {
 						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
 						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
 						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
 							middlewares.add(middleware);
 						}
+						//TODO: why exception is not caught when no implementation is there.
+					} catch (Exception e) {
+						WorkerLogManager.getSystemLogger().severe(String.format("Load middleware fail: %s", e.getMessage()));
+						ExceptionUtils.rethrow(e);
 					} finally {
 						Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 					}
@@ -70,8 +77,14 @@ public class JavaFunctionBroker {
 		}
 	}
 
+	private void loadFunctionResolverMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
+		FunctionArgumentsResolverMiddleware functionArgumentsResolverMiddleware = new FunctionArgumentsResolverMiddleware(new ParameterResovler());
+		middlewares.add(functionArgumentsResolverMiddleware);
+	}
+
 	private void loadFunctionExecutionMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
-		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(new FunctionMethodExecutorImpl(this.classLoaderProvider.createClassLoader()));
+		FunctionExecutionMiddleware functionExecutionMiddleware =
+				new FunctionExecutionMiddleware(new FunctionMethodExecutorImpl(this.classLoaderProvider.createClassLoader()));
 		middlewares.add(functionExecutionMiddleware);
 		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
@@ -107,7 +120,6 @@ public class JavaFunctionBroker {
 				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(functionDefinition.getCandidate())
 				.containingClass(functionDefinition.getContainingClass()).build();
 		dataStore.addExecutionContextSource(executionContextDataSource);
-		executionContextDataSource.buildParameterPayloadMap(request.getInputDataList());
 		return executionContextDataSource;
 	}
 
