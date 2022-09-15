@@ -121,7 +121,7 @@ public class CoreTypeResolver {
 		return new String("");
 	}
 
-	static boolean checkHasImplicitOutput(Parameter parameter) {
+	static boolean checkImplicitOutput(Parameter parameter) {
 		Annotation[] annotations = parameter.getAnnotations();
 		for (Annotation annotation : annotations) {
 			for (Annotation item : annotation.annotationType().getAnnotations()) {

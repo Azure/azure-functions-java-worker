@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
-import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
+import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
@@ -33,34 +33,40 @@ public class JavaFunctionBroker {
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
-
 		addSearchPathsToClassLoader(descriptor);
-		JavaMethodExecutor executor = new FactoryJavaMethodExecutor().getJavaMethodExecutor(descriptor, bindings, classLoaderProvider);
-
-		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), executor));
+		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
+		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
-		ImmutablePair<String, JavaMethodExecutor> methodEntry = this.methods.get(id);
-		JavaMethodExecutor executor = methodEntry.right;
-		if (executor == null) {
+		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
+		JavaMethodExecutor executor = FactoryJavaMethodExecutor.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader());
+		executor.execute(executionContextDataSource);
+		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
+		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+	}
+
+	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
+			throws NoSuchMethodException {
+		ImmutablePair<String, FunctionDefinition> methodEntry = this.methods.get(id);
+		FunctionDefinition functionDefinition = methodEntry.right;
+		if (functionDefinition == null) {
 			throw new NoSuchMethodException("Cannot find method with ID \"" + id + "\"");
 		}
-
 		BindingDataStore dataStore = new BindingDataStore();
-		dataStore.setBindingDefinitions(executor.getBindingDefinitions());
+		dataStore.setBindingDefinitions(functionDefinition.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
-
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(), request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
-
-		dataStore.addExecutionContextSource(request.getInvocationId(), methodEntry.left, traceContext, retryContext);
-
-		executor.execute(dataStore);
-		outputs.addAll(dataStore.getOutputParameterBindings(true));
-		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+		ExecutionContextDataSource.Builder executionContextDataSourceBuilder = new ExecutionContextDataSource.Builder();
+		ExecutionContextDataSource executionContextDataSource = executionContextDataSourceBuilder
+				.invocationId(request.getInvocationId()).funcname(methodEntry.left).traceContext(traceContext)
+				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(functionDefinition.getCandidate())
+				.containingClass(functionDefinition.getContainingClass()).build();
+		dataStore.addExecutionContextSource(executionContextDataSource);
+		return executionContextDataSource;
 	}
 
 	public Optional<String> getMethodName(String id) {
@@ -148,27 +154,11 @@ public class JavaFunctionBroker {
 		}
 	}
 
-	void verifyLibrariesExist (File workerLib, String workerLibPath) throws FileNotFoundException{
-		if(!workerLib.exists()) {
-			throw new FileNotFoundException("Error loading worker jars, from path:  " + workerLibPath);
-		} else {
-			File[] jarFiles = workerLib.listFiles(new FileFilter() {
-				@Override
-				public boolean accept(File file) {
-					return file.isFile() && file.getName().endsWith(".jar");
-				}
-			});
-			if(jarFiles.length == 0) {
-				throw new FileNotFoundException("Error loading worker jars, from path:  " + workerLibPath + ". Jars size is zero");
-			}
-		}
-	}
-
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
 	}
 
-	private final Map<String, ImmutablePair<String, JavaMethodExecutor>> methods;
+	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
 }
