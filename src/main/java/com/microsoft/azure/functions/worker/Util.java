@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.util;
+package com.microsoft.azure.functions.worker;
 
 public class Util {
     public static boolean isTrue(String value) {
