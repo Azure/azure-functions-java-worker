@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.binding;
+package com.microsoft.azure.functions.worker.binding.tests;
 
 import com.microsoft.azure.functions.rpc.messages.CollectionString.Builder;
 import com.microsoft.azure.functions.rpc.messages.CollectionString;
