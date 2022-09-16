@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.util;
+package com.microsoft.azure.functions.worker;
 
 import org.junit.Test;
 

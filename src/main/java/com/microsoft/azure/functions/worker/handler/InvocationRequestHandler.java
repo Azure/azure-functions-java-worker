@@ -6,7 +6,8 @@ import java.util.logging.*;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
-import com.microsoft.azure.functions.worker.util.Util;
+
+import static com.microsoft.azure.functions.worker.Util.getJavaVersion;
 
 public class InvocationRequestHandler extends MessageHandler<InvocationRequest, InvocationResponse.Builder> {
     public InvocationRequestHandler(JavaFunctionBroker broker) {
@@ -24,7 +25,7 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
 
     @Override
     String execute(InvocationRequest request, InvocationResponse.Builder response) throws Exception {
-        WorkerLogManager.getSystemLogger().log(Level.INFO, "Java version - " + Util.getJavaVersion());
+        WorkerLogManager.getSystemLogger().log(Level.INFO, "Java version - " + getJavaVersion());
         WorkerLogManager.getSystemLogger().log(Level.INFO, "InvocationRequest received by the Java worker");
         final String functionId = request.getFunctionId();
         final String invocationId = request.getInvocationId();

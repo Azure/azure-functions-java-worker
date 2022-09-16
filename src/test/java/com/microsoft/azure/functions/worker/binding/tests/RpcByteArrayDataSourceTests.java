@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.binding;
+package com.microsoft.azure.functions.worker.binding.tests;
 
 import static org.junit.Assert.assertEquals;
 
@@ -9,8 +9,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.google.protobuf.ByteString;
+import com.microsoft.azure.functions.worker.binding.BindingData;
+import com.microsoft.azure.functions.worker.binding.RpcByteArrayDataSource;
 
-public class RpcByteArrayDataSourceTest {
+public class RpcByteArrayDataSourceTests {
 
   @Test
   public void rpcByteArrayDataSource_To_byteArray() {
