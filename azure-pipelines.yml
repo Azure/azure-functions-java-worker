@@ -118,7 +118,6 @@ jobs:
         displayName: 'Install NuGet Tool'
       - pwsh: |
           Get-Command mvn
-          mvn -version
         displayName: 'Check Maven is installed'
 
       - pwsh: | # Download, install and set Java home for windows

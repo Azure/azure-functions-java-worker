@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.broker;
+package com.microsoft.azure.functions.worker.broker.tests;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
