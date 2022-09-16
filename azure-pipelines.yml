@@ -13,7 +13,6 @@ trigger:
       - v3.x
       - release/3.x
       - release/main
-      - shreyasg/pipeline-parallel
 pr:
   branches:
     include:
