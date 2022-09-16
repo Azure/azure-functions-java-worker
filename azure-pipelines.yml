@@ -238,7 +238,7 @@ jobs:
         displayName: 'Setup Java 11 for Linux'
       - pwsh: |
           java -version
-        displayName: 'Check default java version'
+        displayName: 'Check java version'
 
       - task: DotNetCoreCLI@2
         inputs:
@@ -293,7 +293,7 @@ jobs:
         displayName: 'Setup Java 17 for Linux'
       - pwsh: |
           java -version
-        displayName: 'Check default java version'
+        displayName: 'Check java version'
 
       - task: DotNetCoreCLI@2
         inputs:
