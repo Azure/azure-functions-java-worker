@@ -13,7 +13,6 @@ import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
 
-import com.microsoft.azure.functions.worker.exception.FunctionExecutionException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
@@ -53,17 +52,19 @@ public final class BindingDataStore {
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
-        if (!this.inputSources.containsKey(name)) {
-            throw new FunctionExecutionException("Cannot find matched parameter name of customer function, please check if customer function is defined correctly");
+        DataSource<?> parameterDataSource = this.inputSources.get(name);
+        if (parameterDataSource == null) {
+            throw new RuntimeException("Cannot find matched parameter name of customer function, please check if customer function is defined correctly");
         }
-    	return this.inputSources.get(name).computeByName(name, target);
+    	return parameterDataSource.computeByName(name, target);
     }
 
     public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {
-        if (!this.metadataSources.containsKey(name)) {
-            throw new FunctionExecutionException("Cannot find matched @BindingName of customer function, please check if customer function is defined correctly");
+        DataSource<?> metadataDataSource = this.metadataSources.get(name);
+        if (metadataDataSource == null) {
+            throw new RuntimeException("Cannot find matched @BindingName of customer function, please check if customer function is defined correctly");
         }
-    	return this.metadataSources.get(name).computeByName(name, target);
+    	return metadataDataSource.computeByName(name, target);
     }
 
     public Optional<BindingData> getDataByType(Type target) {

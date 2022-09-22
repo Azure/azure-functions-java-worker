@@ -19,6 +19,14 @@ import org.apache.commons.lang3.reflect.TypeUtils;
  */
 public class JavaMethodExecutorImpl implements JavaMethodExecutor {
 
+    private static final JavaMethodExecutorImpl INSTANCE = new JavaMethodExecutorImpl();
+
+    public static JavaMethodExecutorImpl getExecutorInstance(){
+        return INSTANCE;
+    }
+
+    private JavaMethodExecutorImpl () {}
+
     public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
         Object retValue = ParameterResolver.resolveArguments(executionContextDataSource)
                 .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))

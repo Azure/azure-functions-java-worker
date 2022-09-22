@@ -2,35 +2,34 @@ package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public final class MethodBindInfo {
 
-    private final Method entry;
-    private final ParamBindInfo[] params;
-    private final boolean isImplicitOutput;
-    MethodBindInfo(Method m) {
-        this.entry = m;
-        this.params = Arrays.stream(this.entry.getParameters()).map(ParamBindInfo::new).toArray(ParamBindInfo[]::new);
-        this.isImplicitOutput = checkImplicitOutput(params);
+    private final Method method;
+    private final List<ParamBindInfo> params;
+    private final boolean hasImplicitOutput;
+    MethodBindInfo(Method method) {
+        this.method = method;
+        this.params = Arrays.stream(method.getParameters()).map(ParamBindInfo::new).collect(Collectors.toList());
+        this.hasImplicitOutput = checkImplicitOutput(params);
     }
 
-    private static boolean checkImplicitOutput(ParamBindInfo[] params){
-        for (ParamBindInfo paramBindInfo : params){
-            if (paramBindInfo.isImplicitOutput()) return true;
-        }
-        return false;
+    private static boolean checkImplicitOutput(List<ParamBindInfo> params){
+        return params.stream().anyMatch(ParamBindInfo::isImplicitOutput);
     }
 
-    public Method getEntry() {
-        return entry;
+    public Method getMethod() {
+        return method;
     }
 
-    public ParamBindInfo[] getParams() {
+    public List<ParamBindInfo> getParams() {
         return params;
     }
 
-    public boolean isImplicitOutput() {
-        return isImplicitOutput;
+    public boolean hasImplicitOutput() {
+        return hasImplicitOutput;
     }
 }
 

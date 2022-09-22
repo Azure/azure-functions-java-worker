@@ -17,8 +17,8 @@ import java.util.Map;
  */
 public class FunctionDefinition {
     private final Class<?> containingClass;
-    private final Map<String, BindingDefinition> bindingDefinitions;
     private final MethodBindInfo candidate;
+    private final Map<String, BindingDefinition> bindingDefinitions;
 
     public FunctionDefinition(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws ClassNotFoundException, NoSuchMethodException

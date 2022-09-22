@@ -1,7 +1,6 @@
 package com.microsoft.azure.functions.worker.broker;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -41,7 +40,7 @@ public class JavaFunctionBroker {
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-		JavaMethodExecutor executor = FactoryJavaMethodExecutor.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader());
+		JavaMethodExecutor executor = JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader());
 		executor.execute(executionContextDataSource);
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
@@ -58,13 +57,13 @@ public class JavaFunctionBroker {
 		dataStore.setBindingDefinitions(functionDefinition.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
-		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(), request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
-		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(), request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
-		ExecutionContextDataSource.Builder executionContextDataSourceBuilder = new ExecutionContextDataSource.Builder();
-		ExecutionContextDataSource executionContextDataSource = executionContextDataSourceBuilder
-				.invocationId(request.getInvocationId()).funcname(methodEntry.left).traceContext(traceContext)
-				.retryContext(retryContext).dataStore(dataStore).methodBindInfo(functionDefinition.getCandidate())
-				.containingClass(functionDefinition.getContainingClass()).build();
+		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(),
+				request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
+		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(),
+				request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
+		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getFunctionId(),
+				traceContext, retryContext, methodEntry.left, dataStore, functionDefinition.getCandidate(),
+				functionDefinition.getContainingClass());
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		return executionContextDataSource;
 	}
@@ -158,6 +157,7 @@ public class JavaFunctionBroker {
 		this.workerDirectory = workerDirectory;
 	}
 
+	//TODO: build dedicate ImmutablePair class with meaningful fields.
 	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;

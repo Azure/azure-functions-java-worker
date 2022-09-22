@@ -1,12 +1,7 @@
 package com.microsoft.azure.functions.worker.broker;
 
 import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,8 +52,8 @@ public class ParameterResolver {
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
                 invokeInfo.appendArgument(actualArg.getValue());
             }
-            if (!method.getEntry().getReturnType().equals(void.class) && !method.getEntry().getReturnType().equals(Void.class)) {
-                dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), BindingDataStore.RETURN_NAME, method.getEntry().getReturnType(), method.isImplicitOutput());
+            if (!method.getMethod().getReturnType().equals(void.class) && !method.getMethod().getReturnType().equals(Void.class)) {
+                dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), BindingDataStore.RETURN_NAME, method.getMethod().getReturnType(), method.hasImplicitOutput());
             }
             return invokeInfo;
         } catch (Exception ex) {
@@ -68,7 +63,7 @@ public class ParameterResolver {
     }
 
     public static final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
-        public InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getEntry()); }
+        public InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getMethod()); }
         private final UUID outputsId = UUID.randomUUID();
 
         public UUID getOutputsId() {
