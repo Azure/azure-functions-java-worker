@@ -116,7 +116,7 @@ jobs:
           JDK_PATH: 'jdk-17.0.3+7'
 
     pool:
-      name: $(IMAGE_TYPE)
+      vmImage: $(IMAGE_TYPE)
       demands:
         - ImageOverride -equals $(imageName)
 
