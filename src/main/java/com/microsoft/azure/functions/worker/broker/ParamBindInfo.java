@@ -9,13 +9,11 @@ public final class ParamBindInfo {
     private final Type type;
     private final String bindingNameAnnotation;
     private final boolean isImplicitOutput;
-    private final Parameter parameter;
     ParamBindInfo(Parameter param) {
         this.name = CoreTypeResolver.getAnnotationName(param);
         this.type = param.getParameterizedType();
         this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
         this.isImplicitOutput = CoreTypeResolver.checkImplicitOutput(param);
-        this.parameter = param;
     }
 
     public boolean isImplicitOutput() {
@@ -32,9 +30,5 @@ public final class ParamBindInfo {
 
     public String getBindingNameAnnotation() {
         return bindingNameAnnotation;
-    }
-
-    public Parameter getParameter() {
-        return parameter;
     }
 }
