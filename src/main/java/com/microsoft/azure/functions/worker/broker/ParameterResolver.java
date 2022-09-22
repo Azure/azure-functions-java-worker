@@ -23,7 +23,7 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
  * Thread-Safety: Multiple thread.
  */
 public class ParameterResolver {
-    public static synchronized Optional<JavaMethodInvokeInfo> resolveArguments(ExecutionContextDataSource executionContextDataSource) {
+    public static Optional<JavaMethodInvokeInfo> resolveArguments(ExecutionContextDataSource executionContextDataSource) {
         InvokeInfoBuilder invoker = resolve(executionContextDataSource);
         if (invoker != null) {
             executionContextDataSource.getDataStore().promoteDataTargets(invoker.getOutputsId());
