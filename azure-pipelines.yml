@@ -117,8 +117,6 @@ jobs:
 
     pool:
       vmImage: $(IMAGE_TYPE)
-      demands:
-        - ImageOverride -equals $(imageName)
 
     steps:
       - task: NuGetToolInstaller@1
