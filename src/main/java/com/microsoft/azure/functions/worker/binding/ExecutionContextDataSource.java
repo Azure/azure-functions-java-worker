@@ -30,7 +30,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.invocationId = invocationId;
         this.traceContext = traceContext;
         this.retryContext = retryContext;
-        this.logger = WorkerLogManager.getInvocationLogger(this.invocationId);
+        this.logger = WorkerLogManager.getInvocationLogger(invocationId);
         this.funcname = funcname;
         this.dataStore = dataStore;
         this.methodBindInfo = methodBindInfo;
