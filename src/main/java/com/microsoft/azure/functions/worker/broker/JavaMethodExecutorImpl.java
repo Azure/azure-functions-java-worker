@@ -1,17 +1,6 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.*;
-import java.net.*;
-import java.util.*;
-
-import com.microsoft.azure.functions.OutputBinding;
 import com.microsoft.azure.functions.worker.binding.*;
-import com.microsoft.azure.functions.worker.description.*;
-import com.microsoft.azure.functions.worker.reflect.*;
-import com.microsoft.azure.functions.rpc.messages.*;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * Used to executor of arbitrary Java method in any JAR using reflection.
@@ -21,7 +10,7 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
 
     private static final JavaMethodExecutorImpl INSTANCE = new JavaMethodExecutorImpl();
 
-    public static JavaMethodExecutorImpl getExecutorInstance(){
+    public static JavaMethodExecutorImpl getInstance(){
         return INSTANCE;
     }
 
