@@ -6,16 +6,18 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
+import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
+import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -24,6 +26,13 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
  * reflection, and invoke them at runtime. Thread-Safety: Multiple thread.
  */
 public class JavaFunctionBroker {
+
+	//TODO: build dedicate ImmutablePair class with meaningful fields.
+	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
+	private final ClassLoaderProvider classLoaderProvider;
+	private String workerDirectory;
+	private volatile boolean loadMiddleware = true;
+	private volatile InvocationChainFactory invocationChainFactory;
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
@@ -33,15 +42,47 @@ public class JavaFunctionBroker {
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
+		loadMiddleware();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
+	}
+
+	private void loadMiddleware() {
+		if (loadMiddleware) {
+			synchronized (JavaFunctionBroker.class){
+				if (loadMiddleware) {
+					ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
+					try {
+						//ServiceLoader will use thread context classloader to verify loaded class
+						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
+						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
+							middlewares.add(middleware);
+							WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
+						}
+					} finally {
+						Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+					}
+					loadFunctionExecutionMiddleWare(middlewares);
+					loadMiddleware = false;
+				}
+			}
+		}
+	}
+
+	private void loadFunctionExecutionMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
+		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(
+				JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader()));
+		middlewares.add(functionExecutionMiddleware);
+		WorkerLogManager.getSystemLogger().info("Load last middleware: FunctionExecutionMiddleware");
+		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-		JavaMethodExecutor executor = JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader());
-		executor.execute(executionContextDataSource);
+		this.invocationChainFactory.create().doNext(executionContextDataSource);
+		executionContextDataSource.updateOutputValue();
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
@@ -64,6 +105,7 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(),
 				traceContext, retryContext, methodEntry.left, dataStore, functionDefinition.getCandidate(),
 				functionDefinition.getContainingClass());
+		executionContextDataSource.buildParameterPayloadMap(request.getInputDataList());
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		return executionContextDataSource;
 	}
@@ -156,9 +198,4 @@ public class JavaFunctionBroker {
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
 	}
-
-	//TODO: build dedicate ImmutablePair class with meaningful fields.
-	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
-	private final ClassLoaderProvider classLoaderProvider;
-	private String workerDirectory;
 }

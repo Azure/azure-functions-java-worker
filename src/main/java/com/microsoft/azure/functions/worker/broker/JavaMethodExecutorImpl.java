@@ -21,5 +21,6 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
                 .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                 .invoke(() -> executionContextDataSource.getContainingClass().newInstance());
         executionContextDataSource.getDataStore().setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
+        executionContextDataSource.setReturnValue(retValue);
     }
 }
