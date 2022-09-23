@@ -9,11 +9,14 @@ import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
+
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareContext {
@@ -25,20 +28,21 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final BindingDataStore dataStore;
     private final MethodBindInfo methodBindInfo;
     private final Class<?> containingClass;
-    private final Map<String, Parameter> parameterMap = new HashMap<>();
-    private final Map<String, String> parameterPayloadMap = new HashMap<>();
+    private final Map<String, Parameter> parameterMap;
+    private final Map<String, String> parameterPayloadMap;
     private final Map<String, Object> middlewareInputMap = new HashMap<>();
     private Object returnValue;
     private Object middlewareOutput;
 
+    //TODO: refactor class to have subclass dedicate to middleware to make logics clean
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
     static {
         EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 
     public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
-                               String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
-                               Class<?> containingClass){
+                                      String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
+                                      Class<?> containingClass, List<ParameterBinding> inputDataList){
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -48,7 +52,8 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore = dataStore;
         this.methodBindInfo = methodBindInfo;
         this.containingClass = containingClass;
-        addParameters(methodBindInfo, this.parameterMap);
+        this.parameterMap = addParameters(methodBindInfo);
+        this.parameterPayloadMap = buildParameterPayloadMap(inputDataList);
         this.setValue(this);
     }
 
@@ -79,26 +84,45 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return containingClass;
     }
 
-    private static void addParameters(MethodBindInfo methodBindInfo, Map<String, Parameter> parameterMap){
+    private static Map<String, Parameter> addParameters(MethodBindInfo methodBindInfo){
+        Map<String, Parameter> map = new HashMap<>();
         for (ParamBindInfo paramBindInfo : methodBindInfo.getParams()) {
-            parameterMap.put(paramBindInfo.getName(), paramBindInfo.getParameter());
+            map.put(paramBindInfo.getName(), paramBindInfo.getParameter());
         }
+        return map;
     }
 
     @Override
-    public Map<String, Parameter> getParameterMap() {
-        return this.parameterMap;
+    public Optional<String> getParameterName(String name){
+        for (Map.Entry<String, Parameter> entry : this.parameterMap.entrySet()){
+            if (isOrchestrationTrigger(entry.getValue(), name)){
+                return Optional.of(entry.getKey());
+            }
+        }
+        return Optional.empty();
     }
 
-    public void buildParameterPayloadMap(List<ParameterBinding> inputDataList){
+    private static boolean isOrchestrationTrigger(Parameter parameter, String name){
+        Annotation[] annotations = parameter.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if(annotation.annotationType().getSimpleName().equals(name)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, String> buildParameterPayloadMap(List<ParameterBinding> inputDataList){
+        Map<String, String> map = new HashMap<>();
         for (ParameterBinding parameterBinding : inputDataList) {
             String serializedPayload = convertToString(parameterBinding.getData());
-            this.parameterPayloadMap.put(parameterBinding.getName(), serializedPayload);
+            map.put(parameterBinding.getName(), serializedPayload);
         }
+        return map;
     }
 
-    // TODO: Refactor the code in V5 to make resolve arguments logs before middleware invocation
-    private String convertToString(TypedData data) {
+    // TODO: Refactor the code in V5 to make resolve arguments logics before middleware invocation
+    private static String convertToString(TypedData data) {
         switch (data.getDataCase()) {
             case INT:    return String.valueOf(data.getInt());
             case DOUBLE: return String.valueOf(data.getDouble());
