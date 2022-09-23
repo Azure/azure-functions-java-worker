@@ -10,7 +10,7 @@ public class JavaMethodExecutors {
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException {
         if(SystemUtils.IS_JAVA_1_8) {
             WorkerLogManager.getSystemLogger().info("Loading JavaMethodExecutorImpl");
-            return JavaMethodExecutorImpl.getExecutorInstance();
+            return JavaMethodExecutorImpl.getInstance();
         } else {
             WorkerLogManager.getSystemLogger().info("Loading EnhancedJavaMethodExecutorImpl");
             return new EnhancedJavaMethodExecutorImpl(classLoader);
