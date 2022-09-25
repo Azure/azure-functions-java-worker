@@ -1,6 +1,6 @@
 package com.microsoft.azure.functions.worker.chain;
 
-import com.microsoft.azure.functions.middleware.FunctionWorkerChain;
+import com.microsoft.azure.functions.middleware.FunctionMiddlewareChain;
 import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public class InvocationChainFactory {
         this.middlewares = middlewares;
     }
 
-    public FunctionWorkerChain create(){
+    public FunctionMiddlewareChain create(){
         return new InvocationChain(middlewares);
     }
 }
