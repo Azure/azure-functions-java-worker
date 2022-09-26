@@ -50,7 +50,7 @@ public class JavaFunctionBroker {
 	}
 
 	private void initializeInvocationChainFactory() {
-		if (invocationChainFactoryInitialized.compareAndSet(false, true)) {
+		if (!invocationChainFactoryInitialized.getAndSet(true)) {
 			ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
 			try {
 				//ServiceLoader will use thread context classloader to verify loaded class
@@ -78,7 +78,6 @@ public class JavaFunctionBroker {
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
 		this.invocationChainFactory.create().doNext(executionContextDataSource);
-		executionContextDataSource.setHostReturnValue();
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}

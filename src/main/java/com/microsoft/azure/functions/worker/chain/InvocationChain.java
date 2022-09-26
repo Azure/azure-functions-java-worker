@@ -16,7 +16,7 @@ public class InvocationChain implements FunctionMiddlewareChain {
 
     @Override
     public void doNext(MiddlewareContext context) throws Exception {
-        while (middlewareIterator.hasNext()) {
+        if (middlewareIterator.hasNext()) {
             middlewareIterator.next().invoke(context, this);
         }
     }
