@@ -40,6 +40,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
      */
     private final Map<String, Parameter> parameterDefinitions;
     private final Map<String, Object> parameterValues;
+    private final Map<String, Object> middlewareInputs = new HashMap<>();
     private Object returnValue;
 
     //TODO: refactor class to have subclass dedicate to middleware to make logics clean
@@ -140,7 +141,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     @Override
     public void updateParameterValue(String key, Object value) {
-        this.parameterValues.put(key, value);
+        this.middlewareInputs.put(key, value);
     }
 
     // set the return value that will be sent back to host
@@ -160,7 +161,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     public Optional<BindingData> getBindingData(String paramName, Type paramType) {
         Optional<BindingData> argument;
-        Object inputValue = this.parameterValues.get(paramName);
+        Object inputValue = this.middlewareInputs.get(paramName);
         if (inputValue != null) {
             argument = Optional.of(new BindingData(inputValue));
         }else{
