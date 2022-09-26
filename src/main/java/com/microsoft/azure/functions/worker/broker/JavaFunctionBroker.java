@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
@@ -31,7 +33,7 @@ public class JavaFunctionBroker {
 	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
-	private volatile boolean loadMiddleware = true;
+	private final AtomicBoolean invocationChainFactoryInitialized = new AtomicBoolean(false);
 	private volatile InvocationChainFactory invocationChainFactory;
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
@@ -42,47 +44,41 @@ public class JavaFunctionBroker {
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
-		loadMiddleware();
+		initializeInvocationChainFactory();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
-	private void loadMiddleware() {
-		if (loadMiddleware) {
-			synchronized (JavaFunctionBroker.class){
-				if (loadMiddleware) {
-					ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
-					try {
-						//ServiceLoader will use thread context classloader to verify loaded class
-						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
-						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
-						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
-							middlewares.add(middleware);
-							WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
-						}
-					} finally {
-						Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
-					}
-					loadFunctionExecutionMiddleWare(middlewares);
-					loadMiddleware = false;
+	private void initializeInvocationChainFactory() {
+		if (invocationChainFactoryInitialized.compareAndSet(false, true)) {
+			ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
+			try {
+				//ServiceLoader will use thread context classloader to verify loaded class
+				Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+				for (FunctionWorkerMiddleware middleware : ServiceLoader.load(FunctionWorkerMiddleware.class)) {
+					middlewares.add(middleware);
+					WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
 				}
+			} finally {
+				Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 			}
+			middlewares.add(getFunctionExecutionMiddleWare());
+			this.invocationChainFactory = new InvocationChainFactory(middlewares);
 		}
 	}
 
-	private void loadFunctionExecutionMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
+	private FunctionExecutionMiddleware getFunctionExecutionMiddleWare() {
 		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(
 				JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader()));
-		middlewares.add(functionExecutionMiddleware);
 		WorkerLogManager.getSystemLogger().info("Load last middleware: FunctionExecutionMiddleware");
-		this.invocationChainFactory = new InvocationChainFactory(middlewares);
+		return functionExecutionMiddleware;
 	}
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
 		this.invocationChainFactory.create().doNext(executionContextDataSource);
-		executionContextDataSource.updateOutputValue();
+		executionContextDataSource.setHostReturnValue();
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}

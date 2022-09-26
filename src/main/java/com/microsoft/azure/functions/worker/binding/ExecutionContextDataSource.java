@@ -1,8 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import com.microsoft.azure.functions.ExecutionContext;
-import com.microsoft.azure.functions.RetryContext;
-import com.microsoft.azure.functions.TraceContext;
+import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.internal.MiddlewareContext;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
@@ -12,7 +10,7 @@ import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
-import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +26,21 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final BindingDataStore dataStore;
     private final MethodBindInfo methodBindInfo;
     private final Class<?> containingClass;
-    private final Map<String, Parameter> parameterMap;
-    private final Map<String, String> parameterPayloadMap;
-    private final Map<String, Object> middlewareInputMap = new HashMap<>();
+
+    /*
+    Key is the name defined on customer function parameters. For ex:
+    @HttpTrigger(
+            name = "req",
+            methods = {HttpMethod.GET, HttpMethod.POST},
+            authLevel = AuthorizationLevel.ANONYMOUS)
+    HttpRequestMessage<Optional<String>> request,
+    Here name will be the "req".
+
+    Value is java.lang.reflect.Parameter type
+     */
+    private final Map<String, Parameter> parameterDefinitions;
+    private final Map<String, Object> parameterValues;
     private Object returnValue;
-    private Object middlewareOutput;
 
     //TODO: refactor class to have subclass dedicate to middleware to make logics clean
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
@@ -42,7 +50,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
                                       String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
-                                      Class<?> containingClass, List<ParameterBinding> inputDataList){
+                                      Class<?> containingClass, List<ParameterBinding> parameterBindings){
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -52,8 +60,8 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore = dataStore;
         this.methodBindInfo = methodBindInfo;
         this.containingClass = containingClass;
-        this.parameterMap = addParameters(methodBindInfo);
-        this.parameterPayloadMap = buildParameterPayloadMap(inputDataList);
+        this.parameterDefinitions = addParameters(methodBindInfo);
+        this.parameterValues = buildParameterValues(parameterBindings);
         this.setValue(this);
     }
 
@@ -93,16 +101,16 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     @Override
-    public Optional<String> getParameterName(String name){
-        for (Map.Entry<String, Parameter> entry : this.parameterMap.entrySet()){
-            if (isOrchestrationTrigger(entry.getValue(), name)){
+    public Optional<String> getParameterName(String annotationType){
+        for (Map.Entry<String, Parameter> entry : this.parameterDefinitions.entrySet()){
+            if (isTargetTrigger(entry.getValue(), annotationType)){
                 return Optional.of(entry.getKey());
             }
         }
         return Optional.empty();
     }
 
-    private static boolean isOrchestrationTrigger(Parameter parameter, String name){
+    private static boolean isTargetTrigger(Parameter parameter, String name){
         Annotation[] annotations = parameter.getAnnotations();
         for (Annotation annotation : annotations) {
             if(annotation.annotationType().getSimpleName().equals(name)){
@@ -112,48 +120,32 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return false;
     }
 
-    private static Map<String, String> buildParameterPayloadMap(List<ParameterBinding> inputDataList){
-        Map<String, String> map = new HashMap<>();
-        for (ParameterBinding parameterBinding : inputDataList) {
-            String serializedPayload = convertToString(parameterBinding.getData());
-            map.put(parameterBinding.getName(), serializedPayload);
+    // TODO: Refactor the code in V5 to make resolve arguments logics before middleware invocation.
+    //  For now only support String type data.
+    private static Map<String, Object> buildParameterValues(List<ParameterBinding> parameterBindings){
+        Map<String, Object> map = new HashMap<>();
+        for (ParameterBinding parameterBinding : parameterBindings) {
+            TypedData typedData = parameterBinding.getData();
+            if (typedData.getDataCase() == TypedData.DataCase.STRING){
+                map.put(parameterBinding.getName(), typedData.getString());
+            }
         }
         return map;
     }
 
-    // TODO: Refactor the code in V5 to make resolve arguments logics before middleware invocation
-    private static String convertToString(TypedData data) {
-        switch (data.getDataCase()) {
-            case INT:    return String.valueOf(data.getInt());
-            case DOUBLE: return String.valueOf(data.getDouble());
-            case STRING: return data.getString();
-            case BYTES:  return data.getBytes().toString(StandardCharsets.UTF_8);
-            case JSON:   return data.getJson();
-            case HTTP:   return data.getHttp().toString();
-            case COLLECTION_STRING: data.getCollectionString().toString();
-            case COLLECTION_DOUBLE: data.getCollectionDouble().toString();
-            case COLLECTION_BYTES: data.getCollectionBytes().toString();
-            case COLLECTION_SINT64: data.getCollectionSint64().toString();
-            default: return null;
-        }
+    @Override
+    public Object getParameterValue(String name) {
+        return this.parameterValues.get(name);
     }
 
     @Override
-    public Object getParameterPayloadByName(String name) {
-        return this.parameterPayloadMap.get(name);
+    public void updateParameterValue(String key, Object value) {
+        this.parameterValues.put(key, value);
     }
 
-    @Override
-    public void updateParameterPayloadByName(String key, Object value) {
-        this.middlewareInputMap.put(key, value);
-    }
-
-    public Object getMiddlewareInputByName(String name){
-        return this.middlewareInputMap.get(name);
-    }
-
-    public void setReturnValue(Object retValue) {
-        this.returnValue = retValue;
+    // set the return value that will be sent back to host
+    public void setHostReturnValue() {
+        this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.returnValue);
     }
 
     @Override
@@ -162,12 +154,19 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     @Override
-    public void setMiddlewareOutput(Object value) {
-        this.middlewareOutput = value;
+    public void setReturnValue(Object returnValue) {
+        this.returnValue = returnValue;
     }
 
-    public void updateOutputValue(){
-        if (this.middlewareOutput == null) return;
-        this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.middlewareOutput);
+    public Optional<BindingData> getBindingData(String paramName, Type paramType) {
+        Optional<BindingData> argument;
+        Object inputValue = this.parameterValues.get(paramName);
+        if (inputValue != null) {
+            argument = Optional.of(new BindingData(inputValue));
+        }else{
+            argument = dataStore.getDataByName(paramName, paramType);
+        }
+        return argument;
     }
+
 }
