@@ -1,7 +1,7 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import com.microsoft.azure.functions.*;
-import com.microsoft.azure.functions.internal.MiddlewareContext;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
@@ -110,13 +110,13 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     //TODO: leverage stream to do the check
     @Override
-    public Optional<String> getParameterName(String annotationSimpleClassName){
+    public String getParameterName(String annotationSimpleClassName){
         for (Map.Entry<String, Parameter> entry : this.parameterDefinitions.entrySet()){
             if (hasAnnotation(entry.getValue(), annotationSimpleClassName)){
-                return Optional.of(entry.getKey());
+                return entry.getKey();
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     private static boolean hasAnnotation(Parameter parameter, String annotationSimpleClassName){

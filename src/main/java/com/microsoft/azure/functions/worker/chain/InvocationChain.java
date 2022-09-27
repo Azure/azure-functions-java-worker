@@ -1,16 +1,17 @@
 package com.microsoft.azure.functions.worker.chain;
 
-import com.microsoft.azure.functions.internal.MiddlewareContext;
-import com.microsoft.azure.functions.middleware.FunctionMiddlewareChain;
-import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
+
+import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 
 import java.util.Iterator;
 import java.util.List;
 
-public class InvocationChain implements FunctionMiddlewareChain {
-     private final Iterator<FunctionWorkerMiddleware> middlewareIterator;
+public class InvocationChain implements MiddlewareChain {
+     private final Iterator<Middleware> middlewareIterator;
 
-     public InvocationChain(List<FunctionWorkerMiddleware> middlewares){
+     public InvocationChain(List<Middleware> middlewares){
          this.middlewareIterator = middlewares.iterator();
      }
 

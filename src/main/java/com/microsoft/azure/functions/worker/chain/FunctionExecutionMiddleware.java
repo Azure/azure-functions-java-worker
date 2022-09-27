@@ -1,12 +1,12 @@
 package com.microsoft.azure.functions.worker.chain;
 
-import com.microsoft.azure.functions.internal.MiddlewareContext;
-import com.microsoft.azure.functions.middleware.FunctionMiddlewareChain;
-import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
+import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.JavaMethodExecutor;
 
-public class FunctionExecutionMiddleware implements FunctionWorkerMiddleware {
+public class FunctionExecutionMiddleware implements Middleware {
 
     private final JavaMethodExecutor functionMethodExecutor;
 
@@ -15,7 +15,7 @@ public class FunctionExecutionMiddleware implements FunctionWorkerMiddleware {
     }
 
     @Override
-    public void invoke(MiddlewareContext context, FunctionMiddlewareChain next) throws Exception{
+    public void invoke(MiddlewareContext context, MiddlewareChain chain) throws Exception{
         this.functionMethodExecutor.execute((ExecutionContextDataSource) context);
     }
 }

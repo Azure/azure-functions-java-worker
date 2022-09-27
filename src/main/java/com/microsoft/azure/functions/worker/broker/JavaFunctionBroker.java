@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
+import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
@@ -51,11 +51,11 @@ public class JavaFunctionBroker {
 
 	private void initializeInvocationChainFactory() {
 		if (!invocationChainFactoryInitialized.getAndSet(true)) {
-			ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
+			ArrayList<Middleware> middlewares = new ArrayList<>();
 			try {
 				//ServiceLoader will use thread context classloader to verify loaded class
 				Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
-				for (FunctionWorkerMiddleware middleware : ServiceLoader.load(FunctionWorkerMiddleware.class)) {
+				for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
 					middlewares.add(middleware);
 					WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
 				}
