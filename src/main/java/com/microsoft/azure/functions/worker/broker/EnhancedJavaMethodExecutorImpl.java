@@ -20,7 +20,7 @@ public class EnhancedJavaMethodExecutorImpl implements JavaMethodExecutor {
             Object retValue = ParameterResolver.resolveArguments(executionContextDataSource)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     .invoke(() -> executionContextDataSource.getContainingClass().newInstance());
-            executionContextDataSource.setReturnValue(retValue);
+            executionContextDataSource.updateReturnValue(retValue);
         } finally {
             Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
         }
