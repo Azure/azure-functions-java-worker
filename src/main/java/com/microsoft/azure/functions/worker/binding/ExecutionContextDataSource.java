@@ -165,7 +165,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     public Optional<BindingData> getBindingData(String paramName, Type paramType) {
-        Optional<BindingData> argument;
         Object inputValue = this.middlewareParameterValues.get(paramName);
         if (inputValue != null) {
             return Optional.of(new BindingData(inputValue));
