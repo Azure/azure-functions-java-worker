@@ -1,13 +1,6 @@
 package com.microsoft.azure.functions.worker.broker;
 
-import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.*;
-import java.util.*;
-
-import com.microsoft.azure.functions.OutputBinding;
 import com.microsoft.azure.functions.worker.binding.*;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * Used to executor of arbitrary Java method in any JAR using reflection.
@@ -27,7 +20,7 @@ public class EnhancedJavaMethodExecutorImpl implements JavaMethodExecutor {
             Object retValue = ParameterResolver.resolveArguments(executionContextDataSource)
                     .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
                     .invoke(() -> executionContextDataSource.getContainingClass().newInstance());
-            executionContextDataSource.getDataStore().setDataTargetValue(BindingDataStore.RETURN_NAME, retValue);
+            executionContextDataSource.updateReturnValue(retValue);
         } finally {
             Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
         }

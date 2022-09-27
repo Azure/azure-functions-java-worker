@@ -41,7 +41,7 @@ public class ParameterResolver {
                     argument = dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), paramName, paramType, false);
                 }
                 else if (paramName != null && !paramName.isEmpty()) {
-                    argument = dataStore.getDataByName(paramName, paramType);
+                    argument = executionContextDataSource.getBindingData(paramName, paramType);
                 }
                 else if (paramName == null && !paramBindingNameAnnotation.isEmpty()) {
                     argument = dataStore.getTriggerMetatDataByName(paramBindingNameAnnotation, paramType);
