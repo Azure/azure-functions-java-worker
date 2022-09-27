@@ -40,11 +40,12 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
      */
     private final Map<String, Parameter> parameterDefinitions;
 
-    // for now only contains String parameter values
-    // and only supports grpc String -> middleware String resolution
+    // currently the values are only Strings (resolved from grpc String values)
+    // but planning to support other types in the future
     private final Map<String, Object> parameterValues;
 
     // these are parameters provided by the middleware, which will override the host provided parameter values
+    // currently the values are only Strings, but planning to support other types in the future
     private final Map<String, Object> middlewareParameterValues = new HashMap<>();
     private Object returnValue;
 
@@ -66,7 +67,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore = dataStore;
         this.methodBindInfo = methodBindInfo;
         this.containingClass = containingClass;
-        this.parameterDefinitions = addParameters(methodBindInfo);
+        this.parameterDefinitions = getParameterDefinitions(methodBindInfo);
         this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
         this.setValue(this);
     }
@@ -98,7 +99,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return containingClass;
     }
 
-    private static Map<String, Parameter> addParameters(MethodBindInfo methodBindInfo){
+    private static Map<String, Parameter> getParameterDefinitions(MethodBindInfo methodBindInfo){
         Map<String, Parameter> map = new HashMap<>();
         for (ParamBindInfo paramBindInfo : methodBindInfo.getParams()) {
             map.put(paramBindInfo.getName(), paramBindInfo.getParameter());
@@ -106,20 +107,22 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return map;
     }
 
+
+    //TODO: leverage stream to do the check
     @Override
-    public Optional<String> getParameterName(String annotationType){
+    public Optional<String> getParameterName(String annotationSimpleClassName){
         for (Map.Entry<String, Parameter> entry : this.parameterDefinitions.entrySet()){
-            if (isTargetTrigger(entry.getValue(), annotationType)){
+            if (hasAnnotation(entry.getValue(), annotationSimpleClassName)){
                 return Optional.of(entry.getKey());
             }
         }
         return Optional.empty();
     }
 
-    private static boolean isTargetTrigger(Parameter parameter, String name){
+    private static boolean hasAnnotation(Parameter parameter, String annotationSimpleClassName){
         Annotation[] annotations = parameter.getAnnotations();
         for (Annotation annotation : annotations) {
-            if(annotation.annotationType().getSimpleName().equals(name)){
+            if(annotation.annotationType().getSimpleName().equals(annotationSimpleClassName)){
                 return true;
             }
         }
@@ -165,10 +168,9 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         Optional<BindingData> argument;
         Object inputValue = this.middlewareParameterValues.get(paramName);
         if (inputValue != null) {
-            argument = Optional.of(new BindingData(inputValue));
+            return Optional.of(new BindingData(inputValue));
         }else{
-            argument = dataStore.getDataByName(paramName, paramType);
+            return dataStore.getDataByName(paramName, paramType);
         }
-        return argument;
     }
 }
