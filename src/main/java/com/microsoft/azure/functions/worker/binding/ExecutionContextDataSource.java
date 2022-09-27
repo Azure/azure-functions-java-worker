@@ -158,7 +158,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     @Override
-    public void setReturnValue(Object returnValue) {
+    public void updateReturnValue(Object returnValue) {
         this.returnValue = returnValue;
         // set the return value that will be sent back to host
         this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.returnValue);
