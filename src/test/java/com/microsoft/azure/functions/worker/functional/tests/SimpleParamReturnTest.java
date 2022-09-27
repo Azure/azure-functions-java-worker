@@ -34,6 +34,8 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 			InvocationResponse stringResponse = host.call("getret", "returnStringTestId");
 			assertEquals(TypedData.DataCase.STRING, stringResponse.getReturnValue().getDataCase());
 			assertEquals(stringInput, stringResponse.getReturnValue().getString());
+		} finally {
+			System.clearProperty("azure.functions.worker.java.skip.testing");
 		}
 	}
 }
