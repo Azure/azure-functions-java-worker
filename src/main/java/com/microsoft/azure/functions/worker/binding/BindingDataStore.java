@@ -47,23 +47,24 @@ public final class BindingDataStore {
         }
     }
 
-    public void addExecutionContextSource(String invocationId, String funcname, ExecutionTraceContext traceContext, ExecutionRetryContext retryContext) {
-        otherSources.put(ExecutionContext.class,
-                new ExecutionContextDataSource(
-                        invocationId,
-                        funcname,
-                        traceContext,
-                        retryContext
-                )
-        );
+    public void addExecutionContextSource(ExecutionContextDataSource executionContextDataSource) {
+        otherSources.put(ExecutionContext.class,executionContextDataSource);
     }
 
     public Optional<BindingData> getDataByName(String name, Type target) {
-    	return this.inputSources.get(name).computeByName(name, target);
+        DataSource<?> parameterDataSource = this.inputSources.get(name);
+        if (parameterDataSource == null) {
+            throw new RuntimeException("Cannot find matched parameter name of customer function, please check if customer function is defined correctly");
+        }
+    	return parameterDataSource.computeByName(name, target);
     }
 
     public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {
-    	return this.metadataSources.get(name).computeByName(name, target);
+        DataSource<?> metadataDataSource = this.metadataSources.get(name);
+        if (metadataDataSource == null) {
+            throw new RuntimeException("Cannot find matched @BindingName of customer function, please check if customer function is defined correctly");
+        }
+    	return metadataDataSource.computeByName(name, target);
     }
 
     public Optional<BindingData> getDataByType(Type target) {
