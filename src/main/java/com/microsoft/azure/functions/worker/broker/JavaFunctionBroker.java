@@ -37,6 +37,16 @@ public class JavaFunctionBroker {
 	private final AtomicBoolean oneTimeLogicInitialized = new AtomicBoolean(false);
 	private volatile InvocationChainFactory invocationChainFactory;
 	private volatile FunctionInstanceInjector functionInstanceInjector;
+
+	private static FunctionInstanceInjector newInstanceInjector() {
+		return new FunctionInstanceInjector() {
+			@Override
+			public <T> T getInstance(Class<T> functionClass) throws Exception {
+				return functionClass.newInstance();
+			}
+		};
+	}
+
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
@@ -60,6 +70,7 @@ public class JavaFunctionBroker {
 
 	private void initializeInvocationChainFactory() {
 		ArrayList<Middleware> middlewares = new ArrayList<>();
+		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
@@ -68,13 +79,14 @@ public class JavaFunctionBroker {
 				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
 			}
 		} finally {
-			Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
 		middlewares.add(getFunctionExecutionMiddleWare());
 		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	private void initializeFunctionInstanceInjector() {
+		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
@@ -82,21 +94,16 @@ public class JavaFunctionBroker {
 			if (iterator.hasNext()) {
 				this.functionInstanceInjector = iterator.next();
 				WorkerLogManager.getSystemLogger().info("Load function instance injector: " + this.functionInstanceInjector.getClass().getName());
+				if (iterator.hasNext()){
+					WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
+					throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
+				}
 			}else {
-				this.functionInstanceInjector = new FunctionInstanceInjector() {
-					@Override
-					public <T> T getInstance(Class<T> functionClass) throws Exception {
-						return functionClass.newInstance();
-					}
-				};
-				WorkerLogManager.getSystemLogger().info("Didn't find any function instance injector, creating class instance every invocation.");
-			}
-			if (iterator.hasNext()){
-				WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
-				throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
+				this.functionInstanceInjector = JavaFunctionBroker.newInstanceInjector();
+				WorkerLogManager.getSystemLogger().info("Didn't find any function instance injector, creating function class instance every invocation.");
 			}
 		} finally {
-			Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
 	}
 
