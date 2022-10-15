@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -93,7 +94,7 @@ public class JavaFunctionBroker {
 			Iterator<FunctionInstanceInjector> iterator = ServiceLoader.load(FunctionInstanceInjector.class).iterator();
 			if (iterator.hasNext()) {
 				this.functionInstanceInjector = iterator.next();
-				WorkerLogManager.getSystemLogger().info("Load function instance injector: " + this.functionInstanceInjector.getClass().getName());
+				WorkerLogManager.getSystemLogger().log(Level.INFO, "Load function instance injector: {0}" + this.functionInstanceInjector.getClass().getName());
 				if (iterator.hasNext()){
 					WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
 					throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
