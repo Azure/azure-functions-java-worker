@@ -9,6 +9,11 @@ import java.util.concurrent.*;
 import com.microsoft.azure.functions.worker.*;
 
 public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
+
+    public static synchronized void resetClassLoaderInstance() {
+        classLoaderInstance = null;
+    }
+
     public EnhancedClassLoaderProvider() {
         customerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
         workerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
@@ -51,6 +56,7 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
         WorkerLogManager.getSystemLogger().info("Loading worker file URL: " + url);
         workerUrls.add(url);
     }
+
     private final Set<URL> customerUrls;
     private final Set<URL> workerUrls;
     private final Object lock = new Object();

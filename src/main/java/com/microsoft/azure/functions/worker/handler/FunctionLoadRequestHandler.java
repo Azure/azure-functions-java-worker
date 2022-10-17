@@ -1,6 +1,7 @@
 package com.microsoft.azure.functions.worker.handler;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import com.microsoft.azure.functions.worker.WorkerLogManager;
@@ -9,13 +10,24 @@ import com.microsoft.azure.functions.worker.description.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 
 public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadRequest, FunctionLoadResponse.Builder> {
+    private static final AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+
     public FunctionLoadRequestHandler(JavaFunctionBroker broker) {
         super(StreamingMessage::getFunctionLoadRequest,
               FunctionLoadResponse::newBuilder,
               FunctionLoadResponse.Builder::setResult,
               StreamingMessage.Builder::setFunctionLoadResponse);
-        
+
         this.broker = broker;
+
+        // used for testing on local without warmup request sent from host.
+        if (atomicBoolean.getAndSet(false)){
+            try {
+                new FunctionWarmupHandler(broker).execute(null, null);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
