@@ -12,8 +12,6 @@ import com.microsoft.azure.functions.rpc.messages.*;
 
 
 public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadRequest, FunctionLoadResponse.Builder> {
-    private static final AtomicBoolean atomicBoolean = new AtomicBoolean(true);
-
     public FunctionLoadRequestHandler(JavaFunctionBroker broker) {
         super(StreamingMessage::getFunctionLoadRequest,
               FunctionLoadResponse::newBuilder,
@@ -21,15 +19,6 @@ public class FunctionLoadRequestHandler extends MessageHandler<FunctionLoadReque
               StreamingMessage.Builder::setFunctionLoadResponse);
 
         this.broker = broker;
-
-        // used for testing on local without warmup request sent from host.
-        if (atomicBoolean.getAndSet(false)){
-            try {
-                new FunctionWarmupHandler(broker).execute(null, null);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     @Override
