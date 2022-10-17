@@ -33,7 +33,8 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             RpcFunctionMetadata.Builder rpcFunctionMetadataBuilder = RpcFunctionMetadata.newBuilder();
             rpcFunctionMetadataBuilder.setName("WarmupFunc");
             rpcFunctionMetadataBuilder.setEntryPoint("com.azfs.java.Function.run");
-            rpcFunctionMetadataBuilder.setScriptFile("D:/code/azfs/host/prs/azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/net6.0/workers/java/annotationLib/java-warmup-app-1.0-SNAPSHOT.jar");
+            String workerDirectory = functionWarmupRequest.getWorkerDirectory();
+            rpcFunctionMetadataBuilder.setScriptFile(workerDirectory + "/annotationLib/java-warmup-app-1.0-SNAPSHOT.jar");
             Map<String, BindingInfo> map = new HashMap<>();
             BindingInfo httpTrigger = BindingInfo.newBuilder().setDirection(BindingInfo.Direction.in).setDataType(BindingInfo.DataType.undefined).setType("httpTrigger").build();
             map.put("req", httpTrigger);
