@@ -1,10 +1,12 @@
 package com.microsoft.azure.functions.worker.handler;
 
 import com.microsoft.azure.functions.rpc.messages.*;
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.reflect.EnhancedClassLoaderProvider;
 
 import java.util.*;
+import java.util.logging.Level;
 
 
 public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest, FunctionWarmupResponse.Builder> {
@@ -47,7 +49,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             functionLoadRequestBuilder.setFunctionId(functionId.toString());
             functionLoadRequestBuilder.setMetadata(rpcFunctionMetadataBuilder);
             String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker).execute(functionLoadRequestBuilder.build(), FunctionLoadResponse.newBuilder());
-            System.out.println("load request result: " + loadRequestResult);
+            WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up load request result: {0}", loadRequestResult);
 
             //warm up InvocationRequestHandler
             InvocationRequest.Builder invocationRequestBuilder = InvocationRequest.newBuilder();
@@ -61,9 +63,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             InvocationResponse.Builder invocationResponseBuilder = InvocationResponse.newBuilder();
             String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequestBuilder.build(), invocationResponseBuilder);
 
-            System.out.println("invocation result:" + invocationResult);
-            System.out.println("@@:)" + invocationResponseBuilder.getReturnValue());
-
+            WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up invocation result: {0}",  invocationResult);
             //reset classloader that used for warm up
             EnhancedClassLoaderProvider.resetClassLoaderInstance();
         } catch (Exception e) {
