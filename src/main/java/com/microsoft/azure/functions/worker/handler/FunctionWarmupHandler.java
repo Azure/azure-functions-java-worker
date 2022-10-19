@@ -29,6 +29,8 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
 
         //warm up FunctionEnvironmentReloadRequestHandler
         try {
+            String warm_up_env = System.getenv("WARM_UP_ENV");
+            WorkerLogManager.getSystemLogger().info("warm_up_env at function warm up request: " + warm_up_env);
             FunctionEnvironmentReloadRequest.Builder functionEnvironmentReloadRequestBuilder = FunctionEnvironmentReloadRequest.newBuilder();
             FunctionEnvironmentReloadRequest functionEnvironmentReloadRequest = functionEnvironmentReloadRequestBuilder.putAllEnvironmentVariables(System.getenv()).build();
             new FunctionEnvironmentReloadRequestHandler(this.javaFunctionBroker).execute(functionEnvironmentReloadRequest, null);
@@ -63,7 +65,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             InvocationResponse.Builder invocationResponseBuilder = InvocationResponse.newBuilder();
             String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequestBuilder.build(), invocationResponseBuilder);
 
-            WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up invocation result: {0}",  invocationResult);
+            WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up invocation result: {0}", invocationResult);
             //reset classloader that used for warm up
             EnhancedClassLoaderProvider.resetClassLoaderInstance();
         } catch (Exception e) {
