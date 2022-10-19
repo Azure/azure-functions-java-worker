@@ -23,6 +23,7 @@
     <azure.functions.java.core.library.version>1.2.0</azure.functions.java.core.library.version>
     <azure.functions.java.spi>1.0.0</azure.functions.java.spi>
     <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
+    <azure.functions.java.http.library.version>1.0.0-SNAPSHOT</azure.functions.java.http.library.version>
   </properties>
   <licenses>
     <license>
@@ -66,6 +67,11 @@
       <groupId>com.microsoft.azure.functions</groupId>
       <artifactId>azure-functions-java-spi</artifactId>
       <version>${azure.functions.java.spi}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure.functions</groupId>
+      <artifactId>azure-functions-java-http-library</artifactId>
+      <version>${azure.functions.java.http.library.version}</version>
     </dependency>
     <dependency>
       <groupId>com.microsoft.azure.functions</groupId>
