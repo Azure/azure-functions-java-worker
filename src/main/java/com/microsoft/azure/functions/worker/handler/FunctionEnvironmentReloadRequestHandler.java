@@ -26,12 +26,16 @@ public class FunctionEnvironmentReloadRequestHandler
 	@Override
 	String execute(FunctionEnvironmentReloadRequest request, Builder response) throws Exception {
 		WorkerLogManager.getSystemLogger().log(Level.INFO, "FunctionEnvironmentReloadRequest received by the Java worker");
+		String warm_up_env = System.getenv("WARM_UP_ENV");
+		WorkerLogManager.getSystemLogger().info("Before Load Env function env reload request: " + warm_up_env);
 		EnvironmentVariables = request.getEnvironmentVariablesMap();
 		if (EnvironmentVariables == null || EnvironmentVariables.isEmpty()) {
 			return String
 					.format("Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null");
 		}
 		setEnv(EnvironmentVariables);
+		warm_up_env = System.getenv("WARM_UP_ENV");
+		WorkerLogManager.getSystemLogger().info("After Load Env at function env reload request: " + warm_up_env);
 		return String.format("FunctionEnvironmentReloadRequest completed");
 	}
 
