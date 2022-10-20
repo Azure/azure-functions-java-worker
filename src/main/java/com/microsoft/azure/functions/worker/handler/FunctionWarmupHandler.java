@@ -4,6 +4,7 @@ import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.reflect.EnhancedClassLoaderProvider;
+import com.microsoft.azure.functions.worker.reflect.FactoryClassLoader;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -14,14 +15,13 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
     private static final String WARM_UP_FUNCTION_NAME = "WarmupFunc";
     private static final String WARM_UP_FUNCTION_ENTRY_POINT = "com.azfs.java.Function.run";
     private static final String WARM_UP_FUNCTION_SCRIPT_FILE = "/annotationLib/java-warmup-app-1.0-SNAPSHOT.jar";
-    private final JavaFunctionBroker javaFunctionBroker;
+    private final JavaFunctionBroker javaFunctionBroker = new JavaFunctionBroker(new FactoryClassLoader().createClassLoaderProvider());
 
-    public FunctionWarmupHandler(JavaFunctionBroker javaFunctionBroker) {
+    public FunctionWarmupHandler() {
         super(StreamingMessage::getFunctionWarmupRequest,
                 FunctionWarmupResponse::newBuilder,
                 FunctionWarmupResponse.Builder::setResult,
                 StreamingMessage.Builder::setFunctionWarmupResponse);
-        this.javaFunctionBroker = javaFunctionBroker;
     }
 
     @Override
@@ -64,8 +64,6 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequestBuilder.build(), invocationResponseBuilder);
 
             WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up invocation result: {0}", invocationResult);
-            //reset classloader that used for warm up
-            EnhancedClassLoaderProvider.resetClassLoaderInstance();
         } catch (Exception e) {
             System.out.println(e.getMessage());
             throw new RuntimeException(e);

@@ -10,10 +10,6 @@ import com.microsoft.azure.functions.worker.*;
 
 public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
 
-    public static synchronized void resetClassLoaderInstance() {
-        classLoaderInstance = null;
-    }
-
     public EnhancedClassLoaderProvider() {
         customerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
         workerUrls = Collections.newSetFromMap(new ConcurrentHashMap<URL, Boolean>());
@@ -60,5 +56,5 @@ public class EnhancedClassLoaderProvider implements ClassLoaderProvider {
     private final Set<URL> customerUrls;
     private final Set<URL> workerUrls;
     private final Object lock = new Object();
-    private static volatile URLClassLoader classLoaderInstance;
+    private volatile URLClassLoader classLoaderInstance;
 }

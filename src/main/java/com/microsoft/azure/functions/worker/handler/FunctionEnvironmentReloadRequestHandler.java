@@ -27,12 +27,11 @@ public class FunctionEnvironmentReloadRequestHandler
 	String execute(FunctionEnvironmentReloadRequest request, Builder response) throws Exception {
 		WorkerLogManager.getSystemLogger().log(Level.INFO, "FunctionEnvironmentReloadRequest received by the Java worker");
 		EnvironmentVariables = request.getEnvironmentVariablesMap();
-		if (EnvironmentVariables == null || EnvironmentVariables.isEmpty()) {
-			return String
-					.format("Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null");
+		if (EnvironmentVariables.isEmpty()) {
+			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null";
 		}
 		setEnv(EnvironmentVariables);
-		return String.format("FunctionEnvironmentReloadRequest completed");
+		return "FunctionEnvironmentReloadRequest completed";
 	}
 
 	/*
