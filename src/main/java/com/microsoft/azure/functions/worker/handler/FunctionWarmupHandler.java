@@ -29,6 +29,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
 
         //warm up FunctionEnvironmentReloadRequestHandler
         try {
+            WorkerLogManager.getSystemLogger().info("warm up start. ");
             FunctionEnvironmentReloadRequest.Builder functionEnvironmentReloadRequestBuilder = FunctionEnvironmentReloadRequest.newBuilder();
             FunctionEnvironmentReloadRequest functionEnvironmentReloadRequest = functionEnvironmentReloadRequestBuilder.putAllEnvironmentVariables(System.getenv()).build();
             new FunctionEnvironmentReloadRequestHandler(this.javaFunctionBroker).execute(functionEnvironmentReloadRequest, null);
