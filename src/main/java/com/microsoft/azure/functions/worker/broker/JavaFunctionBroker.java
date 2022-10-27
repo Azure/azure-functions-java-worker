@@ -39,7 +39,7 @@ public class JavaFunctionBroker {
 	private volatile InvocationChainFactory invocationChainFactory;
 	private volatile FunctionInstanceInjector functionInstanceInjector;
 
-	private static FunctionInstanceInjector newInstanceInjector() {
+	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
 			@Override
 			public <T> T getInstance(Class<T> functionClass) throws Exception {
@@ -94,13 +94,13 @@ public class JavaFunctionBroker {
 			Iterator<FunctionInstanceInjector> iterator = ServiceLoader.load(FunctionInstanceInjector.class).iterator();
 			if (iterator.hasNext()) {
 				this.functionInstanceInjector = iterator.next();
-				WorkerLogManager.getSystemLogger().log(Level.INFO, "Load function instance injector: {0}" + this.functionInstanceInjector.getClass().getName());
+				WorkerLogManager.getSystemLogger().info("Load function instance injector: " + this.functionInstanceInjector.getClass().getName());
 				if (iterator.hasNext()){
 					WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
 					throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
 				}
 			}else {
-				this.functionInstanceInjector = JavaFunctionBroker.newInstanceInjector();
+				this.functionInstanceInjector = newInstanceInjector();
 				WorkerLogManager.getSystemLogger().info("Didn't find any function instance injector, creating function class instance every invocation.");
 			}
 		} finally {
