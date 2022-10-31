@@ -7,9 +7,11 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
+import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
@@ -33,8 +35,19 @@ public class JavaFunctionBroker {
 	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
-	private final AtomicBoolean invocationChainFactoryInitialized = new AtomicBoolean(false);
+	private final AtomicBoolean oneTimeLogicInitialized = new AtomicBoolean(false);
 	private volatile InvocationChainFactory invocationChainFactory;
+	private volatile FunctionInstanceInjector functionInstanceInjector;
+
+	private FunctionInstanceInjector newInstanceInjector() {
+		return new FunctionInstanceInjector() {
+			@Override
+			public <T> T getInstance(Class<T> functionClass) throws Exception {
+				return functionClass.newInstance();
+			}
+		};
+	}
+
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
@@ -44,26 +57,54 @@ public class JavaFunctionBroker {
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
-		initializeInvocationChainFactory();
+		initializeOneTimeLogics();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
+	private void initializeOneTimeLogics() {
+		if (!oneTimeLogicInitialized.getAndSet(true)) {
+			initializeInvocationChainFactory();
+			initializeFunctionInstanceInjector();
+		}
+	}
+
 	private void initializeInvocationChainFactory() {
-		if (!invocationChainFactoryInitialized.getAndSet(true)) {
-			ArrayList<Middleware> middlewares = new ArrayList<>();
-			try {
-				//ServiceLoader will use thread context classloader to verify loaded class
-				Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
-				for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
-					middlewares.add(middleware);
-					WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
-				}
-			} finally {
-				Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+		ArrayList<Middleware> middlewares = new ArrayList<>();
+		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
+		try {
+			//ServiceLoader will use thread context classloader to verify loaded class
+			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
+				middlewares.add(middleware);
+				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
 			}
-			middlewares.add(getFunctionExecutionMiddleWare());
-			this.invocationChainFactory = new InvocationChainFactory(middlewares);
+		} finally {
+			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
+		}
+		middlewares.add(getFunctionExecutionMiddleWare());
+		this.invocationChainFactory = new InvocationChainFactory(middlewares);
+	}
+
+	private void initializeFunctionInstanceInjector() {
+		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
+		try {
+			//ServiceLoader will use thread context classloader to verify loaded class
+			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+			Iterator<FunctionInstanceInjector> iterator = ServiceLoader.load(FunctionInstanceInjector.class).iterator();
+			if (iterator.hasNext()) {
+				this.functionInstanceInjector = iterator.next();
+				WorkerLogManager.getSystemLogger().info("Load function instance injector: " + this.functionInstanceInjector.getClass().getName());
+				if (iterator.hasNext()){
+					WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
+					throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
+				}
+			}else {
+				this.functionInstanceInjector = newInstanceInjector();
+				WorkerLogManager.getSystemLogger().info("Didn't find any function instance injector, creating function class instance every invocation.");
+			}
+		} finally {
+			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
 	}
 
@@ -99,7 +140,7 @@ public class JavaFunctionBroker {
 				request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(),
 				traceContext, retryContext, methodEntry.left, dataStore, functionDefinition.getCandidate(),
-				functionDefinition.getContainingClass(), request.getInputDataList());
+				functionDefinition.getContainingClass(), request.getInputDataList(), this.functionInstanceInjector);
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		return executionContextDataSource;
 	}
