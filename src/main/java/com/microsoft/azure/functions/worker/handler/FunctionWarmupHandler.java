@@ -29,11 +29,12 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
 
         //warm up FunctionEnvironmentReloadRequestHandler
         try {
-            WorkerLogManager.getSystemLogger().info("warm up start. ");
+            WorkerLogManager.getSystemLogger().info("warm up start.");
             this.javaFunctionBroker.setWorkerDirectory(functionWarmupRequest.getWorkerDirectory());
             FunctionEnvironmentReloadRequest.Builder functionEnvironmentReloadRequestBuilder = FunctionEnvironmentReloadRequest.newBuilder();
             FunctionEnvironmentReloadRequest functionEnvironmentReloadRequest = functionEnvironmentReloadRequestBuilder.putAllEnvironmentVariables(System.getenv()).build();
             new FunctionEnvironmentReloadRequestHandler(this.javaFunctionBroker).execute(functionEnvironmentReloadRequest, null);
+            WorkerLogManager.getSystemLogger().info("finish warm up FunctionEnvironmentReloadRequestHandler");
 
             //warm up FunctionLoadRequestHandler
             FunctionLoadRequest.Builder functionLoadRequestBuilder = FunctionLoadRequest.newBuilder();
@@ -51,7 +52,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             functionLoadRequestBuilder.setFunctionId(functionId.toString());
             functionLoadRequestBuilder.setMetadata(rpcFunctionMetadataBuilder);
             String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker).execute(functionLoadRequestBuilder.build(), FunctionLoadResponse.newBuilder());
-            WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up load request result: {0}", loadRequestResult);
+            WorkerLogManager.getSystemLogger().log(Level.INFO, "finish warm up FunctionLoadRequestHandler with result: {0}", loadRequestResult);
 
             //warm up InvocationRequestHandler
             InvocationRequest.Builder invocationRequestBuilder = InvocationRequest.newBuilder();
@@ -64,10 +65,11 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             invocationRequestBuilder.addAllInputData(inputDataList);
             InvocationResponse.Builder invocationResponseBuilder = InvocationResponse.newBuilder();
             String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequestBuilder.build(), invocationResponseBuilder);
+            WorkerLogManager.getSystemLogger().log(Level.INFO, "finish warm up InvocationRequestHandler with result: {0}", invocationResult);
 
-            WorkerLogManager.getSystemLogger().log(Level.INFO, "warm up invocation result: {0}", invocationResult);
+            WorkerLogManager.getSystemLogger().info("warm up completed successfully.");
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            WorkerLogManager.getSystemLogger().severe("warm up process failed with exception: " + e.getMessage());
             throw new RuntimeException(e);
         }
         return "warm up completed";

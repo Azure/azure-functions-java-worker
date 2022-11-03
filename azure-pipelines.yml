@@ -81,39 +81,39 @@ jobs:
     strategy:
       maxParallel: 1
       matrix:
-#        open-jdk-8-linux:
-#          IMAGE_TYPE: 'ubuntu-latest'
-#          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_linux_hotspot_8u322b06.tar.gz'
-#          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
-#          JDK_PATH: 'jdk8u322-b06'
-#          JAVA_VERSION_SPEC: '8'
+        open-jdk-8-linux:
+          IMAGE_TYPE: 'ubuntu-latest'
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_linux_hotspot_8u322b06.tar.gz'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
+          JDK_PATH: 'jdk8u322-b06'
+          JAVA_VERSION_SPEC: '8'
         open-jdk-8-windows:
           IMAGE_TYPE: 'windows-latest'
           JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u322-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u322b06.zip'
           JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u322b06'
           JDK_PATH: 'jdk8u322-b06'
-#        microsoft-open-jdk-11-linux:
-#          IMAGE_TYPE: 'ubuntu-latest'
-#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-linux-x64.tar.gz'
-#          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-linux-x64'
-#          JDK_PATH: 'jdk-11.0.13+8'
-#          JAVA_VERSION_SPEC: '11'
+        microsoft-open-jdk-11-linux:
+          IMAGE_TYPE: 'ubuntu-latest'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-linux-x64'
+          JDK_PATH: 'jdk-11.0.13+8'
+          JAVA_VERSION_SPEC: '11'
         microsoft-open-jdk-11-windows:
           IMAGE_TYPE: 'windows-latest'
           JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.13.8.1-windows-x64.zip'
           JAVA_VERSION: 'microsoft-jdk-11.0.13.8.1-windows-x64'
           JDK_PATH: 'jdk-11.0.13+8'
-#        microsoft-open-jdk-17-linux:
-#          IMAGE_TYPE: 'ubuntu-latest'
-#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-linux-x64.tar.gz'
-#          JAVA_VERSION: 'microsoft-jdk-17.0.3-linux-x64'
-#          JDK_PATH: 'jdk-17.0.3+7'
-#          JAVA_VERSION_SPEC: '17'
-#        microsoft-open-jdk-17-windows:
-#          IMAGE_TYPE: 'windows-latest'
-#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
-#          JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
-#          JDK_PATH: 'jdk-17.0.3+7'
+        microsoft-open-jdk-17-linux:
+          IMAGE_TYPE: 'ubuntu-latest'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-17.0.3-linux-x64'
+          JDK_PATH: 'jdk-17.0.3+7'
+          JAVA_VERSION_SPEC: '17'
+        microsoft-open-jdk-17-windows:
+          IMAGE_TYPE: 'windows-latest'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
+          JDK_PATH: 'jdk-17.0.3+7'
 
     pool:
       vmImage: $(IMAGE_TYPE)
