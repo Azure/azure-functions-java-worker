@@ -49,6 +49,12 @@ public class CoreTypeResolver {
 		String annotationName = null;
 
 		for (Annotation annotation : annotations) {
+
+			if (annotation.annotationType().getName().equals("com.microsoft.azure.functions.warmup.java.HttpTrigger")){
+				annotationName = getBindingNameFromAnnotation(annotation);
+				return annotationName;
+			}
+
 			if (annotation.toString().contains("com.microsoft.azure.functions.annotation")) {
 				annotationName = getBindingNameFromAnnotation(annotation);
 			}

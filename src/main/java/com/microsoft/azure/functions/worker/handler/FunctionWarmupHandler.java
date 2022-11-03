@@ -13,8 +13,8 @@ import java.util.logging.Level;
 public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest, FunctionWarmupResponse.Builder> {
 
     private static final String WARM_UP_FUNCTION_NAME = "WarmupFunc";
-    private static final String WARM_UP_FUNCTION_ENTRY_POINT = "com.azfs.java.Function.run";
-    private static final String WARM_UP_FUNCTION_SCRIPT_FILE = "/annotationLib/java-warmup-app-1.0-SNAPSHOT.jar";
+    private static final String WARM_UP_FUNCTION_ENTRY_POINT = "com.microsoft.azure.functions.warmup.java.Function.run";
+    private static final String WARM_UP_FUNCTION_SCRIPT_FILE = "/annotationLib/warmup-httptrigger.jar";
     private final JavaFunctionBroker javaFunctionBroker = new JavaFunctionBroker(new FactoryClassLoader().createClassLoaderProvider());
 
     public FunctionWarmupHandler() {
@@ -30,6 +30,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
         //warm up FunctionEnvironmentReloadRequestHandler
         try {
             WorkerLogManager.getSystemLogger().info("warm up start. ");
+            this.javaFunctionBroker.setWorkerDirectory(functionWarmupRequest.getWorkerDirectory());
             FunctionEnvironmentReloadRequest.Builder functionEnvironmentReloadRequestBuilder = FunctionEnvironmentReloadRequest.newBuilder();
             FunctionEnvironmentReloadRequest functionEnvironmentReloadRequest = functionEnvironmentReloadRequestBuilder.putAllEnvironmentVariables(System.getenv()).build();
             new FunctionEnvironmentReloadRequestHandler(this.javaFunctionBroker).execute(functionEnvironmentReloadRequest, null);
