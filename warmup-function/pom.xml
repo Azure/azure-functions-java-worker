@@ -14,7 +14,6 @@
         <java.version>1.8</java.version>
         <azure.functions.maven.plugin.version>1.21.0</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>2.0.1</azure.functions.java.library.version>
-        <functionAppName>eastus-linja8--dd-ai-01</functionAppName>
     </properties>
 
     <dependencies>
