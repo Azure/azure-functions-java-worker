@@ -6,11 +6,6 @@
 
 package com.microsoft.azure.functions.warmup.java;
 
-import com.microsoft.azure.functions.HttpMethod;
-import com.microsoft.azure.functions.annotation.AuthorizationLevel;
-import com.microsoft.azure.functions.annotation.BindingName;
-import com.microsoft.azure.functions.annotation.FunctionName;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,8 +18,4 @@ public @interface HttpTrigger {
   String dataType() default "";
 
   String route() default "";
-
-  HttpMethod[] methods() default {};
-
-  AuthorizationLevel authLevel() default AuthorizationLevel.FUNCTION;
 }

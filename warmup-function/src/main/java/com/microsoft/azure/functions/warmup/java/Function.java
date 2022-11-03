@@ -1,8 +1,6 @@
 package com.microsoft.azure.functions.warmup.java;
 
 import com.microsoft.azure.functions.*;
-import com.microsoft.azure.functions.annotation.AuthorizationLevel;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -15,12 +13,7 @@ import java.util.UUID;
 public class Function {
 
     public HttpResponseMessage run(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.GET},
-                    authLevel = AuthorizationLevel.ANONYMOUS)
-            HttpRequestMessage<Optional<String>> request,
-            final ExecutionContext context) {
+            @HttpTrigger(name = "req") HttpRequestMessage<Optional<String>> request, final ExecutionContext context) {
         Set<UUID> set = new HashSet<>();
         set.add(UUID.randomUUID());
         set.add(UUID.randomUUID());

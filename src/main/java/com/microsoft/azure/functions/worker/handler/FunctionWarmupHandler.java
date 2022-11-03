@@ -62,7 +62,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
         final UUID functionId = UUID.randomUUID();
         functionLoadRequestBuilder.setFunctionId(functionId.toString());
         functionLoadRequestBuilder.setMetadata(rpcFunctionMetadataBuilder);
-        String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker).execute(functionLoadRequestBuilder.build(), FunctionLoadResponse.newBuilder());
+        String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker, true).execute(functionLoadRequestBuilder.build(), FunctionLoadResponse.newBuilder());
         WorkerLogManager.getSystemLogger().log(Level.INFO, "finish warm up FunctionLoadRequestHandler with result: {0}", loadRequestResult);
         return functionId;
     }
