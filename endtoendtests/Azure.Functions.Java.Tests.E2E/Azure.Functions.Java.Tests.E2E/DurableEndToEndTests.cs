@@ -45,6 +45,8 @@ namespace Azure.Functions.Java.Tests.E2E
                 Thread.Sleep(TimeSpan.FromSeconds(1));
                 retryCount -= 1;
             }
+
+            Assert.True(success);
         }
     }
 }

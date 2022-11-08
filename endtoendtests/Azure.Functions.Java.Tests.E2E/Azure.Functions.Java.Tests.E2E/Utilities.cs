@@ -102,7 +102,7 @@ namespace Azure.Functions.Java.Tests.E2E
                     $"StartOrchestration: {functionName} : {response.StatusCode} : {response.ReasonPhrase}");
                 if (expectedStatusCode != response.StatusCode)
                 {
-                    return JObject.Parse("null");
+                    return JObject.Parse(null);
                 }
 
                 string output = await response.Content.ReadAsStringAsync();
