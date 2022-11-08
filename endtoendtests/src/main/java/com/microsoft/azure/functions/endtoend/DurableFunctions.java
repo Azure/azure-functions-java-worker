@@ -4,7 +4,8 @@ import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 import java.util.*;
 
-import com.microsoft.durabletask.*;
+import com.microsoft.durabletask.DurableTaskClient;
+import com.microsoft.durabletask.OrchestrationRunner;
 import com.microsoft.durabletask.azurefunctions.DurableActivityTrigger;
 import com.microsoft.durabletask.azurefunctions.DurableClientContext;
 import com.microsoft.durabletask.azurefunctions.DurableClientInput;
@@ -36,13 +37,15 @@ public class DurableFunctions {
      */
     @FunctionName("Cities")
     public String citiesOrchestrator(
-            @DurableOrchestrationTrigger(name = "taskOrchestrationContext") TaskOrchestrationContext ctx) {
-        String result = "";
-        result += ctx.callActivity("Capitalize", "Tokyo", String.class).await() + ", ";
-        result += ctx.callActivity("Capitalize", "London", String.class).await() + ", ";
-        result += ctx.callActivity("Capitalize", "Seattle", String.class).await() + ", ";
-        result += ctx.callActivity("Capitalize", "Austin", String.class).await();
-        return result;
+            @DurableOrchestrationTrigger(name = "orchestratorRequestProtoBytes") String orchestratorRequestProtoBytes) {
+        return OrchestrationRunner.loadAndRun(orchestratorRequestProtoBytes, ctx -> {
+            String result = "";
+            result += ctx.callActivity("Capitalize", "Tokyo", String.class).await() + ", ";
+            result += ctx.callActivity("Capitalize", "London", String.class).await() + ", ";
+            result += ctx.callActivity("Capitalize", "Seattle", String.class).await() + ", ";
+            result += ctx.callActivity("Capitalize", "Austin", String.class).await();
+            return result;
+        });
     }
 
     /**
