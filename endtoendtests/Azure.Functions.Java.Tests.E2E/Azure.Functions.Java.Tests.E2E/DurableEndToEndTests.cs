@@ -23,7 +23,7 @@ namespace Azure.Functions.Java.Tests.E2E
         [Fact]
         public async Task Durable_OrchestrationCompletes()
         {
-            JObject result = await Utilities.StartOrchestration("StartOrchestration", HttpStatusCode.OK);
+            JObject result = await Utilities.StartOrchestration("StartOrchestration", HttpStatusCode.Created);
             Assert.NotNull(result);
 
             String statusUrl = result["statusQueryGetUri"].ToString();
