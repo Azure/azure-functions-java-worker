@@ -23,6 +23,7 @@
 		<java.version>1.8</java.version>
 		<azure.functions.maven.plugin.version>1.18.0</azure.functions.maven.plugin.version>
 		<azure.functions.java.library.version>2.0.1</azure.functions.java.library.version>
+		<durabletask.azure.functions>1.0.0-beta.1</durabletask.azure.functions>
 		<functionAppName>azure-functions-java-endtoendtests</functionAppName>
 		<functionAppRegion>westus</functionAppRegion>
 		<functionResourceGroup>java-functions-group</functionResourceGroup>
@@ -62,6 +63,11 @@
 			<groupId>com.microsoft.azure.functions</groupId>
 			<artifactId>azure-functions-java-library</artifactId>
 			<version>${azure.functions.java.library.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft</groupId>
+			<artifactId>durabletask-azure-functions</artifactId>
+			<version>${durabletask.azure.functions}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
