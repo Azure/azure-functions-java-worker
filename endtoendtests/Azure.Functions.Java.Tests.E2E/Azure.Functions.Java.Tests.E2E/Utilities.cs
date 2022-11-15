@@ -89,5 +89,45 @@ namespace Azure.Functions.Java.Tests.E2E
                 return true;
             }
         }
+
+        public static async Task<JObject> StartOrchestration(string functionName, HttpStatusCode expectedStatusCode)
+        {
+            string uri = $"{Constants.FunctionsHostUrl}/api/{functionName}";
+            using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+                var response = await httpClient.SendAsync(request);
+
+                Console.WriteLine(
+                    $"StartOrchestration: {functionName} : {response.StatusCode} : {response.ReasonPhrase}");
+                if (expectedStatusCode != response.StatusCode)
+                {
+                    return null;
+                }
+
+                string output = await response.Content.ReadAsStringAsync();
+                JObject jsonResponse = JObject.Parse(output);
+
+                Console.WriteLine(
+                    $"Started orchestration with instance ID: {jsonResponse["id"]}");
+                return jsonResponse;
+            }
+        }
+
+        public static async Task<JObject> InvokeUri(string uri)
+        {
+            using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+                var response = await httpClient.SendAsync(request);
+
+                string output = await response.Content.ReadAsStringAsync();
+                JObject jsonResponse = JObject.Parse(output);
+
+                Console.WriteLine(
+                    $"InvokeUrl response: {jsonResponse}");
+                return jsonResponse;
+            }
+        }
     }
 }
