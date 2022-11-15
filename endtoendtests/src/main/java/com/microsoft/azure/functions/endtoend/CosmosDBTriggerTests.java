@@ -20,7 +20,7 @@ public class CosmosDBTriggerTests {
     @FunctionName("CosmosDBInputId")
     public HttpResponseMessage CosmosDBInputId(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", id = "{docId}") String item,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionIn", connection = "AzureWebJobsCosmosDBConnectionString", id = "{docId}") String item,
             final ExecutionContext context) {
 
         context.getLogger().info("Java HTTP trigger processed a request.");
@@ -36,7 +36,7 @@ public class CosmosDBTriggerTests {
     @FunctionName("CosmosDBInputIdPOJO")
     public HttpResponseMessage CosmosDBInputIdPOJO(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", id = "{docId}") Document item,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionIn", connection = "AzureWebJobsCosmosDBConnectionString", id = "{docId}") Document item,
             final ExecutionContext context) {
 
         context.getLogger().info("Java HTTP trigger processed a request.");
@@ -58,8 +58,8 @@ public class CosmosDBTriggerTests {
     @FunctionName("CosmosDBInputQueryPOJOArray")
     public HttpResponseMessage CosmosDBInputQueryPOJOArray(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @CosmosDBInput(name = "items", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") Document[] items,
-            @CosmosDBOutput(name = "itemsOut", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionOut", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString") OutputBinding<Document[]> itemsOut,
+            @CosmosDBInput(name = "items", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionIn", connection = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") Document[] items,
+            @CosmosDBOutput(name = "itemsOut", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionOut", connection = "AzureWebJobsCosmosDBConnectionString") OutputBinding<Document[]> itemsOut,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a request.");
         
@@ -75,8 +75,8 @@ public class CosmosDBTriggerTests {
     @FunctionName("CosmosDBInputQueryPOJOList")
     public HttpResponseMessage CosmosDBInputQueryPOJOList(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") List<Document> items,
-            @CosmosDBOutput(name = "itemsOut", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionOut", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString") OutputBinding<List<Document>> itemsOut,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionIn", connection = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") List<Document> items,
+            @CosmosDBOutput(name = "itemsOut", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionOut", connection = "AzureWebJobsCosmosDBConnectionString") OutputBinding<List<Document>> itemsOut,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a request.");
         
@@ -92,7 +92,7 @@ public class CosmosDBTriggerTests {
     @FunctionName("CosmosDBInputQuery")
     public HttpResponseMessage CosmosDBInputQuery(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemsCollectionIn", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") List<String> items,
+            @CosmosDBInput(name = "item", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemsCollectionIn", connection = "AzureWebJobsCosmosDBConnectionString", sqlQuery = "SELECT f.id, f.name FROM f WHERE f.name = {name}") List<String> items,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a request.");
 
@@ -111,12 +111,12 @@ public class CosmosDBTriggerTests {
     /**
      * This function will be invoked when a post request with file to
      * http://localhost:7071/api/CosmosDBOutput. A new document will add to the
-     * collection.
+     * container.
      */
     @FunctionName("CosmosTriggerAndOutput")
     public void CosmosTriggerAndOutput(
-            @CosmosDBTrigger(name = "itemIn", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemCollectionIn", leaseCollectionName = "leases", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString", createLeaseCollectionIfNotExists = true) Object inputItem,
-            @CosmosDBOutput(name = "itemOut", databaseName = "%CosmosDBDatabaseName%", collectionName = "ItemCollectionOut", connectionStringSetting = "AzureWebJobsCosmosDBConnectionString") OutputBinding<Document> outPutItem,
+            @CosmosDBTrigger(name = "itemIn", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemCollectionIn", leaseContainerName = "leases", connection = "AzureWebJobsCosmosDBConnectionString", createLeaseContainerIfNotExists = true) Object inputItem,
+            @CosmosDBOutput(name = "itemOut", databaseName = "%CosmosDBDatabaseName%", containerName = "ItemCollectionOut", connection = "AzureWebJobsCosmosDBConnectionString") OutputBinding<Document> outPutItem,
             final ExecutionContext context) {
 
         context.getLogger().info("Java Cosmos DB trigger function executed. Received document: " + inputItem);
