@@ -10,7 +10,7 @@ function StopOnFailedExecution {
   }
 }
 
-$ApplicationInsightsAgentVersion = '3.4.0'
+$ApplicationInsightsAgentVersion = '3.4.4'
 $ApplicationInsightsAgentFilename = "applicationinsights-agent-${ApplicationInsightsAgentVersion}.jar"
 $ApplicationInsightsAgentUrl = "https://repo1.maven.org/maven2/com/microsoft/azure/applicationinsights-agent/${ApplicationInsightsAgentVersion}/${ApplicationInsightsAgentFilename}"
 
