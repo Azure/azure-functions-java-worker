@@ -24,10 +24,10 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
     }
 
     @Override
-    String execute(FunctionWarmupRequest functionWarmupRequest, FunctionWarmupResponse.Builder builder) throws Exception {
+    String execute(FunctionWarmupRequest functionWarmupRequest, FunctionWarmupResponse.Builder builder) {
 
         try {
-            WorkerLogManager.getSystemLogger().info("warm up start.");
+            WorkerLogManager.getSystemLogger().info("azure function java worker warm up start.");
             this.javaFunctionBroker.setWorkerDirectory(functionWarmupRequest.getWorkerDirectory());
             warmupFunctionEnvironmentReloadRequestHandler(functionWarmupRequest);
             UUID functionId = warmupFunctionLoadRequestHandler(functionWarmupRequest);
@@ -37,7 +37,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
             WorkerLogManager.getSystemLogger().severe("warm up process failed with exception: " + e.getMessage());
             throw new RuntimeException(e);
         }
-        return "warm up completed";
+        return "azure function java worker warm up completed";
     }
 
     private void warmupFunctionEnvironmentReloadRequestHandler(FunctionWarmupRequest functionWarmupRequest) throws Exception {
@@ -63,7 +63,7 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
         functionLoadRequestBuilder.setFunctionId(functionId.toString());
         functionLoadRequestBuilder.setMetadata(rpcFunctionMetadataBuilder);
         String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker, true).execute(functionLoadRequestBuilder.build(), FunctionLoadResponse.newBuilder());
-        WorkerLogManager.getSystemLogger().log(Level.INFO, "finish warm up FunctionLoadRequestHandler with result: {0}", loadRequestResult);
+        WorkerLogManager.getSystemLogger().info("finish warm up FunctionLoadRequestHandler with result: " + loadRequestResult);
         return functionId;
     }
 
@@ -78,6 +78,6 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
         invocationRequestBuilder.addAllInputData(inputDataList);
         InvocationResponse.Builder invocationResponseBuilder = InvocationResponse.newBuilder();
         String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequestBuilder.build(), invocationResponseBuilder);
-        WorkerLogManager.getSystemLogger().log(Level.INFO, "finish warm up InvocationRequestHandler with result: {0}", invocationResult);
+        WorkerLogManager.getSystemLogger().info("finish warm up InvocationRequestHandler with result: " + invocationResult);
     }
 }

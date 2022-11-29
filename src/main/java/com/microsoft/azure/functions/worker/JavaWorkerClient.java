@@ -38,12 +38,12 @@ public class JavaWorkerClient implements AutoCloseable {
         JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
         
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_WARMUP_REQUEST, FunctionWarmupHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_ENVIRONMENT_RELOAD_REQUEST, () -> new FunctionEnvironmentReloadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_STATUS_REQUEST, WorkerStatusRequestHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_TERMINATE, WorkerTerminateRequestHandler::new);
-        this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_WARMUP_REQUEST, FunctionWarmupHandler::new);
     }
 
     public Future<Void> listen(String workerId, String requestId) {
