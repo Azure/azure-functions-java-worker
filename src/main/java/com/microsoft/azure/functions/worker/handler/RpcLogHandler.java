@@ -19,7 +19,7 @@ public class RpcLogHandler extends OutboundMessageHandler<RpcLog.Builder> {
     private static RpcLog.Builder generateRpcLog(LogRecord record, String invocationId) {
         RpcLog.Builder log = RpcLog.newBuilder();
         /**
-         * Check if the logging namespace belongs to system logsq, invocation log should be categorized to user type (default), others should
+         * Check if the logging namespace belongs to system logs, invocation log should be categorized to user type (default), others should
          * be categorized to system type.
          *
          *              local_console   customer_app_insight    functions_kusto_table

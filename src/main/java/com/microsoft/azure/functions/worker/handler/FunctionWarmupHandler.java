@@ -25,14 +25,13 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
 
     @Override
     String execute(FunctionWarmupRequest functionWarmupRequest, FunctionWarmupResponse.Builder builder) {
-
         try {
             WorkerLogManager.getSystemLogger().info("azure function java worker warm up start.");
             this.javaFunctionBroker.setWorkerDirectory(functionWarmupRequest.getWorkerDirectory());
             warmupFunctionEnvironmentReloadRequestHandler(functionWarmupRequest);
             UUID functionId = warmupFunctionLoadRequestHandler(functionWarmupRequest);
             warmupInvocationRequestHandler(functionId);
-            WorkerLogManager.getSystemLogger().info("warm up completed successfully.");
+            WorkerLogManager.getSystemLogger().info("azure function java worker warm up completed successfully.");
         } catch (Exception e) {
             WorkerLogManager.getSystemLogger().severe("warm up process failed with exception: " + e.getMessage());
             throw new RuntimeException(e);
