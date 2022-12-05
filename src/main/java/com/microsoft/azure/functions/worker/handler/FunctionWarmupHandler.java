@@ -6,7 +6,6 @@ import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.reflect.FactoryClassLoader;
 
 import java.util.*;
-import java.util.logging.Level;
 
 
 public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest, FunctionWarmupResponse.Builder> {
@@ -28,9 +27,9 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
         try {
             WorkerLogManager.getSystemLogger().info("azure function java worker warm up start.");
             this.javaFunctionBroker.setWorkerDirectory(functionWarmupRequest.getWorkerDirectory());
-            warmupFunctionEnvironmentReloadRequestHandler(functionWarmupRequest);
-            UUID functionId = warmupFunctionLoadRequestHandler(functionWarmupRequest);
-            warmupInvocationRequestHandler(functionId);
+            warmupFunctionEnvironmentReload();
+            UUID functionId = warmupFunctionLoad(functionWarmupRequest);
+            warmupInvocation(functionId);
             WorkerLogManager.getSystemLogger().info("azure function java worker warm up completed successfully.");
         } catch (Exception e) {
             WorkerLogManager.getSystemLogger().severe("warm up process failed with exception: " + e.getMessage());
@@ -39,44 +38,49 @@ public class FunctionWarmupHandler extends MessageHandler<FunctionWarmupRequest,
         return "azure function java worker warm up completed";
     }
 
-    private void warmupFunctionEnvironmentReloadRequestHandler(FunctionWarmupRequest functionWarmupRequest) throws Exception {
-        FunctionEnvironmentReloadRequest.Builder functionEnvironmentReloadRequestBuilder = FunctionEnvironmentReloadRequest.newBuilder();
-        FunctionEnvironmentReloadRequest functionEnvironmentReloadRequest = functionEnvironmentReloadRequestBuilder.putAllEnvironmentVariables(System.getenv()).build();
+    private void warmupFunctionEnvironmentReload() throws Exception {
+        FunctionEnvironmentReloadRequest functionEnvironmentReloadRequest = FunctionEnvironmentReloadRequest.newBuilder()
+                .putAllEnvironmentVariables(System.getenv())
+                .build();
         new FunctionEnvironmentReloadRequestHandler(this.javaFunctionBroker).execute(functionEnvironmentReloadRequest, null);
         WorkerLogManager.getSystemLogger().info("finish warm up FunctionEnvironmentReloadRequestHandler");
     }
 
-    private UUID warmupFunctionLoadRequestHandler(FunctionWarmupRequest functionWarmupRequest) throws Exception {
-        FunctionLoadRequest.Builder functionLoadRequestBuilder = FunctionLoadRequest.newBuilder();
-        RpcFunctionMetadata.Builder rpcFunctionMetadataBuilder = RpcFunctionMetadata.newBuilder();
-        rpcFunctionMetadataBuilder.setName(WARM_UP_FUNCTION_NAME);
-        rpcFunctionMetadataBuilder.setEntryPoint(WARM_UP_FUNCTION_ENTRY_POINT);
-        rpcFunctionMetadataBuilder.setScriptFile(functionWarmupRequest.getWorkerDirectory() + WARM_UP_FUNCTION_SCRIPT_FILE);
+    private UUID warmupFunctionLoad(FunctionWarmupRequest functionWarmupRequest) throws Exception {
         Map<String, BindingInfo> map = new HashMap<>();
         BindingInfo httpTrigger = BindingInfo.newBuilder().setDirection(BindingInfo.Direction.in).setDataType(BindingInfo.DataType.undefined).setType("httpTrigger").build();
         map.put("req", httpTrigger);
         BindingInfo http = BindingInfo.newBuilder().setDirection(BindingInfo.Direction.out).setDataType(BindingInfo.DataType.undefined).setType("http").build();
         map.put("$return", http);
-        rpcFunctionMetadataBuilder.putAllBindings(map);
+        RpcFunctionMetadata rpcFunctionMetadata = RpcFunctionMetadata.newBuilder()
+                .setName(WARM_UP_FUNCTION_NAME)
+                .setEntryPoint(WARM_UP_FUNCTION_ENTRY_POINT)
+                .setScriptFile(functionWarmupRequest.getWorkerDirectory() + WARM_UP_FUNCTION_SCRIPT_FILE)
+                .putAllBindings(map)
+                .build();
         final UUID functionId = UUID.randomUUID();
-        functionLoadRequestBuilder.setFunctionId(functionId.toString());
-        functionLoadRequestBuilder.setMetadata(rpcFunctionMetadataBuilder);
-        String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker, true).execute(functionLoadRequestBuilder.build(), FunctionLoadResponse.newBuilder());
+        FunctionLoadRequest functionLoadRequest = FunctionLoadRequest.newBuilder()
+                .setFunctionId(functionId.toString())
+                .setMetadata(rpcFunctionMetadata)
+                .build();
+        String loadRequestResult = new FunctionLoadRequestHandler(this.javaFunctionBroker, true).execute(functionLoadRequest, FunctionLoadResponse.newBuilder());
         WorkerLogManager.getSystemLogger().info("finish warm up FunctionLoadRequestHandler with result: " + loadRequestResult);
         return functionId;
     }
 
-    private void warmupInvocationRequestHandler(UUID functionId) throws Exception {
-        InvocationRequest.Builder invocationRequestBuilder = InvocationRequest.newBuilder();
-        invocationRequestBuilder.setFunctionId(functionId.toString()).setInvocationId(UUID.randomUUID().toString());
+    private void warmupInvocation(UUID functionId) throws Exception {
         List<ParameterBinding> inputDataList = new ArrayList<>();
-        ParameterBinding.Builder parameterBindingBuilder = ParameterBinding.newBuilder();
-        parameterBindingBuilder.setName("req");
-        parameterBindingBuilder.setData(TypedData.newBuilder().setHttp(RpcHttp.newBuilder().setMethod("GET")));
-        inputDataList.add(parameterBindingBuilder.build());
-        invocationRequestBuilder.addAllInputData(inputDataList);
-        InvocationResponse.Builder invocationResponseBuilder = InvocationResponse.newBuilder();
-        String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequestBuilder.build(), invocationResponseBuilder);
+        ParameterBinding parameterBinding = ParameterBinding.newBuilder()
+                .setName("req")
+                .setData(TypedData.newBuilder().setHttp(RpcHttp.newBuilder().setMethod("GET")))
+                .build();
+        inputDataList.add(parameterBinding);
+        InvocationRequest invocationRequest = InvocationRequest.newBuilder()
+                .setFunctionId(functionId.toString())
+                .setInvocationId(UUID.randomUUID().toString())
+                .addAllInputData(inputDataList)
+                .build();
+        String invocationResult = new InvocationRequestHandler(this.javaFunctionBroker).execute(invocationRequest, InvocationResponse.newBuilder());
         WorkerLogManager.getSystemLogger().info("finish warm up InvocationRequestHandler with result: " + invocationResult);
     }
 }

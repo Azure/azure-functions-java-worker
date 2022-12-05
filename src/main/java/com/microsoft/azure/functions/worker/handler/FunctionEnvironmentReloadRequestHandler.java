@@ -28,7 +28,7 @@ public class FunctionEnvironmentReloadRequestHandler
 		WorkerLogManager.getSystemLogger().log(Level.INFO, "FunctionEnvironmentReloadRequest received by the Java worker");
 		environmentVariables = request.getEnvironmentVariablesMap();
 		if (environmentVariables.isEmpty()) {
-			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null";
+			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is empty.";
 		}
 		setEnv(environmentVariables);
 		return "FunctionEnvironmentReloadRequest completed";
