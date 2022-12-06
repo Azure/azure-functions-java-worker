@@ -35,9 +35,10 @@ public class JavaFunctionBroker {
 	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
 	private String workerDirectory;
-	private final AtomicBoolean oneTimeLogicInitialized = new AtomicBoolean(false);
+	private boolean oneTimeLogicInitialized = false;
 	private volatile InvocationChainFactory invocationChainFactory;
 	private volatile FunctionInstanceInjector functionInstanceInjector;
+	private final Object lock = new Object();
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -63,9 +64,12 @@ public class JavaFunctionBroker {
 	}
 
 	private void initializeOneTimeLogics() {
-		if (!oneTimeLogicInitialized.getAndSet(true)) {
-			initializeInvocationChainFactory();
-			initializeFunctionInstanceInjector();
+		synchronized (lock) {
+			if (!oneTimeLogicInitialized) {
+				initializeInvocationChainFactory();
+				initializeFunctionInstanceInjector();
+				oneTimeLogicInitialized = true;
+			}
 		}
 	}
 
