@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -38,7 +36,7 @@ public class JavaFunctionBroker {
 	private volatile boolean oneTimeLogicInitialized = false;
 	private volatile InvocationChainFactory invocationChainFactory;
 	private volatile FunctionInstanceInjector functionInstanceInjector;
-	private final Object lock = new Object();
+	private final Object oneTimeLogicInitializationLock = new Object();
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -65,7 +63,7 @@ public class JavaFunctionBroker {
 
 	private void initializeOneTimeLogics() {
 		if (!oneTimeLogicInitialized) {
-			synchronized (lock) {
+			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
 					initializeInvocationChainFactory();
 					initializeFunctionInstanceInjector();
