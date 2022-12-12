@@ -6,7 +6,7 @@ pr: none
 trigger: none
 
 pool:
-  vmImage: 'windows-2019'
+  vmImage: 'windows-latest'
 
 steps:
 - task: NuGetToolInstaller@1
@@ -19,6 +19,11 @@ steps:
 - pwsh: |
       .\setup-tests-pipeline.ps1 -UseCoreToolsBuildFromIntegrationTests
   displayName: 'Setup test environment -- Install the Core Tools'
+
+- task: UseDotNet@2
+  displayName: 'Install .NET 6'
+  inputs:
+    version: 6.0.x
 
 - pwsh: |
       $currDir =  Get-Location
