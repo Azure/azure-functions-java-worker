@@ -139,15 +139,10 @@ jobs:
       - pwsh: |
           .\package-pipeline.ps1 -buildNumber $(buildNumber)
         displayName: 'Executing build script'
-      - pwsh: |
-          Invoke-WebRequest 'https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1' -OutFile 'dotnet-install.ps1'
-          ./dotnet-install.ps1 -InstallDir "$env:ProgramFiles/dotnet" -Version "6.0.100-rc.2.21505.57" -Channel 'release'
-        displayName: 'Install the .Net version used by the Core Tools for Windows'
-        condition: eq( variables['Agent.OS'], 'Windows_NT' )
-      - bash: |
-          curl -sSL https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.sh | bash /dev/stdin -v '6.0.100-rc.2.21505.57' -c 'release' --install-dir /usr/share/dotnet
-        displayName: 'Install the .Net version used by the Core Tools for Linux'
-        condition: eq( variables['Agent.OS'], 'Linux' )
+      - task: UseDotNet@2
+        displayName: 'Install .NET 6'
+        inputs:
+          version: 6.0.x
       - pwsh: | # Download JDK for later installation 
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
           $current = get-location | select -ExpandProperty Path
@@ -180,14 +175,12 @@ jobs:
       - pwsh: |
           $currDir =  Get-Location
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
-          ls $currDir/Azure.Functions.Cli
           func --version
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
         displayName: 'Setup Core Tools - Windows'
       - bash: |
           chmod +x ./Azure.Functions.Cli/func
           chmod +x ./Azure.Functions.Cli/gozip
-          ls ./Azure.Functions.Cli
           export PATH=$PATH:./Azure.Functions.Cli
           func --version
         condition: eq( variables['Agent.OS'], 'Linux' )
