@@ -184,14 +184,12 @@ jobs:
       - pwsh: |
           $currDir =  Get-Location
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
-          ls $currDir/Azure.Functions.Cli
           func --version
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
         displayName: 'Setup Core Tools - Windows'
       - bash: |
           chmod +x ./Azure.Functions.Cli/func
           chmod +x ./Azure.Functions.Cli/gozip
-          ls ./Azure.Functions.Cli
           export PATH=$PATH:./Azure.Functions.Cli
           func --version
         condition: eq( variables['Agent.OS'], 'Linux' )
