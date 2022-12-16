@@ -144,8 +144,9 @@ public class JavaFunctionBroker {
 				request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(),
 				traceContext, retryContext, methodEntry.left, dataStore, functionDefinition.getCandidate(),
-				functionDefinition.getContainingClass(), request.getInputDataList(), this.functionInstanceInjector);
-		dataStore.addExecutionContextSource(executionContextDataSource);
+				functionDefinition.getContainingClass(), this.functionInstanceInjector);
+//		dataStore.addExecutionContextSource(executionContextDataSource);
+		executionContextDataSource.replaceExecutionContext();
 		return executionContextDataSource;
 	}
 

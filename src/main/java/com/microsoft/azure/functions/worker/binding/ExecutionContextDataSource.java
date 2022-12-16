@@ -8,17 +8,16 @@ import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
+import com.microsoft.azure.functions.worker.broker.ParameterResolver;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 
 public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareContext {
+    public final static String EXECUTION_CONTEXT = "ExecutionContext";
     private final String invocationId;
     private final TraceContext traceContext;
     private final RetryContext retryContext;
@@ -43,7 +42,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     // currently the values are only Strings (resolved from grpc String values)
     // but planning to support other types in the future
-    private final Map<String, Object> parameterValues;
+//    private final Map<String, Object> parameterValues;
 
     // these are parameters provided by the middleware, which will override the host provided parameter values
     // currently the values are only Strings, but planning to support other types in the future
@@ -58,9 +57,11 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 
+    public final Map<String, Object> argumentsMap;
+
     public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
                                       String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
-                                      Class<?> containingClass, List<ParameterBinding> parameterBindings, FunctionInstanceInjector functionInstanceInjector){
+                                      Class<?> containingClass, FunctionInstanceInjector functionInstanceInjector){
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -71,8 +72,9 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.methodBindInfo = methodBindInfo;
         this.containingClass = containingClass;
         this.parameterDefinitions = getParameterDefinitions(methodBindInfo);
-        this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
+//        this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
         this.functionInstanceInjector = functionInstanceInjector;
+        this.argumentsMap = resolveArguments(dataStore, methodBindInfo);
         this.setValue(this);
     }
 
@@ -103,12 +105,20 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return this.functionInstanceInjector.getInstance(containingClass);
     }
 
+    public List<Object> getArguments() {
+        return Arrays.asList(argumentsMap.values().toArray());
+    }
+
     private static Map<String, Parameter> getParameterDefinitions(MethodBindInfo methodBindInfo){
         Map<String, Parameter> map = new HashMap<>();
         for (ParamBindInfo paramBindInfo : methodBindInfo.getParams()) {
             map.put(paramBindInfo.getName(), paramBindInfo.getParameter());
         }
         return map;
+    }
+
+    public static Map<String, Object> resolveArguments(BindingDataStore dataStore, MethodBindInfo methodBindInfo) {
+        return ParameterResolver.resolveArguments(dataStore, methodBindInfo);
     }
 
 
@@ -146,9 +156,14 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return map;
     }
 
+    public void replaceExecutionContext() {
+        this.argumentsMap.put(EXECUTION_CONTEXT, this);
+    }
+
     @Override
     public Object getParameterValue(String name) {
-        return this.parameterValues.get(name);
+//        return this.parameterValues.get(name);
+        return this.argumentsMap.get(name);
     }
 
     @Override

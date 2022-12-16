@@ -127,7 +127,7 @@ public final class BindingDataStore {
                 this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
             }
         }
-        return Optional.ofNullable(output).map(out -> new BindingData(out));
+        return Optional.ofNullable(output).map(BindingData::new);
     }
 
     public void setDataTargetValue(String name, Object value) {
