@@ -21,11 +21,6 @@ public class JavaMethodExecutorImpl implements JavaMethodExecutor {
     private JavaMethodExecutorImpl () {}
 
     public void execute(ExecutionContextDataSource executionContextDataSource) throws Exception {
-//        Object retValue = ParameterResolver.resolveArguments(executionContextDataSource)
-//                .orElseThrow(() -> new NoSuchMethodException("Cannot locate the method signature with the given input"))
-//                .invoke(executionContextDataSource::getFunctionInstance);
-//        executionContextDataSource.updateReturnValue(retValue);
-
         Method method = executionContextDataSource.getMethodBindInfo().getMethod();
         Object instance = Modifier.isStatic(method.getModifiers()) ? null : executionContextDataSource.getFunctionInstance();
         try {

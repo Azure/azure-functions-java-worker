@@ -10,5 +10,6 @@ public class ArgumentsResolverMiddleware implements Middleware {
     @Override
     public void invoke(MiddlewareContext context, MiddlewareChain chain) throws Exception {
         ParameterResolver.getInstance().resolveArguments((ExecutionContextDataSource) context);
+        chain.doNext(context);
     }
 }
