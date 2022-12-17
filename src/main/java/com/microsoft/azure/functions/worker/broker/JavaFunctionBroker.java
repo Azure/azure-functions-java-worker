@@ -16,6 +16,7 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.chain.ArgumentsResolverMiddleware;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
@@ -75,6 +76,7 @@ public class JavaFunctionBroker {
 
 	private void initializeInvocationChainFactory() {
 		ArrayList<Middleware> middlewares = new ArrayList<>();
+		middlewares.add(getArgumentsResolverMiddleware());
 		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
@@ -112,6 +114,11 @@ public class JavaFunctionBroker {
 		}
 	}
 
+	private ArgumentsResolverMiddleware getArgumentsResolverMiddleware() {
+		WorkerLogManager.getSystemLogger().info("Load first middleware: ArgumentsResolverMiddleware");
+		return new ArgumentsResolverMiddleware();
+	}
+
 	private FunctionExecutionMiddleware getFunctionExecutionMiddleWare() {
 		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(
 				JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader()));
@@ -145,8 +152,7 @@ public class JavaFunctionBroker {
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(),
 				traceContext, retryContext, methodEntry.left, dataStore, functionDefinition.getCandidate(),
 				functionDefinition.getContainingClass(), this.functionInstanceInjector);
-//		dataStore.addExecutionContextSource(executionContextDataSource);
-		executionContextDataSource.replaceExecutionContext();
+		dataStore.addExecutionContextSource(executionContextDataSource);
 		return executionContextDataSource;
 	}
 

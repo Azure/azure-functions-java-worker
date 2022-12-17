@@ -2,17 +2,13 @@ package com.microsoft.azure.functions.worker.binding;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
-import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
-import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
-import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
-import com.microsoft.azure.functions.worker.broker.ParameterResolver;
+import com.microsoft.azure.functions.worker.chain.ExecutionParameter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -26,29 +22,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final BindingDataStore dataStore;
     private final MethodBindInfo methodBindInfo;
     private final Class<?> containingClass;
-
-    /*
-    Key is the name defined on customer function parameters. For ex:
-    @HttpTrigger(
-            name = "req",
-            methods = {HttpMethod.GET, HttpMethod.POST},
-            authLevel = AuthorizationLevel.ANONYMOUS)
-    HttpRequestMessage<Optional<String>> request,
-    Here name will be the "req".
-
-    Value is java.lang.reflect.Parameter type
-     */
-    private final Map<String, Parameter> parameterDefinitions;
-
-    // currently the values are only Strings (resolved from grpc String values)
-    // but planning to support other types in the future
-//    private final Map<String, Object> parameterValues;
-
-    // these are parameters provided by the middleware, which will override the host provided parameter values
-    // currently the values are only Strings, but planning to support other types in the future
-    private final Map<String, Object> middlewareParameterValues = new HashMap<>();
     private Object returnValue;
-
     private final FunctionInstanceInjector functionInstanceInjector;
 
     //TODO: refactor class to have subclass dedicate to middleware to make logics clean
@@ -57,7 +31,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 
-    public final Map<String, Object> argumentsMap;
+    public final Map<String, ExecutionParameter> argumentsMap = new HashMap<>();
 
     public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
                                       String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
@@ -71,10 +45,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore = dataStore;
         this.methodBindInfo = methodBindInfo;
         this.containingClass = containingClass;
-        this.parameterDefinitions = getParameterDefinitions(methodBindInfo);
-//        this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
         this.functionInstanceInjector = functionInstanceInjector;
-        this.argumentsMap = resolveArguments(dataStore, methodBindInfo);
         this.setValue(this);
     }
 
@@ -109,24 +80,15 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return Arrays.asList(argumentsMap.values().toArray());
     }
 
-    private static Map<String, Parameter> getParameterDefinitions(MethodBindInfo methodBindInfo){
-        Map<String, Parameter> map = new HashMap<>();
-        for (ParamBindInfo paramBindInfo : methodBindInfo.getParams()) {
-            map.put(paramBindInfo.getName(), paramBindInfo.getParameter());
-        }
-        return map;
+    public void addExecutionParameter(String name, ExecutionParameter executionParameter){
+        this.argumentsMap.put(name, executionParameter);
     }
-
-    public static Map<String, Object> resolveArguments(BindingDataStore dataStore, MethodBindInfo methodBindInfo) {
-        return ParameterResolver.resolveArguments(dataStore, methodBindInfo);
-    }
-
 
     //TODO: leverage stream to do the check
     @Override
     public String getParameterName(String annotationSimpleClassName){
-        for (Map.Entry<String, Parameter> entry : this.parameterDefinitions.entrySet()){
-            if (hasAnnotation(entry.getValue(), annotationSimpleClassName)){
+        for (Map.Entry<String, ExecutionParameter> entry : this.argumentsMap.entrySet()){
+            if (hasAnnotation(entry.getValue().getParameter(), annotationSimpleClassName)){
                 return entry.getKey();
             }
         }
@@ -143,32 +105,14 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return false;
     }
 
-    // TODO: Refactor the code in V5 to make resolve arguments logics before middleware invocation.
-    // for now only supporting String parameter values mapped to String values
-    private static Map<String, Object> resolveParameterValuesForMiddleware(List<ParameterBinding> parameterBindings){
-        Map<String, Object> map = new HashMap<>();
-        for (ParameterBinding parameterBinding : parameterBindings) {
-            TypedData typedData = parameterBinding.getData();
-            if (typedData.getDataCase() == TypedData.DataCase.STRING){
-                map.put(parameterBinding.getName(), typedData.getString());
-            }
-        }
-        return map;
-    }
-
-    public void replaceExecutionContext() {
-        this.argumentsMap.put(EXECUTION_CONTEXT, this);
-    }
-
     @Override
     public Object getParameterValue(String name) {
-//        return this.parameterValues.get(name);
-        return this.argumentsMap.get(name);
+        return this.argumentsMap.get(name).getBindingData();
     }
 
     @Override
     public void updateParameterValue(String name, Object value) {
-        this.middlewareParameterValues.put(name, value);
+        this.argumentsMap.get(name).setBindingData(value);
     }
 
     @Override
@@ -181,14 +125,5 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.returnValue = returnValue;
         // set the return value that will be sent back to host
         this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.returnValue);
-    }
-
-    public Optional<BindingData> getBindingData(String paramName, Type paramType) {
-        Object inputValue = this.middlewareParameterValues.get(paramName);
-        if (inputValue != null) {
-            return Optional.of(new BindingData(inputValue));
-        }else{
-            return dataStore.getDataByName(paramName, paramType);
-        }
     }
 }
