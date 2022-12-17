@@ -77,8 +77,8 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return this.functionInstanceInjector.getInstance(containingClass);
     }
 
-    public List<Object> getArguments() {
-        return this.argumentsMap.values().stream().map(ExecutionParameter::getBindingData).collect(Collectors.toList());
+    public Object[] getArguments() {
+        return this.argumentsMap.values().stream().map(ExecutionParameter::getBindingData).toArray();
     }
 
     public void addExecutionParameter(String name, ExecutionParameter executionParameter){
