@@ -29,6 +29,7 @@ public class ParameterResolver {
     public Map<String, Object> resolveArguments(ExecutionContextDataSource executionContextDataSource){
         Map<String, Object> argumentsLinedHashMap= new LinkedHashMap<>();
         UUID uuid = UUID.randomUUID();
+        executionContextDataSource.getDataStore().promoteDataTargets(uuid);
         MethodBindInfo methodBindInfo = executionContextDataSource.getMethodBindInfo();
         BindingDataStore dataStore = executionContextDataSource.getDataStore();
         for (ParamBindInfo param : methodBindInfo.getParams()) {
