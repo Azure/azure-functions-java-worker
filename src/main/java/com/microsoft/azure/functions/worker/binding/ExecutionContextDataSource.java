@@ -11,6 +11,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareContext {
     public final static String EXECUTION_CONTEXT = "ExecutionContext";
@@ -31,7 +32,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         EXECONTEXT_DATA_OPERATIONS.addGenericOperation(ExecutionContext.class, DataOperations::generalAssignment);
     }
 
-    public final Map<String, ExecutionParameter> argumentsMap = new HashMap<>();
+    public final Map<String, ExecutionParameter> argumentsMap = new LinkedHashMap<>();
 
     public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
                                       String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
@@ -77,7 +78,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     public List<Object> getArguments() {
-        return Arrays.asList(argumentsMap.values().toArray());
+        return this.argumentsMap.values().stream().map(ExecutionParameter::getBindingData).collect(Collectors.toList());
     }
 
     public void addExecutionParameter(String name, ExecutionParameter executionParameter){
