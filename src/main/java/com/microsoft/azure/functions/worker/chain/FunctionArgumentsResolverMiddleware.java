@@ -1,12 +1,12 @@
 package com.microsoft.azure.functions.worker.chain;
 
-import com.microsoft.azure.functions.middleware.FunctionWorkerChain;
-import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
-import com.microsoft.azure.functions.middleware.MiddlewareExecutionContext;
+import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParameterResovler;
 
-public class FunctionArgumentsResolverMiddleware implements FunctionWorkerMiddleware {
+public class FunctionArgumentsResolverMiddleware implements Middleware {
     private final ParameterResovler parameterResovler;
 
     public FunctionArgumentsResolverMiddleware(ParameterResovler parameterResovler) {
@@ -14,7 +14,7 @@ public class FunctionArgumentsResolverMiddleware implements FunctionWorkerMiddle
     }
 
     @Override
-    public void invoke(MiddlewareExecutionContext context, FunctionWorkerChain next) throws Exception {
+    public void invoke(MiddlewareContext context, MiddlewareChain chain) throws Exception {
         this.parameterResovler.resolve((ExecutionContextDataSource) context);
     }
 }

@@ -72,6 +72,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.microsoft.azure.functions</groupId>
+			<artifactId>azure-functions-java-spi</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft.azure.functions</groupId>
 			<artifactId>azure-functions-java-library</artifactId>
 			<version>${azure.functions.java.library.version}</version>
 			<scope>test</scope>

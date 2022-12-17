@@ -7,7 +7,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.microsoft.azure.functions.middleware.FunctionWorkerMiddleware;
+import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
@@ -17,7 +17,6 @@ import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.chain.FunctionArgumentsResolverMiddleware;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
-import com.microsoft.azure.functions.worker.chain.InvocationChain;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
@@ -55,12 +54,12 @@ public class JavaFunctionBroker {
 		if (loadMiddleware) {
 			synchronized (JavaFunctionBroker.class) {
 				if (loadMiddleware) {
-					ArrayList<FunctionWorkerMiddleware> middlewares = new ArrayList<>();
+					ArrayList<Middleware> middlewares = new ArrayList<>();
 					loadFunctionResolverMiddleWare(middlewares);
 					try {
 						Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
-						ServiceLoader<FunctionWorkerMiddleware> middlewareServiceLoader = ServiceLoader.load(FunctionWorkerMiddleware.class);
-						for (FunctionWorkerMiddleware middleware : middlewareServiceLoader) {
+						ServiceLoader<Middleware> middlewareServiceLoader = ServiceLoader.load(Middleware.class);
+						for (Middleware middleware : middlewareServiceLoader) {
 							middlewares.add(middleware);
 						}
 						//TODO: why exception is not caught when no implementation is there.
@@ -77,12 +76,12 @@ public class JavaFunctionBroker {
 		}
 	}
 
-	private void loadFunctionResolverMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
+	private void loadFunctionResolverMiddleWare(ArrayList<Middleware> middlewares) {
 		FunctionArgumentsResolverMiddleware functionArgumentsResolverMiddleware = new FunctionArgumentsResolverMiddleware(new ParameterResovler());
 		middlewares.add(functionArgumentsResolverMiddleware);
 	}
 
-	private void loadFunctionExecutionMiddleWare(ArrayList<FunctionWorkerMiddleware> middlewares) {
+	private void loadFunctionExecutionMiddleWare(ArrayList<Middleware> middlewares) {
 		FunctionExecutionMiddleware functionExecutionMiddleware =
 				new FunctionExecutionMiddleware(new FunctionMethodExecutorImpl(this.classLoaderProvider.createClassLoader()));
 		middlewares.add(functionExecutionMiddleware);

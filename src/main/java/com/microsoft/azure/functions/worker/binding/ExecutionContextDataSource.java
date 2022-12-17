@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker.binding;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.RetryContext;
 import com.microsoft.azure.functions.TraceContext;
-import com.microsoft.azure.functions.middleware.MiddlewareExecutionContext;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.model.ExecutionParameter;
 import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
@@ -13,7 +13,7 @@ import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.logging.Logger;
 
-public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareExecutionContext {
+public final class ExecutionContextDataSource extends DataSource<ExecutionContext> implements MiddlewareContext {
 
     private final String invocationId;
     private final TraceContext traceContext;
@@ -69,7 +69,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return methodBindInfo;
     }
 
-    @Override
     public Class<?> getContainingClass() {
         return containingClass;
     }
@@ -89,7 +88,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return arguments;
     }
 
-    @Override
     public Map<String, Parameter> getParameterMap(){
         Map<String, Parameter> map = new HashMap<>();
         for (Map.Entry<String, ExecutionParameter> entry : this.argumentsMap.entrySet()){
@@ -98,7 +96,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         return map;
     }
 
-    @Override
     public Object getParameterPayloadByName(String name){
         return this.argumentsMap.get(name).getPayload();
     }
@@ -112,11 +109,30 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     }
 
     @Override
+    public String getParameterName(String annotationSimpleClassName) {
+        return null;
+    }
+
+    @Override
+    public Object getParameterValue(String name) {
+        return null;
+    }
+
+    @Override
+    public void updateParameterValue(String name, Object value) {
+
+    }
+
+    @Override
     public Object getReturnValue(){
         return this.returnValue;
     }
 
     @Override
+    public void updateReturnValue(Object returnValue) {
+
+    }
+
     public void setMiddlewareOutput(Object value) {
         this.middlewareOutput = value;
     }
@@ -126,7 +142,6 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.dataStore.setDataTargetValue(BindingDataStore.RETURN_NAME, this.middlewareOutput);
     }
 
-    @Override
     public void setFunctionInstance(Object functionInstance) {
         this.functionInstance = functionInstance;
     }
