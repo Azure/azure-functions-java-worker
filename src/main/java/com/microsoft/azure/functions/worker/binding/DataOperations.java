@@ -87,7 +87,7 @@ public class DataOperations<T, R> {
 			CheckedBiFunction<T, Type, R> matchingOperation = this.operations
 					.get(TypeUtils.getRawType(targetType, null));
 			if (matchingOperation != null) {
-				resultValue = Optional.ofNullable(matchingOperation).map(op -> op.tryApply(sourceValue, targetType));
+				resultValue = Optional.of(matchingOperation).map(op -> op.tryApply(sourceValue, targetType));
 			} else {		
 			  String sourceData;
 			  Class<?> sourceValueClass = sourceValue.getClass();
@@ -161,8 +161,19 @@ public class DataOperations<T, R> {
 				result = RpcJsonDataSource.convertToStringArrayOrList(sourceValue, targetType);
 			}
 			else {
-				throw ex;
+				// Durable Function middleware need to raw binding input, so instead of throwing exception here,
+				// just return the rwo binding input here.
+				// The targetType is com.microsoft.durabletask.TaskOrchestrationContext, which is not in the operation maps,
+				// cannot find a matching operation for this type, so eventually it will come to this line.
+
+				// Potential break change: customer function will not get JsonSyntaxException in some case,
+				// instead the exception will be thrown out when invoke their functions with a InvocationTargetException
+				// saying some arguments are not the correct argument to invoke the function.
+
+				result = sourceValue;
 			}
+		} catch (Exception ex) {
+			result = sourceValue;
 		}
 		return (Optional<R>) Optional.ofNullable(result);
 	}

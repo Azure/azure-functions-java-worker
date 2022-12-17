@@ -7,11 +7,7 @@ public final class RpcStringDataSource extends DataSource<String> {
 
     private static Object convertToJson(boolean isStrict, String s, Type target) throws ClassCastException {
         DataSource<?> jsonSource = new RpcJsonDataSource(null, s);
-        if (isStrict) {
-            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getNullSafeValue();
-        } else {
-            return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getNullSafeValue();
-        }
+        return jsonSource.computeByType(target).orElseThrow(ClassCastException::new).getNullSafeValue();
     }
 
     static final DataOperations<String, Object> STRING_DATA_OPERATIONS = new DataOperations<>();

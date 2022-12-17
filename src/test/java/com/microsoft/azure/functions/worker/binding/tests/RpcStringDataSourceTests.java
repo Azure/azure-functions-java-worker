@@ -142,12 +142,13 @@ public class RpcStringDataSourceTests {
 		assertEquals(convertedData.get(1).name, "joe");
 	}
 
-	@Test(expected = JsonSyntaxException.class)
+	@Test
 	public void rpcStringStringDataSource_To_POJO_Throws() {
 		String sourceKey = "testString";
 		String testString = "item1";
 		RpcJsonDataSource stringData = new RpcJsonDataSource(sourceKey, testString);
-		stringData.computeByName(sourceKey, TestPOJO.class);
+		Optional<BindingData> bindingData = stringData.computeByName(sourceKey, TestPOJO.class);
+		assertEquals(bindingData.get().getValue(), testString);
 	}
 
 	private static Type getParameterType(String functionName) {
