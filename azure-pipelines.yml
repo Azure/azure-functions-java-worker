@@ -131,7 +131,7 @@ jobs:
         displayName: 'Install .NET 6'
         inputs:
           version: 6.0.x
-      - pwsh: | # Download JDK for later installation
+      - pwsh: | # Download JDK for later installation 
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
           $current = get-location | select -ExpandProperty Path
           Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
