@@ -127,6 +127,10 @@ jobs:
       - pwsh: |
           .\package-pipeline.ps1 -buildNumber $(buildNumber)
         displayName: 'Executing build script'
+      - task: UseDotNet@2
+        displayName: 'Install .NET 3'
+        inputs:
+          version: 3.1.x
       - pwsh: | # Download JDK for later installation
           Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
           $current = get-location | select -ExpandProperty Path
@@ -159,14 +163,12 @@ jobs:
       - pwsh: |
           $currDir =  Get-Location
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
-          ls $currDir/Azure.Functions.Cli
           func --version
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
         displayName: 'Setup Core Tools - Windows'
       - bash: |
           chmod +x ./Azure.Functions.Cli/func
           chmod +x ./Azure.Functions.Cli/gozip
-          ls ./Azure.Functions.Cli
           export PATH=$PATH:./Azure.Functions.Cli
           func --version
         condition: eq( variables['Agent.OS'], 'Linux' )

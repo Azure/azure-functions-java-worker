@@ -6,7 +6,7 @@ pr: none
 trigger: none
 
 pool:
-  vmImage: 'windows-2019'
+  vmImage: 'windows-latest'
 
 steps:
 - task: NuGetToolInstaller@1
@@ -20,10 +20,14 @@ steps:
       .\setup-tests-pipeline.ps1 -UseCoreToolsBuildFromIntegrationTests
   displayName: 'Setup test environment -- Install the Core Tools'
 
+- task: UseDotNet@2
+  displayName: 'Install .NET 3'
+  inputs:
+    version: 3.1.x
+
 - pwsh: |
       $currDir =  Get-Location
       $Env:Path = $Env:Path+";$currDir\Azure.Functions.Cli"
-      ls $currDir\Azure.Functions.Cli
       func --version
       cd ./endtoendtests
       mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
