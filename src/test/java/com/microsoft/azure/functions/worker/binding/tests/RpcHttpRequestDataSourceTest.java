@@ -1,19 +1,21 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
-import static org.junit.Assert.assertEquals;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import org.junit.Test;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpStatus;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.binding.*;
+import org.junit.jupiter.api.Test;
 
-public class RpcHttpRequestDataSourceTests {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+
+public class RpcHttpRequestDataSourceTest {
 
   public void HttpRequestStringBody(HttpRequestMessage<String> request) {
   }
@@ -92,8 +94,8 @@ public class RpcHttpRequestDataSourceTests {
   }
 
   private Method getFunctionMethod(String methodName) {
-    RpcHttpRequestDataSourceTests httpDataSourceTests = new RpcHttpRequestDataSourceTests();
-    Class<? extends RpcHttpRequestDataSourceTests> httpDataSourceTestsClass = httpDataSourceTests
+    RpcHttpRequestDataSourceTest httpDataSourceTests = new RpcHttpRequestDataSourceTest();
+    Class<? extends RpcHttpRequestDataSourceTest> httpDataSourceTestsClass = httpDataSourceTests
         .getClass();
     Method[] methods = httpDataSourceTestsClass.getMethods();
     Method functionMethod = null;

@@ -1,16 +1,16 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
-import static org.junit.Assert.assertEquals;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
 
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcIntegerDataSource;
+import org.junit.jupiter.api.Test;
 
-public class RpcIntegerDataSourceTests {
+public class RpcIntegerDataSourceTest {
 
 	@Test
 	public void rpcIntegerDataSource_To_Integer() {

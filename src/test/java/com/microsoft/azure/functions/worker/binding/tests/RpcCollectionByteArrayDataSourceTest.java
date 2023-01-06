@@ -8,16 +8,14 @@ import com.microsoft.azure.functions.rpc.messages.CollectionBytes.Builder;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RpcCollectionByteArrayDataSourceTest {
     @Test

@@ -25,7 +25,6 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
 
     @Override
     String execute(InvocationRequest request, InvocationResponse.Builder response) throws Exception {
-        WorkerLogManager.getSystemLogger().log(Level.INFO, "Java version - " + getJavaVersion());
         WorkerLogManager.getSystemLogger().log(Level.INFO, "InvocationRequest received by the Java worker");
         final String functionId = request.getFunctionId();
         final String invocationId = request.getInvocationId();

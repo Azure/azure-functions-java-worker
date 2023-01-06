@@ -51,12 +51,6 @@ public class DefaultClassLoaderProvider implements ClassLoaderProvider {
     addUrlToSystemClassLoader(url);
   }
 
-  public static boolean isUrlPointingToAFile(URL url) throws UnsupportedEncodingException {
-    String decodedPath = URLDecoder.decode(url.getPath(), "UTF-8");
-    File file = new File(decodedPath);
-    return file.exists();
-  }
-
   private void addUrlToSystemClassLoader(URL url) throws IOException {
     URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
     Class<?> sysclass = URLClassLoader.class;

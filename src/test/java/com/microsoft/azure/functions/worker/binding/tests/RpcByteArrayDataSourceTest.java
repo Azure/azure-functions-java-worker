@@ -1,18 +1,18 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
-import static org.junit.Assert.assertEquals;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Test;
 
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcByteArrayDataSource;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class RpcByteArrayDataSourceTests {
+public class RpcByteArrayDataSourceTest {
 
   @Test
   public void rpcByteArrayDataSource_To_byteArray() {
