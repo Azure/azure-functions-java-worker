@@ -27,7 +27,7 @@ public class FunctionEnvironmentReloadRequestHandlerTest {
 		envHandler.setEnv(newEnvVariables);
 		testSetting = System.getenv("testSetting");
 		assertNotNull(testSetting);
-		assertEquals(testSetting, "testSettingValue");		
+		assertEquals( "testSettingValue", testSetting);
 	}
 
 	@Test

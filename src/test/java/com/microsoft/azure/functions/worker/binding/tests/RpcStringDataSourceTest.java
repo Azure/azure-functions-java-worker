@@ -77,9 +77,9 @@ public class RpcStringDataSourceTest {
         TestPOJO[] convertedData = (TestPOJO[]) actualArg.getValue();
         assertTrue(convertedData.length == 2);
         assertTrue(convertedData[0].id == 7500);
-        assertEquals(convertedData[0].name, "joe");
+        assertEquals("joe", convertedData[0].name);
         assertTrue(convertedData[1].id == 7501);
-        assertEquals(convertedData[1].name, "joe");
+        assertEquals("joe", convertedData[1].name);
     }
 
     @Test
@@ -120,7 +120,7 @@ public class RpcStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         TestPOJO convertedData = (TestPOJO) actualArg.getValue();
         assertTrue(convertedData.id == 7500);
-        assertEquals(convertedData.name, "joe");
+        assertEquals("joe", convertedData.name);
     }
 
     @Test
@@ -137,9 +137,9 @@ public class RpcStringDataSourceTest {
         List<TestPOJO> convertedData = (List<TestPOJO>) actualArg.getValue();
         assertTrue(convertedData.size() == 2);
         assertTrue(convertedData.get(0).id == 7500);
-        assertEquals(convertedData.get(0).name, "joe");
+        assertEquals("joe", convertedData.get(0).name);
         assertTrue(convertedData.get(1).id == 7501);
-        assertEquals(convertedData.get(1).name, "joe");
+        assertEquals("joe", convertedData.get(1).name);
     }
 
     @Test

@@ -34,7 +34,7 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         String[] actualStringArray = (String[]) actualArg.getValue();
         String actualString = actualStringArray[0];
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -100,10 +100,6 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
-
-
-
-
 }

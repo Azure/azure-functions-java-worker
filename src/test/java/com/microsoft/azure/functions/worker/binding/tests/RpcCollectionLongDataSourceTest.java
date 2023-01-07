@@ -34,7 +34,7 @@ public class  RpcCollectionLongDataSourceTest{
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         Long[] actualLongArray = (Long[]) actualArg.getValue();
         Long actualLong = actualLongArray[0];
-        assertEquals(actualLong, expectedLong);
+        assertEquals(expectedLong, actualLong);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class  RpcCollectionLongDataSourceTest{
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         long[] actualLongArray = (long[]) actualArg.getValue();
         Long actualLong = actualLongArray[0];
-        assertEquals(actualLong, expectedLong);
+        assertEquals(expectedLong, actualLong);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class  RpcCollectionLongDataSourceTest{
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Long> actualLongList  = (List) actualArg.getValue();
         Long actualLong = actualLongList.get(0);
-        assertEquals(actualLong, expectedLong);
+        assertEquals(expectedLong, actualLong);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class  RpcCollectionLongDataSourceTest{
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Long> actualLongList  = (List) actualArg.getValue();
         Long actualLong = actualLongList.get(0);
-        assertEquals(actualLong, expectedLong);
+        assertEquals(expectedLong, actualLong);
     }
 
     @Test
@@ -124,6 +124,6 @@ public class  RpcCollectionLongDataSourceTest{
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Long> actualLongList  = (List) actualArg.getValue();
         Long actualLong = actualLongList.get(0);
-        assertEquals(actualLong, expectedLong);
+        assertEquals(expectedLong, actualLong);
     }
 }

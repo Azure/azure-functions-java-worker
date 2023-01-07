@@ -34,7 +34,7 @@ public class RpcCollectionDoubleDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         Double[] actualDoublegArray = (Double[]) actualArg.getValue();
         Double actualDouble = actualDoublegArray[0];
-        assertEquals(actualDouble, expectedDouble);
+        assertEquals(expectedDouble, actualDouble);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class RpcCollectionDoubleDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         double[] actualDoubleArray = (double[]) actualArg.getValue();
         double actualDouble = actualDoubleArray[0];
-        assertEquals("" + actualDouble, "" + expectedDouble);
+        assertEquals(expectedDouble, actualDouble);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class RpcCollectionDoubleDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Double> actualDoubleList  = (List) actualArg.getValue();
         Double actualLong = actualDoubleList.get(0);
-        assertEquals(actualLong, expectedDouble);
+        assertEquals(expectedDouble, actualLong);
     }
 
     @Test
@@ -100,7 +100,7 @@ public class RpcCollectionDoubleDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Double> actualDoubleList  = (List) actualArg.getValue();
         Double actualLong = actualDoubleList.get(0);
-        assertEquals(actualLong, expectedDouble);
+        assertEquals(expectedDouble, actualLong);
     }
 
     @Test
@@ -122,7 +122,7 @@ public class RpcCollectionDoubleDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Double> actualDoubleList  = (List) actualArg.getValue();
         Double actualLong = actualDoubleList.get(0);
-        assertEquals(actualLong, expectedDouble);
+        assertEquals(expectedDouble, actualLong);
     }
 }
 

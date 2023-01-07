@@ -26,7 +26,7 @@ public class RpcByteArrayDataSourceTest {
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     byte[] actualBytes = (byte[]) actualArg.getValue();
     String actualString = new String(actualBytes);
-    assertEquals(actualString, expectedString);
+    assertEquals(expectedString, actualString);
   }
 
   @Test
@@ -41,7 +41,7 @@ public class RpcByteArrayDataSourceTest {
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     Byte[] actualBytes = (Byte[]) actualArg.getValue();
     String actualString = new String(ArrayUtils.toPrimitive(actualBytes));
-    assertEquals(actualString, expectedString);
+    assertEquals(expectedString, actualString);
   }
 
   @Test
@@ -58,7 +58,7 @@ public class RpcByteArrayDataSourceTest {
         TestBlobData.class);
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     TestBlobData actualBlobData = (TestBlobData) actualArg.getValue();
-    assertEquals(actualBlobData.blobText, testBlobData.blobText);
+    assertEquals(testBlobData.blobText, actualBlobData.blobText);
   }
   
   @Test
@@ -73,7 +73,7 @@ public class RpcByteArrayDataSourceTest {
         String.class);
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     String actualBlobData = (String) actualArg.getValue();
-    assertEquals(actualBlobData, expectedString);
+    assertEquals(expectedString, actualBlobData);
   }
 
   public static class TestBlobData {

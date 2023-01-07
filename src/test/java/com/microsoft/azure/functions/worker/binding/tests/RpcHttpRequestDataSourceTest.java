@@ -54,7 +54,7 @@ public class RpcHttpRequestDataSourceTest {
         parameters[0].getParameterizedType());
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
-    assertEquals(requestMsg.getBody().toString(), "testStringBody");
+    assertEquals( "testStringBody", requestMsg.getBody().toString());
   }
 
   @Test
@@ -90,7 +90,7 @@ public class RpcHttpRequestDataSourceTest {
     HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
     byte[] actualBytes = (byte[])requestMsg.getBody();
     String actualString = new String (actualBytes);
-    assertEquals(actualString, expectedString);    
+    assertEquals(expectedString, actualString);
   }
 
   private Method getFunctionMethod(String methodName) {
