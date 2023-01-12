@@ -171,13 +171,34 @@ With this you have completed the setup for Azure Functions Host and the Azure Fu
 
   - Restart host debugger
 
+#### App settings
+You can run your local function app in two ways:
+1. By running the host code and worker code
+2. By running core tools
+
+If you are running the host code and worker code to debug your function app, then you need to add the app settings as part of the host's environment variables (in launch.json).
+
+If you are running core tools to debug your function app, then you need to add the app settings in your function app's local.settings.json file.
+
 ### Common Issues
 #### Extension Bundle
-If you get any exceptions from the Host that are similar to this "The binding type(s) were not found in the configured extension bundle. Please ensure the type is correct and the correct version of extension bundle is configured", then you need to follow the steps here:
+If you are running the host code and worker code to debug your function app, the extension bundle does not need to be enabled if your local function app only uses the HTTP trigger. However, it does need to be enabled when using other types of triggers and output bindings (e.g. EventHub). Otherwise, you will get exceptions like "The binding type(s) were not found in the configured extension bundle. Please ensure the type is correct and the correct version of extension bundle is configured". In order to enable the extension bundle, you need to follow the steps here:
 https://github.com/Azure/azure-functions-host/wiki#extension-bundle-configuration
+The `downloadPath` attribute can be any path in your local machine and is used to indicate what directory you would like some generated files to be saved.
 
-#### App settings
-If you get any exceptions from the Host indicating that an app setting is not defined even though it has been defined in Azure for the function app, as well as in the local.settings.json file, this is because you need to add the app setting as one of the Host's environment variables (in launch.json)
+This is a sample host.json file configuration in the function app:
+```json
+    {
+      "version": "2.0",
+      "extensionBundle": {
+         "id": "Microsoft.Azure.Functions.ExtensionBundle",
+         "version": "[3.*, 4.0.0)",
+         "downloadPath": "C:/Users/<user>/Repos"
+        }
+    }
+```
+
+If you are running core tools to debug your function app, you do not need to enable the extension bundle.
 
 ### Running unit tests
 
