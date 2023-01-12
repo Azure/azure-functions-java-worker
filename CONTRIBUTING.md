@@ -171,6 +171,14 @@ With this you have completed the setup for Azure Functions Host and the Azure Fu
 
   - Restart host debugger
 
+### Common Issues
+#### Extension Bundle
+If you get any exceptions from the Host that are similar to this "The binding type(s) were not found in the configured extension bundle. Please ensure the type is correct and the correct version of extension bundle is configured", then you need to follow the steps here:
+https://github.com/Azure/azure-functions-host/wiki#extension-bundle-configuration
+
+#### App settings
+If you get any exceptions from the Host indicating that an app setting is not defined even though it has been defined in Azure for the function app, as well as in the local.settings.json file, this is because you need to add the app setting as one of the Host's environment variables (in launch.json)
+
 ### Running unit tests
 
 1. Add your unit tests under ./src/test folder
