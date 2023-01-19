@@ -7,8 +7,6 @@ import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 
-import static com.microsoft.azure.functions.worker.Util.getJavaVersion;
-
 public class InvocationRequestHandler extends MessageHandler<InvocationRequest, InvocationResponse.Builder> {
     public InvocationRequestHandler(JavaFunctionBroker broker) {
         super(StreamingMessage::getInvocationRequest,
