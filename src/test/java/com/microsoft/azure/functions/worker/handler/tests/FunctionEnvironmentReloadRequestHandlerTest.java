@@ -1,19 +1,16 @@
 package com.microsoft.azure.functions.worker.handler.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.handler.FunctionEnvironmentReloadRequestHandler;
 import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
+import org.junit.jupiter.api.Test;
 
-public class FunctionEnvironmentReloadRequestHandlerTests {
+public class FunctionEnvironmentReloadRequestHandlerTest {
 
 	@Test
 	public void SetEnv_Succeeds() throws Exception {
@@ -30,7 +27,7 @@ public class FunctionEnvironmentReloadRequestHandlerTests {
 		envHandler.setEnv(newEnvVariables);
 		testSetting = System.getenv("testSetting");
 		assertNotNull(testSetting);
-		assertEquals(testSetting, "testSettingValue");		
+		assertEquals( "testSettingValue", testSetting);
 	}
 
 	@Test

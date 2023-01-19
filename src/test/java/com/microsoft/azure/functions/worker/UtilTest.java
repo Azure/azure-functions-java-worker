@@ -1,11 +1,12 @@
 package com.microsoft.azure.functions.worker;
 
-import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
 
-public class UtilTests {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class UtilTest {
 
     @Test
     public void isTrueNull() {

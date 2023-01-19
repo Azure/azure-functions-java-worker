@@ -5,14 +5,14 @@ import com.microsoft.azure.functions.rpc.messages.CollectionString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcCollectionStringDataSource;
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RpcCollectionStringDataSourceTest {
     @Test
@@ -34,7 +34,7 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         String[] actualStringArray = (String[]) actualArg.getValue();
         String actualString = actualStringArray[0];
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -100,10 +100,6 @@ public class RpcCollectionStringDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<String> actualStringList  = (List) actualArg.getValue();
         String actualString = actualStringList.get(0);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
-
-
-
-
 }

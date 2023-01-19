@@ -8,16 +8,14 @@ import com.microsoft.azure.functions.rpc.messages.CollectionBytes.Builder;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RpcCollectionByteArrayDataSourceTest {
     @Test
@@ -41,7 +39,7 @@ public class RpcCollectionByteArrayDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         byte[][] actualBytes = (byte[][]) actualArg.getValue();
         String actualString = new String(actualBytes[0]);
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -65,7 +63,7 @@ public class RpcCollectionByteArrayDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         Byte[][] actualBytes = (Byte[][]) actualArg.getValue();
         String actualString = new String(ArrayUtils.toPrimitive(actualBytes[0]));
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -89,7 +87,7 @@ public class RpcCollectionByteArrayDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<byte[]> actualBytes = (List) actualArg.getValue();
         String actualString = new String(actualBytes.get(0));
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -113,7 +111,7 @@ public class RpcCollectionByteArrayDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<byte[]> actualBytes = (List) actualArg.getValue();
         String actualString = new String(actualBytes.get(0));
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -137,7 +135,7 @@ public class RpcCollectionByteArrayDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<Byte[]> actualBytes = (List) actualArg.getValue();
         String actualString = new String(ArrayUtils.toPrimitive(actualBytes.get(0)));
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
     @Test
@@ -161,7 +159,7 @@ public class RpcCollectionByteArrayDataSourceTest {
         BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
         List<byte[]> actualBytes = (List) actualArg.getValue();
         String actualString = new String(actualBytes.get(0));
-        assertEquals(actualString, expectedString);
+        assertEquals(expectedString, actualString);
     }
 
 

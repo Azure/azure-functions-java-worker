@@ -1,19 +1,21 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
-import static org.junit.Assert.assertEquals;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import org.junit.Test;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpStatus;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.binding.*;
+import org.junit.jupiter.api.Test;
 
-public class RpcHttpRequestDataSourceTests {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+
+public class RpcHttpRequestDataSourceTest {
 
   public void HttpRequestStringBody(HttpRequestMessage<String> request) {
   }
@@ -52,7 +54,7 @@ public class RpcHttpRequestDataSourceTests {
         parameters[0].getParameterizedType());
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
-    assertEquals(requestMsg.getBody().toString(), "testStringBody");
+    assertEquals( "testStringBody", requestMsg.getBody().toString());
   }
 
   @Test
@@ -88,12 +90,12 @@ public class RpcHttpRequestDataSourceTests {
     HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
     byte[] actualBytes = (byte[])requestMsg.getBody();
     String actualString = new String (actualBytes);
-    assertEquals(actualString, expectedString);    
+    assertEquals(expectedString, actualString);
   }
 
   private Method getFunctionMethod(String methodName) {
-    RpcHttpRequestDataSourceTests httpDataSourceTests = new RpcHttpRequestDataSourceTests();
-    Class<? extends RpcHttpRequestDataSourceTests> httpDataSourceTestsClass = httpDataSourceTests
+    RpcHttpRequestDataSourceTest httpDataSourceTests = new RpcHttpRequestDataSourceTest();
+    Class<? extends RpcHttpRequestDataSourceTest> httpDataSourceTestsClass = httpDataSourceTests
         .getClass();
     Method[] methods = httpDataSourceTestsClass.getMethods();
     Method functionMethod = null;
