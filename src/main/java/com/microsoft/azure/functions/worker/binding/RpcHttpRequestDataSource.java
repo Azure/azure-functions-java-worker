@@ -6,7 +6,9 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.microsoft.azure.functions.rpc.messages.NullableTypes;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import com.microsoft.azure.functions.HttpMethod;
@@ -22,8 +24,10 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 		super(name, null, HTTP_DATA_OPERATIONS);
 		this.httpPayload = value;
 		this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.httpPayload.getBody());
-		this.fields = Arrays.asList(this.httpPayload.getHeadersMap(), this.httpPayload.getQueryMap(),
-				this.httpPayload.getParamsMap());
+		this.fields = Arrays.asList(
+				convertFromNullableMap(this.httpPayload.getNullableHeadersMap()),
+				convertFromNullableMap(this.httpPayload.getNullableQueryMap()),
+				convertFromNullableMap(this.httpPayload.getNullableParamsMap()));
 		this.setValue(this);
 	}
 
@@ -45,12 +49,12 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 
 		@Override
 		public Map<String, String> getHeaders() {
-			return this.parentDataSource.httpPayload.getHeadersMap();
+			return convertFromNullableMap(this.parentDataSource.httpPayload.getNullableHeadersMap());
 		}
 
 		@Override
 		public Map<String, String> getQueryParameters() {
-			return this.parentDataSource.httpPayload.getQueryMap();
+			return convertFromNullableMap(this.parentDataSource.httpPayload.getNullableQueryMap());
 		}
 
 		@Override
@@ -85,5 +89,11 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 			BindingData bodyData = v.bodyDataSource.computeByType(actualType).orElseThrow(ClassCastException::new);
 			return new HttpRequestMessageImpl(v, bodyData.getValue());
 		});
+	}
+
+	private static Map<String, String> convertFromNullableMap(Map<String, NullableTypes.NullableString> nullableMap) {
+		return nullableMap.entrySet().stream().collect(
+			Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue())
+		);
 	}
 }
