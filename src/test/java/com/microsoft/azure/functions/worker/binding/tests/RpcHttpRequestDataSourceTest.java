@@ -12,6 +12,9 @@ import com.microsoft.azure.functions.HttpStatus;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.binding.*;
+import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
+import com.microsoft.azure.functions.worker.handler.FunctionEnvironmentReloadRequestHandler;
+import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,8 +57,15 @@ public class RpcHttpRequestDataSourceTest {
   }
 
   @Test
-  public void rpcHttpDataSource_To_HttpRequestMessage_NullableQueryParamsEmpty() throws Exception {
-
+  public void rpcHttpDataSource_To_HttpRequestMessage_NullableQueryParamsEmpty_EnvSettingEnabled() throws Exception {
+    DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
+    JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
+    FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
+    Map<String, String> existingVariables = System.getenv();
+    Map<String, String> newEnvVariables = new HashMap<>();
+    newEnvVariables.putAll(existingVariables);
+    newEnvVariables.put("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED", "true");
+    envHandler.setEnv(newEnvVariables);
     Method httpRequestMessageStringBodyMethod = getFunctionMethod("HttpRequestStringBody");
     Map<String, String> queryMap = new HashMap<String, String>() {{
       put("name", "");
@@ -69,6 +79,31 @@ public class RpcHttpRequestDataSourceTest {
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
     assertEquals(requestMsg.getQueryParameters().get("name"), "");
+  }
+
+  @Test
+  public void rpcHttpDataSource_To_HttpRequestMessage_NullableQueryParamsEmpty_EnvSettingDisabled() throws Exception {
+    DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
+    JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
+    FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
+    Map<String, String> existingVariables = System.getenv();
+    Map<String, String> newEnvVariables = new HashMap<>();
+    newEnvVariables.putAll(existingVariables);
+    newEnvVariables.put("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED", "false");
+    envHandler.setEnv(newEnvVariables);
+    Method httpRequestMessageStringBodyMethod = getFunctionMethod("HttpRequestStringBody");
+    Map<String, String> queryMap = new HashMap<String, String>() {{
+      put("name", "");
+    }};
+    Parameter[] parameters = httpRequestMessageStringBodyMethod.getParameters();
+    String sourceKey = "testRpcHttp";
+    RpcHttp input = getTestRpcHttp(null, null, queryMap);
+    RpcHttpRequestDataSource rpcHttp = new RpcHttpRequestDataSource(sourceKey, input);
+    Optional<BindingData> actualBindingData = rpcHttp.computeByName(sourceKey,
+            parameters[0].getParameterizedType());
+    BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
+    HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
+    assertEquals(requestMsg.getQueryParameters().get("name"), null);
   }
 
   @Test
@@ -90,8 +125,15 @@ public class RpcHttpRequestDataSourceTest {
   }
 
   @Test
-  public void rpcHttpDataSource_To_HttpRequestMessage_NullableHeadersEmpty() throws Exception {
-
+  public void rpcHttpDataSource_To_HttpRequestMessage_NullableHeadersEmpty_EnvSettingEnabled() throws Exception {
+    DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
+    JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
+    FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
+    Map<String, String> existingVariables = System.getenv();
+    Map<String, String> newEnvVariables = new HashMap<>();
+    newEnvVariables.putAll(existingVariables);
+    newEnvVariables.put("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED", "true");
+    envHandler.setEnv(newEnvVariables);
     Method httpRequestMessageStringBodyMethod = getFunctionMethod("HttpRequestStringBody");
     Map<String, String> headersMap = new HashMap<String, String>() {{
       put("cookie", "");
@@ -105,6 +147,31 @@ public class RpcHttpRequestDataSourceTest {
     BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
     HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
     assertEquals(requestMsg.getHeaders().get("cookie"), "");
+  }
+
+  @Test
+  public void rpcHttpDataSource_To_HttpRequestMessage_NullableHeadersEmpty_EnvSettingDisabled() throws Exception {
+    DefaultClassLoaderProvider classLoader = new DefaultClassLoaderProvider();
+    JavaFunctionBroker broker = new JavaFunctionBroker(classLoader);
+    FunctionEnvironmentReloadRequestHandler envHandler = new FunctionEnvironmentReloadRequestHandler(broker);
+    Map<String, String> existingVariables = System.getenv();
+    Map<String, String> newEnvVariables = new HashMap<>();
+    newEnvVariables.putAll(existingVariables);
+    newEnvVariables.put("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED", "false");
+    envHandler.setEnv(newEnvVariables);
+    Method httpRequestMessageStringBodyMethod = getFunctionMethod("HttpRequestStringBody");
+    Map<String, String> headersMap = new HashMap<String, String>() {{
+      put("cookie", "");
+    }};
+    Parameter[] parameters = httpRequestMessageStringBodyMethod.getParameters();
+    String sourceKey = "testRpcHttp";
+    RpcHttp input = getTestRpcHttp(null, headersMap, null);
+    RpcHttpRequestDataSource rpcHttp = new RpcHttpRequestDataSource(sourceKey, input);
+    Optional<BindingData> actualBindingData = rpcHttp.computeByName(sourceKey,
+            parameters[0].getParameterizedType());
+    BindingData actualArg = actualBindingData.orElseThrow(WrongMethodTypeException::new);
+    HttpRequestMessage<?> requestMsg = (HttpRequestMessage<?>) actualArg.getValue();
+    assertEquals(requestMsg.getHeaders().get("cookie"), null);
   }
 
   @Test
