@@ -192,7 +192,7 @@ This is a sample host.json file configuration in the function app:
       "version": "2.0",
       "extensionBundle": {
          "id": "Microsoft.Azure.Functions.ExtensionBundle",
-         "version": "[3.*, 4.0.0)",
+         "version": "[4.*, 5.0.0)",
          "downloadPath": "C:/Users/<user>/Repos"
         }
     }
