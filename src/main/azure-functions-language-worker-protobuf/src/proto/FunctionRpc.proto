@@ -89,13 +89,13 @@ message StreamingMessage {
 
     // Host gets the list of function load responses
     FunctionLoadResponseCollection function_load_response_collection = 32;
-    
+
     // Host sends required metadata to worker to warmup the worker
     WorkerWarmupRequest worker_warmup_request = 33;
-    
+
     // Worker responds after warming up with the warmup result
     WorkerWarmupResponse worker_warmup_response = 34;
-    
+
   }
 }
 
