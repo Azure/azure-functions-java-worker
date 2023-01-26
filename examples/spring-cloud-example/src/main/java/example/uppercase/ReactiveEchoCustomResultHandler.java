@@ -1,4 +1,4 @@
-package example;
+package example.uppercase;
 
 import java.util.List;
 

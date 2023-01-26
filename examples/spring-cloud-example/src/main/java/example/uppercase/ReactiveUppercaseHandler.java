@@ -1,4 +1,4 @@
-package example;
+package example.uppercase;
 
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.HttpMethod;

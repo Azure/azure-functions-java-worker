@@ -1,9 +1,10 @@
-package example;
+package example.uppercase;
 
 import java.util.Map;
 import java.util.function.Function;
 
 import com.microsoft.azure.functions.ExecutionContext;
+import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -13,12 +14,8 @@ import org.springframework.cloud.function.json.JsonMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 
-@SpringBootApplication
+@Configuration
 public class Config {
-
-	public static void main(String[] args) throws Exception {
-		SpringApplication.run(Config.class, args);
-	}
 
 	@Bean
 	public Function<String, String> echo() {

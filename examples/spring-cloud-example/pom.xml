@@ -21,7 +21,7 @@
 		<spring-boot-thin-layout.version>1.0.28.RELEASE</spring-boot-thin-layout.version>
 
 		<!-- Spring Boot start class! WARING: correct class must be set! -->
-		<start-class>example.Config</start-class>
+		<start-class>example.Application</start-class>
 
 		<!-- AZURE FUNCTION CONFIG -->
 		<azure.functions.maven.plugin.version>1.22.0</azure.functions.maven.plugin.version>
@@ -69,6 +69,7 @@
 					<pricingTier>${functionPricingTier}</pricingTier>
 
 					<hostJson>${project.basedir}/src/main/resources/host.json</hostJson>
+					<localSettingsJson>${project.basedir}/src/main/resources/local.settings.json</localSettingsJson>
 
 					<runtime>
 						<os>linux</os>
