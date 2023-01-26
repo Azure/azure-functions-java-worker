@@ -1,19 +1,3 @@
-/*
- * Copyright 2022-2022 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package example;
 
 import java.util.List;
@@ -35,7 +19,6 @@ import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry
  * Sample that shows how to customize the default function result handling by operating on the {@link Flux} returned
  * from the {@link Config#echoStream()} echoStream} function.
  *
- * @author Chris Bono
  */
 public class ReactiveEchoCustomResultHandler extends FunctionInvoker<List<String>, String> {
 
