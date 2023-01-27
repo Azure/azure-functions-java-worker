@@ -11,6 +11,7 @@ import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpStatus;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
+import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.binding.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.handler.FunctionEnvironmentReloadRequestHandler;
@@ -63,7 +64,7 @@ public class RpcHttpRequestDataSourceTest {
     Map<String, String> existingVariables = System.getenv();
     Map<String, String> newEnvVariables = new HashMap<>();
     newEnvVariables.putAll(existingVariables);
-    newEnvVariables.put("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED", "true");
+    newEnvVariables.put(Constants.NULLABLE_VALUES_ENABLED_APP_SETTING, "true");
     envHandler.setEnv(newEnvVariables);
     Method httpRequestMessageStringBodyMethod = getFunctionMethod("HttpRequestStringBody");
     Map<String, String> queryMap = new HashMap<String, String>() {{
@@ -97,7 +98,7 @@ public class RpcHttpRequestDataSourceTest {
     Map<String, String> existingVariables = System.getenv();
     Map<String, String> newEnvVariables = new HashMap<>();
     newEnvVariables.putAll(existingVariables);
-    newEnvVariables.put("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED", "false");
+    newEnvVariables.put(Constants.NULLABLE_VALUES_ENABLED_APP_SETTING, "false");
     envHandler.setEnv(newEnvVariables);
     Method httpRequestMessageStringBodyMethod = getFunctionMethod("HttpRequestStringBody");
     Map<String, String> queryMap = new HashMap<String, String>() {{

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.microsoft.azure.functions.rpc.messages.NullableTypes;
+import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.Util;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -93,7 +94,7 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 	}
 
 	private static Map<String, String> convertFromNullableMap(Map<String, NullableTypes.NullableString> nullableMap) {
-		if (Util.isTrue(System.getenv("FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED"))) {
+		if (Util.isTrue(System.getenv(Constants.NULLABLE_VALUES_ENABLED_APP_SETTING))) {
 			return nullableMap.entrySet().stream().collect(
 					Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue())
 			);
