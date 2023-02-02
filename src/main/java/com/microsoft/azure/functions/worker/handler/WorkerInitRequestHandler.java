@@ -25,6 +25,7 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("RpcHttpBodyOnly", "RpcHttpBodyOnly");
         response.putCapabilities("RpcHttpTriggerMetadataRemoved", "RpcHttpTriggerMetadataRemoved");
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
+        response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
         response.setWorkerMetadata(composeWorkerMetadata());
         return "Worker initialized";
     }

@@ -21,18 +21,17 @@ public class FunctionEnvironmentReloadRequestHandler
 		this.broker = broker;
 	}
 
-	public Map<String, String> EnvironmentVariables = new HashMap<>();
+	public Map<String, String> environmentVariables = new HashMap<>();
 
 	@Override
 	String execute(FunctionEnvironmentReloadRequest request, Builder response) throws Exception {
 		WorkerLogManager.getSystemLogger().log(Level.INFO, "FunctionEnvironmentReloadRequest received by the Java worker");
-		EnvironmentVariables = request.getEnvironmentVariablesMap();
-		if (EnvironmentVariables == null || EnvironmentVariables.isEmpty()) {
-			return String
-					.format("Ignoring FunctionEnvironmentReloadRequest as newSettings map is either empty or null");
+		environmentVariables = request.getEnvironmentVariablesMap();
+		if (environmentVariables.isEmpty()) {
+			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is empty.";
 		}
-		setEnv(EnvironmentVariables);
-		return String.format("FunctionEnvironmentReloadRequest completed");
+		setEnv(environmentVariables);
+		return "FunctionEnvironmentReloadRequest completed";
 	}
 
 	/*

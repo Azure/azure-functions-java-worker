@@ -49,6 +49,14 @@ public class CoreTypeResolver {
 		String annotationName = null;
 
 		for (Annotation annotation : annotations) {
+
+			//Checking if it's warmup function, warmup function has its own HttpTrigger class defined in the function jar file.
+			//If it's not warmup function will bypass this check and fail back to normal logics.
+			if (annotation.annotationType().getName().equals("com.microsoft.azure.functions.warmup.java.HttpTrigger")){
+				annotationName = getBindingNameFromAnnotation(annotation);
+				return annotationName;
+			}
+
 			if (annotation.toString().contains("com.microsoft.azure.functions.annotation")) {
 				annotationName = getBindingNameFromAnnotation(annotation);
 			}

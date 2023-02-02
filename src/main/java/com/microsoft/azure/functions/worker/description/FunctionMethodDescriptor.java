@@ -6,12 +6,23 @@ import java.util.*;
 import org.apache.commons.lang3.*;
 
 public class FunctionMethodDescriptor {
-    public FunctionMethodDescriptor(String id, String name, String fullMethodName, String jarPath) {
+    private File parentDirectory;
+    private File jarDirectory;
+    private MethodInfo methodInfo;
+
+    private final String id;
+    private final String jarPath;
+    private final String name;
+    private final String fullMethodName;
+    private final boolean isWarmup;
+
+    public FunctionMethodDescriptor(String id, String name, String fullMethodName, String jarPath, boolean isWarmup) {
         this.id = id;
         this.name = name;
         this.fullMethodName = fullMethodName;
         this.methodInfo = new MethodInfo(fullMethodName);
         this.jarPath = StringUtils.trim(jarPath);
+        this.isWarmup = isWarmup;
     }
     
     /**
@@ -141,15 +152,10 @@ public class FunctionMethodDescriptor {
             throw new IllegalArgumentException("\"" + jarPath + "\" is not a qualified JAR file name");
         }
     }
-    
-    private File parentDirectory;
-    private File jarDirectory;
-    private MethodInfo methodInfo;
-    
-    private final String id;
-    private final String jarPath;
-    private final String name;
-    private final String fullMethodName;
+
+    public boolean isWarmup() {
+        return isWarmup;
+    }
     
     /*
      * "struct" to track the info on the function method
