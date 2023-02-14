@@ -66,5 +66,11 @@ namespace Azure.Functions.Java.Tests.E2E
         {
             Assert.True(await Utilities.InvokeHttpTrigger("BindingName", "/testMessage", HttpStatusCode.OK, "testMessage"));
         }
+
+        [Fact]
+        public async Task HttpTrigger_StaticBlockFailure()
+        {
+            Assert.True(await Utilities.InvokeHttpTrigger("StaticBlockFailure", "", HttpStatusCode.InternalServerError, ""));
+        }
     }
 }
