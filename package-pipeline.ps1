@@ -56,57 +56,57 @@ if (-not(Test-Path -Path $extract)) {
     exit 1
 }
 
-echo "Start downloading '$ApplicationInsightsAgentUrl' to '$PSScriptRoot'"
-try {
-    Invoke-WebRequest -Uri $ApplicationInsightsAgentUrl -OutFile $ApplicationInsightsAgentFile
-} catch {
-    echo "An error occurred. Download fails" $ApplicationInsightsAgentFile
-    echo "Exiting"
-    exit 1
-}
-
-if (-not(Test-Path -Path $ApplicationInsightsAgentFile)) {
-    echo "$ApplicationInsightsAgentFile do not exist."
-    exit 1
-}
-
-echo "Start extracting content from $ApplicationInsightsAgentFilename to extract folder"
-cd -Path $extract -PassThru
-jar xf $ApplicationInsightsAgentFile
-cd $PSScriptRoot
-echo "Done extracting"
-
-echo "Unsign $ApplicationInsightsAgentFilename"
-Remove-Item $extract\META-INF\MSFTSIG.*
-$manifest = "$extract\META-INF\MANIFEST.MF"
-$newContent = (Get-Content -Raw $manifest | Select-String -Pattern '(?sm)^(.*?\r?\n)\r?\n').Matches[0].Groups[1].Value
-Set-Content -Path $manifest $newContent
-
-Remove-Item $ApplicationInsightsAgentFile
-if (-not(Test-Path -Path $ApplicationInsightsAgentFile)) {
-    echo "Delete the original $ApplicationInsightsAgentFilename successfully"
-} else {
-    echo "Fail to delete original source $ApplicationInsightsAgentFilename"
-    exit 1
-}
-
-$agent = new-item -type directory -force $PSScriptRoot\agent
-$filename = "applicationinsights-agent.jar"
-$result = [System.IO.Path]::Combine($agent, $filename)
-echo "re-jar $filename"
-
-cd -Path $extract -PassThru
-jar cfm $result META-INF/MANIFEST.MF .
-
-if (-not(Test-Path -Path $result)) {
-    echo "Fail to re-archive $filename"
-    exit 1
-}
-Write-Host "Creating the functions.codeless file"
-New-Item -path $PSScriptRoot\agent -type file -name "functions.codeless"
-
-cd $PSScriptRoot
-Copy-Item $PSScriptRoot/agent $PSScriptRoot/pkg/agent -Recurse -Verbose
+# echo "Start downloading '$ApplicationInsightsAgentUrl' to '$PSScriptRoot'"
+# try {
+#     Invoke-WebRequest -Uri $ApplicationInsightsAgentUrl -OutFile $ApplicationInsightsAgentFile
+# } catch {
+#     echo "An error occurred. Download fails" $ApplicationInsightsAgentFile
+#     echo "Exiting"
+#     exit 1
+# }
+#
+# if (-not(Test-Path -Path $ApplicationInsightsAgentFile)) {
+#     echo "$ApplicationInsightsAgentFile do not exist."
+#     exit 1
+# }
+#
+# echo "Start extracting content from $ApplicationInsightsAgentFilename to extract folder"
+# cd -Path $extract -PassThru
+# jar xf $ApplicationInsightsAgentFile
+# cd $PSScriptRoot
+# echo "Done extracting"
+#
+# echo "Unsign $ApplicationInsightsAgentFilename"
+# Remove-Item $extract\META-INF\MSFTSIG.*
+# $manifest = "$extract\META-INF\MANIFEST.MF"
+# $newContent = (Get-Content -Raw $manifest | Select-String -Pattern '(?sm)^(.*?\r?\n)\r?\n').Matches[0].Groups[1].Value
+# Set-Content -Path $manifest $newContent
+#
+# Remove-Item $ApplicationInsightsAgentFile
+# if (-not(Test-Path -Path $ApplicationInsightsAgentFile)) {
+#     echo "Delete the original $ApplicationInsightsAgentFilename successfully"
+# } else {
+#     echo "Fail to delete original source $ApplicationInsightsAgentFilename"
+#     exit 1
+# }
+#
+# $agent = new-item -type directory -force $PSScriptRoot\agent
+# $filename = "applicationinsights-agent.jar"
+# $result = [System.IO.Path]::Combine($agent, $filename)
+# echo "re-jar $filename"
+# 
+# cd -Path $extract -PassThru
+# jar cfm $result META-INF/MANIFEST.MF .
+#
+# if (-not(Test-Path -Path $result)) {
+#     echo "Fail to re-archive $filename"
+#     exit 1
+# }
+# Write-Host "Creating the functions.codeless file"
+# New-Item -path $PSScriptRoot\agent -type file -name "functions.codeless"
+#
+# cd $PSScriptRoot
+# Copy-Item $PSScriptRoot/agent $PSScriptRoot/pkg/agent -Recurse -Verbose
 
 set-location pkg
 nuget pack -Properties version=$buildNumber
