@@ -8,19 +8,25 @@ import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
 import java.util.Optional;
+import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.adapter.azure.FunctionInvoker;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
 
-public class EchoHandler extends FunctionInvoker<Message<String>, String> {
+@Component
+public class EchoHandler {
+
+	@Autowired
+	private Function<String, String> echo;
 
 	@FunctionName("echo")
 	public String execute(@HttpTrigger(name = "req", methods = {HttpMethod.GET,
 			HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
 		ExecutionContext context) {
 		Message<String> message = MessageBuilder.withPayload(request.getBody().get()).copyHeaders(request.getHeaders()).build();
-		return handleRequest(message, context);
+		return echo.apply(message.getPayload());
 	}
-
 }
