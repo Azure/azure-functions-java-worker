@@ -2,8 +2,6 @@ package example.hello;
 
 import example.hello.model.*;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
-
 import java.util.function.Function;
 
 @Component
