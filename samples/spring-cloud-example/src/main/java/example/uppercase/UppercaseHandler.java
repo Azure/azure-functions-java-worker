@@ -31,8 +31,6 @@ public class UppercaseHandler {
 		ExecutionContext context
 	) {
 		context.getLogger().warning("Using Java (" + System.getProperty("java.version") + ")");
-		Message<String> message = MessageBuilder.withPayload(request.getBody().get())
-			.copyHeaders(request.getHeaders()).build();
-		return uppercase.apply(message.getPayload());
+		return uppercase.apply(request.getBody().get());
 	}
 }

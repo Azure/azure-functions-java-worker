@@ -26,7 +26,6 @@ public class EchoHandler {
 	public String execute(@HttpTrigger(name = "req", methods = {HttpMethod.GET,
 			HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
 		ExecutionContext context) {
-		Message<String> message = MessageBuilder.withPayload(request.getBody().get()).copyHeaders(request.getHeaders()).build();
-		return echo.apply(message.getPayload());
+		return echo.apply(request.getBody().get());
 	}
 }
