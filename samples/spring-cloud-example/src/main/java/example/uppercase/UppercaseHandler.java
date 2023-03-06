@@ -8,12 +8,19 @@ import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
 import java.util.Optional;
+import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.adapter.azure.FunctionInvoker;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
 
-public class UppercaseHandler extends FunctionInvoker<Message<String>, String> {
+@Component
+public class UppercaseHandler {
+
+	@Autowired
+	private Function<String, String> uppercase;
 
 	@FunctionName("uppercase")
 	public String execute(
@@ -24,8 +31,6 @@ public class UppercaseHandler extends FunctionInvoker<Message<String>, String> {
 		ExecutionContext context
 	) {
 		context.getLogger().warning("Using Java (" + System.getProperty("java.version") + ")");
-		Message<String> message = MessageBuilder.withPayload(request.getBody().get())
-			.copyHeaders(request.getHeaders()).build();
-		return handleRequest(message, context);
+		return uppercase.apply(request.getBody().get());
 	}
 }

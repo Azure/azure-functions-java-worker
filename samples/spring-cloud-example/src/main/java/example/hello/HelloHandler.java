@@ -5,12 +5,16 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 import example.hello.model.*;
-import org.springframework.cloud.function.adapter.azure.FunctionInvoker;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+@Component
+public class HelloHandler {
 
-public class HelloHandler extends FunctionInvoker<User, Greeting> {
+    @Autowired
+    private Hello hello;
 
     @FunctionName("hello")
     public HttpResponseMessage execute(
@@ -22,7 +26,7 @@ public class HelloHandler extends FunctionInvoker<User, Greeting> {
         context.getLogger().info("Greeting user name: " + user.getName());
         return request
                 .createResponseBuilder(HttpStatus.OK)
-                .body(handleRequest(user, context))
+                .body(hello.apply(user))
                 .header("Content-Type", "application/json")
                 .build();
     }
