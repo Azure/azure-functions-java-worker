@@ -4,11 +4,6 @@
   <artifactId>azure-functions-java-worker</artifactId>
   <version>2.9.0</version>
   <packaging>jar</packaging>
-  <parent>
-    <groupId>com.microsoft.maven</groupId>
-    <artifactId>java-8-parent</artifactId>
-    <version>8.0.0</version>
-  </parent>
   <name>Azure Functions Java Worker</name>
   <description>This package contains the Java Language Worker used by Azure functions host to execute java functions</description>
   <url>https://azure.microsoft.com/en-us/services/functions</url>
