@@ -55,7 +55,7 @@ public class ParameterResolverTest {
     }
 
     @Test
-    public void testResolveArguments() throws Exception {
+    public void testResolveArgumentsHasImplicitOutputTrue() throws Exception {
         Method testMethod = this.getClass().getDeclaredMethod("testMethod");
         when(methodBindInfo.hasImplicitOutput()).thenReturn(true);
         when(methodBindInfo.getMethod()).thenReturn(testMethod);
@@ -65,7 +65,7 @@ public class ParameterResolverTest {
     }
 
     @Test
-    public void testResolveArguments1() throws Exception {
+    public void testResolveArgumentsHasImplicitOutputFalse() throws Exception {
         Method testMethod = this.getClass().getDeclaredMethod("testMethod");
         when(methodBindInfo.hasImplicitOutput()).thenReturn(false);
         when(methodBindInfo.getMethod()).thenReturn(testMethod);
