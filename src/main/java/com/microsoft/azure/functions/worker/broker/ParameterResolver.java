@@ -52,7 +52,11 @@ public class ParameterResolver {
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
                 invokeInfo.appendArgument(actualArg.getValue());
             }
-            if (!method.getMethod().getReturnType().equals(void.class) && !method.getMethod().getReturnType().equals(Void.class)) {
+            // For function annotated with @HasImplicitOutput, we should allow it to send back data even function's return type is void
+            // Reference to https://github.com/microsoft/durabletask-java/issues/126
+            if (!method.getMethod().getReturnType().equals(void.class)
+                    && !method.getMethod().getReturnType().equals(Void.class)
+                    || method.hasImplicitOutput()) {
                 dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), BindingDataStore.RETURN_NAME, method.getMethod().getReturnType(), method.hasImplicitOutput());
             }
             return invokeInfo;
@@ -63,8 +67,8 @@ public class ParameterResolver {
     }
 
     public static final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
-        public InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getMethod()); }
         private final UUID outputsId = UUID.randomUUID();
+        public InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getMethod()); }
 
         public UUID getOutputsId() {
             return outputsId;
