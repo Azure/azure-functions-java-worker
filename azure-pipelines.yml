@@ -72,6 +72,11 @@ jobs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
           ArtifactName: 'buildDrop'
         displayName: 'Upload build artifacts'
+      - task: ComponentGovernanceComponentDetection@0
+        inputs:
+          scanType: 'Register'
+          verbosity: 'Verbose'
+          alertWarningLevel: 'High'
 
   - job: "Test"
     displayName: 'Test java worker'
