@@ -152,3 +152,9 @@ jobs:
         AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
       displayName: 'Build & Run tests'
       continueOnError: false
+
+    - task: ComponentGovernanceComponentDetection@0
+      inputs:
+        scanType: 'Register'
+        verbosity: 'Verbose'
+        alertWarningLevel: 'High'
