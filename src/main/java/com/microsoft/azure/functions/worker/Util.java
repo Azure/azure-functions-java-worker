@@ -18,13 +18,7 @@ public class Util {
     }
 
     public static void setGsonInstance(Gson instance) {
-        if (gsonInstance == null) {
-            synchronized (utilLock) {
-                if (gsonInstance == null) {
-                    gsonInstance = instance;
-                }
-            }
-        }
+        gsonInstance = instance;
     }
 
     public static Gson getGsonInstance() {
