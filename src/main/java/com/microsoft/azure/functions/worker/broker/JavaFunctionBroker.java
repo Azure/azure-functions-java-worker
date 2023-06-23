@@ -113,8 +113,7 @@ public class JavaFunctionBroker {
 	}
 
 	private FunctionExecutionMiddleware getFunctionExecutionMiddleWare() {
-		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(
-				JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader()));
+		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(JavaMethodExecutor.getInstance());
 		WorkerLogManager.getSystemLogger().info("Load last middleware: FunctionExecutionMiddleware");
 		return functionExecutionMiddleware;
 	}
@@ -122,7 +121,14 @@ public class JavaFunctionBroker {
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-		this.invocationChainFactory.create().doNext(executionContextDataSource);
+		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
+		try {
+			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+			System.out.println("from worker --" + Thread.currentThread().getContextClassLoader());
+			this.invocationChainFactory.create().doNext(executionContextDataSource);
+		} finally {
+			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
+		}
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
