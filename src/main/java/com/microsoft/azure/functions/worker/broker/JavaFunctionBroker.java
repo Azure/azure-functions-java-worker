@@ -124,7 +124,6 @@ public class JavaFunctionBroker {
 		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
-			System.out.println("from worker --" + Thread.currentThread().getContextClassLoader());
 			this.invocationChainFactory.create().doNext(executionContextDataSource);
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
