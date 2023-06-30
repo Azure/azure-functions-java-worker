@@ -13,6 +13,7 @@ trigger:
       - v3.x
       - release/3.x
       - release/main
+      - shreyasg/bundle-test
 
 pr:
   branches:
