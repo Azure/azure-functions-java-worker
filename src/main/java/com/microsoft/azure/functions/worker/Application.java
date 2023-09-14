@@ -1,10 +1,15 @@
 package com.microsoft.azure.functions.worker;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.logging.*;
 import javax.annotation.*;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import static com.microsoft.azure.functions.worker.Constants.*;
 
 /**
  * The entry point of the Java Language Worker. Every component could get the command line options from this singleton
@@ -15,36 +20,17 @@ public final class Application implements IApplication {
         this.parseCommandLine(args);
     }
 
-    @Override
-    public String getHost() { return this.host; }
-    @Override
-    public int getPort() { return this.port; }
-    @Override
-    public boolean logToConsole() { return this.logToConsole; }
-    @Override
-    public Integer getMaxMessageSize() { return this.maxMessageSize; }
-    private String getWorkerId() { return this.workerId; }
-    private String getRequestId() { return this.requestId; }
-
-    private void printUsage() {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("Application", this.OPTIONS, true);
-    }
-
-    private boolean isCommandlineValid() { return this.commandParseSucceeded; }
-
     @PostConstruct
     private void parseCommandLine(String[] args) {
         CommandLineParser parser = new DefaultParser();
         try {
-            CommandLine commands = parser.parse(this.OPTIONS, args);
-            this.host = this.parseHost(commands.getOptionValue("h"));
-            this.port = this.parsePort(commands.getOptionValue("p"));
-            this.workerId = this.parseWorkerId(commands.getOptionValue("w"));
-            this.requestId = this.parseRequestId(commands.getOptionValue("q"));
-            this.logToConsole = commands.hasOption("l");
-            if (commands.hasOption("m")) {
-                this.maxMessageSize = this.parseMaxMessageSize(commands.getOptionValue("m"));
+            CommandLine commands = parser.parse(this.OPTIONS, args, true);
+            this.uri = this.parseUri(commands.getOptionValue(FUNCTIONS_URI_OPTION));
+            this.workerId = this.parseWorkerId(commands.getOptionValue(FUNCTIONS_WORKER_ID_OPTION));
+            this.requestId = this.parseRequestId(commands.getOptionValue(FUNCTIONS_REQUEST_ID_OPTION));
+            this.logToConsole = commands.hasOption(FUNCTIONS_CONSOLE_LOG_OPTION);
+            if (commands.hasOption(FUNCTIONS_GRPC_MAX_MESSAGE_LENGTH_OPTION)) {
+                this.maxMessageSize = this.parseMaxMessageSize(commands.getOptionValue(FUNCTIONS_GRPC_MAX_MESSAGE_LENGTH_OPTION));
             }
             this.commandParseSucceeded = true;
         } catch (ParseException ex) {
@@ -52,66 +38,6 @@ public final class Application implements IApplication {
             this.commandParseSucceeded = false;
         }
     }
-
-    private String parseHost(String input) { return input; }
-
-    private int parsePort(String input) throws ParseException {
-        try {
-            int result = Integer.parseInt(input);
-            if (result < 1 || result > 65535) {
-                throw new IndexOutOfBoundsException("port number out of range");
-            }
-            return result;
-        } catch (NumberFormatException | IndexOutOfBoundsException ex) {
-            throw new ParseException(String.format(
-                    "port number \"%s\" is not qualified. It must be an integer within range [1, 65535]", input));
-        }
-    }
-
-    private String parseRequestId(String input) { return input; }
-
-    private String parseWorkerId(String input) { return input; }
-
-    private Integer parseMaxMessageSize(String input) {
-        return Integer.parseInt(input);
-    }
-
-    private boolean commandParseSucceeded = false;
-    private String host;
-    private int port;
-    private String workerId, requestId;
-    private boolean logToConsole;
-    private Integer maxMessageSize = null;
-
-    private final Options OPTIONS = new Options()
-            .addOption(Option.builder("h").longOpt("host")
-                    .hasArg().argName("HostName")
-                    .desc("The address of the machine that the Azure Functions host is running on")
-                    .required()
-                    .build())
-            .addOption(Option.builder("p").longOpt("port")
-                    .hasArg().argName("PortNumber")
-                    .desc("The port number which the Azure Functions host is listening to")
-                    .required()
-                    .build())
-            .addOption(Option.builder("w").longOpt("workerId")
-                    .hasArg().argName("WorkerId")
-                    .desc("The ID of this running worker throughout communication session")
-                    .required()
-                    .build())
-            .addOption(Option.builder("q").longOpt("requestId")
-                    .hasArg().argName("RequestId")
-                    .desc("The startup request ID of this communication session")
-                    .required()
-                    .build())
-            .addOption(Option.builder("l").longOpt("consoleLog")
-                    .desc("Whether to duplicate all host logs to console as well")
-                    .build())
-            .addOption(Option.builder("m").longOpt("grpcMaxMessageLength")
-                    .hasArg().argName("MessageSizeInBytes")
-                    .desc("The maximum message size could be used by GRPC protocol")
-                    .build());
-
 
     public static void main(String[] args) {
         WorkerLogManager.getSystemLogger().log(Level.INFO, "Azure Functions Java Worker  version [ " + version() + "]");
@@ -129,8 +55,107 @@ public final class Application implements IApplication {
         }
     }
 
+    private boolean commandParseSucceeded = false;
+    private String uri, host, workerId, requestId;
+    private int port;
+    private boolean logToConsole;
+    private Integer maxMessageSize = null;
+    private final Options OPTIONS = new Options()
+            .addOption(Option.builder("u").longOpt(FUNCTIONS_URI_OPTION)
+                    .hasArg().argName("Uri")
+                    .desc("The uri of the machine that the Azure Functions host is running on")
+                    .required()
+                    .build())
+            .addOption(Option.builder("w").longOpt(FUNCTIONS_WORKER_ID_OPTION)
+                    .hasArg().argName("WorkerId")
+                    .desc("The ID of this running worker throughout communication session")
+                    .required()
+                    .build())
+            .addOption(Option.builder("q").longOpt(FUNCTIONS_REQUEST_ID_OPTION)
+                    .hasArg().argName("RequestId")
+                    .desc("The startup request ID of this communication session")
+                    .required()
+                    .build())
+            .addOption(Option.builder("l").longOpt(FUNCTIONS_GRPC_MAX_MESSAGE_LENGTH_OPTION)
+                    .hasArg().argName("MessageSizeInBytes")
+                    .desc("The maximum message size could be used by GRPC protocol")
+                    .build())
+            .addOption(Option.builder("m").longOpt(FUNCTIONS_CONSOLE_LOG_OPTION)
+                    .desc("Whether to duplicate all host logs to console as well")
+                    .build());
+
+    @Override
+    public String getHost() {
+        return this.host;
+    }
+
+    @Override
+    public int getPort() {
+        return this.port;
+    }
+
+    public String getUri() {
+        return this.uri;
+    }
+
+    @Override
+    public boolean logToConsole() {
+        return this.logToConsole;
+    }
+
+    @Override
+    public Integer getMaxMessageSize() {
+        return this.maxMessageSize;
+    }
+
+    private String getWorkerId() {
+        return this.workerId;
+    }
+
+    private String getRequestId() {
+        return this.requestId;
+    }
+
+    private boolean isCommandlineValid() {
+        return this.commandParseSucceeded;
+    }
+
+    private String parseUri(String uri) throws ParseException {
+        try {
+            URL url = new URL(uri);
+            url.toURI();
+            this.host = url.getHost();
+            this.port = url.getPort();
+            if (port < 1 || port > 65535) {
+                throw new IndexOutOfBoundsException("port number out of range");
+            }
+            return uri;
+        } catch (MalformedURLException | URISyntaxException | IndexOutOfBoundsException e) {
+            throw new ParseException(String.format(
+                    "Error parsing URI \"%s\". Please provide a valid URI", uri));
+        }
+    }
+
+    private String parseRequestId(String input) {
+        return input;
+    }
+
+    private String parseWorkerId(String input) {
+        return input;
+    }
+
+    private Integer parseMaxMessageSize(String input) {
+        return Integer.parseInt(input);
+    }
+
     public static String version() {
         String jarVersion = Application.class.getPackage().getImplementationVersion();
         return jarVersion != null && !jarVersion.isEmpty() ? jarVersion : "Unknown";
+    }
+
+    private void printUsage() {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.setWidth(100);
+        formatter.printHelp("Application", this.OPTIONS, true);
     }
 }
