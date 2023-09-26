@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.handler.FunctionEnvironmentReloadRequestHandler;
-import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
+import com.microsoft.azure.functions.worker.classloader.DefaultClassLoaderProvider;
 import org.junit.jupiter.api.Test;
 
 public class FunctionEnvironmentReloadRequestHandlerTest {

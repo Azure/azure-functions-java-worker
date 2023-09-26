@@ -1,11 +1,13 @@
-package com.microsoft.azure.functions.worker.broker;
+package com.microsoft.azure.functions.worker.converter;
 
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Type;
 import java.util.Optional;
-import java.util.UUID;
 
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
+import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
+import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
+import com.microsoft.azure.functions.worker.invoker.MethodInvoker;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -17,28 +19,24 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
  * Resolve a Java method overload using reflection.
  * Thread-Safety: Multiple thread.
  */
-public class ParameterResolver {
-    public static Optional<JavaMethodInvokeInfo> resolveArguments(ExecutionContextDataSource executionContextDataSource) {
-        InvokeInfoBuilder invoker = resolve(executionContextDataSource);
-        if (invoker != null) {
-            executionContextDataSource.getDataStore().promoteDataTargets(invoker.getOutputsId());
-            return Optional.of(invoker.build());
-        }
-        return Optional.empty();
+public class ParameterConverter {
+    public static Optional<MethodInvoker> resolveArguments(ExecutionContextDataSource executionContextDataSource) {
+        MethodInvoker invoker = resolve(executionContextDataSource);
+        return invoker != null ? Optional.of(invoker) : Optional.empty();
     }
 
-    private static InvokeInfoBuilder resolve(ExecutionContextDataSource executionContextDataSource) {
+    private static MethodInvoker resolve(ExecutionContextDataSource executionContextDataSource) {
         try {
             MethodBindInfo method = executionContextDataSource.getMethodBindInfo();
             BindingDataStore dataStore = executionContextDataSource.getDataStore();
-            final InvokeInfoBuilder invokeInfo = new InvokeInfoBuilder(method);
+            final MethodInvoker invoker = new MethodInvoker(method.getMethod());
             for (ParamBindInfo param : method.getParams()) {
                 String paramName = param.getName();
                 Type paramType = param.getType();
                 String paramBindingNameAnnotation = param.getBindingNameAnnotation();
                 Optional<BindingData> argument;
                 if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(paramType, null))) {
-                    argument = dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), paramName, paramType, false);
+                    argument = dataStore.getOrAddDataTarget(paramName, paramType, false);
                 }
                 else if (paramName != null && !paramName.isEmpty()) {
                     argument = executionContextDataSource.getBindingData(paramName, paramType);
@@ -50,28 +48,19 @@ public class ParameterResolver {
                     argument = dataStore.getDataByType(paramType);
                 }
                 BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
-                invokeInfo.appendArgument(actualArg.getValue());
+                invoker.addArgument(actualArg.getValue());
             }
             // For function annotated with @HasImplicitOutput, we should allow it to send back data even function's return type is void
             // Reference to https://github.com/microsoft/durabletask-java/issues/126
             if (!method.getMethod().getReturnType().equals(void.class)
                     && !method.getMethod().getReturnType().equals(Void.class)
                     || method.hasImplicitOutput()) {
-                dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), BindingDataStore.RETURN_NAME, method.getMethod().getReturnType(), method.hasImplicitOutput());
+                dataStore.getOrAddDataTarget(BindingDataStore.RETURN_NAME, method.getMethod().getReturnType(), method.hasImplicitOutput());
             }
-            return invokeInfo;
+            return invoker;
         } catch (Exception ex) {
             ExceptionUtils.rethrow(ex);
             return null;
-        }
-    }
-
-    public static final class InvokeInfoBuilder extends JavaMethodInvokeInfo.Builder {
-        private final UUID outputsId = UUID.randomUUID();
-        public InvokeInfoBuilder(MethodBindInfo method) { super.setMethod(method.getMethod()); }
-
-        public UUID getOutputsId() {
-            return outputsId;
         }
     }
 }

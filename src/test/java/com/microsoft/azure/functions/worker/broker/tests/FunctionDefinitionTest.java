@@ -5,7 +5,7 @@ import java.util.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.worker.description.*;
-import com.microsoft.azure.functions.worker.reflect.*;
+import com.microsoft.azure.functions.worker.classloader.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

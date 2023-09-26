@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import com.microsoft.azure.functions.rpc.messages.BindingInfo;
 import com.microsoft.azure.functions.worker.binding.BindingDefinition;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
-import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
+import com.microsoft.azure.functions.worker.classloader.ClassLoaderProvider;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
