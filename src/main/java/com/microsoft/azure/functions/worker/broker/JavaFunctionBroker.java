@@ -121,6 +121,12 @@ public class JavaFunctionBroker {
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
+		invoke(executionContextDataSource);
+		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
+		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+	}
+
+	private void invoke(ExecutionContextDataSource executionContextDataSource) throws Exception {
 		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
@@ -128,8 +134,6 @@ public class JavaFunctionBroker {
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
-		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
-		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
 	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
