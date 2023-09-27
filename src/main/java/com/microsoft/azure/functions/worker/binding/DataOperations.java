@@ -1,10 +1,7 @@
 package com.microsoft.azure.functions.worker.binding;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -15,13 +12,11 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.*;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
-import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
+import com.microsoft.azure.functions.worker.converter.CoreTypeConverter;
 
 @FunctionalInterface
 interface CheckedFunction<T, R> {
@@ -101,7 +96,7 @@ public class DataOperations<T, R> {
 			  
 				// Try POJO
 				if (Collection.class.isAssignableFrom(TypeUtils.getRawType(targetType, null))) {
-					Class<?> collectionItemType = (Class<?>) CoreTypeResolver
+					Class<?> collectionItemType = (Class<?>) CoreTypeConverter
 							.getParameterizedActualTypeArgumentsType(targetType);
 
 					try {
@@ -185,7 +180,7 @@ public class DataOperations<T, R> {
 		if (value == null) {
 			return ObjectUtils.NULL;
 		}
-		if (CoreTypeResolver.getRuntimeClass(target).isAssignableFrom(value.getClass())) {
+		if (CoreTypeConverter.getRuntimeClass(target).isAssignableFrom(value.getClass())) {
 			return value;
 		}
 		throw new ClassCastException("Cannot convert " + value + "to type " + target.getTypeName());

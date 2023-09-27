@@ -19,7 +19,7 @@ import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
-import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
+import com.microsoft.azure.functions.worker.classloader.ClassLoaderProvider;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -122,7 +122,7 @@ public class JavaFunctionBroker {
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
 		invoke(executionContextDataSource);
-		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
+		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings());
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 

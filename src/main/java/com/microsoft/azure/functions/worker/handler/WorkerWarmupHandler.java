@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker.handler;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
-import com.microsoft.azure.functions.worker.reflect.FactoryClassLoader;
+import com.microsoft.azure.functions.worker.classloader.FactoryClassLoader;
 
 import java.util.*;
 

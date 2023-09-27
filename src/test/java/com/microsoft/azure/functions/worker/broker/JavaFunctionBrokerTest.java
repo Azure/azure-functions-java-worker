@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
-import com.microsoft.azure.functions.worker.reflect.DefaultClassLoaderProvider;
+import com.microsoft.azure.functions.worker.classloader.DefaultClassLoaderProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

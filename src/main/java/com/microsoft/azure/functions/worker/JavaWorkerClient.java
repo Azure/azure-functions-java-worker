@@ -12,7 +12,7 @@ import io.grpc.stub.*;
 
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.worker.handler.*;
-import com.microsoft.azure.functions.worker.reflect.*;
+import com.microsoft.azure.functions.worker.classloader.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 
 /**

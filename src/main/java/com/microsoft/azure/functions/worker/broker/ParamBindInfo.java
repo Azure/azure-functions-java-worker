@@ -1,5 +1,7 @@
 package com.microsoft.azure.functions.worker.broker;
 
+import com.microsoft.azure.functions.worker.converter.CoreTypeConverter;
+
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 
@@ -11,10 +13,10 @@ public final class ParamBindInfo {
     private final boolean isImplicitOutput;
     private final Parameter parameter;
     ParamBindInfo(Parameter param) {
-        this.name = CoreTypeResolver.getAnnotationName(param);
+        this.name = CoreTypeConverter.getAnnotationName(param);
         this.type = param.getParameterizedType();
-        this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);
-        this.isImplicitOutput = CoreTypeResolver.checkImplicitOutput(param);
+        this.bindingNameAnnotation = CoreTypeConverter.getBindingNameAnnotation(param);
+        this.isImplicitOutput = CoreTypeConverter.checkImplicitOutput(param);
         this.parameter = param;
     }
 

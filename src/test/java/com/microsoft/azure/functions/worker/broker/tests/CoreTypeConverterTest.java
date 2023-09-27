@@ -5,16 +5,16 @@ import java.util.*;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
-import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
+import com.microsoft.azure.functions.worker.converter.CoreTypeConverter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
-import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.getRuntimeClass;
-import static com.microsoft.azure.functions.worker.broker.CoreTypeResolver.isValidOutputType;
+import static com.microsoft.azure.functions.worker.converter.CoreTypeConverter.getRuntimeClass;
+import static com.microsoft.azure.functions.worker.converter.CoreTypeConverter.isValidOutputType;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CoreTypeResolverTest {
+public class CoreTypeConverterTest {
 
 	public void CustomBinding_Valid(
 			@HttpTrigger(name = "req", methods = { HttpMethod.GET,
@@ -64,7 +64,7 @@ public class CoreTypeResolverTest {
 		Method customBindingValid = getFunctionMethod("CustomBinding_Valid");
 		Parameter[] parameters = customBindingValid.getParameters();
 		for (Parameter parameter : parameters) {
-			String annotationName = CoreTypeResolver.getAnnotationName(parameter);
+			String annotationName = CoreTypeConverter.getAnnotationName(parameter);
 			assertNotNull(annotationName);
 		}
 	}
@@ -74,7 +74,7 @@ public class CoreTypeResolverTest {
 		Method customBindingValid = getFunctionMethod("TestCustomBindingName_OverridesCustomBindingName");
 		Parameter[] parameters = customBindingValid.getParameters();
 		for (Parameter parameter : parameters) {
-			String annotationName = CoreTypeResolver.getAnnotationName(parameter);
+			String annotationName = CoreTypeConverter.getAnnotationName(parameter);
 			assertNotNull(annotationName);
 			assertTrue(StringUtils.isNotEmpty(annotationName));
 		}
@@ -85,7 +85,7 @@ public class CoreTypeResolverTest {
 		Method customBindingInvalid = getFunctionMethod("CustomBinding_Invalid");
 		Parameter[] parameters = customBindingInvalid.getParameters();
 		for (Parameter parameter : parameters) {
-			String annotationName = CoreTypeResolver.getAnnotationName(parameter);
+			String annotationName = CoreTypeConverter.getAnnotationName(parameter);
 			assertNull(annotationName);
 		}
 	}
@@ -123,7 +123,7 @@ public class CoreTypeResolverTest {
 	}
 
 	private Type returnTypeOf(String type) throws NoSuchMethodException {
-		Method m = CoreTypeResolverTest.class.getDeclaredMethod(type);
+		Method m = CoreTypeConverterTest.class.getDeclaredMethod(type);
 		m.setAccessible(true);
 		return m.getGenericReturnType();
 	}
@@ -151,8 +151,8 @@ public class CoreTypeResolverTest {
 	}
 
 	private Method getFunctionMethod(String methodName) {
-		CoreTypeResolverTest coreTypeResolverTest = new CoreTypeResolverTest();
-		Class<? extends CoreTypeResolverTest> testsClass = coreTypeResolverTest.getClass();
+		CoreTypeConverterTest coreTypeResolverTest = new CoreTypeConverterTest();
+		Class<? extends CoreTypeConverterTest> testsClass = coreTypeResolverTest.getClass();
 		Method[] methods = testsClass.getMethods();
 		Method functionMethod = null;
 		for (Method method : methods) {

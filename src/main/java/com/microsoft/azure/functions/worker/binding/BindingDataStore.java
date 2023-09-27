@@ -6,12 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
-import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
+import com.microsoft.azure.functions.worker.converter.CoreTypeConverter;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -21,16 +20,22 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * Thread-safety: Single thread.
  */
 public final class BindingDataStore {
+
+    private final Map<String, DataTarget> targets;
+    private final Map<String, DataSource<?>> inputSources;
+    private final Map<Type, DataSource<?>> otherSources;
+    private final Map<String, DataSource<?>> metadataSources;
+    private Map<String, BindingDefinition> definitions;
+    public static final String RETURN_NAME = "$return";
+
     public BindingDataStore() {
         this.targets = new HashMap<>();
         this.inputSources = new HashMap<>();
         this.otherSources = new HashMap<>();
         this.metadataSources = new HashMap<>();
-        this.promotedTargets = null;
     }
 
-    ///////////////////////// region Input Binding Data
-
+    //Logics for input Binding Data
     public void addParameterSources(List<ParameterBinding> parameters) {
         assert parameters != null;
         for (ParameterBinding parameter : parameters) {
@@ -92,24 +97,21 @@ public final class BindingDataStore {
         return rpcSourceFromTypedData(parameter.getName(), parameter.getData());
     }
 
-    ///////////////////////// end region Input Binding Data
 
-    ///////////////////////// region Output Binding Data
-
-    public List<ParameterBinding> getOutputParameterBindings(boolean excludeReturn) throws Exception {
+    //Logics for output Binding Data
+    public List<ParameterBinding> getOutputParameterBindings() throws Exception {
         List<ParameterBinding> bindings = new ArrayList<>();
-        for (Map.Entry<String, DataTarget> entry : this.getTarget(this.promotedTargets).entrySet()) {
-            if (!excludeReturn || !entry.getKey().equals(RETURN_NAME)) {
-                entry.getValue().computeFromValue().ifPresent(data ->
-                    bindings.add(ParameterBinding.newBuilder().setName(entry.getKey()).setData(data).build())
-                );
-            }
+        for (String key : this.targets.keySet()) {
+            if (key.equals(RETURN_NAME)) continue;
+            DataTarget dataTarget = this.targets.get(key);
+            dataTarget.computeFromValue().ifPresent(data ->
+                    bindings.add(ParameterBinding.newBuilder().setName(key).setData(data).build()));
         }
         return bindings;
     }
 
     public Optional<TypedData> getDataTargetTypedValue(String name) throws Exception{
-    	return Optional.ofNullable(this.getTarget(this.promotedTargets).get(name)).map(o -> {
+    	return Optional.ofNullable(this.targets.get(name)).map(o -> {
 			try {
 				return o.computeFromValue().orElse(null);
 			} catch (Exception ex) {
@@ -119,48 +121,37 @@ public final class BindingDataStore {
 		});
     }
 
-    public Optional<BindingData> getOrAddDataTarget(UUID outputId, String name, Type target, boolean hasImplicitOutput) {
+    public Optional<BindingData> getOrAddDataTarget(String name, Type target, boolean hasImplicitOutput) {
         DataTarget output = null;
         if (this.isDataTargetValid(name, target)) {
-            output = this.getTarget(outputId).get(name);
+            output = this.targets.get(name);
             if (output == null && (this.isDefinitionOutput(name) || hasImplicitOutput)) {
-                this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
+                this.targets.put(name, output = rpcDataTargetFromType(target));
             }
         }
-        return Optional.ofNullable(output).map(out -> new BindingData(out));
+        return Optional.ofNullable(output).map(BindingData::new);
     }
 
     public void setDataTargetValue(String name, Object value) {
-        Optional.ofNullable(this.getTarget(this.promotedTargets).get(name)).ifPresent(out -> out.setValue(value));
-    }
-
-    public void promoteDataTargets(UUID outputId) {
-        this.promotedTargets = outputId;
-    }
-
-    private Map<String, DataTarget> getTarget(UUID outputId) {
-        return this.targets.computeIfAbsent(outputId, m -> new HashMap<>());
+        Optional.ofNullable(this.targets.get(name)).ifPresent(out -> out.setValue(value));
     }
 
     private boolean isDataTargetValid(String name, Type target) {
         if (!name.equals(RETURN_NAME)) {
-            if (!CoreTypeResolver.isValidOutputType(target)) { return false; }
-            target = CoreTypeResolver.getParameterizedActualTypeArgumentsType(target);
+            if (!CoreTypeConverter.isValidOutputType(target)) { return false; }
+            target = CoreTypeConverter.getParameterizedActualTypeArgumentsType(target);
         }
         return true;
     }
 
     private static DataTarget rpcDataTargetFromType(Type target) {
-        if (CoreTypeResolver.isHttpResponse(target)) {
+        if (CoreTypeConverter.isHttpResponse(target)) {
             return new RpcHttpDataTarget();
         }
         return new RpcUnspecifiedDataTarget();
     }
 
-    ///////////////////////// end region Output Binding Data
-
-    ///////////////////////// region Binding Definitions
-
+    //Logics for binding Definitions
     public void setBindingDefinitions(Map<String, BindingDefinition> definitions) {
         this.definitions = definitions;
     }
@@ -172,14 +163,4 @@ public final class BindingDataStore {
     private Optional<BindingDefinition> getDefinition(String name) {
         return Optional.ofNullable(this.definitions.get(name));
     }
-
-    ///////////////////////// endregion Binding Definitions
-
-    private UUID promotedTargets;
-    private final Map<UUID, Map<String, DataTarget>> targets;
-    private final Map<String, DataSource<?>> inputSources;
-    private final Map<Type, DataSource<?>> otherSources;
-    private final Map<String, DataSource<?>> metadataSources;
-    private Map<String, BindingDefinition> definitions;
-    public static final String RETURN_NAME = "$return";
 }
