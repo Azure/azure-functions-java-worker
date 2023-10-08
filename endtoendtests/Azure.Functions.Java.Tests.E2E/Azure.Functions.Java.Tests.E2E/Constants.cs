@@ -88,5 +88,8 @@ namespace Azure.Functions.Java.Tests.E2E
 
         // Xunit Fixtures and Collections
         public const string FunctionAppCollectionName = "FunctionAppCollection";
+
+        // SQL Binding tests
+        public static string SqlConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsSqlConnectionString");
     }
 }
