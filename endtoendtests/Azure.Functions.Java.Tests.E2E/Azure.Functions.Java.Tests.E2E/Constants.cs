@@ -93,5 +93,8 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string ApplicationInsightAPIKey = Environment.GetEnvironmentVariable("ApplicationInsightAPIKey");
         public static string ApplicationInsightAPPID = Environment.GetEnvironmentVariable("ApplicationInsightAPPID");
         public static string ApplicationInsightAgentVersion = Environment.GetEnvironmentVariable("ApplicationInsightAgentVersion");
+
+        // SQL Binding tests
+        public static string SqlConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsSqlConnectionString");
     }
 }
