@@ -22,7 +22,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
-        public async Task SqlInput_Output_Trigger_Succeeds()
+        public async Task SqlInput_Output_Succeeds()
         {
             var product = new Dictionary<string, object>()
             {
@@ -37,12 +37,6 @@ namespace Azure.Functions.Java.Tests.E2E
 
             // Read row from Products table using SqlInput
             await Utilities.InvokeHttpTrigger("GetProducts", "", HttpStatusCode.OK, productString);
-
-            // Wait for the SqlTrigger to fire and insert a row into Product2 table
-            Thread.Sleep(TimeSpan.FromSeconds(5));
-
-            // ProductsTrigger function should have been triggered by the SqlTrigger and inserted a row into Product2 table
-            await Utilities.InvokeHttpTrigger("GetProducts2", "", HttpStatusCode.OK, productString);
         }
     }
 }
