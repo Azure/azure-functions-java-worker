@@ -29,7 +29,7 @@ else
 
 $FUNC_CLI_DIRECTORY = Join-Path $PSScriptRoot 'Azure.Functions.Cli'
 
-$ApplicationInsightsAgentVersion = '3.4.18'
+$ApplicationInsightsAgentVersion = '3.4.17'
 $ApplicationInsightsAgentFilename = "applicationinsights-agent-${ApplicationInsightsAgentVersion}.jar"
 $ApplicationInsightsAgentUrl = "https://repo1.maven.org/maven2/com/microsoft/azure/applicationinsights-agent/${ApplicationInsightsAgentVersion}/${ApplicationInsightsAgentFilename}"
 
