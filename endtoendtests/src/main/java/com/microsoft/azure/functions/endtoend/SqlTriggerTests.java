@@ -20,18 +20,20 @@ public class SqlTriggerTests {
 
     @FunctionName("GetProducts")
     public HttpResponseMessage GetProducts(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
-            HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @SQLInput(name = "products", commandText = "SELECT * FROM Products",
-            commandType = CommandType.Text, connectionStringSetting = "AzureWebJobsSqlConnectionString") Product[] products,
+            HttpMethod.POST }, route = "getproducts/{productid}", authLevel = AuthorizationLevel.ANONYMOUS)
+            HttpRequestMessage<Optional<String>> request,
+            @SQLInput(name = "products", commandText = "SELECT TOP 1 * FROM Products WHERE ProductId = @ProductId",
+            commandType = CommandType.Text, parameters = "@ProductId={productid}",
+            connectionStringSetting = "AzureWebJobsSqlConnectionString") Product[] products,
             final ExecutionContext context) {
 
         context.getLogger().info("Java HTTP trigger processed a request.");
 
         if (products != null) {
-            return request.createResponseBuilder(HttpStatus.OK).body(products).build();
+            return request.createResponseBuilder(HttpStatus.OK).body(products[0].toString()).build();
         } else {
             return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Did not find expected products in table Products").build();
+                    .body("Did not find expected product in table Products").build();
         }
     }
 
@@ -77,6 +79,10 @@ public class SqlTriggerTests {
         public int ProductId;
         public String Name;
         public int Cost;
+
+        public String toString() {
+            return "{\"ProductId\":" + ProductId + ",\"Name\":\"" + Name + "\",\"Cost\":" + Cost + "}";
+        }
     }
 
     public class SqlChangeProduct {
