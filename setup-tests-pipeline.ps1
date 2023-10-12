@@ -136,5 +136,5 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
     New-Item -path $PSScriptRoot\agent -type file -name "functions.codeless"
 
     Write-Host "Copying the unsigned Application Insights Agent to worker directory"
-    Copy-Item "$PSScriptRoot/agent" "$FUNC_CLI_DIRECTORY/workers/java/agent" -Recurse -Verbose
+    Copy-Item "$PSScriptRoot/agent" "$FUNC_CLI_DIRECTORY/workers/java/agent" -Recurse -Verbose -Force
 }
