@@ -57,7 +57,7 @@ if (-not $UseCoreToolsBuildFromIntegrationTests.IsPresent)
     Write-Host "Copying worker.config.json to worker directory"
     Copy-Item "$PSScriptRoot/worker.config.json" "$FUNC_CLI_DIRECTORY/workers/java" -Force -Verbose
     Write-Host "Copying worker.config.json and annotationLib to worker directory"
-    Copy-Item "$PSScriptRoot/annotationLib" "$FUNC_CLI_DIRECTORY/workers/java" -Recurse -Verbose
+    Copy-Item "$PSScriptRoot/annotationLib" "$FUNC_CLI_DIRECTORY/workers/java" -Recurse -Verbose -Force
 
     # Download application insights agent from maven central
     $ApplicationInsightsAgentFile = [System.IO.Path]::Combine($PSScriptRoot, $ApplicationInsightsAgentFilename)
