@@ -114,6 +114,17 @@ jobs:
           JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.3-windows-x64.zip'
           JAVA_VERSION: 'microsoft-jdk-17.0.3-windows-x64'
           JDK_PATH: 'jdk-17.0.3+7'
+        microsoft-open-jdk-21-linux:
+          IMAGE_TYPE: 'ubuntu-latest'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.0-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-21.0.0-linux-x64'
+          JDK_PATH: 'jdk-21+35'
+          JAVA_VERSION_SPEC: '21'
+        microsoft-open-jdk-21-windows:
+          IMAGE_TYPE: 'windows-latest'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.0-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-21.0.0-windows-x64'
+          JDK_PATH: 'jdk-21+35'
 
     pool:
       vmImage: $(IMAGE_TYPE)
