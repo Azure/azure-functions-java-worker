@@ -7,6 +7,8 @@ trigger: none
 
 jobs:
   - job: "End_to_end_integration_tests"
+    variables:
+      ApplicationInsightAgentVersion: 3.4.16
     displayName: 'End to end integration tests'
     strategy:
       maxParallel: 1
@@ -161,5 +163,8 @@ jobs:
         ConfluentCloudPassword: $(ConfluentCloudPassword)
         AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
         AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
+        ApplicationInsightAPIKey: $(ApplicationInsightAPIKey)
+        ApplicationInsightAPPID: $(ApplicationInsightAPPID)
+        ApplicationInsightAgentVersion: $(ApplicationInsightAgentVersion)
       displayName: 'Build & Run tests'
       continueOnError: false
