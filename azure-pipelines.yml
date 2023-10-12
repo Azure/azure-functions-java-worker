@@ -78,6 +78,7 @@ jobs:
     dependsOn: Build
     variables:
       buildNumber: $[ dependencies.Build.outputs['output.buildNumber'] ]
+      ApplicationInsightAgentVersion: 3.4.16
     strategy:
       maxParallel: 1
       matrix:
@@ -224,6 +225,9 @@ jobs:
           ConfluentCloudPassword: $(ConfluentCloudPassword)
           AzureWebJobsEventGridOutputBindingTopicUriString: $(AzureWebJobsEventGridOutputBindingTopicUriString)
           AzureWebJobsEventGridOutputBindingTopicKeyString: $(AzureWebJobsEventGridOutputBindingTopicKeyString)
+          ApplicationInsightAPIKey: $(ApplicationInsightAPIKey)
+          ApplicationInsightAPPID: $(ApplicationInsightAPPID)
+          ApplicationInsightAgentVersion: $(ApplicationInsightAgentVersion)
         displayName: 'Build & Run tests'
         continueOnError: false
 

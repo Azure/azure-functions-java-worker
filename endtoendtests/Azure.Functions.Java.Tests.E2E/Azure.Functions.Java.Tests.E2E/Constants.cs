@@ -88,5 +88,10 @@ namespace Azure.Functions.Java.Tests.E2E
 
         // Xunit Fixtures and Collections
         public const string FunctionAppCollectionName = "FunctionAppCollection";
+
+        // Application Insights
+        public static string ApplicationInsightAPIKey = Environment.GetEnvironmentVariable("ApplicationInsightAPIKey");
+        public static string ApplicationInsightAPPID = Environment.GetEnvironmentVariable("ApplicationInsightAPPID");
+        public static string ApplicationInsightAgentVersion = Environment.GetEnvironmentVariable("ApplicationInsightAgentVersion");
     }
 }

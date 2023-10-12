@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Azure.Functions.Java.Tests.E2E.Helpers.AppInsight;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -65,6 +66,12 @@ namespace Azure.Functions.Java.Tests.E2E
         public async Task HttpTrigger_BindingName()
         {
             Assert.True(await Utilities.InvokeHttpTrigger("BindingName", "/testMessage", HttpStatusCode.OK, "testMessage"));
+        }
+
+        [Fact]
+        public void ApplicationInsightTest() 
+        {
+            Assert.True(AppInsightHelper.ValidateData(E2ETestCases.Utils.QueryType.traces, Constants.ApplicationInsightAgentVersion));
         }
     }
 }
