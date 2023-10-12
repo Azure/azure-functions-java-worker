@@ -24,19 +24,21 @@ namespace Azure.Functions.Java.Tests.E2E
         [Fact]
         public async Task SqlInput_Output_Succeeds()
         {
+            TimeSpan t = DateTime.UtcNow - new DateTime(1970, 1, 1);
+            int id  = (int) t.TotalSeconds;
             var product = new Dictionary<string, object>()
             {
-                { "ProductId", 1 },
+                { "ProductId", id },
                 { "Name", "test" },
                 { "Cost", 100 }
             };
 
             var productString = JsonConvert.SerializeObject(product);
             // Insert row into Products table using SqlOutput
-            await Utilities.InvokeHttpTriggerPost("AddProduct", productString, HttpStatusCode.OK);
+            Assert.True(await Utilities.InvokeHttpTriggerPost("AddProduct", productString, HttpStatusCode.OK));
 
             // Read row from Products table using SqlInput
-            await Utilities.InvokeHttpTrigger("GetProducts", "", HttpStatusCode.OK, productString);
+            Assert.True(await Utilities.InvokeHttpTrigger("GetProducts", "/" + id.ToString(), HttpStatusCode.OK, productString));
         }
     }
 }
