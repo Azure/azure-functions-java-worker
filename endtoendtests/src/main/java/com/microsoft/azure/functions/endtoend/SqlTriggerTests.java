@@ -67,14 +67,6 @@ public class SqlTriggerTests {
         return request.createResponseBuilder(HttpStatus.OK).body(product).build();
     }
 
-    @FunctionName("ProductsTrigger")
-    public void ProductsTrigger(@SQLTrigger(name = "changes", tableName = "Products", connectionStringSetting = "AzureWebJobsSqlConnectionString") SqlChangeProduct[] changes,
-            @SQLOutput(name = "product", commandText = "Products2", connectionStringSetting = "AzureWebJobsSqlConnectionString") OutputBinding<Product> product,
-            final ExecutionContext context) {
-        context.getLogger().info("Java SQL trigger function executed. Received row: " + new Gson().toJson(changes[0]));
-        product.setValue(changes[0].Item);
-    }
-
     public class Product {
         public int ProductId;
         public String Name;
@@ -83,16 +75,5 @@ public class SqlTriggerTests {
         public String toString() {
             return "{\"ProductId\":" + ProductId + ",\"Name\":\"" + Name + "\",\"Cost\":" + Cost + "}";
         }
-    }
-
-    public class SqlChangeProduct {
-        public SqlChangeOperation Operation;
-        public Product Item;
-    }
-
-    public enum SqlChangeOperation {
-        Insert,
-        Update,
-        Delete
     }
 }
