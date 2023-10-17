@@ -29,28 +29,11 @@ public class SqlTriggerTests {
 
         context.getLogger().info("Java HTTP trigger processed a request.");
 
-        if (products != null) {
+        if (products.length != 0) {
             return request.createResponseBuilder(HttpStatus.OK).body(products[0].toString()).build();
         } else {
             return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Did not find expected product in table Products").build();
-        }
-    }
-
-    @FunctionName("GetProducts2")
-    public HttpResponseMessage GetProducts2(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
-            HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @SQLInput(name = "products", commandText = "SELECT * FROM Products2",
-            commandType = CommandType.Text, connectionStringSetting = "AzureWebJobsSqlConnectionString") Product[] products,
-            final ExecutionContext context) {
-
-        context.getLogger().info("Java HTTP trigger processed a request.");
-
-        if (products != null) {
-            return request.createResponseBuilder(HttpStatus.OK).body(products).build();
-        } else {
-            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Did not find expected products in table Products2").build();
         }
     }
 
