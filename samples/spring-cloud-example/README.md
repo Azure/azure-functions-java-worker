@@ -15,7 +15,7 @@ To develop functions using Java, you must have the following installed:
 
 > [!IMPORTANT]
 > 1. You must set the JAVA_HOME environment variable to the install location of the JDK to complete this quickstart.
-> 2. Make sure your core tools version is at least 4.0.5030
+> 2. Make sure your core tools version is at least 4.0.5455
 
 ## What we're going to build
 
@@ -46,19 +46,17 @@ Change those properties directly near the top of the *pom.xml* file, as shown in
 ```xml
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <java.version>11</java.version>
 
-        <azure.functions.maven.plugin.version>1.22.0</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>3.0.0</azure.functions.java.library.version>
+        <!-- Spring Boot start class. WARNING: correct class must be set -->
+        <start-class>com.example.DemoApplication</start-class>
 
-        <!-- customize those two properties. The functionAppName should be unique across Azure -->
+        <!-- customize those properties. WARNING:: the functionAppName should be unique across Azure -->
         <functionResourceGroup>my-spring-function-resource-group</functionResourceGroup>
         <functionAppServicePlanName>my-spring-function-service-plan</functionAppServicePlanName>
         <functionAppName>my-spring-function</functionAppName>
-
-        <functionAppRegion>westeurope</functionAppRegion>
-        <start-class>example.Application</start-class>
+        <functionAppRegion>eastus</functionAppRegion>
+        <functionPricingTier>Y1</functionPricingTier>
     </properties>
 
 ```
@@ -74,7 +72,7 @@ Create a *src/main/azure* folder and add the following Azure Functions configura
   "version": "2.0",
   "extensionBundle": {
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
-    "version": "[4.*, 5.0.0)"
+    "version": "[4.*, 5.2.0)"
   },
   "functionTimeout": "00:10:00"
 }
@@ -162,33 +160,32 @@ This capability gives you two main benefits over a standard Azure Function:
 - It doesn't rely on the Azure Functions APIs, so you can easily port it to other systems. For example, you can reuse it in a normal Spring Boot application.
 - You can use all the `@Enable` annotations from Spring Boot to add new features.
 
-In the *src/main/java/example* folder, create the following file, which is a normal Spring Boot application:
+In the *src/main/java/com/example* folder, create the following file, which is a normal Spring Boot application:
 
 *DemoApplication.java*:
 
 ```java
-package example;
+package com.example;
 
-import example.uppercase.Config;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Application {
+public class DemoApplication {
     public static void main(String[] args) throws Exception {
-        SpringApplication.run(Config.class, args);
+        SpringApplication.run(DemoApplication.class, args);
     }
 }
 ```
 
-Now create the following file *src/main/java/example/hello* folder, which contains a Spring Boot component that represents the Function we want to run:
+Now create the following file *src/main/java/com/example/hello* folder, which contains a Spring Boot component that represents the Function we want to run:
 
 *Hello.java*:
 
 ```java
-package example.hello;
+package com.example.hello;
 
-import example.hello.model.*;
+import com.example.model.*;
 import org.springframework.stereotype.Component;
 import java.util.function.Function;
 
@@ -217,13 +214,13 @@ In the *src/main/java/com/example/hello* folder, create the following Azure Func
 *HelloHandler.java*:
 
 ```java
-package example.hello;
+package com.example.hello;
 
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
-import example.hello.model.*;
+import com.example.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -237,14 +234,12 @@ public class HelloHandler {
 
     @FunctionName("hello")
     public HttpResponseMessage execute(
-            @HttpTrigger(name = "request", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<User>> request,
-            ExecutionContext context) {
+            @HttpTrigger(name = "request", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<User>> request, ExecutionContext context) {
         User user = request.getBody()
                 .filter(u -> u.getName() != null)
                 .orElseGet(() -> new User(request.getQueryParameters().getOrDefault("name", "world")));
         context.getLogger().info("Greeting user name: " + user.getName());
-        return request
-                .createResponseBuilder(HttpStatus.OK)
+        return request.createResponseBuilder(HttpStatus.OK)
                 .body(hello.apply(user))
                 .header("Content-Type", "application/json")
                 .build();
@@ -267,10 +262,11 @@ Create a *src/test/java/com/example* folder and add the following JUnit tests:
 *HelloTest.java*:
 
 ```java
-package example.hello;
+package com.example;
 
-import example.hello.model.Greeting;
-import example.hello.model.User;
+import com.example.hello.Hello;
+import com.example.model.Greeting;
+import com.example.model.User;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
