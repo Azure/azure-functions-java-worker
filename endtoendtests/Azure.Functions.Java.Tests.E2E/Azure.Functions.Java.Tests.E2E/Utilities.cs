@@ -64,6 +64,30 @@ namespace Azure.Functions.Java.Tests.E2E
             }
         }
 
+        public static async Task<bool> InvokeHttpTriggerPost(string functionName, string bodyString, HttpStatusCode expectedStatusCode)
+        {
+            string uri = $"{Constants.FunctionsHostUrl}/api/{functionName}";
+            using (var request = new HttpRequestMessage(HttpMethod.Post, uri))
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+                request.Content = new StringContent(
+                    bodyString,
+                    Encoding.UTF8,
+                    "application/json"
+                );
+                var response = await httpClient.SendAsync(request);
+
+                Console.WriteLine(
+                    $"InvokeHttpTrigger: {functionName} : {response.StatusCode} : {response.ReasonPhrase}");
+                if (expectedStatusCode != response.StatusCode)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
         public static async Task<bool> InvokeEventGridTrigger(string functionName, JObject jsonContent, HttpStatusCode expectedStatusCode=HttpStatusCode.Accepted)
         {
             string uri = $"{Constants.FunctionsHostUrl}/runtime/webhooks/eventgrid?functionName={functionName}";

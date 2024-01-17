@@ -149,6 +149,7 @@ jobs:
         JAVA_HOME: $(JavaHome)
         AzureWebJobsStorage: $(AzureWebJobsStorage)
         AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
+        AzureWebJobsSqlConnectionString: $(AzureWebJobsSqlConnectionString)
         AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
         AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
         AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)

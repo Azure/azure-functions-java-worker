@@ -17,6 +17,7 @@
     "AzureWebJobsCosmosDBConnectionString":"",
     "AzureWebJobsEventGridOutputBindingTopicUriString": "",
     "AzureWebJobsEventGridOutputBindingTopicKeyString": "",
+    "AzureWebJobsSqlConnectionString": "",
     "FUNCTIONS_WORKER_RUNTIME": "java"
   }
 }
