@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.microsoft.azure.functions.worker.Util;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import com.google.gson.Gson;
@@ -17,7 +18,7 @@ public final class RpcJsonDataSource extends DataSource<String> {
 		super(name, value, JSON_DATA_OPERATIONS);
 	}
 
-	public static final Gson gson = new Gson();
+	public static final Gson gson = Util.getGsonInstance();
 	public static final JsonParser gsonParser = new JsonParser();
 	private static final DataOperations<String, Object> JSON_DATA_OPERATIONS = new DataOperations<>();
 
