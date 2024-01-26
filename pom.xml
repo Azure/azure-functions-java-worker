@@ -72,17 +72,17 @@
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf</artifactId>
-      <version>1.57.2</version>
+      <version>1.61.0</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
-      <version>1.45.2</version>
+      <version>1.61.0</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-netty-shaded</artifactId>
-      <version>1.45.2</version>
+      <version>1.61.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -302,6 +302,19 @@
             </property>
           </systemProperties>
         </configuration>
+      </plugin>
+      <!-- This plugin is used to detect publicly disclosed vulnerabilities contained within a project’s dependencies -->
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>9.0.9</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
