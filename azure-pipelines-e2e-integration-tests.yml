@@ -8,7 +8,7 @@ trigger: none
 jobs:
   - job: "End_to_end_integration_tests"
     variables:
-      ApplicationInsightAgentVersion: 3.4.16
+      ApplicationInsightAgentVersion: 3.4.19
     displayName: 'End to end integration tests'
     strategy:
       maxParallel: 1
