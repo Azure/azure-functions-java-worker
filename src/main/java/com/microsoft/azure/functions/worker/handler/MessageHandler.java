@@ -45,10 +45,10 @@ public abstract class MessageHandler<TRequest extends Message, TResponse extends
             if (statusMessage != null) {
                 this.getLogger().info(statusMessage);
             }
-        } catch (Exception ex) {
+        } catch (Throwable throwable) {
             status = StatusResult.Status.Failure;
-            statusMessage = ExceptionUtils.getRootCauseMessage(ex);
-            rpcException = RpcException.newBuilder().setMessage(statusMessage).setStackTrace(ExceptionUtils.getStackTrace(ex)).build();
+            statusMessage = ExceptionUtils.getRootCauseMessage(throwable);
+            rpcException = RpcException.newBuilder().setMessage(statusMessage).setStackTrace(ExceptionUtils.getStackTrace(throwable)).build();
         }
         if (this.responseStatusMarshaller != null) {
             StatusResult.Builder result = StatusResult.newBuilder().setStatus(status).setResult(statusMessage);
