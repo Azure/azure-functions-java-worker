@@ -160,7 +160,7 @@ jobs:
         inputs:
           version: 6.0.x
       - pwsh: | # Download JDK for later installation
-          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).tar.gz"
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).tar.gz"
           $current = get-location | select -ExpandProperty Path
           Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
         displayName: 'Download jdk for Linux'
@@ -176,7 +176,7 @@ jobs:
         condition: eq( variables['Agent.OS'], 'Linux' )
         displayName: 'Setup Java for Linux'
       - pwsh: |
-          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -O "$(JAVA_VERSION).zip"
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).zip"
           Expand-Archive -Force "$(JAVA_VERSION).zip" .
           cd $(JDK_PATH)
           $current = get-location | select -ExpandProperty Path
