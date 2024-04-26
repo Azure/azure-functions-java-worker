@@ -24,6 +24,7 @@
 		<azure.functions.maven.plugin.version>1.18.0</azure.functions.maven.plugin.version>
 		<azure.functions.java.library.version>3.1.0</azure.functions.java.library.version>
 		<azure.functions.java.library.sql.version>2.1.0</azure.functions.java.library.sql.version>
+		<azure.functions.java.library.mysql.version>1.0.0</azure.functions.java.library.mysql.version>
 		<durabletask.azure.functions>1.0.0-beta.1</durabletask.azure.functions>
 		<functionAppName>azure-functions-java-endtoendtests</functionAppName>
 		<functionAppRegion>westus</functionAppRegion>
@@ -69,6 +70,11 @@
             <groupId>com.microsoft.azure.functions</groupId>
             <artifactId>azure-functions-java-library-sql</artifactId>
             <version>${azure.functions.java.library.sql.version}</version>
+        </dependency>
+		<dependency>
+            <groupId>com.microsoft.azure.functions</groupId>
+            <artifactId>azure-functions-java-library-mysql</artifactId>
+            <version>${azure.functions.java.library.mysql.version}</version>
         </dependency>
 		<dependency>
 			<groupId>com.microsoft</groupId>
