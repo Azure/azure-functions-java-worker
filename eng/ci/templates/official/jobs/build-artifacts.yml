@@ -1,0 +1,64 @@
+jobs:
+  - job: "Build"
+    displayName: 'Build java worker'
+
+    templateContext:
+      outputParentDirectory: $(Build.ArtifactStagingDirectory)
+      outputs:
+        - output: pipelineArtifact
+          targetPath: $(Build.ArtifactStagingDirectory)
+          artifactName: 'buildDrop'
+        - output: nuget
+          condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['UPLOADPACKAGETOPRERELEASEFEED'], true))
+          useDotNetTask: false
+          packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+          packageParentPath: '$(Build.ArtifactStagingDirectory)'
+          publishVstsFeed: 'e6a70c92-4128-439f-8012-382fe78d6396/f37f760c-aebd-443e-9714-ce725cd427df'
+          nuGetFeedType: 'internal'
+          allowPackageConflicts: true
+
+    pool:
+      name: 1es-pool-azfunc
+      image: 1es-windows-2022 
+      os: windows
+
+    variables:
+      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+        isTagTemp: true
+      isTag: $[variables.isTagTemp]
+
+    steps:
+      - task: NuGetToolInstaller@1
+        inputs:
+          checkLatest: true
+        displayName: 'Install NuGet Tool'
+      - pwsh: |
+          Get-Command mvn
+        displayName: 'Check Maven is installed'
+      - pwsh: |
+          java -version
+        displayName: 'Check default java version'
+      - pwsh: |
+          if ("$(isTag)"){
+            $buildNumber="$(Build.SourceBranchName)"
+            Write-Host "Found git tag."
+          }
+          else {
+            $buildNumber="$(Build.BuildNumber)-v4"
+            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+          }
+          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+          .\package-pipeline.ps1 -buildNumber $buildNumber
+        name: output
+        displayName: 'Executing build script'
+      - pwsh: |
+          mvn dependency-check:check
+        condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['SkipMavenDependencyCheck'], 'false'))
+        displayName: 'Maven dependency check'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(Build.Repository.LocalPath)/pkg'
+          Contents: '*.nupkg'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+          CleanTargetFolder: true
+        displayName: 'Copying files for artifacts'
