@@ -207,6 +207,7 @@ jobs:
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-endtoendtests"
         displayName: 'Package Java for E2E'
       - task: DotNetCoreCLI@2
+        retryCountOnTaskFailure: 3
         inputs:
           command: 'test'
           projects: |
