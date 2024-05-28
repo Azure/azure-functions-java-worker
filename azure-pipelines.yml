@@ -82,7 +82,7 @@ jobs:
     dependsOn: Build
     variables:
       buildNumber: $[ dependencies.Build.outputs['output.buildNumber'] ]
-      ApplicationInsightAgentVersion: 3.5.1
+      ApplicationInsightAgentVersion: 3.5.2
     strategy:
       maxParallel: 1
       matrix:
