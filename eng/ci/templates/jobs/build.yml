@@ -1,0 +1,19 @@
+jobs:
+  - job: "Build"
+    displayName: 'Build java worker'
+
+    pool:
+      name: 1es-pool-azfunc-public
+      image: 1es-windows-2022 
+      os: windows
+
+    steps:
+    - pwsh: |
+        Get-Command mvn
+      displayName: 'Check Maven is installed'
+    - pwsh: |
+        java -version
+      displayName: 'Check default java version'
+    - pwsh: |
+        mvn clean package
+      displayName: 'Build java worker'
