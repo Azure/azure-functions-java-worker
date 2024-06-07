@@ -1,5 +1,7 @@
 # Azure Functions in Java
 
+Dummy comment
+
 This repo contains several Java Azure Functions samples for different events.
 
 ## Prerequisites
