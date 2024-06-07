@@ -1,3 +1,11 @@
+schedules:
+- cron: "0 0 * * *"
+  displayName: Nightly Build
+  branches:
+    include:
+      - dev
+  always: true
+
 trigger:
   batch: true
   branches:
@@ -23,3 +31,15 @@ extends:
       name: 1es-pool-azfunc-public
       image: 1es-windows-2022
       os: windows
+
+    sdl:
+      codeql:
+         compiled:
+           enabled: true
+         runSourceLanguagesInSourceAnalysis: true
+
+    stages:
+    - stage: Build
+
+      jobs:
+      - template: /eng/ci/templates/jobs/build.yml@self
