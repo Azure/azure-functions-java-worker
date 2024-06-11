@@ -8,8 +8,10 @@ jobs:
       os: windows
 
     variables:
-      buildNumber: $[ stageDependencies.Build.Build.outputs['output.buildNumber'] ]
-      ApplicationInsightAgentVersion: 3.5.1
+      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+        isTagTemp: true
+      isTag: $[variables.isTagTemp]
+      ApplicationInsightAgentVersion: 3.5.2
 
     strategy:
       maxParallel: 1
@@ -43,7 +45,16 @@ jobs:
           java -version
         displayName: 'Check default java version'
       - pwsh: |
-          .\package-pipeline.ps1 -buildNumber $(buildNumber)
+          if ("$(isTag)"){
+            $buildNumber="$(Build.SourceBranchName)"
+            Write-Host "Found git tag."
+          }
+          else {
+            $buildNumber="$(Build.BuildNumber)-v4"
+            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+          }
+          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+          .\package-pipeline.ps1 -buildNumber $buildNumber
         displayName: 'Executing build script'
       - task: UseDotNet@2
         displayName: 'Install .NET 6'
@@ -61,6 +72,7 @@ jobs:
       - pwsh: |
           .\setup-tests-pipeline.ps1
         displayName: 'Setup test environment -- Install the Core Tools'
+
       - pwsh: |
           $currDir =  Get-Location
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
