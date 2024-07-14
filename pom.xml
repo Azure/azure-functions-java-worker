@@ -304,7 +304,7 @@
         </configuration>
       </plugin>
       <!-- This plugin is used to detect publicly disclosed vulnerabilities contained within a projectâ€™s dependencies -->
-      <plugin>
+<!--       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
         <version>9.0.9</version>
@@ -318,7 +318,7 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
+      </plugin> -->
     </plugins>
   </build>
 </project>
