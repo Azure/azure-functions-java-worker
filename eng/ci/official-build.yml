@@ -12,6 +12,7 @@ trigger:
     include:
     - dev
     - release/* # azure-functions-java-worker github repo restricts creation of release/* branches, so using a pattern is safe here.
+    - shreyasg/icm-496768690-aiagent-removed
 
 # CI only, does not trigger on PRs.
 pr: none
