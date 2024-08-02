@@ -8,9 +8,6 @@ schedules:
 
 trigger:
   batch: true
-  tags:
-    include:
-      - '*' # azure-functions-java-worker github repo restricts creation of tags, so using a pattern is safe here.
   branches:
     include:
     - dev
