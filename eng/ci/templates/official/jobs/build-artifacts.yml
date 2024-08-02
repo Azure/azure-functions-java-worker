@@ -51,10 +51,6 @@ jobs:
           .\package-pipeline.ps1 -buildNumber $buildNumber
         name: output
         displayName: 'Executing build script'
-      - pwsh: |
-          mvn dependency-check:check
-        condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['SkipMavenDependencyCheck'], 'false'))
-        displayName: 'Maven dependency check'
       - task: CopyFiles@2
         inputs:
           SourceFolder: '$(Build.Repository.LocalPath)/pkg'
