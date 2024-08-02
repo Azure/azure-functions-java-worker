@@ -23,9 +23,9 @@ jobs:
       os: windows
 
     variables:
-      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-        isTagTemp: true
-      isTag: $[variables.isTagTemp]
+      ${{ if contains(variables['Build.SourceBranch'], 'refs/heads/release/' ) }}:
+        isReleaseTemp: true
+      isRelease: $[variables.isReleaseTemp]
 
     steps:
       - task: NuGetToolInstaller@1
@@ -39,13 +39,13 @@ jobs:
           java -version
         displayName: 'Check default java version'
       - pwsh: |
-          if ("$(isTag)"){
+          if ("$(isRelease)"){
             $buildNumber="$(Build.SourceBranchName)"
-            Write-Host "Found git tag."
+            Write-Host "Triggered for release."
           }
           else {
             $buildNumber="$(Build.BuildNumber)-v4"
-            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+            Write-Host "Not triggered for release. Setting package suffix to '$buildNumber'"
           }
           Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
           .\package-pipeline.ps1 -buildNumber $buildNumber
