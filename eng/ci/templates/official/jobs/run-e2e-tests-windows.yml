@@ -11,7 +11,7 @@ jobs:
       ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
         isTagTemp: true
       isTag: $[variables.isTagTemp]
-      ApplicationInsightAgentVersion: 3.5.2
+      ApplicationInsightAgentVersion: 3.5.4
 
     strategy:
       maxParallel: 1
