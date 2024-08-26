@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.azure.functions</groupId>
   <artifactId>azure-functions-java-worker</artifactId>
-  <version>2.16.0</version>
+  <version>2.17.0</version>
   <packaging>jar</packaging>
   <name>Azure Functions Java Worker</name>
   <description>This package contains the Java Language Worker used by Azure functions host to execute java functions</description>
@@ -303,7 +303,7 @@
           </systemProperties>
         </configuration>
       </plugin>
-      <!-- This plugin is used to detect publicly disclosed vulnerabilities contained within a projectÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s dependencies -->
+      <!-- This plugin is used to detect publicly disclosed vulnerabilities contained within a project's dependencies -->
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
