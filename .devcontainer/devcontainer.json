@@ -1,0 +1,32 @@
+{
+    "name": "Azure Java Function Worker Development",
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "context": "."
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "none"
+        },
+        "ghcr.io/devcontainers/features/node:1": "none",
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "latest",
+            "ppa": "false"
+        }
+    },
+    "containerEnv": {
+        "JAVA_HOME": "/usr/lib/jvm/msopenjdk-current"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscjava.vscode-java-pack",        // Java extension pack for VS Code
+                "vscjava.vscode-java-debug",        // Java debug extension
+                "vscjava.vscode-maven",            // Maven extension for VS Code
+                "ms-azuretools.vscode-azurefunctions",  // Azure Functions extension
+                "ms-azuretools.vscode-azurestorage",  // Azure Storage,
+                "Azurite.azurite"  // Azurite extension
+            ]
+        }
+    }
+}
