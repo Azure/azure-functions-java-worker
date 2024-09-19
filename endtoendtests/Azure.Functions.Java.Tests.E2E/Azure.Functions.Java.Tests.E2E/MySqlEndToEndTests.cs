@@ -34,7 +34,7 @@ namespace Azure.Functions.Java.Tests.E2E
             };
 
             var productString = JsonConvert.SerializeObject(product);
-            // Insert row into Products table using MySqlOutput
+            // Insert a row into Products table using MySqlOutput
             Assert.True(await Utilities.InvokeHttpTriggerPost("AddProduct", productString, HttpStatusCode.OK));
 
             // Read row from Products table using MySqlInput
