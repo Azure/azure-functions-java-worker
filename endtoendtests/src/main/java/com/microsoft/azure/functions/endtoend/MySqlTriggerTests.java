@@ -7,6 +7,7 @@ import com.microsoft.azure.functions.HttpMethod;
 import com.microsoft.azure.functions.mysql.annotation.CommandType;
 import com.microsoft.azure.functions.mysql.annotation.MySqlInput;
 import com.microsoft.azure.functions.mysql.annotation.MySqlOutput;
+import com.microsoft.azure.functions.mysql.annotation.MySqlTrigger;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
