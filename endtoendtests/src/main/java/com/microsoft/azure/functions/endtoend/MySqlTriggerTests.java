@@ -40,7 +40,7 @@ public class MySqlTriggerTests {
     @FunctionName("AddProduct")
     public HttpResponseMessage AddProduct(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @MySqlOutput(name = "product", tableName = "Products", connectionStringSetting = "AzureWebJobsMySqlConnectionString") OutputBinding<Product> product,
+            @MySqlOutput(name = "product", commandText = "Products", connectionStringSetting = "AzureWebJobsMySqlConnectionString") OutputBinding<Product> product,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a MySql Output Binding request.");
 
