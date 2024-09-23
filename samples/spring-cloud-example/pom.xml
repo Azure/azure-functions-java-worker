@@ -5,11 +5,11 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.1-SNAPSHOT</version>
+		<version>3.2.0</version>
 		<relativePath/>
 		<!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example.azure.di</groupId>
+	<groupId>com.example</groupId>
 	<artifactId>azure-httptrigger-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>azure-httptrigger-demo</name>
@@ -17,26 +17,25 @@
 	<description>Demo Spring Boot, Azure Function - HttpTrigger (DI adapter)</description>
 
 	<properties>
-		<java.version>17</java.version>
-		<spring-boot-thin-layout.version>1.0.28.RELEASE</spring-boot-thin-layout.version>
+		<java.version>11</java.version>
 
-		<!-- Spring Boot start class! WARING: correct class must be set! -->
-		<start-class>example.Application</start-class>
+		<!-- Spring Boot start class. WARNING: correct class must be set -->
+		<start-class>com.example.DemoApplication</start-class>
 
-		<!-- AZURE FUNCTION CONFIG -->
-		<azure.functions.maven.plugin.version>1.22.0</azure.functions.maven.plugin.version>
+		<!-- customize those properties. WARNING: the functionAppName should be unique across Azure -->
+		<azure.functions.maven.plugin.version>1.29.0</azure.functions.maven.plugin.version>
 		<functionAppName>spring-cloud-function-samples</functionAppName>
-		<functionAppRegion>westus</functionAppRegion>
 		<functionResourceGroup>sample-resource-group</functionResourceGroup>
 		<functionAppServicePlanName>sample-service-plan</functionAppServicePlanName>
-		<functionPricingTier>EP1</functionPricingTier>
+		<functionPricingTier>Y1</functionPricingTier>
+		<functionAppRegion>eastus</functionAppRegion>
 	</properties>
 	<dependencies>
 
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-function-adapter-azure</artifactId>
-			<version>4.0.0</version>
+			<version>4.0.5</version>
 		</dependency>
 
 		<dependency>
@@ -48,7 +47,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.9.2</version>
+			<version>5.10.1</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -98,18 +97,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<dependencies>
-					<dependency>
-						<groupId>org.springframework.boot.experimental</groupId>
-						<artifactId>spring-boot-thin-layout</artifactId>
-						<version>${spring-boot-thin-layout.version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
