@@ -30,7 +30,7 @@ resources:
 variables:
   - template: ci/variables/build.yml@eng
   - template: ci/variables/cfs.yml@eng
-
+  - isPreviewBundle: $[variables.isPreviewBundle]
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
   parameters:
@@ -38,8 +38,6 @@ extends:
       name: 1es-pool-azfunc
       image: 1es-windows-2022
       os: windows
-    variables:
-      isPreviewBundle: $[variables.isPreviewBundle]
     stages:
     - stage: Build
 
