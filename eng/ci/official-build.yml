@@ -38,7 +38,8 @@ extends:
       name: 1es-pool-azfunc
       image: 1es-windows-2022
       os: windows
-
+    variables:
+      isPreviewBundle: $[variables.isPreviewBundle]
     stages:
     - stage: Build
 

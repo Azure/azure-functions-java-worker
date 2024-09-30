@@ -12,7 +12,7 @@ jobs:
         isTagTemp: true
       isTag: $[variables.isTagTemp]
       ApplicationInsightAgentVersion: 3.5.4
-
+      isPreviewBundle: ${{ parameters.variables.isPreviewBundle }}
     strategy:
       maxParallel: 1
       matrix:
@@ -97,7 +97,7 @@ jobs:
           chmod +x ./tools/scripts/ci/override-extensionbundle.ps1
           ./tools/scripts/ci/override-extensionbundle.ps1 `
             -hostJsonPath "./endtoendtests/Azure.Functions.Java.Tests.E2E/host.json" `
-            -isPreviewBundle $($(isPreviewBundle) -eq 'true')
+            -isPreviewBundle ([System.Convert]::ToBoolean("$(isPreviewBundle)"))
         displayName: 'Override host.json extensionBundle'
       - pwsh: |
           cd ./endtoendtests
