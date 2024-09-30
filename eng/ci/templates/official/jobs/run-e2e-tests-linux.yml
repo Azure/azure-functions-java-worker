@@ -12,7 +12,7 @@ jobs:
         isTagTemp: true
       isTag: $[variables.isTagTemp]
       ApplicationInsightAgentVersion: 3.5.4
-      isPreviewBundle: ${{ parameters.variables.isPreviewBundle }}
+      isPreviewBundle: $[variables.isPreviewBundle]
     strategy:
       maxParallel: 1
       matrix:
