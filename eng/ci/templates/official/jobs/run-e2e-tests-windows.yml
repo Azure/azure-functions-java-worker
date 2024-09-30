@@ -12,6 +12,7 @@ jobs:
         isTagTemp: true
       isTag: $[variables.isTagTemp]
       ApplicationInsightAgentVersion: 3.5.4
+      isPreviewBundle: $[variables.isPreviewBundle]
 
     strategy:
       maxParallel: 1
@@ -78,6 +79,11 @@ jobs:
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
           func --version
         displayName: 'Setup Core Tools - Windows'
+      - pwsh: |
+          ./tools/scripts/ci/override-extensionbundle.ps1 `
+            -hostJsonPath "./endtoendtests/Azure.Functions.Java.Tests.E2E/host.json" `
+            -isPreviewBundle $($(isPreviewBundle) -eq 'true')
+        displayName: 'Override host.json extensionBundle'
       - pwsh: |
           cd ./endtoendtests
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
