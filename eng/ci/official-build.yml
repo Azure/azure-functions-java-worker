@@ -30,7 +30,8 @@ resources:
 variables:
   - template: ci/variables/build.yml@eng
   - template: ci/variables/cfs.yml@eng
-  - isPreviewBundle: $[variables.isPreviewBundle]
+  - name: isPreviewBundle
+    value: $[variables.isPreviewBundle]
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
   parameters:
