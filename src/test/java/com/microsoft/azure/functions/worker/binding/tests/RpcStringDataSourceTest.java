@@ -8,11 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.microsoft.azure.functions.worker.Util;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcJsonDataSource;
 import com.microsoft.azure.functions.worker.binding.RpcStringDataSource;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,6 +33,11 @@ public class RpcStringDataSourceTest {
     }
 
     public void FunctionWithStringListInput(List<String> items) {
+    }
+
+    @BeforeAll
+    public static void setGsonInstance() {
+        Util.setGsonInstance(new Gson());
     }
 
     @Test
