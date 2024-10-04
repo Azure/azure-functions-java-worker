@@ -69,6 +69,12 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
+        public async Task HttpTrigger_StaticBlockFailure()
+        {
+            Assert.True(await Utilities.InvokeHttpTrigger("StaticBlockFailure", "", HttpStatusCode.InternalServerError, ""));
+        }
+
+        [Fact]
         public void ApplicationInsightTest() 
         {
             Assert.True(AppInsightHelper.ValidateData(E2ETestCases.Utils.QueryType.traces, Constants.ApplicationInsightAgentVersion));
