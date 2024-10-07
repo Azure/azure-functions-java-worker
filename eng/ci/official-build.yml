@@ -30,8 +30,7 @@ resources:
 variables:
   - template: ci/variables/build.yml@eng
   - template: ci/variables/cfs.yml@eng
-  - name: isPreviewBundle
-    value: $[variables.isPreviewBundle]
+
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
   parameters:
@@ -39,12 +38,12 @@ extends:
       name: 1es-pool-azfunc
       image: 1es-windows-2022
       os: windows
+
     stages:
     - stage: ValidateAndPrint
-      displayName: 'Validate and Print Variables'
+
       jobs:
         - job: ValidateVariables
-          displayName: 'Validate isPreviewBundle'
           steps:
             - script: |
                 echo "Validating the isPreviewBundle variable..."
@@ -53,12 +52,11 @@ extends:
                 else
                   echo "ERROR: isPreviewBundle must be either 'true' or 'false'. Current value: ${{ variables.isPreviewBundle }}"
                   exit 1
-                fi
-              displayName: 'Print and Validate isPreviewBundle'
 
     - stage: TestWindows
-      dependsOn: ValidateAndPrint
+      dependsOn: Build
+
       jobs:
-        - template: /eng/ci/templates/official/jobs/run-e2e-tests-windows.yml@self
-          parameters:
-            isPreviewBundle: ${{ variables.isPreviewBundle }}
+      - template: /eng/ci/templates/official/jobs/run-e2e-tests-windows.yml@self
+        parameters:
+          isPreviewBundle: ${{ variables.isPreviewBundle }}
