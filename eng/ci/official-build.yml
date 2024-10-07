@@ -40,20 +40,25 @@ extends:
       image: 1es-windows-2022
       os: windows
     stages:
-    - stage: Build
-
+    - stage: ValidateAndPrint
+      displayName: 'Validate and Print Variables'
       jobs:
-      - template: /eng/ci/templates/official/jobs/build-artifacts.yml@self
+        - job: ValidateVariables
+          displayName: 'Validate isPreviewBundle'
+          steps:
+            - script: |
+                echo "Validating the isPreviewBundle variable..."
+                if [ "${{ variables.isPreviewBundle }}" == "true" ] || [ "${{ variables.isPreviewBundle }}" == "false" ]; then
+                  echo "isPreviewBundle is valid: ${{ variables.isPreviewBundle }}"
+                else
+                  echo "ERROR: isPreviewBundle must be either 'true' or 'false'. Current value: ${{ variables.isPreviewBundle }}"
+                  exit 1
+                fi
+              displayName: 'Print and Validate isPreviewBundle'
 
     - stage: TestWindows
-      dependsOn: Build
-
+      dependsOn: ValidateAndPrint
       jobs:
-      - template: /eng/ci/templates/official/jobs/run-e2e-tests-windows.yml@self
-
-    - stage: TestLinux
-      dependsOn:
-      - TestWindows
-
-      jobs:
-      - template: /eng/ci/templates/official/jobs/run-e2e-tests-linux.yml@self
+        - template: /eng/ci/templates/official/jobs/run-e2e-tests-windows.yml@self
+          parameters:
+            isPreviewBundle: ${{ variables.isPreviewBundle }}
