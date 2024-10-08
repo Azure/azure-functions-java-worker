@@ -1,4 +1,13 @@
 jobs:
+  - job: "Run emulated containers"
+    displayName: 'Run emulated containers'
+    pool:
+      vmImage: 'ubuntu-latest'  # Use Linux agent for Docker tasks
+    steps:
+      - bash: |
+          docker compose -f emulatedtests/utils/docker-compose.yml pull
+          docker compose -f emulatedtests/utils/docker-compose.yml up -d
+
   - job: "TestWindows"
     displayName: 'Test java worker - Windows'
 
@@ -83,10 +92,6 @@ jobs:
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
         displayName: 'Package Java for E2E'
-      - bash: |
-          docker compose -f emulatedtests/utils/docker-compose.yml pull
-          docker compose -f emulatedtests/utils/docker-compose.yml up -d
-        displayName: 'Install Azurite and Start Emulators'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
