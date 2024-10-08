@@ -19,7 +19,7 @@ namespace Azure.Functions.Java.Tests.E2E
             funcHostProcess.StartInfo.RedirectStandardError = true;
             funcHostProcess.StartInfo.RedirectStandardOutput = true;
             funcHostProcess.StartInfo.CreateNoWindow = true;
-            funcHostProcess.StartInfo.WorkingDirectory = Path.Combine(rootDir, @"endtoendtests/target/azure-functions/azure-functions-java-endtoendtests");
+            funcHostProcess.StartInfo.WorkingDirectory = Path.Combine(rootDir, @"emulatedtests/target/azure-functions/azure-functions-java-emulatedtests");
             if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 funcHostProcess.StartInfo.FileName = Path.Combine(rootDir, @"Azure.Functions.Cli/func.exe");
