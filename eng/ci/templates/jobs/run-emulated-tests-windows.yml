@@ -1,5 +1,5 @@
 jobs:
-  - job: "Run emulated containers"
+  - job: "RunEmulatedContainers"
     displayName: 'Run emulated containers'
     pool:
       vmImage: 'ubuntu-latest'  # Use Linux agent for Docker tasks
