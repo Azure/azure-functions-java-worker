@@ -1,13 +1,4 @@
 jobs:
-  - job: "RunEmulatedContainers"
-    displayName: 'Run emulated containers'
-    pool:
-      vmImage: 'ubuntu-latest'  # Use Linux agent for Docker tasks
-    steps:
-      - bash: |
-          docker compose -f emulatedtests/utils/docker-compose.yml pull
-          docker compose -f emulatedtests/utils/docker-compose.yml up -d
-
   - job: "TestWindows"
     displayName: 'Test java worker - Windows'
 
@@ -92,6 +83,27 @@ jobs:
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
         displayName: 'Package Java for E2E'
+      # Step 1: Switch Docker to Linux containers mode
+      - pwsh: |
+          # Check if Docker is already running in Linux mode
+          $dockerInfo = docker info
+          if ($dockerInfo -notmatch "linux") {
+              # Switch to Linux containers mode
+              Write-Host "Switching Docker to Linux container mode"
+              & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchLinuxEngine
+          } else {
+              Write-Host "Docker is already in Linux container mode"
+          }
+        displayName: 'Ensure Docker is in Linux container mode'
+
+      # Step 2: Verify Docker is in Linux mode
+      - pwsh: |
+          docker info
+        displayName: 'Verify Docker is in Linux container mode'
+      - bash: |
+          docker compose -f emulatedtests/utils/docker-compose.yml pull
+          docker compose -f emulatedtests/utils/docker-compose.yml up -d
+        displayName: 'Install Azurite and Start Emulators'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
