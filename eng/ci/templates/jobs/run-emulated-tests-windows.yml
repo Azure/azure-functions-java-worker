@@ -83,6 +83,9 @@ jobs:
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
         displayName: 'Package Java for E2E'
+      - pwsh: |
+          choco install docker-desktop --pre -y
+        displayName: 'Install Docker Desktop'
       # Step 1: Switch Docker to Linux containers mode
       - pwsh: |
           # Check if Docker is already running in Linux mode
