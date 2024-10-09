@@ -94,6 +94,10 @@ jobs:
               # Switch to Linux containers mode
               Write-Host "Switching Docker to Linux container mode"
               & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchLinuxEngine
+              # Restart Docker after switching to ensure it applies
+              Write-Host "Restarting Docker service"
+              Stop-Service docker
+              Start-Service docker
           } else {
               Write-Host "Docker is already in Linux container mode"
           }
