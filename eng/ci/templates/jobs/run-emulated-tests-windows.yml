@@ -84,9 +84,9 @@ jobs:
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
         displayName: 'Package Java for E2E'
       - bash: |
-          sudo npm install -g azurite
-          sudo mkdir azurite
-          sudo azurite --silent --location azurite --debug azurite\debug.log &
+          npm install -g azurite
+          mkdir azurite
+          azurite --silent --location azurite --debug azurite\debug.log &
         displayName: 'Install and Run Azurite'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
