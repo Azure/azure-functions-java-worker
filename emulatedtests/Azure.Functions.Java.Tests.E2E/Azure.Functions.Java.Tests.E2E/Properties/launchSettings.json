@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Azure.Functions.Java.Tests.E2E": {
+      "commandName": "Project"
+    }
+  }
+}
