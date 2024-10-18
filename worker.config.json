@@ -45,6 +45,15 @@
             "description":{
                 "arguments": ["-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Djava.net.preferIPv4Stack=true -javaagent:\"{workerDirectoryPath}/agent/applicationinsights-agent.jar\" -jar", "%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
             }
+        },
+        {
+            "profileName":"CustomDefined",
+            "conditions":[
+                {"conditionType":"environment","conditionName":"OVERRIDE_JVM_ARG","conditionExpression":"(?i)true$"}
+            ],
+            "description":{
+                "arguments": ["%JAVA_OPTS%", "%AZURE_FUNCTIONS_MESH_JAVA_OPTS%"]
+            }
         }
     ]
 }
