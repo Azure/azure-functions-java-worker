@@ -1,0 +1,115 @@
+jobs:
+  - job: "TestLinux"
+    displayName: 'Test java worker - Linux'
+
+    pool:
+      name: 1es-pool-azfunc-public
+      image: 1es-ubuntu-22.04
+      os: linux
+
+    variables:
+      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+        isTagTemp: true
+      isTag: $[variables.isTagTemp]
+      ApplicationInsightAgentVersion: 3.5.4
+
+    strategy:
+      maxParallel: 1
+      matrix:
+        open-jdk-8-linux:
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u392b08.tar.gz'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_linux_hotspot_8u392b08'
+          JDK_PATH: 'jdk8u392-b08'
+          JAVA_VERSION_SPEC: '8'
+        microsoft-open-jdk-11-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.21-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-11.0.21-linux-x64'
+          JDK_PATH: 'jdk-11.0.21+9'
+          JAVA_VERSION_SPEC: '11'
+        microsoft-open-jdk-17-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.9-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-17.0.9-linux-x64'
+          JDK_PATH: 'jdk-17.0.9+8'
+          JAVA_VERSION_SPEC: '17'
+        microsoft-open-jdk-21-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.1-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-21.0.1-linux-x64'
+          JDK_PATH: 'jdk-21.0.1+12'
+          JAVA_VERSION_SPEC: '21'
+
+    steps:
+      - task: NuGetToolInstaller@1
+        inputs:
+          checkLatest: true
+        displayName: 'Install NuGet Tool'
+      - pwsh: |
+          Get-Command mvn
+        displayName: 'Check Maven is installed'
+      - task: JavaToolInstaller@0 # This step is necessary as Linux image has Java 11 as default
+        inputs:
+          versionSpec: '8'
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
+        displayName: 'Setup Java for Linux'
+      - pwsh: |
+          java -version
+        displayName: 'Check default java version'
+      - pwsh: |
+          if ("$(isTag)"){
+            $buildNumber="$(Build.SourceBranchName)"
+            Write-Host "Found git tag."
+          }
+          else {
+            $buildNumber="$(Build.BuildNumber)-v4"
+            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+          }
+          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+          .\package-pipeline.ps1 -buildNumber $buildNumber
+        displayName: 'Executing build script'
+      - task: UseDotNet@2
+        displayName: 'Install .NET 6'
+        inputs:
+          version: 6.0.x
+      - pwsh: | # Download JDK for later installation
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).tar.gz"
+          $current = get-location | select -ExpandProperty Path
+          Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
+        displayName: 'Download jdk for Linux'
+      - task: JavaToolInstaller@0 # Install JDK downloaded from previous task
+        inputs:
+          versionSpec: $(JAVA_VERSION_SPEC)
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: LocalDirectory
+          jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+          jdkDestinationDirectory: "$(downloadPath)/externals"
+          cleanDestinationDirectory: true
+        displayName: 'Setup Java for Linux'
+      - pwsh: |
+          .\setup-tests-pipeline.ps1
+        displayName: 'Setup test environment -- Install the Core Tools'
+      - bash: |
+          chmod +x ./Azure.Functions.Cli/func
+          chmod +x ./Azure.Functions.Cli/gozip
+          export PATH=$PATH:./Azure.Functions.Cli
+          func --version
+        displayName: 'Setup Core Tools - Linux'
+      - pwsh: |
+          cd ./emulatedtests
+          mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
+        displayName: 'Package Java for E2E'
+      - bash: |
+          docker compose -f emulatedtests/utils/docker-compose.yml pull
+          docker compose -f emulatedtests/utils/docker-compose.yml up -d
+        displayName: 'Install Azurite and Start Emulators'
+      - task: DotNetCoreCLI@2
+        retryCountOnTaskFailure: 3
+        inputs:
+          command: 'test'
+          projects: |
+            emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
+        env:
+          JAVA_HOME: $(JavaHome)
+          AzureWebJobsStorage: "UseDevelopmentStorage=true"
+        displayName: 'Build & Run tests'
+        continueOnError: false

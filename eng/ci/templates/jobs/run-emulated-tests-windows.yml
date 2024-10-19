@@ -1,0 +1,101 @@
+jobs:
+  - job: "TestWindows"
+    displayName: 'Test java worker - Windows'
+
+    pool:
+      name: 1es-pool-azfunc-public
+      image: 1es-windows-2022
+      os: windows
+
+    variables:
+      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+        isTagTemp: true
+      isTag: $[variables.isTagTemp]
+      ApplicationInsightAgentVersion: 3.5.4
+
+    strategy:
+      maxParallel: 1
+      matrix:
+        open-jdk-8-windows:
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08/OpenJDK8U-jdk_x64_windows_hotspot_8u392b08.zip'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u392b08'
+          JDK_PATH: 'jdk8u392-b08'
+        microsoft-open-jdk-11-windows:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.21-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-11.0.21-windows-x64'
+          JDK_PATH: 'jdk-11.0.21+9'
+        microsoft-open-jdk-17-windows:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.9-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-17.0.9-windows-x64'
+          JDK_PATH: 'jdk-17.0.9+8'
+        microsoft-open-jdk-21-windows:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.1-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-21.0.1-windows-x64'
+          JDK_PATH: 'jdk-21.0.1+12'
+
+    steps:
+      - task: NuGetToolInstaller@1
+        inputs:
+          checkLatest: true
+        displayName: 'Install NuGet Tool'
+      - pwsh: |
+          Get-Command mvn
+        displayName: 'Check Maven is installed'
+      - pwsh: |
+          java -version
+        displayName: 'Check default java version'
+      - pwsh: |
+          if ("$(isTag)"){
+            $buildNumber="$(Build.SourceBranchName)"
+            Write-Host "Found git tag."
+          }
+          else {
+            $buildNumber="$(Build.BuildNumber)-v4"
+            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+          }
+          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+          .\package-pipeline.ps1 -buildNumber $buildNumber
+        displayName: 'Executing build script'
+      - task: UseDotNet@2
+        displayName: 'Install .NET 6'
+        inputs:
+          version: 6.0.x
+      - pwsh: |
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).zip"
+          Expand-Archive -Force "$(JAVA_VERSION).zip" .
+          cd $(JDK_PATH)
+          $current = get-location | select -ExpandProperty Path
+          cd ..
+          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
+        displayName: 'Download and setup Java for Windows'
+
+      - pwsh: |
+          .\setup-tests-pipeline.ps1
+        displayName: 'Setup test environment -- Install the Core Tools'
+
+      - pwsh: |
+          $currDir =  Get-Location
+          $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
+          func --version
+        displayName: 'Setup Core Tools - Windows'
+      - pwsh: |
+          cd ./emulatedtests
+          mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
+        displayName: 'Package Java for E2E'
+      - bash: |
+          npm install -g azurite
+          mkdir azurite
+          azurite --silent --location azurite --debug azurite\debug.log &
+        displayName: 'Install and Run Azurite'
+      - task: DotNetCoreCLI@2
+        retryCountOnTaskFailure: 3
+        inputs:
+          command: 'test'
+          projects: |
+            emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
+        env:
+          JAVA_HOME: $(JavaHome)
+          AzureWebJobsStorage: "UseDevelopmentStorage=true"
+        displayName: 'Build & Run tests'
+        continueOnError: false
