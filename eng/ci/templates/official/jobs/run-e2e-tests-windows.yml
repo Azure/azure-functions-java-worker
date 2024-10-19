@@ -94,6 +94,7 @@ jobs:
           AzureWebJobsStorage: $(AzureWebJobsStorage)
           AzureWebJobsCosmosDBConnectionString: $(AzureWebJobsCosmosDBConnectionString)
           AzureWebJobsSqlConnectionString: $(AzureWebJobsSqlConnectionString)
+          AzureWebJobsMySqlConnectionString: $(AzureWebJobsMySqlConnectionString)
           AzureWebJobsServiceBus: $(AzureWebJobsServiceBus)
           AzureWebJobsEventHubReceiver: $(AzureWebJobsEventHubReceiver)
           AzureWebJobsEventHubSender_2: $(AzureWebJobsEventHubSender_2)
