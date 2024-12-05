@@ -30,9 +30,12 @@ resources:
 variables:
   - template: ci/variables/build.yml@eng
   - template: ci/variables/cfs.yml@eng
-  - codeql.language: java,powershell
-  - codeql.buildIdentifier: java_worker_official
-  - codeql.excludePathPatterns: 'extract/inst'
+  - name: codeql.language
+    value: java,powershell
+  - name: codeql.buildIdentifier
+    value: java_worker_official
+  - name: codeql.excludePathPatterns
+    value: extract/inst
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
