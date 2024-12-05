@@ -25,9 +25,12 @@ resources:
       ref: refs/tags/release
 
 variables:
-  - codeql.language: java,powershell
-  - codeql.buildIdentifier: java_worker_public
-  - codeql.excludePathPatterns: 'extract/inst'
+  - name: codeql.language
+    value: java,powershell
+  - name: codeql.buildIdentifier
+    value: java_worker_public
+  - name: codeql.excludePathPatterns
+    value: extract/inst
 
 extends:
   template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
