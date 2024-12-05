@@ -24,6 +24,11 @@ resources:
       name: 1ESPipelineTemplates/1ESPipelineTemplates
       ref: refs/tags/release
 
+variables:
+  - codeql.language: java,powershell
+  - codeql.buildIdentifier: java_worker_official
+  - codeql.excludePathPatterns: 'extract/inst'
+
 extends:
   template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
   parameters:
@@ -38,35 +43,16 @@ extends:
 
     stages:
       - stage: Build
-        templateContext:
-          sdl:
-            codeql:
-              language: java,powershell
-              buildIdentifier: java_worker_public
-              excludePathPatterns: '/extract/inst'
-              runSourceLanguagesInSourceAnalysis: true
         jobs:
           - template: /eng/ci/templates/jobs/build.yml@self
 
       - stage: TestWindows
         dependsOn: Build
-        templateContext:
-          sdl:
-            codeql:
-              language: csharp
-              buildIdentifier: java_worker_csharp_public
-              excludePathPatterns: '/extract/inst'
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-windows.yml@self
 
       - stage: TestLinux
         dependsOn:
           - TestWindows
-        templateContext:
-          sdl:
-            codeql:
-              compiled:
-                enabled: false
-                justificationForDisabling: 'Running the scan in TestWindows stage'
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
