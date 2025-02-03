@@ -41,45 +41,79 @@ if (Test-Path -Path $oldOutput) {
     Remove-Item -Path $oldOutput -Recurse
 }
 
-## local testing cleanup
-#$oldExtract = [System.IO.Path]::Combine($PSScriptRoot, "extract")
-#if (Test-Path -Path $oldExtract) {
-#    Remove-Item -Path $oldExtract -Recurse
-#}
-#
-#$extract = new-item -type directory -force $PSScriptRoot\extract
-#if (-not(Test-Path -Path $extract)) {
-#    echo "Fail to create a new directory $extract"
-#    exit 1
-#}
-#
-#echo "Start extracting content from $ApplicationInsightsAgentFile to extract folder"
-#cd -Path $extract -PassThru
-#jar xf $ApplicationInsightsAgentFile
-#cd $PSScriptRoot
-#echo "Done extracting"
-#
-#echo "Unsign $ApplicationInsightsAgentFile"
-#Remove-Item $extract\META-INF\MSFTSIG.*
-#$manifest = "$extract\META-INF\MANIFEST.MF"
-#$newContent = (Get-Content -Raw $manifest | Select-String -Pattern '(?sm)^(.*?\r?\n)\r?\n').Matches[0].Groups[1].Value
-#Set-Content -Path $manifest $newContent
-
 $agent = new-item -type directory -force $PSScriptRoot\agent
 $filename = "applicationinsights-agent.jar"
-#$result = [System.IO.Path]::Combine($agent, $filename)
-#echo "re-jar $filename"
-#
-#cd -Path $extract -PassThru
-#jar cfm $result META-INF/MANIFEST.MF .
-#
-#if (-not(Test-Path -Path $result)) {
-#    echo "Fail to re-archive $filename"
-#    exit 1
-#}
+$packagedAgentFile = Join-Path $agent $filename
 
-Copy-Item $ApplicationInsightsAgentFile -Destination (Join-Path $agent $filename)
-Write-Host "Agent copied successfully to $agentDir"
+Copy-Item $ApplicationInsightsAgentFile -Destination $packagedAgentFile
+Write-Host "Agent copied successfully to $packagedAgentFile"
+
+# Load the required assembly for ZipArchive
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+
+Write-Host "Removing signature files from $packagedAgentFile ..."
+
+# Open the jar as a zip archive in "Update" mode
+$fileStream = [System.IO.File]::Open($packagedAgentFile, [System.IO.FileMode]::Open)
+$zipArchive = New-Object System.IO.Compression.ZipArchive($fileStream, [System.IO.Compression.ZipArchiveMode]::Update)
+
+try {
+    # 1) Remove signature files (META-INF/MSFTSIG.*, .SF, .RSA, .DSA)
+    Write-Host "Removing signature files..."
+    $entriesToRemove = $zipArchive.Entries | Where-Object {
+        $_.FullName -like "META-INF/MSFTSIG.*" `
+        -or $_.FullName -like "META-INF/*.SF" `
+        -or $_.FullName -like "META-INF/*.RSA" `
+        -or $_.FullName -like "META-INF/*.DSA"
+    }
+
+    foreach ($entry in $entriesToRemove) {
+        Write-Host "  Deleting: $($entry.FullName)"
+        $entry.Delete()
+    }
+
+    # 2) Locate the MANIFEST.MF entry
+    $manifestEntry = $zipArchive.Entries | Where-Object { $_.FullName -eq "META-INF/MANIFEST.MF" }
+    if ($manifestEntry) {
+        Write-Host "Removing signature references from MANIFEST.MF ..."
+
+        # Read the existing manifest
+        $reader = New-Object System.IO.StreamReader($manifestEntry.Open())
+        $manifestContent = $reader.ReadToEnd()
+        $reader.Close()
+
+        $pattern = '(?sm)^(.*?\r?\n)\r?\n'
+        $matches = [regex]::Matches($manifestContent, $pattern)
+
+        if ($matches.Count -gt 0) {
+            $cleanedManifest = $matches[0].Groups[1].Value
+
+            # Delete the old MANIFEST.MF entry from the archive
+            $manifestEntry.Delete()
+
+            # Create a fresh entry for the updated MANIFEST.MF
+            $newManifestEntry = $zipArchive.CreateEntry("META-INF/MANIFEST.MF")
+            $writer = New-Object System.IO.StreamWriter($newManifestEntry.Open())
+            $writer.Write($cleanedManifest)
+            $writer.Flush()
+            $writer.Close()
+
+            Write-Host "MANIFEST.MF updated successfully."
+        }
+        else {
+            Write-Host "No extra blank lines found. No changes to MANIFEST.MF."
+        }
+    }
+    else {
+        Write-Host "No MANIFEST.MF found in the JAR (unexpected?)."
+    }
+} finally {
+    # Close out the archive and file streams
+    $zipArchive.Dispose()
+    $fileStream.Dispose()
+}
+
+Write-Host "Done removing signature files from $packagedAgentFile."
 
 Write-Host "Creating the functions.codeless file"
 New-Item -path $PSScriptRoot\agent -type file -name "functions.codeless"
