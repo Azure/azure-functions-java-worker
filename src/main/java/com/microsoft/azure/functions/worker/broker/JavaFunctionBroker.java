@@ -18,6 +18,7 @@ import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
+import com.microsoft.azure.functions.worker.chain.SdkTypeMiddleware;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -37,6 +38,8 @@ public class JavaFunctionBroker {
 	private volatile InvocationChainFactory invocationChainFactory;
 	private volatile FunctionInstanceInjector functionInstanceInjector;
 	private final Object oneTimeLogicInitializationLock = new Object();
+	private List<Middleware> baseMiddlewares = new ArrayList<>();
+	private final Map<String, InvocationChainFactory> functionFactories = new ConcurrentHashMap<>();
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -57,15 +60,33 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
 		initializeOneTimeLogics();
+		createInvocationChainFactory(descriptor, bindings);
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
+	}
+
+	private void createInvocationChainFactory(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings) {
+		List<Middleware> functionMws = new ArrayList<>(this.baseMiddlewares);
+		boolean supportsDeferredBinding = (bindings.get("supportsDeferredBinding") != null);
+
+
+		if (supportsDeferredBinding) {
+			functionMws.add(new SdkTypeMiddleware());
+		}
+		functionMws.add(getFunctionExecutionMiddleWare());
+
+		InvocationChainFactory factory = new InvocationChainFactory(functionMws);
+		this.functionFactories.put(descriptor.getId(), factory);
+
+		WorkerLogManager.getSystemLogger().info("Created custom invocationChainFactory for function "
+				+ descriptor.getId() + ", supportsDeferredBinding=" + supportsDeferredBinding);
 	}
 
 	private void initializeOneTimeLogics() {
 		if (!oneTimeLogicInitialized) {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
-					initializeInvocationChainFactory();
+					loadGlobalMiddlewares();
 					initializeFunctionInstanceInjector();
 					oneTimeLogicInitialized = true;
 				}
@@ -73,21 +94,18 @@ public class JavaFunctionBroker {
 		}
 	}
 
-	private void initializeInvocationChainFactory() {
-		ArrayList<Middleware> middlewares = new ArrayList<>();
+	private void loadGlobalMiddlewares() {
 		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
-				middlewares.add(middleware);
-				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
+				this.baseMiddlewares.add(middleware);
+				WorkerLogManager.getSystemLogger().info("Loading discovered middleware " + middleware.getClass().getSimpleName());
 			}
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
-		middlewares.add(getFunctionExecutionMiddleWare());
-		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	private void initializeFunctionInstanceInjector() {
@@ -122,7 +140,7 @@ public class JavaFunctionBroker {
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-		this.invocationChainFactory.create().doNext(executionContextDataSource);
+		this.functionFactories.get(id).create().doNext(executionContextDataSource);
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
