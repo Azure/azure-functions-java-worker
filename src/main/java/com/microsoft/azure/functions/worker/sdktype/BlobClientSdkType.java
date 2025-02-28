@@ -1,7 +1,9 @@
 package com.microsoft.azure.functions.worker.sdktype;
 
+import com.microsoft.azure.functions.rpc.messages.ModelBindingData;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
+import com.microsoft.azure.functions.worker.binding.RpcModelBindingDataSource;
 
 /**
  * SdkType for building a BlobClient. The parseMetadata method obtains
@@ -18,18 +20,20 @@ public class BlobClientSdkType extends SdkType {
     public void parseMetadata(ExecutionContextDataSource execCtx) throws Exception {
         BindingDataStore dataStore = execCtx.getDataStore();
 
+         Object mbd = dataStore.getDataByName("content", RpcModelBindingDataSource.class);
+
         // containerName
-        this.containerName = (String) dataStore.getTriggerMetatDataByName("containerName", String.class)
+        this.containerName = (String) dataStore.getDataByName("ContainerName", String.class)
                 .map(b -> b.getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Missing containerName for BlobClientSdkType"));
 
         // blobName
-        this.blobName = (String) dataStore.getTriggerMetatDataByName("blobName", String.class)
+        this.blobName = (String) dataStore.getDataByName("BlobName", String.class)
                 .map(b -> b.getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Missing blobName for BlobClientSdkType"));
 
         // envVarForConnectionString
-        this.envVarForConnectionString = (String) dataStore.getTriggerMetatDataByName("envVarForConnectionString", String.class)
+        this.envVarForConnectionString = (String) dataStore.getDataByName("Connection", String.class)
                 .map(b -> b.getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Missing envVarForConnectionString for BlobClientSdkType"));
     }

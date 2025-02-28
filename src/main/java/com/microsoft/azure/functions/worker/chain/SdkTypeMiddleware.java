@@ -23,33 +23,49 @@ import java.util.logging.Logger;
  */
 public class SdkTypeMiddleware implements Middleware {
     private static final Logger LOGGER = WorkerLogManager.getSystemLogger();
+    private final ClassLoader classLoader;
+
+    public SdkTypeMiddleware(ClassLoader classLoader) {
+        this.classLoader = classLoader;
+    }
 
     @Override
     public void invoke(MiddlewareContext context, MiddlewareChain chain) throws Exception {
-        ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
-        MethodBindInfo methodBindInfo = execCtx.getMethodBindInfo();
-        BindingDataStore dataStore = execCtx.getDataStore();
 
-        for (ParamBindInfo param : methodBindInfo.getParams()) {
-            String paramTypeFqcn = param.getType().getTypeName();
+        // save the current loader
+        ClassLoader prevCL = Thread.currentThread().getContextClassLoader();
 
-            if (SdkTypeRegistry.isRecognizedType(paramTypeFqcn)) {
-                SdkType sdkTypeInstance = SdkTypeRegistry.createSdkType(paramTypeFqcn);
+        try {
+            // set class loader for the reflection calls
+            Thread.currentThread().setContextClassLoader(this.classLoader);
 
-                // parse all needed metadata from the invocation context
-                sdkTypeInstance.parseMetadata(execCtx);
+            ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
+            MethodBindInfo methodBindInfo = execCtx.getMethodBindInfo();
+            //BindingDataStore dataStore = execCtx.getDataStore();
 
-                // build the final client object
-                Object sdkClient = sdkTypeInstance.hydrate();
+            for (ParamBindInfo param : methodBindInfo.getParams()) {
+                String paramTypeFqcn = param.getType().getTypeName();
 
-                // store in data store
-                dataStore.setDataTargetValue(param.getName(), sdkClient);
+                if (SdkTypeRegistry.isRecognizedType(paramTypeFqcn)) {
+                    SdkType sdkTypeInstance = SdkTypeRegistry.createSdkType(paramTypeFqcn);
 
-                LOGGER.info("SdkTypeMiddleware: Successfully created instance for param "
-                        + param.getName() + " of type " + paramTypeFqcn);
+                    // parse all needed metadata from the invocation context
+                    sdkTypeInstance.parseMetadata(execCtx);
+
+                    // build the final client object
+                    Object sdkClient = sdkTypeInstance.hydrate();
+
+                    // store in data store
+                    execCtx.updateParameterValue(param.getName(), sdkClient);
+
+                    LOGGER.info("SdkTypeMiddleware: Successfully created instance for param "
+                            + param.getName() + " of type " + paramTypeFqcn);
+                }
             }
-        }
 
-        chain.doNext(context);
+            chain.doNext(context);
+        } finally {
+            Thread.currentThread().setContextClassLoader(prevCL);
+        }
     }
 }

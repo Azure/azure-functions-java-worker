@@ -19,11 +19,13 @@ public class FunctionDefinition {
     private final Class<?> containingClass;
     private final MethodBindInfo candidate;
     private final Map<String, BindingDefinition> bindingDefinitions;
+    private final FunctionMethodDescriptor descriptor;
 
     public FunctionDefinition(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindingInfos, ClassLoaderProvider classLoaderProvider)
             throws ClassNotFoundException, NoSuchMethodException
     {
-        descriptor.validateMethodInfo();
+        this.descriptor = descriptor;
+        this.descriptor.validateMethodInfo();
 
         this.containingClass = getContainingClass(descriptor.getFullClassName(), classLoaderProvider);
 
@@ -71,4 +73,6 @@ public class FunctionDefinition {
     public MethodBindInfo getCandidate() {
         return candidate;
     }
+
+    public FunctionMethodDescriptor getDescriptor() { return descriptor; }
 }

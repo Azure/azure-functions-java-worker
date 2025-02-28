@@ -54,6 +54,12 @@ public final class BindingDataStore {
     public Optional<BindingData> getDataByName(String name, Type target) {
         DataSource<?> parameterDataSource = this.inputSources.get(name);
         if (parameterDataSource == null) {
+            DataSource<?> parameterDataSource2 = this.inputSources.get("content");
+            if (parameterDataSource2 != null) {
+                return parameterDataSource2.computeByName(name, target);
+            }
+        }
+        if (parameterDataSource == null) {
             throw new RuntimeException("Cannot find matched parameter name of customer function, please check if customer function is defined correctly");
         }
     	return parameterDataSource.computeByName(name, target);
@@ -84,6 +90,7 @@ public final class BindingDataStore {
             case COLLECTION_BYTES: return new RpcCollectionByteArrayDataSource(name, data.getCollectionBytes());
             case COLLECTION_SINT64: return new RpcCollectionLongDataSource(name, data.getCollectionSint64());
             case DATA_NOT_SET: return new RpcEmptyDataSource(name);
+            case MODEL_BINDING_DATA: return new RpcModelBindingDataSource(name, data.getModelBindingData());
             default:     throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
         }
     }

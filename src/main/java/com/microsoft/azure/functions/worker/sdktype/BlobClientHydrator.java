@@ -20,7 +20,8 @@ public class BlobClientHydrator implements SdkTypeHydrator<BlobClientSdkType> {
         }
 
         // Reflection over com.azure.storage.blob.BlobClientBuilder
-        Class<?> builderClass = Class.forName("com.azure.storage.blob.BlobClientBuilder");
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Class<?> builderClass = classLoader.loadClass("com.azure.storage.blob.BlobClientBuilder");
         Object builder = builderClass.getDeclaredConstructor().newInstance();
 
         Method conn = builderClass.getMethod("connectionString", String.class);

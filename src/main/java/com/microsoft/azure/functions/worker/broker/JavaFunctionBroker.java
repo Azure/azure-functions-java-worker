@@ -60,26 +60,27 @@ public class JavaFunctionBroker {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
 		initializeOneTimeLogics();
-		createInvocationChainFactory(descriptor, bindings);
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
+		createInvocationChainFactory(functionDefinition, bindings);
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
-	private void createInvocationChainFactory(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings) {
+	private void createInvocationChainFactory(FunctionDefinition functionDefinition, Map<String, BindingInfo> bindings) {
 		List<Middleware> functionMws = new ArrayList<>(this.baseMiddlewares);
-		boolean supportsDeferredBinding = (bindings.get("supportsDeferredBinding") != null);
-
-
+		//boolean supportsDeferredBinding = (bindings.get("supportsDeferredBinding") != null);
+		boolean supportsDeferredBinding = true;
+		ClassLoader classLoader = this.classLoaderProvider.createClassLoader();
 		if (supportsDeferredBinding) {
-			functionMws.add(new SdkTypeMiddleware());
+			functionMws.add(new SdkTypeMiddleware(classLoader));
 		}
-		functionMws.add(getFunctionExecutionMiddleWare());
+		functionMws.add(getFunctionExecutionMiddleWare(classLoader));
 
 		InvocationChainFactory factory = new InvocationChainFactory(functionMws);
-		this.functionFactories.put(descriptor.getId(), factory);
+		String functionId = functionDefinition.getDescriptor().getId();
+		this.functionFactories.put(functionId, factory);
 
 		WorkerLogManager.getSystemLogger().info("Created custom invocationChainFactory for function "
-				+ descriptor.getId() + ", supportsDeferredBinding=" + supportsDeferredBinding);
+				+ functionId + ", supportsDeferredBinding=" + supportsDeferredBinding);
 	}
 
 	private void initializeOneTimeLogics() {
@@ -130,9 +131,9 @@ public class JavaFunctionBroker {
 		}
 	}
 
-	private FunctionExecutionMiddleware getFunctionExecutionMiddleWare() {
+	private FunctionExecutionMiddleware getFunctionExecutionMiddleWare(ClassLoader classLoader) {
 		FunctionExecutionMiddleware functionExecutionMiddleware = new FunctionExecutionMiddleware(
-				JavaMethodExecutors.createJavaMethodExecutor(this.classLoaderProvider.createClassLoader()));
+				JavaMethodExecutors.createJavaMethodExecutor(classLoader));
 		WorkerLogManager.getSystemLogger().info("Load last middleware: FunctionExecutionMiddleware");
 		return functionExecutionMiddleware;
 	}
