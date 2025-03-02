@@ -7,10 +7,13 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.gson.Gson;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
+import com.microsoft.azure.functions.spi.inject.GsonInstanceInjector;
 import com.microsoft.azure.functions.worker.Constants;
+import com.microsoft.azure.functions.worker.Util;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
@@ -38,7 +41,7 @@ public class JavaFunctionBroker {
 	private volatile FunctionInstanceInjector functionInstanceInjector;
 	private final Object oneTimeLogicInitializationLock = new Object();
 
-	private FunctionInstanceInjector newInstanceInjector() {
+	private FunctionInstanceInjector newFunctionInstanceInjector() {
 		return new FunctionInstanceInjector() {
 			@Override
 			public <T> T getInstance(Class<T> functionClass) throws Exception {
@@ -53,7 +56,7 @@ public class JavaFunctionBroker {
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
-			throws ClassNotFoundException, NoSuchMethodException, IOException {
+			throws Exception {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
 		initializeOneTimeLogics();
@@ -61,12 +64,12 @@ public class JavaFunctionBroker {
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
-	private void initializeOneTimeLogics() {
+	private void initializeOneTimeLogics() throws Exception{
 		if (!oneTimeLogicInitialized) {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
 					initializeInvocationChainFactory();
-					initializeFunctionInstanceInjector();
+					initializeInstanceInjector();
 					oneTimeLogicInitialized = true;
 				}
 			}
@@ -90,25 +93,42 @@ public class JavaFunctionBroker {
 		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
-	private void initializeFunctionInstanceInjector() {
+	private void initializeInstanceInjector() throws Exception{
 		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
-			Iterator<FunctionInstanceInjector> iterator = ServiceLoader.load(FunctionInstanceInjector.class).iterator();
-			if (iterator.hasNext()) {
-				this.functionInstanceInjector = iterator.next();
-				WorkerLogManager.getSystemLogger().info("Load function instance injector: " + this.functionInstanceInjector.getClass().getName());
-				if (iterator.hasNext()){
-					WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
-					throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
-				}
-			}else {
-				this.functionInstanceInjector = newInstanceInjector();
-				WorkerLogManager.getSystemLogger().info("Didn't find any function instance injector, creating function class instance every invocation.");
-			}
+			loadFunctionInstanceInjector();
+			loadGsonInstanceInjector();
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
+		}
+	}
+
+	private void loadFunctionInstanceInjector() {
+		Iterator<FunctionInstanceInjector> iterator = ServiceLoader.load(FunctionInstanceInjector.class).iterator();
+		if (iterator.hasNext()) {
+			this.functionInstanceInjector = iterator.next();
+			WorkerLogManager.getSystemLogger().info("Load function instance injector: " + this.functionInstanceInjector.getClass().getName());
+			if (iterator.hasNext()){
+				WorkerLogManager.getSystemLogger().warning("Customer function app has multiple FunctionInstanceInjector implementations.");
+				throw new RuntimeException("Customer function app has multiple FunctionInstanceInjector implementations");
+			}
+		}else {
+			this.functionInstanceInjector = newFunctionInstanceInjector();
+			WorkerLogManager.getSystemLogger().info("Didn't find any function instance injector, creating function class instance every invocation.");
+		}
+	}
+
+	private void loadGsonInstanceInjector() throws Exception{
+		Iterator<GsonInstanceInjector> iterator = ServiceLoader.load(GsonInstanceInjector.class).iterator();
+		if (iterator.hasNext()) {
+			GsonInstanceInjector gsonInstanceInjector = iterator.next();
+			Util.setGsonInstance(gsonInstanceInjector.getGsonInstance());
+			WorkerLogManager.getSystemLogger().info("Load gson instance injector: " + gsonInstanceInjector.getClass().getName());
+		}else {
+			Util.setGsonInstance(new Gson());
+			WorkerLogManager.getSystemLogger().info("Didn't find any gson instance injector, creating function class instance every invocation.");
 		}
 	}
 

@@ -4,15 +4,23 @@ package com.microsoft.azure.functions.worker.binding.tests;
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.Optional;
 
+import com.google.gson.Gson;
+import com.microsoft.azure.functions.worker.Util;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.RpcByteArrayDataSource;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RpcByteArrayDataSourceTest {
+
+  @BeforeAll
+  public static void setGsonInstance() {
+    Util.setGsonInstance(new Gson());
+  }
 
   @Test
   public void rpcByteArrayDataSource_To_byteArray() {
