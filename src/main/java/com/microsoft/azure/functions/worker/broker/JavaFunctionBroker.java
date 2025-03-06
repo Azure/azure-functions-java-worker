@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
@@ -16,11 +17,14 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.chain.SdkTypeMiddleware;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
+import com.microsoft.azure.functions.worker.sdktype.SdkParameterAnalysisResult;
+import com.microsoft.azure.functions.worker.sdktype.SdkParameterAnalyzer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -40,6 +44,8 @@ public class JavaFunctionBroker {
 	private final Object oneTimeLogicInitializationLock = new Object();
 	private List<Middleware> baseMiddlewares = new ArrayList<>();
 	private final Map<String, InvocationChainFactory> functionFactories = new ConcurrentHashMap<>();
+	private final SdkParameterAnalyzer sdkParameterAnalyzer = new SdkParameterAnalyzer();
+	private final WorkerObjectCache<CacheKey> workerObjectCache = new WorkerObjectCache<>();
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -66,13 +72,17 @@ public class JavaFunctionBroker {
 	}
 
 	private void createInvocationChainFactory(FunctionDefinition functionDefinition, Map<String, BindingInfo> bindings) {
-		List<Middleware> functionMws = new ArrayList<>(this.baseMiddlewares);
-		//boolean supportsDeferredBinding = (bindings.get("supportsDeferredBinding") != null);
-		boolean supportsDeferredBinding = true;
+		SdkParameterAnalysisResult sdkParameterAnalysisResult =
+				this.sdkParameterAnalyzer.analyze(functionDefinition.getCandidate().getMethod());
+
 		ClassLoader classLoader = this.classLoaderProvider.createClassLoader();
-		if (supportsDeferredBinding) {
-			functionMws.add(new SdkTypeMiddleware(classLoader));
+		List<Middleware> functionMws = new ArrayList<>(this.baseMiddlewares);
+		boolean hasAnySdkTypes = sdkParameterAnalysisResult.hasAnySdkTypes();
+
+		if (hasAnySdkTypes) {
+			functionMws.add(new SdkTypeMiddleware(classLoader, sdkParameterAnalysisResult.getSdkTypes()));
 		}
+
 		functionMws.add(getFunctionExecutionMiddleWare(classLoader));
 
 		InvocationChainFactory factory = new InvocationChainFactory(functionMws);
@@ -80,7 +90,7 @@ public class JavaFunctionBroker {
 		this.functionFactories.put(functionId, factory);
 
 		WorkerLogManager.getSystemLogger().info("Created custom invocationChainFactory for function "
-				+ functionId + ", supportsDeferredBinding=" + supportsDeferredBinding);
+				+ functionId + ", supportsDeferredBinding=" + hasAnySdkTypes);
 	}
 
 	private void initializeOneTimeLogics() {
@@ -161,9 +171,17 @@ public class JavaFunctionBroker {
 				request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(),
 				request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
-		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(request.getInvocationId(),
-				traceContext, retryContext, methodEntry.left, dataStore, functionDefinition.getCandidate(),
-				functionDefinition.getContainingClass(), request.getInputDataList(), this.functionInstanceInjector);
+		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(
+				request.getInvocationId(),
+				traceContext,
+				retryContext,
+				methodEntry.left,
+				dataStore,
+				functionDefinition.getCandidate(),
+				functionDefinition.getContainingClass(),
+				request.getInputDataList(),
+				this.functionInstanceInjector,
+				this.workerObjectCache);
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		return executionContextDataSource;
 	}

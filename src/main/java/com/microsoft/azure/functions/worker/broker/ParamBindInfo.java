@@ -10,7 +10,7 @@ public final class ParamBindInfo {
     private final String bindingNameAnnotation;
     private final boolean isImplicitOutput;
     private final Parameter parameter;
-    ParamBindInfo(Parameter param) {
+    public ParamBindInfo(Parameter param) {
         this.name = CoreTypeResolver.getAnnotationName(param);
         this.type = param.getParameterizedType();
         this.bindingNameAnnotation = CoreTypeResolver.getBindingNameAnnotation(param);

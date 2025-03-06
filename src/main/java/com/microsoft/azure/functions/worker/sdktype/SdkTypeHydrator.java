@@ -1,9 +1,10 @@
 package com.microsoft.azure.functions.worker.sdktype;
 
 /**
- * Separate interface for reflection logic:
- * createInstance(sdkType) builds the final Azure SDK client from the parsed fields.
+ * Reflection or direct logic to create an instance of T.
+ *
+ * @param <T> The specific SdkType
  */
-public interface SdkTypeHydrator<T extends SdkType> {
+public interface SdkTypeHydrator<T extends SdkType<T>> {
     Object createInstance(T sdkType) throws Exception;
 }

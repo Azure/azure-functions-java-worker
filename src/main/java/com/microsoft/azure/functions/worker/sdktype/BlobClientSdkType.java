@@ -1,26 +1,38 @@
 package com.microsoft.azure.functions.worker.sdktype;
 
+import com.microsoft.azure.functions.cache.CacheKey;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.rpc.messages.ModelBindingData;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.RpcModelBindingDataSource;
 
+import java.lang.reflect.Parameter;
+
 /**
  * SdkType for building a BlobClient. The parseMetadata method obtains
  * containerName, blobName, and envVarForConnection from the invocation context.
  */
-public class BlobClientSdkType extends SdkType {
-    private static final BlobClientHydrator HYDRATOR = new BlobClientHydrator();
-
+public class BlobClientSdkType implements SdkType<BlobClientSdkType> {
+    private final SdkTypeHydrator<BlobClientSdkType> hydrator;
+    private final SdkTypeVerifier<BlobClientSdkType> verifier;
+    private final Parameter param;
     private String containerName;
     private String blobName;
     private String envVarForConnectionString;
 
-    @Override
-    public void parseMetadata(ExecutionContextDataSource execCtx) throws Exception {
-        BindingDataStore dataStore = execCtx.getDataStore();
+    public BlobClientSdkType(SdkTypeHydrator<BlobClientSdkType> hydrator,
+                             SdkTypeVerifier<BlobClientSdkType> verifier,
+                             Parameter param) {
+        this.hydrator = hydrator;
+        this.verifier = verifier;
+        this.param = param;
+    }
 
-         Object mbd = dataStore.getDataByName("content", RpcModelBindingDataSource.class);
+    @Override
+    public void parseMetadata(MiddlewareContext context) throws Exception {
+        ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
+        BindingDataStore dataStore = execCtx.getDataStore();
 
         // containerName
         this.containerName = (String) dataStore.getDataByName("ContainerName", String.class)
@@ -39,8 +51,24 @@ public class BlobClientSdkType extends SdkType {
     }
 
     @Override
-    protected SdkTypeHydrator<BlobClientSdkType> getHydrator() {
-        return HYDRATOR;
+    public CacheKey buildCacheKey() {
+        // If we want caching, produce a key. Otherwise could return null.
+        return new BlobClientCacheKey(containerName, blobName, envVarForConnectionString);
+    }
+
+    @Override
+    public SdkTypeHydrator<BlobClientSdkType> getHydrator() {
+        return hydrator;
+    }
+
+    @Override
+    public SdkTypeVerifier<BlobClientSdkType> getVerifier() {
+        return verifier;
+    }
+
+    @Override
+    public Parameter getParam() {
+        return param;
     }
 
     // Getters for the hydrator

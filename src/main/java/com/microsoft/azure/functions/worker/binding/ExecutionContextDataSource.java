@@ -1,6 +1,7 @@
 package com.microsoft.azure.functions.worker.binding;
 
 import com.microsoft.azure.functions.*;
+import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
@@ -8,6 +9,7 @@ import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.MethodBindInfo;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
+import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
@@ -51,6 +53,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private Object returnValue;
 
     private final FunctionInstanceInjector functionInstanceInjector;
+    private final WorkerObjectCache<CacheKey> workerObjectCache;
 
     //TODO: refactor class to have subclass dedicate to middleware to make logics clean
     private static final DataOperations<ExecutionContext, Object> EXECONTEXT_DATA_OPERATIONS = new DataOperations<>();
@@ -60,7 +63,8 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
                                       String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
-                                      Class<?> containingClass, List<ParameterBinding> parameterBindings, FunctionInstanceInjector functionInstanceInjector){
+                                      Class<?> containingClass, List<ParameterBinding> parameterBindings, FunctionInstanceInjector functionInstanceInjector,
+                                      WorkerObjectCache<CacheKey> workerObjectCache){
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -73,6 +77,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.parameterDefinitions = getParameterDefinitions(methodBindInfo);
         this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
         this.functionInstanceInjector = functionInstanceInjector;
+        this.workerObjectCache = workerObjectCache;
         this.setValue(this);
     }
 
@@ -175,5 +180,11 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         }else{
             return dataStore.getDataByName(paramName, paramType);
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public WorkerObjectCache<CacheKey> getCache() {
+        return this.workerObjectCache;
     }
 }

@@ -1,32 +1,71 @@
 package com.microsoft.azure.functions.worker.sdktype;
 
-import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
+import com.microsoft.azure.functions.cache.CacheKey;
+import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
+
+import java.lang.reflect.Parameter;
 
 /**
- * Generic interface/class for each SDK type, e.g., BlobClient, QueueClient, etc.
- * 1) parseMetadata(context) -> fill internal fields
- * 2) hydrate() -> internally calls hydrator to reflectively create the final SDK client
+ * A recognized SDK type that:
+ *   - Has references to a hydrator and verifier
+ *   - Knows how to parse invocation metadata
+ *   - Can produce a CacheKey (if needed)
+ *   - Has default methods for verify() and buildInstance() that rely on getVerifier(), getHydrator().
+ *
+ * @param <T> The concrete type implementing SdkType (for safe casting in hydrators/verifiers).
  */
-public abstract class SdkType {
-    /**
-     * Gathers all necessary data from the worker's invocation context
-     * (e.g. containerName, blobName, connection env var, etc.).
-     */
-    public abstract void parseMetadata(ExecutionContextDataSource execCtx) throws Exception;
+public interface SdkType<T extends SdkType<T>> {
 
     /**
-     * Returns the hydrator instance for this SdkType.
-     * Typically, a static final field or something similar.
+     * Gather necessary fields from the invocation context
+     * (e.g., containerName, blobName, etc.).
      */
-    protected abstract SdkTypeHydrator<? extends SdkType> getHydrator();
+    void parseMetadata(MiddlewareContext context) throws Exception;
 
     /**
-     * Triggers the reflection-based creation of the actual SDK client.
-     * We do not supply defaults for missing data. If parseMetadata didn't fill the fields, this should fail.
+     * Return a SdkTypeVerifier (if any) for advanced checks.
      */
-    public Object hydrate() throws Exception {
+    SdkTypeVerifier<T> getVerifier();
+
+    /**
+     * Return a SdkTypeHydrator (if any) for reflection-based creation.
+     */
+    SdkTypeHydrator<T> getHydrator();
+
+    /**
+     * Return a Parameter object for the argument that uses the SDK type.
+     */
+    Parameter getParam();
+
+    /**
+     * Optionally build a CacheKey for caching.
+     * Return null if no caching is desired.
+     */
+    CacheKey buildCacheKey();
+
+    /**
+     * Default method to run advanced checks.
+     * Calls getVerifier().verify(this) if present.
+     */
+    default void verify() throws Exception {
+        SdkTypeVerifier<T> verifier = getVerifier();
+        if (verifier != null) {
+            @SuppressWarnings("unchecked")
+            T self = (T) this;
+            verifier.verify(self);
+        }
+    }
+
+    /**
+     * Default method to build the final object by calling getHydrator().
+     */
+    default Object buildInstance() throws Exception {
+        SdkTypeHydrator<T> hydrator = getHydrator();
+        if (hydrator == null) {
+            throw new IllegalStateException("No hydrator provided in this SdkType");
+        }
         @SuppressWarnings("unchecked")
-        SdkTypeHydrator<SdkType> hydrator = (SdkTypeHydrator<SdkType>) getHydrator();
-        return hydrator.createInstance(this);
+        T self = (T) this;
+        return hydrator.createInstance(self);
     }
 }

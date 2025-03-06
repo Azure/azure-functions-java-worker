@@ -1,30 +1,42 @@
 package com.microsoft.azure.functions.worker.sdktype;
 
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Maps param-type FQCN -> SdkType class.
- * The SdkType class internally references its hydrator via getHydrator().
+ * A registry that knows about recognized SDK client FQCNs and can create SdkType objects.
  */
 public class SdkTypeRegistry {
-    private static final Map<String, Class<? extends SdkType>> REGISTRY = new HashMap<>();
+    // Maps FQCN -> Class<? extends SdkType>
+    private final Map<String, SdkTypeFactory> knownTypes = new HashMap<>();
 
-    static {
-        // Register BlobClient
-        REGISTRY.put("com.azure.storage.blob.BlobClient", BlobClientSdkType.class);
-        // In future, add queue, table, etc.
+    public SdkTypeRegistry() {
+        registerBlobClient();
     }
 
-    public static boolean isRecognizedType(String fqcn) {
-        return REGISTRY.containsKey(fqcn);
+    /** Check if we recognize a param type */
+    public boolean isRecognizedType(String fqcn) {
+        return knownTypes.containsKey(fqcn);
     }
 
-    public static SdkType createSdkType(String fqcn) throws Exception {
-        Class<? extends SdkType> sdkTypeClass = REGISTRY.get(fqcn);
-        if (sdkTypeClass == null) {
-            throw new IllegalArgumentException("Unrecognized sdkType: " + fqcn);
+    /** Create an SdkType object for the given recognized type */
+    public SdkType<?> createSdkType(String fqcn, Parameter param) throws Exception {
+        SdkTypeFactory factory = knownTypes.get(fqcn);
+        if (factory == null) {
+            throw new IllegalArgumentException("Unrecognized SdkType: " + fqcn);
         }
-        return sdkTypeClass.getDeclaredConstructor().newInstance();
+        return factory.create(param);
+    }
+
+    public interface SdkTypeFactory {
+        SdkType create(Parameter param) throws Exception;
+    }
+
+    private void registerBlobClient() {
+        SdkTypeHydrator<BlobClientSdkType> hydrator = new BlobClientHydrator();
+        SdkTypeVerifier<BlobClientSdkType> verifier = new BlobClientVerifier();
+        knownTypes.put("com.azure.storage.blob.BlobClient",
+                (Parameter param) -> new BlobClientSdkType(hydrator, verifier, param));
     }
 }

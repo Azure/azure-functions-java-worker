@@ -7,6 +7,7 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +50,7 @@ public class ParameterResolverTest {
                 public <T> T getInstance(Class<T> functionClass) throws Exception {
                     return null;
                 }
-            });
+            }, new WorkerObjectCache<>());
         }
 
     }
