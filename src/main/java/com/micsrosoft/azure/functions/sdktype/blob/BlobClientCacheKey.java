@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype.blob;
 
 import com.microsoft.azure.functions.cache.CacheKey;
 import java.util.Objects;

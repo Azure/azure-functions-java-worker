@@ -23,8 +23,8 @@ import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.chain.SdkTypeMiddleware;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
-import com.microsoft.azure.functions.worker.sdktype.SdkParameterAnalysisResult;
-import com.microsoft.azure.functions.worker.sdktype.SdkParameterAnalyzer;
+import com.micsrosoft.azure.functions.sdktype.SdkParameterAnalysisResult;
+import com.micsrosoft.azure.functions.sdktype.SdkParameterAnalyzer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 

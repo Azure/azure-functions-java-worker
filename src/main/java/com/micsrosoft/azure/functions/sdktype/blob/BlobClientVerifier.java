@@ -1,4 +1,6 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype.blob;
+
+import com.micsrosoft.azure.functions.sdktype.SdkTypeVerifier;
 
 public class BlobClientVerifier implements SdkTypeVerifier<BlobClientSdkType> {
     @Override

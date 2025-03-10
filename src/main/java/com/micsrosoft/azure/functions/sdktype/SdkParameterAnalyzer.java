@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -22,6 +22,8 @@ public class SdkParameterAnalyzer {
                 }
             }
         }
+
+        // TODO: Throw exception if more than one sdktype is detected
         return result;
     }
 }

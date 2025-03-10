@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype;
 
 import java.util.ArrayList;
 import java.util.List;

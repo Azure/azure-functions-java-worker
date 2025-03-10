@@ -7,8 +7,7 @@ import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
-import com.microsoft.azure.functions.worker.sdktype.SdkParameterAnalysisResult;
-import com.microsoft.azure.functions.worker.sdktype.SdkType;
+import com.micsrosoft.azure.functions.sdktype.SdkType;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 
 import java.lang.reflect.Parameter;

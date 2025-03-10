@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype;
 
 /**
  * Reflection or direct logic to create an instance of T.

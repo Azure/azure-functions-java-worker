@@ -1,4 +1,4 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype;
 
 /**
  * Advanced usage checks for T (e.g., triggers, library presence).

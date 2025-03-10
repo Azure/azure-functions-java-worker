@@ -1,4 +1,8 @@
-package com.microsoft.azure.functions.worker.sdktype;
+package com.micsrosoft.azure.functions.sdktype;
+
+import com.micsrosoft.azure.functions.sdktype.blob.BlobClientHydrator;
+import com.micsrosoft.azure.functions.sdktype.blob.BlobClientSdkType;
+import com.micsrosoft.azure.functions.sdktype.blob.BlobClientVerifier;
 
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
