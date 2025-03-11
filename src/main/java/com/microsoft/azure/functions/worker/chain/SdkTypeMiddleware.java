@@ -4,14 +4,17 @@ import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
+import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.micsrosoft.azure.functions.sdktype.SdkType;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
+import com.micsrosoft.azure.functions.sdktype.SdkTypeMetaData;
 
 import java.lang.reflect.Parameter;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -42,14 +45,22 @@ public class SdkTypeMiddleware implements Middleware {
 
         try {
             ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
+            BindingDataStore dataStore = execCtx.getDataStore();
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
             for (SdkType<?> sdkType : this.sdkTypes) {
-                sdkType.parseMetadata(execCtx);
-                Parameter param = sdkType.getParam();
-                ParamBindInfo paramBindInfo = new ParamBindInfo(param);
+                SdkTypeMetaData metaData = sdkType.getMetaData();
+                Set<String> requiredKeys = metaData.getRequiredFields();
 
-                CacheKey key = sdkType.buildCacheKey();
+                for (String key : requiredKeys) {
+                    Object val = dataStore.getDataByName(key, String.class)
+                            .map(b -> b.getValue())
+                            .orElseThrow(() -> new IllegalArgumentException("Missing " + key));
+
+                    metaData.setFieldValue(key, val);
+                }
+
+                CacheKey key = metaData.buildCacheKey();
                 Object instance = cache.computeIfAbsent(
                         this.getClass(),
                         key,
@@ -63,6 +74,8 @@ public class SdkTypeMiddleware implements Middleware {
                 );
 
                 // update in data store
+                Parameter param = sdkType.getParam();
+                ParamBindInfo paramBindInfo = new ParamBindInfo(param);
                 execCtx.updateParameterValue(paramBindInfo.getName(), instance);
 
                 LOGGER.info("SdkTypeMiddleware: Successfully created instance for param "

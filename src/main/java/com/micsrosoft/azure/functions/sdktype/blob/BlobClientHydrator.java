@@ -8,13 +8,13 @@ import java.lang.reflect.Method;
  * Reflection logic for building a BlobClient from a BlobClientSdkType.
  * No defaults for missing data. parseMetadata ensures required fields are set.
  */
-public class BlobClientHydrator implements SdkTypeHydrator<BlobClientSdkType> {
+public class BlobClientHydrator implements SdkTypeHydrator<BlobClientMetaData> {
 
     @Override
-    public Object createInstance(BlobClientSdkType sdkType) throws Exception {
-        String containerName = sdkType.getContainerName();
-        String blobName = sdkType.getBlobName();
-        String envVar = sdkType.getEnvVarForConnectionString();
+    public Object createInstance(BlobClientMetaData metaData) throws Exception {
+        String containerName = metaData.getContainerName();
+        String blobName = metaData.getBlobName();
+        String envVar = metaData.getConnectionEnvVar();
 
         String connectionString = System.getenv(envVar);
         if (connectionString == null || connectionString.isEmpty()) {
@@ -23,6 +23,7 @@ public class BlobClientHydrator implements SdkTypeHydrator<BlobClientSdkType> {
 
         // Reflection over com.azure.storage.blob.BlobClientBuilder
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        // TODO: add try-catch and error
         Class<?> builderClass = classLoader.loadClass("com.azure.storage.blob.BlobClientBuilder");
         Object builder = builderClass.getDeclaredConstructor().newInstance();
 

@@ -1,10 +1,14 @@
 package com.micsrosoft.azure.functions.sdktype;
 
 /**
- * Reflection or direct logic to create an instance of T.
+ * A hydrator that builds the final client instance
+ * from a given SdkTypeMetaData object.
  *
- * @param <T> The specific SdkType
+ * @param <M> the type of MetaData used
  */
-public interface SdkTypeHydrator<T extends SdkType<T>> {
-    Object createInstance(T sdkType) throws Exception;
+public interface SdkTypeHydrator<M extends SdkTypeMetaData> {
+    /**
+     * Build the final object using data from the metaData.
+     */
+    Object createInstance(M metaData) throws Exception;
 }

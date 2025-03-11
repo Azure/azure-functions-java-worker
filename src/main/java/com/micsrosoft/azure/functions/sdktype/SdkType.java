@@ -1,7 +1,6 @@
 package com.micsrosoft.azure.functions.sdktype;
 
 import com.microsoft.azure.functions.cache.CacheKey;
-import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
 
 import java.lang.reflect.Parameter;
 
@@ -12,60 +11,35 @@ import java.lang.reflect.Parameter;
  *   - Can produce a CacheKey (if needed)
  *   - Has default methods for verify() and buildInstance() that rely on getVerifier(), getHydrator().
  *
- * @param <T> The concrete type implementing SdkType (for safe casting in hydrators/verifiers).
+ * @param <M> The concrete type implementing SdkTypeMetaData
  */
-public interface SdkType<T extends SdkType<T>> {
+public interface SdkType<M extends SdkTypeMetaData> {
 
     /**
-     * Gather necessary fields from the invocation context
-     * (e.g., containerName, blobName, etc.).
+     * Return the associated metadata object, so
+     * the worker can fill it with fields if needed.
      */
-    void parseMetadata(MiddlewareContext context) throws Exception;
+    M getMetaData();
 
     /**
-     * Return a SdkTypeVerifier (if any) for advanced checks.
+     * Return the hydrator that builds the final instance using the metaData.
      */
-    SdkTypeVerifier<T> getVerifier();
+    SdkTypeHydrator<M> getHydrator();
 
     /**
-     * Return a SdkTypeHydrator (if any) for reflection-based creation.
-     */
-    SdkTypeHydrator<T> getHydrator();
-
-    /**
-     * Return a Parameter object for the argument that uses the SDK type.
+     * Return a Parameter object for the argument that uses this SDK type.
      */
     Parameter getParam();
 
     /**
-     * Optionally build a CacheKey for caching.
-     * Return null if no caching is desired.
-     */
-    CacheKey buildCacheKey();
-
-    /**
-     * Default method to run advanced checks.
-     * Calls getVerifier().verify(this) if present.
-     */
-    default void verify() throws Exception {
-        SdkTypeVerifier<T> verifier = getVerifier();
-        if (verifier != null) {
-            @SuppressWarnings("unchecked")
-            T self = (T) this;
-            verifier.verify(self);
-        }
-    }
-
-    /**
-     * Default method to build the final object by calling getHydrator().
+     * Build or retrieve a final instance of the SDK object.
+     * Calls parseAndVerify() on metaData
+     * then calls the hydrator.
      */
     default Object buildInstance() throws Exception {
-        SdkTypeHydrator<T> hydrator = getHydrator();
-        if (hydrator == null) {
-            throw new IllegalStateException("No hydrator provided in this SdkType");
-        }
-        @SuppressWarnings("unchecked")
-        T self = (T) this;
-        return hydrator.createInstance(self);
+        M meta = getMetaData();
+        meta.parseAndVerify();
+        SdkTypeHydrator<M> hydrator = getHydrator();
+        return hydrator.createInstance(meta);
     }
 }
