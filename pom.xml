@@ -16,7 +16,8 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <azure.functions.java.core.library.version>1.3.0</azure.functions.java.core.library.version>
-    <azure.functions.java.spi>1.0.0</azure.functions.java.spi>
+    <azure.functions.java.spi>1.1.0</azure.functions.java.spi>
+    <azure.functions.java.sdktypes>1.0.0</azure.functions.java.sdktypes>
     <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
     <jupiter.version>5.9.1</jupiter.version>
     <mockito-core.version>4.11.0</mockito-core.version>
@@ -64,6 +65,11 @@
       <groupId>com.microsoft.azure.functions</groupId>
       <artifactId>azure-functions-java-spi</artifactId>
       <version>${azure.functions.java.spi}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure.functions</groupId>
+      <artifactId>azure-functions-java-sdktypes</artifactId>
+      <version>${azure.functions.java.sdktypes}</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
