@@ -23,8 +23,8 @@ import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
 import com.microsoft.azure.functions.worker.chain.SdkTypeMiddleware;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
-import com.micsrosoft.azure.functions.sdktype.SdkParameterAnalysisResult;
-import com.micsrosoft.azure.functions.sdktype.SdkParameterAnalyzer;
+import com.microsoft.azure.functions.sdktype.SdkParameterAnalysisResult;
+import com.microsoft.azure.functions.sdktype.SdkParameterAnalyzer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -80,7 +80,9 @@ public class JavaFunctionBroker {
 		boolean hasAnySdkTypes = sdkParameterAnalysisResult.hasAnySdkTypes();
 
 		if (hasAnySdkTypes) {
-			functionMws.add(new SdkTypeMiddleware(classLoader, sdkParameterAnalysisResult.getSdkTypes()));
+			functionMws.add(new SdkTypeMiddleware(classLoader,
+					sdkParameterAnalysisResult.getSdkTypesMetaData(),
+					this.sdkParameterAnalyzer.getRegistry()));
 		}
 
 		functionMws.add(getFunctionExecutionMiddleWare(classLoader));

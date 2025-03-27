@@ -4,13 +4,15 @@ import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
+import com.microsoft.azure.functions.sdktype.CachableSdkType;
+import com.microsoft.azure.functions.sdktype.SdkType;
+import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
-import com.micsrosoft.azure.functions.sdktype.SdkType;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
-import com.micsrosoft.azure.functions.sdktype.SdkTypeMetaData;
+import com.microsoft.azure.functions.sdktype.SdkTypeMetaData;
 
 import java.lang.reflect.Parameter;
 import java.util.List;
@@ -27,12 +29,14 @@ import java.util.logging.Logger;
 public class SdkTypeMiddleware implements Middleware {
     private static final Logger LOGGER = WorkerLogManager.getSystemLogger();
     private final ClassLoader classLoader;
-    private final List<SdkType<?>> sdkTypes;
+    private final List<SdkTypeMetaData> sdkTypesMetaData;
+    private final SdkTypeRegistry sdkTypeRegistry;
 
 
-    public SdkTypeMiddleware(ClassLoader classLoader, List<SdkType<?>> sdkTypes) {
+    public SdkTypeMiddleware(ClassLoader classLoader, List<SdkTypeMetaData> sdkTypesMetaData, SdkTypeRegistry sdkTypeRegistry) {
         this.classLoader = classLoader;
-        this.sdkTypes = sdkTypes;
+        this.sdkTypesMetaData = sdkTypesMetaData;
+        this.sdkTypeRegistry = sdkTypeRegistry;
     }
 
     @Override
@@ -48,8 +52,7 @@ public class SdkTypeMiddleware implements Middleware {
             BindingDataStore dataStore = execCtx.getDataStore();
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
-            for (SdkType<?> sdkType : this.sdkTypes) {
-                SdkTypeMetaData metaData = sdkType.getMetaData();
+            for (SdkTypeMetaData metaData : this.sdkTypesMetaData) {
                 Set<String> requiredKeys = metaData.getRequiredFields();
 
                 for (String key : requiredKeys) {
@@ -60,21 +63,28 @@ public class SdkTypeMiddleware implements Middleware {
                     metaData.setFieldValue(key, val);
                 }
 
-                CacheKey key = metaData.buildCacheKey();
-                Object instance = cache.computeIfAbsent(
-                        this.getClass(),
-                        key,
-                        () -> {
-                            try {
-                                return sdkType.buildInstance();
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
+                SdkType<?> sdkType = this.sdkTypeRegistry.createSdkType(metaData);
+
+                Object instance = null;
+                if (sdkType instanceof CachableSdkType) {
+                    CacheKey key = ((CachableSdkType<?>) sdkType).buildCacheKey();
+                    instance = cache.computeIfAbsent(
+                            this.getClass(),
+                            key,
+                            () -> {
+                                try {
+                                    return sdkType.buildInstance();
+                                } catch (Exception ex) {
+                                    throw new RuntimeException(ex);
+                                }
                             }
-                        }
-                );
+                    );
+                } else {
+                    instance = sdkType.buildInstance();
+                }
 
                 // update in data store
-                Parameter param = sdkType.getParam();
+                Parameter param = metaData.getParam();
                 ParamBindInfo paramBindInfo = new ParamBindInfo(param);
                 execCtx.updateParameterValue(paramBindInfo.getName(), instance);
 
