@@ -3,8 +3,6 @@ package com.microsoft.azure.functions.endtoend;
 import com.microsoft.azure.functions.annotation.*;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
-import java.util.Optional;
 
 import com.microsoft.azure.functions.*;
 
@@ -69,7 +67,7 @@ public class BlobTriggerTests {
     public void BlobTriggerToBlobTest_BlobClient(
             @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobclient/{name}", dataType = "binary") BlobClient triggerBlobClient,
             @BindingName("name") String fileName,
-            @BlobOutput(name = "outputBlob", path = "test-output-java-new/{name}", dataType = "binary") OutputBinding<byte[]> outputBlob,
+            @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context
     ) {
         context.getLogger().info("BlobTriggerUsingBlobClient triggered for blob: " + fileName);
@@ -80,7 +78,7 @@ public class BlobTriggerTests {
 
         // Set the downloaded content as output
         outputBlob.setValue(outputStream.toByteArray());
-        context.getLogger().info("Blob content copied successfully from trigger blob to output blob.");
+        context.getLogger().info("Uploaded blob " + fileName + " to container test-output-java-new/testfile.txt");
     }
 
     /**
@@ -91,7 +89,7 @@ public class BlobTriggerTests {
     public void BlobTriggerToBlobTest_BlobContainerClient(
             @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobcontclient/{name}", dataType = "binary") BlobContainerClient triggerBlobContainerClient,
             @BindingName("name") String fileName,
-            @BlobOutput(name = "outputBlob", path = "test-output-java-new/{name}", dataType = "binary") OutputBinding<byte[]> outputBlob,
+            @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context
     ) {
         context.getLogger().info("BlobTriggerUsingBlobContainerClient triggered for blob: " + fileName);
@@ -103,7 +101,7 @@ public class BlobTriggerTests {
 
         // Set the downloaded content as output
         outputBlob.setValue(outputStream.toByteArray());
-        context.getLogger().info("Blob content copied successfully from trigger blob to output blob.");
+        context.getLogger().info("Uploaded blob " + fileName + " to container test-output-java-new/testfile.txt");
     }
 
     public static class TestBlobData {

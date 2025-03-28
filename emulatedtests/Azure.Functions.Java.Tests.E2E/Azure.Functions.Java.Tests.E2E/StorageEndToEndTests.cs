@@ -126,7 +126,7 @@ namespace Azure.Functions.Java.Tests.E2E
             await StorageHelpers.UpdloadFileToContainer(Constants.TriggerInputBindingBlobClientSdk, fileName);
 
             //Verify
-            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, fileName);
+            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, "testfile");
             Assert.Equal("Hello World", result);
         }
 
@@ -145,7 +145,7 @@ namespace Azure.Functions.Java.Tests.E2E
             await StorageHelpers.UpdloadFileToContainer(Constants.TriggerInputBindingBlobContainerClientSdk, fileName);
 
             //Verify
-            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, fileName);
+            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, "testfile");
             Assert.Equal("Hello World", result);
         }
     }
