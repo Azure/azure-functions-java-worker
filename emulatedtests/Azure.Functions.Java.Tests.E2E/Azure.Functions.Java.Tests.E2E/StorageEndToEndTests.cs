@@ -110,5 +110,43 @@ namespace Azure.Functions.Java.Tests.E2E
 
             Assert.Equal("Hello World", result);
         }
+
+        [Fact]
+        public async Task BlobTriggerToBlob_BlobClient_Succeeds()
+        {
+            string fileName = Guid.NewGuid().ToString();
+
+            //cleanup
+            await StorageHelpers.ClearBlobContainers();
+
+            //Setup
+            await StorageHelpers.CreateBlobContainers();
+
+            //Trigger
+            await StorageHelpers.UpdloadFileToContainer(Constants.TriggerInputBindingBlobClientSdk, fileName);
+
+            //Verify
+            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, fileName);
+            Assert.Equal("Hello World", result);
+        }
+
+        [Fact]
+        public async Task BlobTriggerToBlob_BlobContainerClient_Succeeds()
+        {
+            string fileName = Guid.NewGuid().ToString();
+
+            //cleanup
+            await StorageHelpers.ClearBlobContainers();
+
+            //Setup
+            await StorageHelpers.CreateBlobContainers();
+
+            //Trigger
+            await StorageHelpers.UpdloadFileToContainer(Constants.TriggerInputBindingBlobContainerClientSdk, fileName);
+
+            //Verify
+            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, fileName);
+            Assert.Equal("Hello World", result);
+        }
     }
 }

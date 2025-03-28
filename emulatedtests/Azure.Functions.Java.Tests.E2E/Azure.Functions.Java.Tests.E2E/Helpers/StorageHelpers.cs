@@ -84,6 +84,8 @@ namespace Azure.Functions.Java.Tests.E2E
             await ClearBlobContainer(Constants.TriggerInputBindingBlobContainer);
             await ClearBlobContainer(Constants.InputBindingBlobContainer);
             await ClearBlobContainer(Constants.OutputBindingBlobContainer);
+            await ClearBlobContainer(Constants.TriggerInputBindingBlobClientSdk);
+            await ClearBlobContainer(Constants.TriggerInputBindingBlobContainerClientSdk);
         }
 
         public async static Task CreateBlobContainers()
@@ -91,6 +93,8 @@ namespace Azure.Functions.Java.Tests.E2E
             await CreateBlobContainer(Constants.TriggerInputBindingBlobContainer);
             await CreateBlobContainer(Constants.InputBindingBlobContainer);
             await CreateBlobContainer(Constants.OutputBindingBlobContainer);
+            await CreateBlobContainer(Constants.TriggerInputBindingBlobClientSdk);
+            await CreateBlobContainer(Constants.TriggerInputBindingBlobContainerClientSdk);
         }
 
         public async static Task UpdloadFileToContainer(string containerName, string expectedFileName)
