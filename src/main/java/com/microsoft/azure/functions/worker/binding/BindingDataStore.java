@@ -54,9 +54,10 @@ public final class BindingDataStore {
     public Optional<BindingData> getDataByName(String name, Type target) {
         DataSource<?> parameterDataSource = this.inputSources.get(name);
         if (parameterDataSource == null) {
-            DataSource<?> parameterDataSource2 = this.inputSources.get("content");
-            if (parameterDataSource2 != null) {
-                return parameterDataSource2.computeByName(name, target);
+            Optional<Map.Entry<String, DataSource<?>>> firstEntry = this.inputSources.entrySet().stream().findFirst();
+            if (firstEntry.isPresent()) {
+                DataSource<?> subDict = firstEntry.get().getValue();
+                return subDict.computeByName(name, target);
             }
         }
         if (parameterDataSource == null) {

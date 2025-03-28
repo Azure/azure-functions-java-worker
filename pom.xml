@@ -129,11 +129,6 @@
       <version>${mockito-core.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.azure</groupId>
-      <artifactId>azure-identity</artifactId>
-      <version>1.15.4</version>
-    </dependency>
   </dependencies>
   <build>
     <extensions>
@@ -288,16 +283,6 @@
                 <relocation combine.children="append">
                   <pattern>javax.annotation</pattern>
                   <shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
-                </relocation>
-                <!-- relocate azure-identity -->
-                <relocation combine.children="append">
-                  <pattern>com.azure.identity</pattern>
-                  <shadedPattern>com.microsoft.azure.functions.shaded.com.azure.identity</shadedPattern>
-                </relocation>
-                <!-- relocate azure-core credential classes -->
-                <relocation combine.children="append">
-                  <pattern>com.azure.core.credential</pattern>
-                  <shadedPattern>com.microsoft.azure.functions.shaded.com.azure.core.credential</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

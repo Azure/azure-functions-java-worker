@@ -4,14 +4,14 @@ import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
-import com.microsoft.azure.functions.sdktype.CachableSdkType;
-import com.microsoft.azure.functions.sdktype.SdkType;
-import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
+import com.microsoft.azure.functions.sdktype.CachableSdkType;
+import com.microsoft.azure.functions.sdktype.SdkType;
+import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
 import com.microsoft.azure.functions.sdktype.SdkTypeMetaData;
 
 import java.lang.reflect.Parameter;
