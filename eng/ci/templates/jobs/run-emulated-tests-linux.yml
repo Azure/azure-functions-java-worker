@@ -58,6 +58,9 @@ jobs:
           java -version
         displayName: 'Check default java version'
       - pwsh: |
+          .\installJavaAdditions.ps1
+        displayName: 'Install java-additions locally'
+      - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
             Write-Host "Found git tag."
