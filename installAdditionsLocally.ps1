@@ -1,6 +1,6 @@
 # Variables for first repository
-$repoUrl1 = 'https://github.com/ahmedmuhsin/azure-functions-java-additions.git'
-$branchName1 = 'sdk-types'
+$repoUrl1 = 'https://github.com/Azure/azure-functions-java-additions.git'
+$branchName1 = 'dev'
 $repoName1 = 'azure-functions-java-additions'
 
 # Clone the first repository
