@@ -70,7 +70,7 @@ jobs:
           azurite --silent --location azurite --debug azurite\debug.log &
         displayName: 'Install and Run Azurite'
       - pwsh: |
-          .\installLibsLocally.ps1
+          .\installAdditionsLocally.ps1
         displayName: 'Install java-additions locally'
       - pwsh: |
           if ("$(isTag)"){
@@ -114,6 +114,9 @@ jobs:
       # Conditionally run an additional set of steps for "SDK types" scenario
       # ------------------------------------------
       - ${{ if eq(parameters.runSdkTypesTests, true) }}:
+          - pwsh: |
+              .\installMavenPluginLocally.ps1
+            displayName: 'Install maven plugin locally'
           - pwsh: |
               if ("$(isTag)"){
                 $buildNumber="$(Build.SourceBranchName)"
