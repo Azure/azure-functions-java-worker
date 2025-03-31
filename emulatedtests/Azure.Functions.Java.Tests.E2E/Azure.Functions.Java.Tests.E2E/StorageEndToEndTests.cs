@@ -112,6 +112,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
+        [Trait("Category", "SdkTypes")]
         public async Task BlobTriggerToBlob_BlobClient_Succeeds()
         {
             string fileName = Guid.NewGuid().ToString();
@@ -131,6 +132,7 @@ namespace Azure.Functions.Java.Tests.E2E
         }
 
         [Fact]
+        [Trait("Category", "SdkTypes")]
         public async Task BlobTriggerToBlob_BlobContainerClient_Succeeds()
         {
             string fileName = Guid.NewGuid().ToString();

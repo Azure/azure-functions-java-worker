@@ -24,6 +24,11 @@ resources:
       name: 1ESPipelineTemplates/1ESPipelineTemplates
       ref: refs/tags/release
 
+parameters:
+  - name: runSdkTypesTests
+    type: boolean
+    default: false
+
 extends:
   template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
   parameters:
@@ -55,6 +60,7 @@ extends:
           - template: /eng/ci/templates/jobs/run-emulated-tests-windows.yml@self
             parameters:
               poolName: 1es-pool-azfunc-public
+              runSdkTypesTests: ${{ parameters.runSdkTypesTests }}
 
       - stage: TestLinux
         dependsOn: Build
@@ -62,3 +68,4 @@ extends:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
             parameters:
               poolName: 1es-pool-azfunc-public
+              runSdkTypesTests: ${{ parameters.runSdkTypesTests }}

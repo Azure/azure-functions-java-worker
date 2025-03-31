@@ -1,5 +1,10 @@
 parameters:
-  poolName: ''
+  - name: poolName
+    type: string
+    default: ''
+  - name: runSdkTypesTests
+    type: boolean
+    default: false
 
 jobs:
   - job: "TestWindows"
@@ -47,6 +52,23 @@ jobs:
       - pwsh: |
           java -version
         displayName: 'Check default java version'
+      - task: UseDotNet@2
+        displayName: 'Install .NET 6'
+        inputs:
+          version: 6.0.x
+      - pwsh: |
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).zip"
+          Expand-Archive -Force "$(JAVA_VERSION).zip" .
+          cd $(JDK_PATH)
+          $current = get-location | select -ExpandProperty Path
+          cd ..
+          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
+        displayName: 'Download and setup Java for Windows'
+      - bash: |
+          npm install -g azurite
+          mkdir azurite
+          azurite --silent --location azurite --debug azurite\debug.log &
+        displayName: 'Install and Run Azurite'
       - pwsh: |
           .\installLibsLocally.ps1
         displayName: 'Install java-additions locally'
@@ -62,46 +84,70 @@ jobs:
           Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
           .\package-pipeline.ps1 -buildNumber $buildNumber
         displayName: 'Executing build script'
-      - task: UseDotNet@2
-        displayName: 'Install .NET 6'
-        inputs:
-          version: 6.0.x
       - pwsh: |
-          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).zip"
-          Expand-Archive -Force "$(JAVA_VERSION).zip" .
-          cd $(JDK_PATH)
-          $current = get-location | select -ExpandProperty Path
-          cd ..
-          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
-        displayName: 'Download and setup Java for Windows'
-
+          cd ./emulatedtests
+          mvn clean package -DexcludedClassPattern="**/BlobTriggerSdkTypesTests.java" `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
+        displayName: 'Package Java for E2E'
       - pwsh: |
           .\setup-tests-pipeline.ps1
         displayName: 'Setup test environment -- Install the Core Tools'
-
       - pwsh: |
           $currDir =  Get-Location
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
           func --version
         displayName: 'Setup Core Tools - Windows'
-      - pwsh: |
-          cd ./emulatedtests
-          mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
-          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
-        displayName: 'Package Java for E2E'
-      - bash: |
-          npm install -g azurite
-          mkdir azurite
-          azurite --silent --location azurite --debug azurite\debug.log &
-        displayName: 'Install and Run Azurite'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
           command: 'test'
           projects: |
             emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
+          arguments: '--filter "Category!=SdkTypes"'
         env:
           JAVA_HOME: $(JavaHome)
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
+          ENABLE_SDK_TYPES: "true"
         displayName: 'Build & Run tests'
         continueOnError: false
+      # ------------------------------------------
+      # Conditionally run an additional set of steps for "SDK types" scenario
+      # ------------------------------------------
+      - ${{ if eq(parameters.runSdkTypesTests, true) }}:
+          - pwsh: |
+              if ("$(isTag)"){
+                $buildNumber="$(Build.SourceBranchName)"
+                Write-Host "Found git tag."
+              }
+              else {
+                $buildNumber="$(Build.BuildNumber)-v4"
+                Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+              }
+              Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+              .\package-pipeline.ps1 -buildNumber $buildNumber
+            displayName: 'Executing build script (SDK types)'
+          - pwsh: |
+              cd ./emulatedtests
+              mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+              Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
+            displayName: 'Package Java for E2E (SDK types)'
+          - pwsh: |
+              .\setup-tests-pipeline.ps1
+            displayName: 'Setup test environment -- Install the Core Tools'
+          - pwsh: |
+              $currDir =  Get-Location
+              $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
+              func --version
+            displayName: 'Setup Core Tools - Windows'
+          - task: DotNetCoreCLI@2
+            retryCountOnTaskFailure: 3
+            inputs:
+              command: 'test'
+              projects: |
+                emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
+            env:
+              JAVA_HOME: $(JavaHome)
+              AzureWebJobsStorage: "UseDevelopmentStorage=true"
+              ENABLE_SDK_TYPES: "true"
+            displayName: 'Build & Run tests (SDK types)'
+            continueOnError: false

@@ -45,7 +45,9 @@ public class JavaFunctionBroker {
 	private List<Middleware> baseMiddlewares = new ArrayList<>();
 	private final Map<String, InvocationChainFactory> functionFactories = new ConcurrentHashMap<>();
 	private final SdkParameterAnalyzer sdkParameterAnalyzer = new SdkParameterAnalyzer();
-	private final WorkerObjectCache<CacheKey> workerObjectCache = new WorkerObjectCache<>();
+	private final WorkerObjectCache<CacheKey> workerObjectCache;
+	private static final boolean ENABLE_SDK_TYPES_FLAG =
+			Boolean.parseBoolean(System.getenv("ENABLE_SDK_TYPES"));
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -59,6 +61,11 @@ public class JavaFunctionBroker {
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
+		if (ENABLE_SDK_TYPES_FLAG) {
+			this.workerObjectCache = new WorkerObjectCache<>();
+		} else {
+			this.workerObjectCache = null;
+		}
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -67,7 +74,11 @@ public class JavaFunctionBroker {
 		addSearchPathsToClassLoader(descriptor);
 		initializeOneTimeLogics();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
-		createInvocationChainFactory(functionDefinition, bindings);
+
+		if (ENABLE_SDK_TYPES_FLAG) {
+			createInvocationChainFactory(functionDefinition, bindings);
+		}
+
 		this.methods.put(descriptor.getId(), new ImmutablePair<>(descriptor.getName(), functionDefinition));
 	}
 
@@ -99,7 +110,13 @@ public class JavaFunctionBroker {
 		if (!oneTimeLogicInitialized) {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
-					loadGlobalMiddlewares();
+
+					if (ENABLE_SDK_TYPES_FLAG) {
+						loadGlobalMiddlewares();
+					} else {
+						initializeInvocationChainFactory();
+					}
+
 					initializeFunctionInstanceInjector();
 					oneTimeLogicInitialized = true;
 				}
@@ -119,6 +136,24 @@ public class JavaFunctionBroker {
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
+	}
+
+	private void initializeInvocationChainFactory() {
+		ArrayList<Middleware> middlewares = new ArrayList<>();
+		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
+		ClassLoader newContextClassLoader = classLoaderProvider.createClassLoader();
+		try {
+			//ServiceLoader will use thread context classloader to verify loaded class
+			Thread.currentThread().setContextClassLoader(newContextClassLoader);
+			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
+				middlewares.add(middleware);
+				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
+			}
+		} finally {
+			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
+		}
+		middlewares.add(getFunctionExecutionMiddleWare(newContextClassLoader));
+		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	private void initializeFunctionInstanceInjector() {
@@ -153,7 +188,13 @@ public class JavaFunctionBroker {
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-		this.functionFactories.get(id).create().doNext(executionContextDataSource);
+
+		if (ENABLE_SDK_TYPES_FLAG) {
+			this.functionFactories.get(id).create().doNext(executionContextDataSource);
+		} else {
+			this.invocationChainFactory.create().doNext(executionContextDataSource);
+		}
+
 		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
