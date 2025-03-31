@@ -34,16 +34,16 @@ jobs:
           JAVA_VERSION: 'microsoft-jdk-11.0.21-linux-x64'
           JDK_PATH: 'jdk-11.0.21+9'
           JAVA_VERSION_SPEC: '11'
-        microsoft-open-jdk-17-linux:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.9-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-17.0.9-linux-x64'
-          JDK_PATH: 'jdk-17.0.9+8'
-          JAVA_VERSION_SPEC: '17'
-        microsoft-open-jdk-21-linux:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.1-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-21.0.1-linux-x64'
-          JDK_PATH: 'jdk-21.0.1+12'
-          JAVA_VERSION_SPEC: '21'
+#        microsoft-open-jdk-17-linux:
+#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.9-linux-x64.tar.gz'
+#          JAVA_VERSION: 'microsoft-jdk-17.0.9-linux-x64'
+#          JDK_PATH: 'jdk-17.0.9+8'
+#          JAVA_VERSION_SPEC: '17'
+#        microsoft-open-jdk-21-linux:
+#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.1-linux-x64.tar.gz'
+#          JAVA_VERSION: 'microsoft-jdk-21.0.1-linux-x64'
+#          JDK_PATH: 'jdk-21.0.1+12'
+#          JAVA_VERSION_SPEC: '21'
 
     steps:
       - task: NuGetToolInstaller@1
