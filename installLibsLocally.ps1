@@ -17,14 +17,7 @@ if ($IsWindows) {
     # Run the batch script (mvnBuild.bat)
     & ".\mvnBuild.bat"
 } else {
-    # Extract and explicitly invoke the mvn command from mvnBuild.bat
-    $mvnCommand = Get-Content "./mvnBuild.bat" | Where-Object { $_ -match '^mvn\s+' }
-    if ($null -ne $mvnCommand) {
-        # Execute the extracted mvn command explicitly as a single line
-        bash -c "$mvnCommand"
-    } else {
-        Write-Error "No mvn command found in mvnBuild.bat."
-    }
+    bash -c 'mvn clean install -U -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B -Dgpg.skip -Dspotbugs.skip=true'
 }
 
 # Return to the parent directory before working on the second repository
