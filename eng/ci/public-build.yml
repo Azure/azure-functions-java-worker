@@ -55,6 +55,7 @@ extends:
           - template: /eng/ci/templates/jobs/build.yml@self
 
       - stage: TestWindows
+        dependsOn: []
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-windows.yml@self
             parameters:
@@ -62,6 +63,7 @@ extends:
               runSdkTypesTests: ${{ parameters.runSdkTypesTests }}
 
       - stage: TestLinux
+        dependsOn: []
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
             parameters:
