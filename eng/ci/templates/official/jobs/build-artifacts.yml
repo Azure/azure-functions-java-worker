@@ -39,6 +39,9 @@ jobs:
           java -version
         displayName: 'Check default java version'
       - pwsh: |
+          .\installAdditionsLocally.ps1
+        displayName: 'Install java-additions locally'
+      - pwsh: |
           if ("$(isRelease)"){
             $buildNumber="$(Build.SourceBranchName)"
             Write-Host "Triggered for release."
