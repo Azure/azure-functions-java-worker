@@ -46,8 +46,8 @@ public class JavaFunctionBroker {
 	private final Map<String, InvocationChainFactory> functionFactories = new ConcurrentHashMap<>();
 	private final SdkParameterAnalyzer sdkParameterAnalyzer = new SdkParameterAnalyzer();
 	private final WorkerObjectCache<CacheKey> workerObjectCache;
-	private static final boolean ENABLE_SDK_TYPES_FLAG =
-			Boolean.parseBoolean(System.getenv("ENABLE_SDK_TYPES"));
+	private static final boolean JAVA_ENABLE_SDK_TYPES_FLAG =
+			Boolean.parseBoolean(System.getenv("JAVA_ENABLE_SDK_TYPES"));
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -61,7 +61,7 @@ public class JavaFunctionBroker {
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
-		if (ENABLE_SDK_TYPES_FLAG) {
+		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 			this.workerObjectCache = new WorkerObjectCache<>();
 		} else {
 			this.workerObjectCache = null;
@@ -75,7 +75,7 @@ public class JavaFunctionBroker {
 		initializeOneTimeLogics();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 
-		if (ENABLE_SDK_TYPES_FLAG) {
+		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 			createInvocationChainFactory(functionDefinition, bindings);
 		}
 
@@ -111,7 +111,7 @@ public class JavaFunctionBroker {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
 
-					if (ENABLE_SDK_TYPES_FLAG) {
+					if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 						loadGlobalMiddlewares();
 					} else {
 						initializeInvocationChainFactory();
@@ -189,7 +189,7 @@ public class JavaFunctionBroker {
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
 
-		if (ENABLE_SDK_TYPES_FLAG) {
+		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 			this.functionFactories.get(id).create().doNext(executionContextDataSource);
 		} else {
 			this.invocationChainFactory.create().doNext(executionContextDataSource);
