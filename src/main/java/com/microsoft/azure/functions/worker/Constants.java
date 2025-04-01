@@ -15,4 +15,5 @@ public final class Constants {
     public final static String JAVA_LIBRARY_DIRECTORY = "/annotationLib";
     public final static String JAVA_LIBRARY_ARTIFACT_ID = "azure-functions-java-library";
     public final static String HAS_IMPLICIT_OUTPUT_QUALIFIED_NAME = "com.microsoft.azure.functions.annotation.HasImplicitOutput";
+    public final static String NULLABLE_VALUES_ENABLED_APP_SETTING = "FUNCTIONS_WORKER_NULLABLE_VALUES_ENABLED";
 }

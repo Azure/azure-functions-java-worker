@@ -23,6 +23,7 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("TypedDataCollection", "TypedDataCollection");
         response.putCapabilities("WorkerStatus", "WorkerStatus");
         response.putCapabilities("RpcHttpBodyOnly", "RpcHttpBodyOnly");
+        response.putCapabilities("UseNullableValueDictionaryForHttp", "UseNullableValueDictionaryForHttp");
         response.putCapabilities("RpcHttpTriggerMetadataRemoved", "RpcHttpTriggerMetadataRemoved");
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
