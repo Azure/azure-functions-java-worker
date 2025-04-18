@@ -20,6 +20,7 @@ import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
+import com.microsoft.azure.functions.worker.chain.OpenTelemetryInvocationMiddleware;
 import com.microsoft.azure.functions.worker.chain.SdkTypeMiddleware;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
@@ -152,6 +153,7 @@ public class JavaFunctionBroker {
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
+		middlewares.add(new OpenTelemetryInvocationMiddleware());
 		middlewares.add(getFunctionExecutionMiddleWare(newContextClassLoader));
 		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}

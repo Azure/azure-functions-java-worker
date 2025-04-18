@@ -21,7 +21,7 @@
     <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
     <jupiter.version>5.9.1</jupiter.version>
     <mockito-core.version>4.11.0</mockito-core.version>
-    <appinsights.agents.version>3.6.2</appinsights.agents.version>
+    <appinsights.agents.version>3.7.1</appinsights.agents.version>
   </properties>
   <licenses>
     <license>
@@ -111,6 +111,36 @@
       <artifactId>javax.annotation-api</artifactId>
       <version>1.3.2</version>
     </dependency>
+    <!-- OTel Core API -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+      <version>1.49.0</version>
+    </dependency>
+    <!-- OTel SDK for traces and basic resource detection -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk</artifactId>
+      <version>1.49.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-logging</artifactId>
+      <version>1.49.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-otlp</artifactId>
+      <version>1.49.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-monitor-opentelemetry-autoconfigure</artifactId>
+      <version>1.1.0</version>
+    </dependency>
+
+    <!-- test -->
     <dependency>
       <groupId>com.microsoft.azure.functions</groupId>
       <artifactId>azure-functions-java-library</artifactId>
@@ -284,6 +314,10 @@
                   <pattern>javax.annotation</pattern>
                   <shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
                 </relocation>
+<!--                <relocation combine.children="append">-->
+<!--                  <pattern>io.opentelemetry</pattern>-->
+<!--                  <shadedPattern>com.microsoft.azure.functions.shaded.io.opentelemetry</shadedPattern>-->
+<!--                </relocation>-->
               </relocations>
             </configuration>
           </execution>
