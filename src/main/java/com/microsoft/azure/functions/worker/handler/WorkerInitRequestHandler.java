@@ -3,7 +3,6 @@ package com.microsoft.azure.functions.worker.handler;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
-import com.microsoft.azure.functions.worker.opentelemetry.OpenTelemetryInitializer;
 
 import java.util.logging.Level;
 
@@ -27,10 +26,14 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("RpcHttpTriggerMetadataRemoved", "RpcHttpTriggerMetadataRemoved");
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
-        response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
+
+        boolean otelEnabled = Boolean.parseBoolean(System.getenv("FUNCTIONS_OTEL_SUPPORT_ENABLED"));
+        if (otelEnabled){
+            response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
+        }
+
         response.setWorkerMetadata(composeWorkerMetadata());
 
-        //OpenTelemetryInitializer.initialize();
 
         return "Worker initialized";
     }
