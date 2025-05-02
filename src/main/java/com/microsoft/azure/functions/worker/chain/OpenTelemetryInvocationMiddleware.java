@@ -53,7 +53,8 @@ public class OpenTelemetryInvocationMiddleware implements Middleware {
 
         Context parent = sdk.getPropagators().getTextMapPropagator()
                 .extract(Context.current(), context.getTraceContext(), GETTER);
-        Span span = sdk.getTracer("func.demo").spanBuilder("func.hello")
+
+        Span span = sdk.getTracer("func.app").spanBuilder(context.getFunctionName())
                 .setParent(parent)
                 .setSpanKind(SpanKind.INTERNAL)
                 .startSpan();
@@ -68,7 +69,6 @@ public class OpenTelemetryInvocationMiddleware implements Middleware {
             span.setStatus(StatusCode.ERROR, t.getMessage());
             throw t;
         } finally {
-            // 5. End the span
             span.end();
             LOGGER.info("OpenTelemetryInvocationMiddleware ended span for " + context.getFunctionName());
         }
