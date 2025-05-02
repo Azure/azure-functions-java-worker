@@ -97,6 +97,11 @@ public class JavaFunctionBroker {
 					this.sdkParameterAnalyzer.getRegistry()));
 		}
 
+		boolean otelEnabled = Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OTEL"));
+		if (otelEnabled){
+			functionMws.add(new OpenTelemetryInvocationMiddleware());
+		}
+
 		functionMws.add(getFunctionExecutionMiddleWare(classLoader));
 
 		InvocationChainFactory factory = new InvocationChainFactory(functionMws);
@@ -154,7 +159,7 @@ public class JavaFunctionBroker {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
 
-		boolean otelEnabled = Boolean.parseBoolean(System.getenv("FUNCTIONS_OTEL_SUPPORT_ENABLED"));
+		boolean otelEnabled = Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OTEL"));
 		if (otelEnabled){
 			middlewares.add(new OpenTelemetryInvocationMiddleware());
 		}

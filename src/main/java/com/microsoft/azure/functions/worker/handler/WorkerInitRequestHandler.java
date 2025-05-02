@@ -27,7 +27,7 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
 
-        boolean otelEnabled = Boolean.parseBoolean(System.getenv("FUNCTIONS_OTEL_SUPPORT_ENABLED"));
+        boolean otelEnabled = Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OTEL"));
         if (otelEnabled){
             response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
         }
