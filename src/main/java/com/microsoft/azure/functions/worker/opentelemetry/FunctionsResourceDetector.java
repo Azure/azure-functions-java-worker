@@ -4,72 +4,118 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.sdk.resources.Resource;
 
+/**
+ * Builds a {@link Resource} that describes the current Azure Functions
+ * instance (or a local “func start” host) using environment variables.
+ *
+ * <p>All attribute keys follow the OpenTelemetry semantic-conventions
+ * (<code>cloud.*</code>, <code>service.*</code>, <code>deployment.*</code>).
+ */
 public final class FunctionsResourceDetector {
-    private static final String CLOUD_PROVIDER = "cloud.provider";
-    private static final String CLOUD_PLATFORM = "cloud.platform";
-    private static final String CLOUD_REGION = "cloud.region";
-    private static final String CLOUD_RESOURCE_ID = "cloud.resource.id";
-    private static final String DEPLOYMENT_ENVIRONMENT = "deployment.environment";
-    private static final String SERVICE_NAME = "service.name";
 
-    // Well-known Azure Functions environment variables
-    private static final String WEBSITE_SITE_NAME = "WEBSITE_SITE_NAME";
-    private static final String REGION_NAME = "REGION_NAME";
-    private static final String WEBSITE_RESOURCE_GROUP = "WEBSITE_RESOURCE_GROUP";
-    private static final String WEBSITE_OWNER_NAME = "WEBSITE_OWNER_NAME";
-    private static final String WEBSITE_SLOT_NAME = "WEBSITE_SLOT_NAME";
+    /* ────────────────────────────────────────────────────────────────── */
+    /*  Attribute keys (OTel semantic-conventions)                       */
+    /* ────────────────────────────────────────────────────────────────── */
+    private static final String ATTR_CLOUD_PROVIDER         = "cloud.provider";
+    private static final String ATTR_CLOUD_PLATFORM         = "cloud.platform";
+    private static final String ATTR_CLOUD_REGION           = "cloud.region";
+    private static final String ATTR_CLOUD_RESOURCE_ID      = "cloud.resource.id";
+    private static final String ATTR_DEPLOYMENT_ENVIRONMENT = "deployment.environment";
+    private static final String ATTR_SERVICE_NAME           = "service.name";
 
+    /* ────────────────────────────────────────────────────────────────── */
+    /*  Env-vars published by the Functions host                         */
+    /* ────────────────────────────────────────────────────────────────── */
+    private static final String ENV_SITE_NAME       = "WEBSITE_SITE_NAME";
+    private static final String ENV_REGION_NAME     = "REGION_NAME";
+    private static final String ENV_RESOURCE_GROUP  = "WEBSITE_RESOURCE_GROUP";
+    private static final String ENV_OWNER_NAME      = "WEBSITE_OWNER_NAME";
+    private static final String ENV_SLOT_NAME       = "WEBSITE_SLOT_NAME";
+
+    private FunctionsResourceDetector() { /* utility – do not instantiate */ }
+
+    /* ===================================================================
+       Public API
+       =================================================================== */
+
+    /** Returns an OTel {@link Resource} describing the running Function-App. */
     public static Resource getResource() {
-        String siteName = System.getenv(WEBSITE_SITE_NAME);
-        String region = System.getenv(REGION_NAME);
-        String resourceGroup = System.getenv(WEBSITE_RESOURCE_GROUP);
-        String ownerName = System.getenv(WEBSITE_OWNER_NAME);
-        String slotName = System.getenv(WEBSITE_SLOT_NAME);
+        AttributesBuilder builder = Attributes.builder();
 
-        AttributesBuilder attrBuilder = Attributes.builder();
+        populateServiceAttributes(builder);
+        populateRegionAttribute(builder);
+        populateResourceId(builder);
+        populateDeploymentEnvironment(builder);
 
-        // Always set some form of service.name
-        if (siteName != null && !siteName.isEmpty()) {
-            attrBuilder.put(SERVICE_NAME, siteName);
-            // We are running in Azure
-            attrBuilder.put(CLOUD_PROVIDER, "azure");
-            attrBuilder.put(CLOUD_PLATFORM, "azure_functions");
+        return Resource.create(builder.build());
+    }
+
+    /* ===================================================================
+       Helpers
+       =================================================================== */
+
+    private static void populateServiceAttributes(AttributesBuilder builder) {
+        String siteName = env(ENV_SITE_NAME);
+
+        if (!siteName.isEmpty()) {
+            builder.put(ATTR_SERVICE_NAME, siteName);
+            builder.put(ATTR_CLOUD_PROVIDER, "azure");
+            builder.put(ATTR_CLOUD_PLATFORM, "azure_functions");
         } else {
-            // For local dev or fallback
-            attrBuilder.put(SERVICE_NAME, "java-function-app");
+            // local “func start” run
+            builder.put(ATTR_SERVICE_NAME, "java-function-app");
+        }
+    }
+
+    private static void populateRegionAttribute(AttributesBuilder builder) {
+        String region = env(ENV_REGION_NAME);
+        if (!region.isEmpty()) {
+            builder.put(ATTR_CLOUD_REGION, region);
+        }
+    }
+
+    /**
+     * WEBSITE_OWNER_NAME looks like {@code <subscriptionId>+<something>}.
+     * Combined with WEBSITE_RESOURCE_GROUP and WEBSITE_SITE_NAME we can
+     * build an ARM-style resourceId.
+     */
+    private static void populateResourceId(AttributesBuilder builder) {
+        String ownerName     = env(ENV_OWNER_NAME);
+        String resourceGroup = env(ENV_RESOURCE_GROUP);
+        String siteName      = env(ENV_SITE_NAME);
+
+        if (ownerName.isEmpty() || resourceGroup.isEmpty() || siteName.isEmpty()) {
+            return; // not on a real Azure site
         }
 
-        // If region is available
-        if (region != null && !region.isEmpty()) {
-            attrBuilder.put(CLOUD_REGION, region);
+        int plus = ownerName.indexOf('+');
+        if (plus <= 0) {
+            return;
         }
+        String subscriptionId = ownerName.substring(0, plus);
 
-        // If we can parse subscription/resource group from WEBSITE_OWNER_NAME
-        // WEBSITE_OWNER_NAME typically looks like: <subscription>+<something else>
-        String subscriptionId = null;
-        if (ownerName != null && !ownerName.isEmpty()) {
-            int idx = ownerName.indexOf('+');
-            if (idx > 0) {
-                subscriptionId = ownerName.substring(0, idx);
-            }
-        }
+        String resourceId = String.format(
+                "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Web/sites/%s",
+                subscriptionId, resourceGroup, siteName);
 
-        if (subscriptionId != null && resourceGroup != null && siteName != null) {
-            String resourceId = String.format(
-                    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Web/sites/%s",
-                    subscriptionId, resourceGroup, siteName
-            );
-            attrBuilder.put(CLOUD_RESOURCE_ID, resourceId);
-        }
+        builder.put(ATTR_CLOUD_RESOURCE_ID, resourceId);
+    }
 
-        // Determine deployment environment (slot), default to "production" if not set
-        if (slotName == null || slotName.isEmpty()) {
+    private static void populateDeploymentEnvironment(AttributesBuilder builder) {
+        String slotName = env(ENV_SLOT_NAME);
+        if (slotName.isEmpty()) {
             slotName = "production";
         }
-        attrBuilder.put(DEPLOYMENT_ENVIRONMENT, slotName);
+        builder.put(ATTR_DEPLOYMENT_ENVIRONMENT, slotName);
+    }
 
-        // Build resource
-        return Resource.create(attrBuilder.build());
+    /* ===================================================================
+       Tiny util
+       =================================================================== */
+
+    /** Returns the trimmed env-var value or the empty string if missing. */
+    private static String env(String name) {
+        String value = System.getenv(name);
+        return value == null ? "" : value.trim();
     }
 }
-

@@ -48,7 +48,7 @@ class OpenTelemetryInvocationMiddlewareSpanTest {
                 .build();
 
         // 2. overwrite the static-final field 'sdk' in the middleware
-        Field sdkField = OpenTelemetryInvocationMiddleware.class.getDeclaredField("sdk");
+        Field sdkField = OpenTelemetryInvocationMiddleware.class.getDeclaredField("OPEN_TELEMETRY_SDK");
         sdkField.setAccessible(true);
 
         // remove the FINAL modifier bits
@@ -58,7 +58,7 @@ class OpenTelemetryInvocationMiddlewareSpanTest {
 
         sdkField.set(null, sdk);   // succeeds now
 
-        // 3 — also register globally (optional but harmless)
+        // 3. also register globally (optional but harmless)
         GlobalOpenTelemetry.set(sdk);
     }
 
