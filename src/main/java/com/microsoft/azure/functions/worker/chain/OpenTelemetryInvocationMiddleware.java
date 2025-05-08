@@ -73,7 +73,7 @@ public class OpenTelemetryInvocationMiddleware implements Middleware {
                 .extract(Context.current(), context.getTraceContext(), TRACE_CONTEXT_GETTER);
 
         // 2) Create a span for this invocation
-        Span invocationSpan = OPEN_TELEMETRY_SDK.getTracer("func.app")
+        Span invocationSpan = OPEN_TELEMETRY_SDK.getTracer("azure.functions.worker")
                 .spanBuilder(context.getFunctionName())
                 .setParent(parentContext)
                 .setSpanKind(SpanKind.INTERNAL)
