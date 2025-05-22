@@ -21,7 +21,7 @@
     <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
     <jupiter.version>5.9.1</jupiter.version>
     <mockito-core.version>4.11.0</mockito-core.version>
-    <appinsights.agents.version>3.6.2</appinsights.agents.version>
+    <appinsights.agents.version>3.7.2</appinsights.agents.version>
   </properties>
   <licenses>
     <license>
