@@ -48,6 +48,7 @@ public class JavaFunctionBroker {
 	private final WorkerObjectCache<CacheKey> workerObjectCache;
 	private static final boolean JAVA_ENABLE_SDK_TYPES_FLAG =
 			Boolean.parseBoolean(System.getenv("JAVA_ENABLE_SDK_TYPES"));
+	private ClassLoader userContextClassLoader;
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -87,17 +88,16 @@ public class JavaFunctionBroker {
 		SdkParameterAnalysisResult sdkParameterAnalysisResult =
 				this.sdkParameterAnalyzer.analyze(functionDefinition.getCandidate().getMethod());
 
-		ClassLoader classLoader = this.classLoaderProvider.createClassLoader();
 		List<Middleware> functionMws = new ArrayList<>(this.serviceLoadedMiddlewares);
 		boolean hasAnySdkTypes = sdkParameterAnalysisResult.hasAnySdkTypes();
 
 		if (hasAnySdkTypes) {
-			functionMws.add(new SdkTypeMiddleware(classLoader,
+			functionMws.add(new SdkTypeMiddleware(userContextClassLoader,
 					sdkParameterAnalysisResult.getSdkTypesMetaData(),
 					this.sdkParameterAnalyzer.getRegistry()));
 		}
 
-		functionMws.add(getFunctionExecutionMiddleWare(classLoader));
+		functionMws.add(getFunctionExecutionMiddleWare(userContextClassLoader));
 
 		InvocationChainFactory factory = new InvocationChainFactory(functionMws);
 		String functionId = functionDefinition.getDescriptor().getId();
@@ -111,7 +111,7 @@ public class JavaFunctionBroker {
 		if (!oneTimeLogicInitialized) {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
-
+					userContextClassLoader = classLoaderProvider.createClassLoader();
 					if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 						loadGlobalMiddlewares();
 					} else {
@@ -129,7 +129,7 @@ public class JavaFunctionBroker {
 		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
-			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
+			Thread.currentThread().setContextClassLoader(userContextClassLoader);
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
 				this.serviceLoadedMiddlewares.add(middleware);
 				WorkerLogManager.getSystemLogger().info("Loading discovered middleware " + middleware.getClass().getSimpleName());
@@ -141,10 +141,9 @@ public class JavaFunctionBroker {
 
 	private void initializeInvocationChainFactory() {
         ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
-		ClassLoader newContextClassLoader = classLoaderProvider.createClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
-			Thread.currentThread().setContextClassLoader(newContextClassLoader);
+			Thread.currentThread().setContextClassLoader(userContextClassLoader);
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
 				this.serviceLoadedMiddlewares.add(middleware);
 				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
@@ -154,7 +153,7 @@ public class JavaFunctionBroker {
 		}
 
         ArrayList<Middleware> middlewares = new ArrayList<>(this.serviceLoadedMiddlewares);
-		middlewares.add(getFunctionExecutionMiddleWare(newContextClassLoader));
+		middlewares.add(getFunctionExecutionMiddleWare(userContextClassLoader));
 		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
