@@ -20,7 +20,6 @@ import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
-import com.microsoft.azure.functions.worker.chain.OpenTelemetryInvocationMiddleware;
 import com.microsoft.azure.functions.worker.chain.SdkTypeMiddleware;
 import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
 import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
@@ -43,7 +42,7 @@ public class JavaFunctionBroker {
 	private volatile InvocationChainFactory invocationChainFactory;
 	private volatile FunctionInstanceInjector functionInstanceInjector;
 	private final Object oneTimeLogicInitializationLock = new Object();
-	private List<Middleware> baseMiddlewares = new ArrayList<>();
+	private List<Middleware> serviceLoadedMiddlewares = new ArrayList<>();
 	private final Map<String, InvocationChainFactory> functionFactories = new ConcurrentHashMap<>();
 	private final SdkParameterAnalyzer sdkParameterAnalyzer = new SdkParameterAnalyzer();
 	private final WorkerObjectCache<CacheKey> workerObjectCache;
@@ -67,13 +66,14 @@ public class JavaFunctionBroker {
 		} else {
 			this.workerObjectCache = null;
 		}
+
+		initializeOneTimeLogics();
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
-		initializeOneTimeLogics();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 
 		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
@@ -88,18 +88,13 @@ public class JavaFunctionBroker {
 				this.sdkParameterAnalyzer.analyze(functionDefinition.getCandidate().getMethod());
 
 		ClassLoader classLoader = this.classLoaderProvider.createClassLoader();
-		List<Middleware> functionMws = new ArrayList<>(this.baseMiddlewares);
+		List<Middleware> functionMws = new ArrayList<>(this.serviceLoadedMiddlewares);
 		boolean hasAnySdkTypes = sdkParameterAnalysisResult.hasAnySdkTypes();
 
 		if (hasAnySdkTypes) {
 			functionMws.add(new SdkTypeMiddleware(classLoader,
 					sdkParameterAnalysisResult.getSdkTypesMetaData(),
 					this.sdkParameterAnalyzer.getRegistry()));
-		}
-
-		boolean otelEnabled = Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OPENTELEMETRY"));
-		if (otelEnabled){
-			functionMws.add(new OpenTelemetryInvocationMiddleware());
 		}
 
 		functionMws.add(getFunctionExecutionMiddleWare(classLoader));
@@ -136,7 +131,7 @@ public class JavaFunctionBroker {
 			//ServiceLoader will use thread context classloader to verify loaded class
 			Thread.currentThread().setContextClassLoader(classLoaderProvider.createClassLoader());
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
-				this.baseMiddlewares.add(middleware);
+				this.serviceLoadedMiddlewares.add(middleware);
 				WorkerLogManager.getSystemLogger().info("Loading discovered middleware " + middleware.getClass().getSimpleName());
 			}
 		} finally {
@@ -145,25 +140,20 @@ public class JavaFunctionBroker {
 	}
 
 	private void initializeInvocationChainFactory() {
-		ArrayList<Middleware> middlewares = new ArrayList<>();
-		ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader prevContextClassLoader = Thread.currentThread().getContextClassLoader();
 		ClassLoader newContextClassLoader = classLoaderProvider.createClassLoader();
 		try {
 			//ServiceLoader will use thread context classloader to verify loaded class
 			Thread.currentThread().setContextClassLoader(newContextClassLoader);
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
-				middlewares.add(middleware);
+				this.serviceLoadedMiddlewares.add(middleware);
 				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
 			}
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
 		}
 
-		boolean otelEnabled = Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OPENTELEMETRY"));
-		if (otelEnabled){
-			middlewares.add(new OpenTelemetryInvocationMiddleware());
-		}
-
+        ArrayList<Middleware> middlewares = new ArrayList<>(this.serviceLoadedMiddlewares);
 		middlewares.add(getFunctionExecutionMiddleWare(newContextClassLoader));
 		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
@@ -329,4 +319,6 @@ public class JavaFunctionBroker {
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
 	}
+
+	public List<Middleware> getServiceLoadedMiddlewares() { return this.serviceLoadedMiddlewares; }
 }

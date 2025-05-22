@@ -1,5 +1,6 @@
 package com.microsoft.azure.functions.worker.handler;
 
+import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
@@ -27,13 +28,16 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
 
-        boolean otelEnabled = Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OPENTELEMETRY"));
-        if (otelEnabled){
-            response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
+        for (Middleware middleware : broker.getServiceLoadedMiddlewares()){
+            if (middleware.getClass().getName().equals("com.function.OpenTelemetryInvocationMiddleware")) {
+                response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
+                response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
+
+                break;
+            }
         }
 
         response.setWorkerMetadata(composeWorkerMetadata());
-
 
         return "Worker initialized";
     }
