@@ -68,13 +68,13 @@ public class JavaFunctionBroker {
 			this.workerObjectCache = null;
 		}
 
-		initializeOneTimeLogics();
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
 			throws ClassNotFoundException, NoSuchMethodException, IOException {
 		descriptor.validate();
 		addSearchPathsToClassLoader(descriptor);
+		initializeOneTimeLogics();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 
 		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
@@ -112,14 +112,14 @@ public class JavaFunctionBroker {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
 					userContextClassLoader = classLoaderProvider.createClassLoader();
+					oneTimeLogicInitialized = true;
+					initializeFunctionInstanceInjector();
+
 					if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 						loadGlobalMiddlewares();
 					} else {
 						initializeInvocationChainFactory();
 					}
-
-					initializeFunctionInstanceInjector();
-					oneTimeLogicInitialized = true;
 				}
 			}
 		}
@@ -146,15 +146,14 @@ public class JavaFunctionBroker {
 			Thread.currentThread().setContextClassLoader(userContextClassLoader);
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
 				this.serviceLoadedMiddlewares.add(middleware);
-				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
+				WorkerLogManager.getSystemLogger().info("Load middleware test!!" + middleware.getClass().getSimpleName());
 			}
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
+			ArrayList<Middleware> middlewares = new ArrayList<>(this.serviceLoadedMiddlewares);
+			middlewares.add(getFunctionExecutionMiddleWare(userContextClassLoader));
+			this.invocationChainFactory = new InvocationChainFactory(middlewares);
 		}
-
-        ArrayList<Middleware> middlewares = new ArrayList<>(this.serviceLoadedMiddlewares);
-		middlewares.add(getFunctionExecutionMiddleWare(userContextClassLoader));
-		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	private void initializeFunctionInstanceInjector() {
