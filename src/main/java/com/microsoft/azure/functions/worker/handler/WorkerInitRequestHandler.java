@@ -28,13 +28,9 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
 
-        for (Middleware middleware : broker.getServiceLoadedMiddlewares()){
-            if (middleware.getClass().getName().equals("com.function.OpenTelemetryInvocationMiddleware")) {
-                response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
-                response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
-
-                break;
-            }
+        if (Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OPENTELEMETRY"))) {
+            response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
+            response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
         }
 
         response.setWorkerMetadata(composeWorkerMetadata());
