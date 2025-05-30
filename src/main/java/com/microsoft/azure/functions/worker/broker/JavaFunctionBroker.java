@@ -67,7 +67,6 @@ public class JavaFunctionBroker {
 		} else {
 			this.workerObjectCache = null;
 		}
-
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -112,14 +111,15 @@ public class JavaFunctionBroker {
 			synchronized (oneTimeLogicInitializationLock) {
 				if (!oneTimeLogicInitialized) {
 					userContextClassLoader = classLoaderProvider.createClassLoader();
-					oneTimeLogicInitialized = true;
-					initializeFunctionInstanceInjector();
 
 					if (JAVA_ENABLE_SDK_TYPES_FLAG) {
 						loadGlobalMiddlewares();
 					} else {
 						initializeInvocationChainFactory();
 					}
+
+					oneTimeLogicInitialized = true;
+					initializeFunctionInstanceInjector();
 				}
 			}
 		}
@@ -150,10 +150,11 @@ public class JavaFunctionBroker {
 			}
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
-			ArrayList<Middleware> middlewares = new ArrayList<>(this.serviceLoadedMiddlewares);
-			middlewares.add(getFunctionExecutionMiddleWare(userContextClassLoader));
-			this.invocationChainFactory = new InvocationChainFactory(middlewares);
 		}
+
+		ArrayList<Middleware> middlewares = new ArrayList<>(this.serviceLoadedMiddlewares);
+		middlewares.add(getFunctionExecutionMiddleWare(userContextClassLoader));
+		this.invocationChainFactory = new InvocationChainFactory(middlewares);
 	}
 
 	private void initializeFunctionInstanceInjector() {
@@ -317,6 +318,4 @@ public class JavaFunctionBroker {
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
 	}
-
-	public List<Middleware> getServiceLoadedMiddlewares() { return this.serviceLoadedMiddlewares; }
 }

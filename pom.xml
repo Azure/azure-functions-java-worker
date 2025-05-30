@@ -286,10 +286,6 @@
                   <pattern>javax.annotation</pattern>
                   <shadedPattern>com.microsoft.azure.functions.shaded.javax.annotation</shadedPattern>
                 </relocation>
-                <relocation combine.children="append">
-                  <pattern>io.opentelemetry</pattern>
-                  <shadedPattern>com.microsoft.azure.functions.shaded.io.opentelemetry</shadedPattern>
-                </relocation>
               </relocations>
             </configuration>
           </execution>
