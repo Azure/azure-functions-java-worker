@@ -1,11 +1,13 @@
 package com.microsoft.azure.functions.worker.handler;
 
-import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 
 import java.util.logging.Level;
+
+import static com.microsoft.azure.functions.worker.Constants.JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY;
+import static com.microsoft.azure.functions.worker.Constants.JAVA_ENABLE_OPENTELEMETRY;
 
 public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, WorkerInitResponse.Builder> {
     public WorkerInitRequestHandler(JavaFunctionBroker broker) {
@@ -28,7 +30,8 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
 
-        if (Boolean.parseBoolean(System.getenv("JAVA_ENABLE_OPENTELEMETRY"))) {
+        if (Boolean.parseBoolean(System.getenv(JAVA_ENABLE_OPENTELEMETRY)) ||
+                Boolean.parseBoolean(System.getenv(JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY))) {
             response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
             response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
         }
