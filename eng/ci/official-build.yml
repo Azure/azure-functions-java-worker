@@ -51,14 +51,14 @@ extends:
           - template: /eng/ci/templates/official/jobs/build-artifacts.yml@self
 
       - stage: TestWindows
-        dependsOn: Build
+        dependsOn: []
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-windows.yml@self
             parameters:
               poolName: 1es-pool-azfunc
 
       - stage: TestLinux
-        dependsOn: Build
+        dependsOn: []
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
             parameters:

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.azure.functions</groupId>
   <artifactId>azure-functions-java-worker</artifactId>
-  <version>2.19.0</version>
+  <version>2.19.1</version>
   <packaging>jar</packaging>
   <name>Azure Functions Java Worker</name>
   <description>This package contains the Java Language Worker used by Azure functions host to execute java functions</description>
@@ -21,7 +21,7 @@
     <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
     <jupiter.version>5.9.1</jupiter.version>
     <mockito-core.version>4.11.0</mockito-core.version>
-    <appinsights.agents.version>3.6.2</appinsights.agents.version>
+    <appinsights.agents.version>3.7.2</appinsights.agents.version>
   </properties>
   <licenses>
     <license>
