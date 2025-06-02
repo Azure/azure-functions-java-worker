@@ -146,7 +146,7 @@ public class JavaFunctionBroker {
 			Thread.currentThread().setContextClassLoader(userContextClassLoader);
 			for (Middleware middleware : ServiceLoader.load(Middleware.class)) {
 				this.serviceLoadedMiddlewares.add(middleware);
-				WorkerLogManager.getSystemLogger().info("Load middleware test!!" + middleware.getClass().getSimpleName());
+				WorkerLogManager.getSystemLogger().info("Load middleware " + middleware.getClass().getSimpleName());
 			}
 		} finally {
 			Thread.currentThread().setContextClassLoader(prevContextClassLoader);
