@@ -167,6 +167,6 @@ jobs:
             env:
               JAVA_HOME: $(JavaHome)
               AzureWebJobsStorage: "UseDevelopmentStorage=true"
-              ENABLE_SDK_TYPES: "true"
+              JAVA_ENABLE_SDK_TYPES: "true"
             displayName: 'Build & Run tests'
             continueOnError: false
