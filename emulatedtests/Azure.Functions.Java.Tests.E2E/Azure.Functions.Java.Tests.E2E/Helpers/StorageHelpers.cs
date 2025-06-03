@@ -85,6 +85,7 @@ namespace Azure.Functions.Java.Tests.E2E
             await ClearBlobContainer(Constants.InputBindingBlobContainer);
             await ClearBlobContainer(Constants.OutputBindingBlobContainer);
             await ClearBlobContainer(Constants.TriggerInputBindingBlobClientSdk);
+            await ClearBlobContainer(Constants.TriggerInputBindingBlobInputBlobClientSdk);
             await ClearBlobContainer(Constants.TriggerInputBindingBlobContainerClientSdk);
         }
 
@@ -94,6 +95,7 @@ namespace Azure.Functions.Java.Tests.E2E
             await CreateBlobContainer(Constants.InputBindingBlobContainer);
             await CreateBlobContainer(Constants.OutputBindingBlobContainer);
             await CreateBlobContainer(Constants.TriggerInputBindingBlobClientSdk);
+            await CreateBlobContainer(Constants.TriggerInputBindingBlobInputBlobClientSdk);
             await CreateBlobContainer(Constants.TriggerInputBindingBlobContainerClientSdk);
         }
 
