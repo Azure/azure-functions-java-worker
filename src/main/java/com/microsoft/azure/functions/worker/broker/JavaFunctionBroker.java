@@ -28,6 +28,8 @@ import com.microsoft.azure.functions.sdktype.SdkParameterAnalyzer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import static com.microsoft.azure.functions.worker.Constants.JAVA_ENABLE_SDK_TYPES;
+
 /**
  * A broker between JAR methods and the function RPC. It can load methods using
  * reflection, and invoke them at runtime. Thread-Safety: Multiple thread.
@@ -47,7 +49,7 @@ public class JavaFunctionBroker {
 	private final SdkParameterAnalyzer sdkParameterAnalyzer = new SdkParameterAnalyzer();
 	private final WorkerObjectCache<CacheKey> workerObjectCache;
 	private static final boolean JAVA_ENABLE_SDK_TYPES_FLAG =
-			Boolean.parseBoolean(System.getenv("JAVA_ENABLE_SDK_TYPES"));
+			Boolean.parseBoolean(System.getenv(JAVA_ENABLE_SDK_TYPES));
 	private ClassLoader userContextClassLoader;
 
 	private FunctionInstanceInjector newInstanceInjector() {

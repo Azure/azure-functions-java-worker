@@ -17,4 +17,5 @@ public final class Constants {
     public final static String HAS_IMPLICIT_OUTPUT_QUALIFIED_NAME = "com.microsoft.azure.functions.annotation.HasImplicitOutput";
     public static final String JAVA_ENABLE_OPENTELEMETRY = "JAVA_ENABLE_OPENTELEMETRY";
     public static final String JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY = "JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY";
+    public static final String JAVA_ENABLE_SDK_TYPES = "JAVA_ENABLE_SDK_TYPES";
 }
