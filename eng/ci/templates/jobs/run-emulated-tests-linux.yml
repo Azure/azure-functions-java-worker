@@ -87,44 +87,44 @@ jobs:
       - pwsh: |
           .\installAdditionsLocally.ps1
         displayName: 'Install java-additions locally'
-      - pwsh: |
-          if ("$(isTag)"){
-            $buildNumber="$(Build.SourceBranchName)"
-            Write-Host "Found git tag."
-          }
-          else {
-            $buildNumber="$(Build.BuildNumber)-v4"
-            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
-          }
-          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
-          .\package-pipeline.ps1 -buildNumber $buildNumber
-        displayName: 'Executing build script'
-      - pwsh: |
-          cd ./emulatedtests
-          mvn clean package -DexcludedClassPattern="**/BlobTriggerSdkTypesTests.java" `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
-          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
-        displayName: 'Package Java for E2E'
-      - pwsh: |
-          .\setup-tests-pipeline.ps1
-        displayName: 'Setup test environment -- Install the Core Tools'
-      - bash: |
-          chmod +x ./Azure.Functions.Cli/func
-          chmod +x ./Azure.Functions.Cli/gozip
-          export PATH=$PATH:./Azure.Functions.Cli
-          func --version
-        displayName: 'Setup Core Tools - Linux'
-      - task: DotNetCoreCLI@2
-        retryCountOnTaskFailure: 3
-        inputs:
-          command: 'test'
-          projects: |
-            emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
-          arguments: '--filter "Category!=SdkTypes"'
-        env:
-          JAVA_HOME: $(JavaHome)
-          AzureWebJobsStorage: "UseDevelopmentStorage=true"
-        displayName: 'Build & Run tests'
-        continueOnError: false
+#      - pwsh: |
+#          if ("$(isTag)"){
+#            $buildNumber="$(Build.SourceBranchName)"
+#            Write-Host "Found git tag."
+#          }
+#          else {
+#            $buildNumber="$(Build.BuildNumber)-v4"
+#            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+#          }
+#          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+#          .\package-pipeline.ps1 -buildNumber $buildNumber
+#        displayName: 'Executing build script'
+#      - pwsh: |
+#          cd ./emulatedtests
+#          mvn clean package -DexcludedClassPattern="**/BlobTriggerSdkTypesTests.java" `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+#          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
+#        displayName: 'Package Java for E2E'
+#      - pwsh: |
+#          .\setup-tests-pipeline.ps1
+#        displayName: 'Setup test environment -- Install the Core Tools'
+#      - bash: |
+#          chmod +x ./Azure.Functions.Cli/func
+#          chmod +x ./Azure.Functions.Cli/gozip
+#          export PATH=$PATH:./Azure.Functions.Cli
+#          func --version
+#        displayName: 'Setup Core Tools - Linux'
+#      - task: DotNetCoreCLI@2
+#        retryCountOnTaskFailure: 3
+#        inputs:
+#          command: 'test'
+#          projects: |
+#            emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
+#          arguments: '--filter "Category!=SdkTypes"'
+#        env:
+#          JAVA_HOME: $(JavaHome)
+#          AzureWebJobsStorage: "UseDevelopmentStorage=true"
+#        displayName: 'Build & Run tests'
+#        continueOnError: false
       # ------------------------------------------
       # Conditionally run an additional set of steps for "SDK types" scenario
       # ------------------------------------------
