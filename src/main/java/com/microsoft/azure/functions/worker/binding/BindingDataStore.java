@@ -66,6 +66,15 @@ public final class BindingDataStore {
     	return parameterDataSource.computeByName(name, target);
     }
 
+    public Optional<BindingData> getDataByNameFromInputSource(String name, Type target, String inputSourceName) {
+        Optional<DataSource<?>> inputSourceDict = Optional.ofNullable(this.inputSources.get(inputSourceName));
+        if (inputSourceDict.isPresent()) {
+            return inputSourceDict.get().computeByName(name, target);
+        }
+
+        return Optional.empty();
+    }
+
     public Optional<BindingData> getTriggerMetatDataByName(String name, Type target) {
         DataSource<?> metadataDataSource = this.metadataSources.get(name);
         if (metadataDataSource == null) {

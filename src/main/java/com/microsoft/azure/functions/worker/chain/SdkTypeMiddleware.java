@@ -53,10 +53,12 @@ public class SdkTypeMiddleware implements Middleware {
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
             for (SdkTypeMetaData metaData : this.sdkTypesMetaData) {
+                Parameter param = metaData.getParam();
+                ParamBindInfo paramBindInfo = new ParamBindInfo(param);
                 Set<String> requiredKeys = metaData.getRequiredFields();
 
                 for (String key : requiredKeys) {
-                    Object val = dataStore.getDataByName(key, String.class)
+                    Object val = dataStore.getDataByNameFromInputSource(key, String.class, paramBindInfo.getName())
                             .map(b -> b.getValue())
                             .orElseThrow(() -> new IllegalArgumentException("Missing " + key));
 
@@ -84,8 +86,6 @@ public class SdkTypeMiddleware implements Middleware {
                 }
 
                 // update in data store
-                Parameter param = metaData.getParam();
-                ParamBindInfo paramBindInfo = new ParamBindInfo(param);
                 execCtx.updateParameterValue(paramBindInfo.getName(), instance);
 
                 LOGGER.info("SdkTypeMiddleware: Successfully created instance for param "
