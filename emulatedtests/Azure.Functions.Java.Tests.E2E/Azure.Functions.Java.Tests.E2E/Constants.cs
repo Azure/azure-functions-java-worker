@@ -25,6 +25,7 @@ namespace Azure.Functions.Java.Tests.E2E
         public static string InputBindingBlobContainer = "test-input-java-new";
         public static string OutputBindingBlobContainer = "test-output-java-new";
         public static string TriggerInputBindingBlobClientSdk = "test-triggerinput-blobclient";
+        public static string TriggerInputBindingBlobInputBlobClientSdk = "test-triggerinput-blobinput-blobclient";
         public static string TriggerInputBindingBlobContainerClientSdk = "test-triggerinput-blobcontclient";
 
         // Xunit Fixtures and Collections
