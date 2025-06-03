@@ -54,16 +54,9 @@ public final class BindingDataStore {
     public Optional<BindingData> getDataByName(String name, Type target) {
         DataSource<?> parameterDataSource = this.inputSources.get(name);
         if (parameterDataSource == null) {
-            Optional<Map.Entry<String, DataSource<?>>> firstEntry = this.inputSources.entrySet().stream().findFirst();
-            if (firstEntry.isPresent()) {
-                DataSource<?> subDict = firstEntry.get().getValue();
-                return subDict.computeByName(name, target);
-            }
-        }
-        if (parameterDataSource == null) {
             throw new RuntimeException("Cannot find matched parameter name of customer function, please check if customer function is defined correctly");
         }
-    	return parameterDataSource.computeByName(name, target);
+        return parameterDataSource.computeByName(name, target);
     }
 
     public Optional<BindingData> getDataByNameFromInputSource(String name, Type target, String inputSourceName) {
