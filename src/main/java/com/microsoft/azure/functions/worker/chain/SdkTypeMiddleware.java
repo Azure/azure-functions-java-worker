@@ -65,6 +65,7 @@ public class SdkTypeMiddleware implements Middleware {
                     metaData.setFieldValue(key, val);
                 }
 
+                metaData.parseAndVerify();
                 SdkType<?> sdkType = this.sdkTypeRegistry.createSdkType(metaData);
 
                 Object instance = null;
