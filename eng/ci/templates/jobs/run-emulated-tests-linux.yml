@@ -114,7 +114,6 @@ jobs:
           projects: |
             emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
         env:
-          JAVA_HOME: $(JavaHome)
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
           JAVA_ENABLE_SDK_TYPES: "true"
         displayName: 'Build & Run tests'
