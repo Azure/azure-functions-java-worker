@@ -115,9 +115,6 @@ jobs:
       # ------------------------------------------
       - ${{ if eq(parameters.runSdkTypesTests, true) }}:
           - pwsh: |
-              .\installMavenPluginLocally.ps1
-            displayName: 'Install maven plugin locally'
-          - pwsh: |
               if ("$(isTag)"){
                 $buildNumber="$(Build.SourceBranchName)"
                 Write-Host "Found git tag."
