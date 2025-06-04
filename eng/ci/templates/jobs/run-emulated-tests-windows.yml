@@ -67,9 +67,6 @@ jobs:
           azurite --silent --location azurite --debug azurite\debug.log &
         displayName: 'Install and Run Azurite'
       - pwsh: |
-          .\installAdditionsLocally.ps1
-        displayName: 'Install java-additions locally'
-      - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
             Write-Host "Found git tag."

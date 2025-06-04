@@ -82,9 +82,6 @@ jobs:
           docker compose -f emulatedtests/utils/docker-compose.yml up -d
         displayName: 'Install Azurite and Start Emulators'
       - pwsh: |
-          .\installAdditionsLocally.ps1
-        displayName: 'Install java-additions locally'
-      - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
             Write-Host "Found git tag."
