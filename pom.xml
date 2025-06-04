@@ -20,7 +20,7 @@
     <azure.functions.java.sdktypes>1.0.1</azure.functions.java.sdktypes>
     <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
     <jupiter.version>5.9.1</jupiter.version>
-    <mockito-core.version>5.18.0</mockito-core.version>
+    <mockito-core.version>4.11.0</mockito-core.version>
     <appinsights.agents.version>3.7.2</appinsights.agents.version>
   </properties>
   <licenses>
@@ -428,7 +428,9 @@
         <!-- activates when the running JDK is 17 or newer -->
         <jdk>[17,)</jdk>
       </activation>
-
+      <properties>
+        <mockito-core.version>5.18.0</mockito-core.version>
+      </properties>
       <build>
         <plugins>
           <plugin>
