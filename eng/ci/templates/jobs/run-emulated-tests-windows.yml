@@ -53,14 +53,20 @@ jobs:
         displayName: 'Install .NET 6'
         inputs:
           version: 6.0.x
-      - pwsh: |
-          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).zip"
-          Expand-Archive -Force "$(JAVA_VERSION).zip" .
-          cd $(JDK_PATH)
+      - pwsh: | # Download JDK for later installation
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).tar.gz"
           $current = get-location | select -ExpandProperty Path
-          cd ..
-          Write-Host "##vso[task.setvariable variable=JavaHome;]$current"
-        displayName: 'Download and setup Java for Windows'
+          Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
+        displayName: 'Download jdk for Windows'
+      - task: JavaToolInstaller@0 # Install JDK downloaded from previous task
+        inputs:
+          versionSpec: $(JAVA_VERSION_SPEC)
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: LocalDirectory
+          jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+          jdkDestinationDirectory: "$(downloadPath)/externals"
+          cleanDestinationDirectory: true
+        displayName: 'Setup Java for Windows'
       - bash: |
           npm install -g azurite
           mkdir azurite
