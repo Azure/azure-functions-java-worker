@@ -55,7 +55,6 @@ extends:
           - template: /eng/ci/templates/jobs/run-emulated-tests-windows.yml@self
             parameters:
               poolName: 1es-pool-azfunc-public
-              runSdkTypesTests: ${{ parameters.runSdkTypesTests }}
 
       - stage: TestLinux
         dependsOn: []
@@ -63,4 +62,3 @@ extends:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
             parameters:
               poolName: 1es-pool-azfunc-public
-              runSdkTypesTests: ${{ parameters.runSdkTypesTests }}
