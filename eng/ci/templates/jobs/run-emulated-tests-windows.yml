@@ -71,11 +71,10 @@ jobs:
           jdkDestinationDirectory: "$(downloadPath)/externals"
           cleanDestinationDirectory: true
         displayName: 'Setup Java for Windows'
-      - bash: |
-          npm install -g azurite
-          mkdir azurite
-          azurite --silent --location azurite --debug azurite\debug.log &
-        displayName: 'Install and Run Azurite'
+      - pwsh: |
+          docker compose -f emulatedtests/utils/docker-compose.yml pull
+          docker compose -f emulatedtests/utils/docker-compose.yml up -d
+        displayName: 'Install Azurite and Start Emulators'
       - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
