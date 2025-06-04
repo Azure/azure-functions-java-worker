@@ -34,16 +34,16 @@ jobs:
           JAVA_VERSION: 'microsoft-jdk-11.0.21-linux-x64'
           JDK_PATH: 'jdk-11.0.21+9'
           JAVA_VERSION_SPEC: '11'
-#        microsoft-open-jdk-17-linux:
-#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.9-linux-x64.tar.gz'
-#          JAVA_VERSION: 'microsoft-jdk-17.0.9-linux-x64'
-#          JDK_PATH: 'jdk-17.0.9+8'
-#          JAVA_VERSION_SPEC: '17'
-#        microsoft-open-jdk-21-linux:
-#          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.1-linux-x64.tar.gz'
-#          JAVA_VERSION: 'microsoft-jdk-21.0.1-linux-x64'
-#          JDK_PATH: 'jdk-21.0.1+12'
-#          JAVA_VERSION_SPEC: '21'
+        microsoft-open-jdk-17-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.9-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-17.0.9-linux-x64'
+          JDK_PATH: 'jdk-17.0.9+8'
+          JAVA_VERSION_SPEC: '17'
+        microsoft-open-jdk-21-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.1-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-21.0.1-linux-x64'
+          JDK_PATH: 'jdk-21.0.1+12'
+          JAVA_VERSION_SPEC: '21'
 
     steps:
       - task: NuGetToolInstaller@1
@@ -87,44 +87,44 @@ jobs:
       - pwsh: |
           .\installAdditionsLocally.ps1
         displayName: 'Install java-additions locally'
-#      - pwsh: |
-#          if ("$(isTag)"){
-#            $buildNumber="$(Build.SourceBranchName)"
-#            Write-Host "Found git tag."
-#          }
-#          else {
-#            $buildNumber="$(Build.BuildNumber)-v4"
-#            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
-#          }
-#          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
-#          .\package-pipeline.ps1 -buildNumber $buildNumber
-#        displayName: 'Executing build script'
-#      - pwsh: |
-#          cd ./emulatedtests
-#          mvn clean package -DexcludedClassPattern="**/BlobTriggerSdkTypesTests.java" `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
-#          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
-#        displayName: 'Package Java for E2E'
-#      - pwsh: |
-#          .\setup-tests-pipeline.ps1
-#        displayName: 'Setup test environment -- Install the Core Tools'
-#      - bash: |
-#          chmod +x ./Azure.Functions.Cli/func
-#          chmod +x ./Azure.Functions.Cli/gozip
-#          export PATH=$PATH:./Azure.Functions.Cli
-#          func --version
-#        displayName: 'Setup Core Tools - Linux'
-#      - task: DotNetCoreCLI@2
-#        retryCountOnTaskFailure: 3
-#        inputs:
-#          command: 'test'
-#          projects: |
-#            emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
-#          arguments: '--filter "Category!=SdkTypes"'
-#        env:
-#          JAVA_HOME: $(JavaHome)
-#          AzureWebJobsStorage: "UseDevelopmentStorage=true"
-#        displayName: 'Build & Run tests'
-#        continueOnError: false
+      - pwsh: |
+          if ("$(isTag)"){
+            $buildNumber="$(Build.SourceBranchName)"
+            Write-Host "Found git tag."
+          }
+          else {
+            $buildNumber="$(Build.BuildNumber)-v4"
+            Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
+          }
+          Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
+          .\package-pipeline.ps1 -buildNumber $buildNumber
+        displayName: 'Executing build script'
+      - pwsh: |
+          cd ./emulatedtests
+          mvn clean package -DexcludedClassPattern="**/BlobTriggerSdkTypesTests.java" `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+          Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
+        displayName: 'Package Java for E2E'
+      - pwsh: |
+          .\setup-tests-pipeline.ps1
+        displayName: 'Setup test environment -- Install the Core Tools'
+      - bash: |
+          chmod +x ./Azure.Functions.Cli/func
+          chmod +x ./Azure.Functions.Cli/gozip
+          export PATH=$PATH:./Azure.Functions.Cli
+          func --version
+        displayName: 'Setup Core Tools - Linux'
+      - task: DotNetCoreCLI@2
+        retryCountOnTaskFailure: 3
+        inputs:
+          command: 'test'
+          projects: |
+            emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
+          arguments: '--filter "Category!=SdkTypes"'
+        env:
+          JAVA_HOME: $(JavaHome)
+          AzureWebJobsStorage: "UseDevelopmentStorage=true"
+        displayName: 'Build & Run tests'
+        continueOnError: false
       # ------------------------------------------
       # Conditionally run an additional set of steps for "SDK types" scenario
       # ------------------------------------------
