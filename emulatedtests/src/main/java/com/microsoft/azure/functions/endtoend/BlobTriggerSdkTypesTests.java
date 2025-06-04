@@ -18,7 +18,7 @@ public class BlobTriggerSdkTypesTests {
     @FunctionName("BlobTriggerUsingBlobClientToBlobTest")
     @StorageAccount("AzureWebJobsStorage")
     public void BlobTriggerToBlobTest_BlobClient(
-            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobclient/{name}", dataType = "binary") BlobClient triggerBlobClient,
+            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobclient/{name}") BlobClient triggerBlobClient,
             @BindingName("name") String fileName,
             @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context
@@ -40,8 +40,8 @@ public class BlobTriggerSdkTypesTests {
     @FunctionName("BlobTriggerUsingBlobInputBlobClientToBlobTest")
     @StorageAccount("AzureWebJobsStorage")
     public void BlobTriggerBlobInputToBlobTest_BlobClient(
-            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobinput-blobclient/{name}", dataType = "binary") BlobClient triggerBlobClient,
-            @BlobInput(name = "inputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") BlobClient outputBlobClient,
+            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobinput-blobclient/{name}") BlobClient triggerBlobClient,
+            @BlobInput(name = "inputBlob", path = "test-triggerinput-blobinput-blobclient/testfile.txt") BlobClient outputBlobClient,
             @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context
     ) {
@@ -62,7 +62,7 @@ public class BlobTriggerSdkTypesTests {
     @FunctionName("BlobTriggerUsingBlobContainerClientToBlobTest")
     @StorageAccount("AzureWebJobsStorage")
     public void BlobTriggerToBlobTest_BlobContainerClient(
-            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobcontclient/{name}", dataType = "binary") BlobContainerClient triggerBlobContainerClient,
+            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobcontclient/{name}") BlobContainerClient triggerBlobContainerClient,
             @BindingName("name") String fileName,
             @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context

@@ -135,7 +135,7 @@ namespace Azure.Functions.Java.Tests.E2E
         [Trait("Category", "SdkTypes")]
         public async Task BlobTriggerToBlob_FromBlobInput_BlobClient_Succeeds()
         {
-            string fileName = Guid.NewGuid().ToString();
+            string fileName = "testfile";
 
             //cleanup
             await StorageHelpers.ClearBlobContainers();
