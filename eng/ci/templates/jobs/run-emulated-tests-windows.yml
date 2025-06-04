@@ -63,7 +63,7 @@ jobs:
           versionSpec: $(JAVA_VERSION_SPEC)
           jdkArchitectureOption: 'x64'
           jdkSourceOption: LocalDirectory
-          jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+          jdkFile: "$(downloadPath)/$(JAVA_VERSION).zip"
           jdkDestinationDirectory: "$(downloadPath)/externals"
           cleanDestinationDirectory: true
         displayName: 'Setup Java for Windows'
