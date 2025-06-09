@@ -122,6 +122,7 @@ jobs:
           arguments: '--filter "Category!=SdkTypes"'
         env:
           JAVA_HOME: $(JavaHome)
+          AzureWebJobsMySqlConnectionString: $(AzureWebJobsMySqlConnectionString)
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
         displayName: 'Build & Run tests'
         continueOnError: false
@@ -166,6 +167,7 @@ jobs:
                 emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
             env:
               JAVA_HOME: $(JavaHome)
+              AzureWebJobsMySqlConnectionString: $(AzureWebJobsMySqlConnectionString)
               AzureWebJobsStorage: "UseDevelopmentStorage=true"
               ENABLE_SDK_TYPES: "true"
             displayName: 'Build & Run tests'

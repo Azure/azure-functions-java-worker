@@ -29,5 +29,8 @@ namespace Azure.Functions.Java.Tests.E2E
 
         // Xunit Fixtures and Collections
         public const string FunctionAppCollectionName = "FunctionAppCollection";
+
+        // MySql tests
+        public static string MySqlConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsMySqlConnectionString");
     }
 }
