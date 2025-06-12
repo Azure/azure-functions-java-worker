@@ -4,6 +4,7 @@ import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
+import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
@@ -59,7 +60,7 @@ public class SdkTypeMiddleware implements Middleware {
 
                 for (String key : requiredKeys) {
                     Object val = dataStore.getDataByNameFromInputSource(key, String.class, paramBindInfo.getName())
-                            .map(b -> b.getValue())
+                            .map(BindingData::getValue)
                             .orElseThrow(() -> new IllegalArgumentException("Missing " + key));
 
                     metaData.setFieldValue(key, val);
