@@ -133,6 +133,26 @@ namespace Azure.Functions.Java.Tests.E2E
 
         [Fact]
         [Trait("Category", "SdkTypes")]
+        public async Task BlobTriggerToBlob_FromBlobInput_BlobClient_Succeeds()
+        {
+            string fileName = "testfile";
+
+            //cleanup
+            await StorageHelpers.ClearBlobContainers();
+
+            //Setup
+            await StorageHelpers.CreateBlobContainers();
+
+            //Trigger
+            await StorageHelpers.UpdloadFileToContainer(Constants.TriggerInputBindingBlobInputBlobClientSdk, fileName);
+
+            //Verify
+            string result = await StorageHelpers.DownloadFileFromContainer(Constants.OutputBindingBlobContainer, "testfile");
+            Assert.Equal("Hello World", result);
+        }
+
+        [Fact]
+        [Trait("Category", "SdkTypes")]
         public async Task BlobTriggerToBlob_BlobContainerClient_Succeeds()
         {
             string fileName = Guid.NewGuid().ToString();

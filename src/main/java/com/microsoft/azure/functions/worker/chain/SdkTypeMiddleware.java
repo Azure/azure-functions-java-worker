@@ -4,6 +4,7 @@ import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareChain;
 import com.microsoft.azure.functions.internal.spi.middleware.MiddlewareContext;
+import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.broker.ParamBindInfo;
@@ -15,7 +16,9 @@ import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
 import com.microsoft.azure.functions.sdktype.SdkTypeMetaData;
 
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -49,20 +52,13 @@ public class SdkTypeMiddleware implements Middleware {
 
         try {
             ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
-            BindingDataStore dataStore = execCtx.getDataStore();
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
             for (SdkTypeMetaData metaData : this.sdkTypesMetaData) {
-                Set<String> requiredKeys = metaData.getRequiredFields();
+                Parameter param = metaData.getParam();
+                ParamBindInfo paramBindInfo = new ParamBindInfo(param);
 
-                for (String key : requiredKeys) {
-                    Object val = dataStore.getDataByName(key, String.class)
-                            .map(b -> b.getValue())
-                            .orElseThrow(() -> new IllegalArgumentException("Missing " + key));
-
-                    metaData.setFieldValue(key, val);
-                }
-
+                fillMetaData(execCtx, metaData, paramBindInfo.getName());
                 SdkType<?> sdkType = this.sdkTypeRegistry.createSdkType(metaData);
 
                 Object instance = null;
@@ -84,8 +80,6 @@ public class SdkTypeMiddleware implements Middleware {
                 }
 
                 // update in data store
-                Parameter param = metaData.getParam();
-                ParamBindInfo paramBindInfo = new ParamBindInfo(param);
                 execCtx.updateParameterValue(paramBindInfo.getName(), instance);
 
                 LOGGER.info("SdkTypeMiddleware: Successfully created instance for param "
@@ -96,5 +90,44 @@ public class SdkTypeMiddleware implements Middleware {
         }
 
         chain.doNext(context);
+    }
+
+    /**
+     * Populate the {@link SdkTypeMetaData} with required field values and ensure
+     * every required key is present. Throws a single informative exception if any
+     * are missing. 
+     * 
+     * After successfully filling in all required data, a call to 
+     * SdkTypeMetaData::parseAndVerify is made using the input metaData.
+     */
+    private void fillMetaData(ExecutionContextDataSource execCtx, SdkTypeMetaData metaData, String inputSourceName) {
+
+        BindingDataStore dataStore = execCtx.getDataStore();
+        Set<String> requiredKeys = metaData.getRequiredFields();
+        List<String> missing = new ArrayList<>();
+
+        for (String key : requiredKeys) {
+            Optional<BindingData> opt = dataStore
+                    .getDataByNameFromInputSource(key, String.class, inputSourceName);
+
+            if (opt.isPresent()) {
+                metaData.setFieldValue(key, opt.get().getValue());
+            } else {
+                missing.add(key);
+            }
+        }
+
+        if (missing.isEmpty()) {
+            metaData.parseAndVerify();
+        } else {
+            throw new IllegalArgumentException(String.format(
+                    "Parameter '%s' in function '%s' (invocation %s) is missing %d required "
+                  + "key(s): %s",
+                    inputSourceName,
+                    execCtx.getFunctionName(),
+                    execCtx.getInvocationId(),
+                    missing.size(),
+                    String.join(", ", missing)));
+        }
     }
 }

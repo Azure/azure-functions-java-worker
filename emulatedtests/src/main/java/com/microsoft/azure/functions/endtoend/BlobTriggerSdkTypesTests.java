@@ -18,7 +18,7 @@ public class BlobTriggerSdkTypesTests {
     @FunctionName("BlobTriggerUsingBlobClientToBlobTest")
     @StorageAccount("AzureWebJobsStorage")
     public void BlobTriggerToBlobTest_BlobClient(
-            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobclient/{name}", dataType = "binary") BlobClient triggerBlobClient,
+            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobclient/{name}") BlobClient triggerBlobClient,
             @BindingName("name") String fileName,
             @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context
@@ -37,10 +37,32 @@ public class BlobTriggerSdkTypesTests {
     /**
      * This function will be invoked when a new or updated blob is detected at the specified path. The blob contents are provided as input to this function.
      */
+    @FunctionName("BlobTriggerUsingBlobInputBlobClientToBlobTest")
+    @StorageAccount("AzureWebJobsStorage")
+    public void BlobTriggerBlobInputToBlobTest_BlobClient(
+            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobinput-blobclient/{name}") BlobClient triggerBlobClient,
+            @BlobInput(name = "inputBlob", path = "test-triggerinput-blobinput-blobclient/testfile.txt") BlobClient outputBlobClient,
+            @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
+            final ExecutionContext context
+    ) {
+        context.getLogger().info("BlobTriggerUsingBlobInputBlobClientToBlobTest triggered for blob: " + triggerBlobClient.getBlobName());
+
+        // Download the blob content
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputBlobClient.downloadStream(outputStream);
+
+        // Set the downloaded content as output
+        outputBlob.setValue(outputStream.toByteArray());
+        context.getLogger().info("Uploaded blob " + triggerBlobClient.getBlobUrl() + " to container test-output-java-new/testfile.txt");
+    }
+
+    /**
+     * This function will be invoked when a new or updated blob is detected at the specified path. The blob contents are provided as input to this function.
+     */
     @FunctionName("BlobTriggerUsingBlobContainerClientToBlobTest")
     @StorageAccount("AzureWebJobsStorage")
     public void BlobTriggerToBlobTest_BlobContainerClient(
-            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobcontclient/{name}", dataType = "binary") BlobContainerClient triggerBlobContainerClient,
+            @BlobTrigger(name = "triggerBlob", path = "test-triggerinput-blobcontclient/{name}") BlobContainerClient triggerBlobContainerClient,
             @BindingName("name") String fileName,
             @BlobOutput(name = "outputBlob", path = "test-output-java-new/testfile.txt", dataType = "binary") OutputBinding<byte[]> outputBlob,
             final ExecutionContext context

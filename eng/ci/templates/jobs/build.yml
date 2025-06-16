@@ -15,8 +15,5 @@ jobs:
         java -version
       displayName: 'Check default java version'
     - pwsh: |
-        .\installAdditionsLocally.ps1
-      displayName: 'Install java-additions locally'
-    - pwsh: |
         mvn clean package
       displayName: 'Build java worker'
