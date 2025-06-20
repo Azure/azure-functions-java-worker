@@ -113,6 +113,11 @@
 			<artifactId>spring-cloud-starter-function-web</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+            <groupId>com.microsoft.azure.functions</groupId>
+            <artifactId>azure-functions-java-library-mysql</artifactId>
+            <version>${azure.functions.java.library.mysql.version}</version>
+        </dependency>
 	</dependencies>
 
 	<dependencyManagement>
