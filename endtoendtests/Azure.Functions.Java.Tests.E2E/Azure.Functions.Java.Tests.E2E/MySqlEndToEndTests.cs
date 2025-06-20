@@ -35,10 +35,10 @@ namespace Azure.Functions.Java.Tests.E2E
 
             var productString = JsonConvert.SerializeObject(product);
             // Insert a row into Products table using MySqlOutput
-            Assert.True(await Utilities.InvokeHttpTriggerPost("AddProduct", productString, HttpStatusCode.OK));
+            Assert.True(await Utilities.InvokeHttpTriggerPost("AddProductMySql", productString, HttpStatusCode.OK));
 
             // Read row from Products table using MySqlInput
-            Assert.True(await Utilities.InvokeHttpTrigger("GetProducts", "/" + id.ToString(), HttpStatusCode.OK, productString));
+            Assert.True(await Utilities.InvokeHttpTrigger("GetProductsMySql", "/" + id.ToString(), HttpStatusCode.OK, productString));
         }
     }
 }

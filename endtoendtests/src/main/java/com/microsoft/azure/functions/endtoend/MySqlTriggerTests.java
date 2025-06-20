@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class MySqlTriggerTests {
 
-    @FunctionName("GetProducts")
+    @FunctionName("GetProductsMySql")
     public HttpResponseMessage GetProducts(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, route = "getproducts/{productid}", authLevel = AuthorizationLevel.ANONYMOUS)
             HttpRequestMessage<Optional<String>> request,
@@ -37,7 +37,7 @@ public class MySqlTriggerTests {
         }
     }
 
-    @FunctionName("AddProduct")
+    @FunctionName("AddProductMySql")
     public HttpResponseMessage AddProduct(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @MySqlOutput(name = "product", commandText = "Products", connectionStringSetting = "AzureWebJobsMySqlConnectionString") OutputBinding<Product> product,
