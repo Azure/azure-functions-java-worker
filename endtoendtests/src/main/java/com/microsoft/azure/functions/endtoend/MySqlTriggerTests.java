@@ -22,7 +22,7 @@ public class MySqlTriggerTests {
     public HttpResponseMessage GetProducts(@HttpTrigger(name = "req", methods = { HttpMethod.GET,
             HttpMethod.POST }, route = "getproducts/{productid}", authLevel = AuthorizationLevel.ANONYMOUS)
             HttpRequestMessage<Optional<String>> request,
-            @MySqlInput(name = "products", commandText = "SELECT TOP 1 * FROM Products WHERE ProductId = @ProductId",
+            @MySqlInput(name = "products", commandText = "SELECT * FROM Products WHERE ProductId = @ProductId",
             commandType = CommandType.Text, parameters = "@ProductId={productid}",
             connectionStringSetting = "AzureWebJobsMySqlConnectionString") Product[] products,
             final ExecutionContext context) {
