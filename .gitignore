@@ -278,3 +278,6 @@ pkg/
 local.settings.json
 bin/
 obj/
+
+# Certificate files (downloaded dynamically)
+confluent_cloud_cacert.pem

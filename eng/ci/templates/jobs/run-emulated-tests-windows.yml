@@ -89,10 +89,12 @@ jobs:
           .\package-pipeline.ps1 -buildNumber $buildNumber
         displayName: 'Executing build script'
       - pwsh: |
+          # Download Mozilla CA certificate bundle
+          Invoke-WebRequest -Uri "https://curl.se/ca/cacert.pem" -OutFile "./emulatedtests/confluent_cloud_cacert.pem"
           cd ./emulatedtests
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
-        displayName: 'Package Java for E2E'
+        displayName: 'Download CA Bundle & Package Java for Emulated Tests'
       - pwsh: |
           .\setup-tests-pipeline.ps1
         displayName: 'Setup test environment -- Install the Core Tools'
