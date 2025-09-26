@@ -79,10 +79,12 @@ jobs:
           func --version
         displayName: 'Setup Core Tools - Windows'
       - pwsh: |
+          # Download Mozilla CA certificate bundle
+          Invoke-WebRequest -Uri "https://curl.se/ca/cacert.pem" -OutFile "./endtoendtests/confluent_cloud_cacert.pem"
           cd ./endtoendtests
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-endtoendtests"
-        displayName: 'Package Java for E2E'
+        displayName: 'Download CA Bundle & Package Java for E2E'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
