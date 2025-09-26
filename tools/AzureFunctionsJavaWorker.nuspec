@@ -9,7 +9,7 @@
     <owners>Microsoft</owners>
     <projectUrl>https://github.com/Azure/azure-functions-java-worker</projectUrl>
     <licenseUrl>https://github.com/Azure/azure-functions-java-worker/blob/master/LICENSE</licenseUrl>
-    <iconUrl>https://raw.githubusercontent.com/Azure/azure-functions-cli/master/src/Azure.Functions.Cli/npm/assets/azure-functions-logo-color-raster.png</iconUrl>
+    <iconUrl>https://raw.githubusercontent.com/Azure/azure-functions-cli/refs/heads/main/eng/res/functions.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Microsoft Azure Functions Java Worker</description>
     <copyright>Copyright (c) Microsoft Corporation. All rights reserved.</copyright>
