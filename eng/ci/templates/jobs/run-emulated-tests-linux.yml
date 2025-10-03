@@ -37,9 +37,9 @@ jobs:
           JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.6-linux-x64.tar.gz'
           JAVA_VERSION: 'microsoft-jdk-21.0.6-linux-x64'
           JAVA_VERSION_SPEC: '21'
-        adoptium-open-jdk-25-linux:
-          JDK_DOWNLOAD_LINK: 'https://api.adoptium.net/v3/binary/latest/25/ea/linux/x64/jdk/hotspot/normal/eclipse?project=jdk'
-          JAVA_VERSION: 'adoptium-jdk-25-ea-linux-x64'
+        microsoft-open-jdk-25-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-25.0.0-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-25.0.0-linux-x64'
           JAVA_VERSION_SPEC: '25'
 
     steps:
