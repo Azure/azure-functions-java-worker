@@ -15,8 +15,10 @@ jobs:
     variables:
       - template: ../java-versions.yml
       - ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-          isTagTemp: true
-      - isTag: $[variables.isTagTemp]
+        - name: isTagTemp
+          value: true
+      - name: isTag
+        value: $[variables.isTagTemp]
 
     strategy:
       maxParallel: 4
