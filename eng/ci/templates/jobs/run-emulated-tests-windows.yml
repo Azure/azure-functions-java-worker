@@ -13,33 +13,35 @@ jobs:
       os: windows
 
     variables:
-      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-        isTagTemp: true
-      isTag: $[variables.isTagTemp]
-      ApplicationInsightAgentVersion: 3.5.4
+      - template: ../java-versions.yml
+      - ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+        - name: isTagTemp
+          value: true
+      - name: isTag
+        value: $[variables.isTagTemp]
 
     strategy:
       maxParallel: 4
       matrix:
         open-jdk-8-windows:
-          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u442-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u442b06.zip'
-          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u442b06'
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u$(JDK8_WINDOWS_VERSION)-b$(JDK8_WINDOWS_BUILD)/OpenJDK8U-jdk_x64_windows_hotspot_8u$(JDK8_WINDOWS_VERSION)b$(JDK8_WINDOWS_BUILD).zip'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_windows_hotspot_8u$(JDK8_WINDOWS_VERSION)b$(JDK8_WINDOWS_BUILD)'
           JAVA_VERSION_SPEC: '8'
         microsoft-open-jdk-11-windows:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.26-windows-x64.zip'
-          JAVA_VERSION: 'microsoft-jdk-11.0.26-windows-x64'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK11_WINDOWS_VERSION)-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK11_WINDOWS_VERSION)-windows-x64'
           JAVA_VERSION_SPEC: '11'
         microsoft-open-jdk-17-windows:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.14-windows-x64.zip'
-          JAVA_VERSION: 'microsoft-jdk-17.0.14-windows-x64'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK17_WINDOWS_VERSION)-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK17_WINDOWS_VERSION)-windows-x64'
           JAVA_VERSION_SPEC: '17'
         microsoft-open-jdk-21-windows:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.6-windows-x64.zip'
-          JAVA_VERSION: 'microsoft-jdk-21.0.6-windows-x64'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK21_WINDOWS_VERSION)-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK21_WINDOWS_VERSION)-windows-x64'
           JAVA_VERSION_SPEC: '21'
-        adoptium-open-jdk-25-windows:
-          JDK_DOWNLOAD_LINK: 'https://api.adoptium.net/v3/binary/latest/25/ea/windows/x64/jdk/hotspot/normal/eclipse?project=jdk'
-          JAVA_VERSION: 'adoptium-jdk-25-ea-windows-x64'
+        microsoft-open-jdk-25-windows:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK25_WINDOWS_VERSION)-windows-x64.zip'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK25_WINDOWS_VERSION)-windows-x64'
           JAVA_VERSION_SPEC: '25'
 
     steps:

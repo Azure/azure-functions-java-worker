@@ -13,33 +13,35 @@ jobs:
       os: linux
 
     variables:
-      ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
-        isTagTemp: true
-      isTag: $[variables.isTagTemp]
-      ApplicationInsightAgentVersion: 3.5.4
+      - template: ../java-versions.yml
+      - ${{ if contains(variables['Build.SourceBranch'], '/tags/' ) }}:
+        - name: isTagTemp
+          value: true
+      - name: isTag
+        value: $[variables.isTagTemp]
 
     strategy:
       maxParallel: 4
       matrix:
         open-jdk-8-linux:
-          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u442-b06/OpenJDK8U-jdk_x64_linux_hotspot_8u442b06.tar.gz'
-          JAVA_VERSION: 'OpenJDK8U-jdk_x64_linux_hotspot_8u442b06'
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u$(JDK8_LINUX_VERSION)-b$(JDK8_LINUX_BUILD)/OpenJDK8U-jdk_x64_linux_hotspot_8u$(JDK8_LINUX_VERSION)b$(JDK8_LINUX_BUILD).tar.gz'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_linux_hotspot_8u$(JDK8_LINUX_VERSION)b$(JDK8_LINUX_BUILD)'
           JAVA_VERSION_SPEC: '8'
         microsoft-open-jdk-11-linux:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-11.0.26-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-11.0.26-linux-x64'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK11_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK11_LINUX_VERSION)-linux-x64'
           JAVA_VERSION_SPEC: '11'
         microsoft-open-jdk-17-linux:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-17.0.14-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-17.0.14-linux-x64'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK17_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK17_LINUX_VERSION)-linux-x64'
           JAVA_VERSION_SPEC: '17'
         microsoft-open-jdk-21-linux:
-          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-21.0.6-linux-x64.tar.gz'
-          JAVA_VERSION: 'microsoft-jdk-21.0.6-linux-x64'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK21_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK21_LINUX_VERSION)-linux-x64'
           JAVA_VERSION_SPEC: '21'
-        adoptium-open-jdk-25-linux:
-          JDK_DOWNLOAD_LINK: 'https://api.adoptium.net/v3/binary/latest/25/ea/linux/x64/jdk/hotspot/normal/eclipse?project=jdk'
-          JAVA_VERSION: 'adoptium-jdk-25-ea-linux-x64'
+        microsoft-open-jdk-25-linux:
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK25_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK25_LINUX_VERSION)-linux-x64'
           JAVA_VERSION_SPEC: '25'
 
     steps:
