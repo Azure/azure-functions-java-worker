@@ -137,11 +137,12 @@ class TestEnvironment:
         
         # Initialize and spawn Functions container
         print("🐳 Starting Functions container...")
+        functions_container_name = f"functions-{self.environment_id}"
         self.functions_controller = FunctionsContainerController(
             runtime=self.runtime,
             runtime_version=self.runtime_version,
             host_version=self.host_version,
-            site_name=self.site_name,
+            site_name=functions_container_name,
             docker_flags=self.docker_flags
         )
         self.functions_controller.spawn_container()
