@@ -1,40 +1,77 @@
 #!/usr/bin/env python3
 """
-Example usage script for the generic container assignment utility.
-Shows how to assign containers for different runtimes.
+Example usage script showing different ways to test Azure Functions containers.
 """
 
-import os
 import time
 import requests
-from utils.functions_container_controller import FunctionsContainerController
+from utils import TestEnvironment, FunctionsContainerController
 
-def assign_java_container_existing():
-    """Example: Assign an already-running Java container"""
-    controller = FunctionsContainerController(
-        container_url="http://localhost:8080",
+
+def example_with_test_environment():
+    """Example: Use TestEnvironment for complete test setup with Azurite and app management"""
+    print("=" * 80)
+    print("Example 1: Using TestEnvironment (Recommended)")
+    print("=" * 80)
+    
+    # TestEnvironment handles Azurite, app uploads, and SAS token generation
+    with TestEnvironment(
+        use_azurite=True,
+        apps_directory="./apps",
+        apps_to_upload=["app"],  # List of app names (without extension) to upload
         runtime="java",
         runtime_version="21",
-        site_name="13934045-7273-42fc-bb4f-f738236547b6"  # Match the container's WEBSITE_SITE_NAME
-    )
-    cs_azurite = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;TableEndpoint=http://172.17.0.1:10002/devstoreaccount1;"
-    env_vars = {
-        "SCM_RUN_FROM_PACKAGE": "http://host.docker.internal:10000/devstoreaccount1/app/app.squashfs?se=2025-12-31T23%3A59%3A59Z&sp=r&sv=2022-11-02&sr=b&sig=8cxj%2FQAfsJ7EOgW29Tl9rPHUc8P81kME%2FIYD9rB4fkE%3D",
-        "AzureWebJobsStorage": cs_azurite,
-        "PDFProcessorSTORAGE": cs_azurite,
-        "JAVA_ENABLE_SDK_TYPES": "false",
-        "AzureWebEncryptionKey": "0F75CA46E7EBDD39E4CA6B074D1F9A5972B849A55F91A248"
-    }
-    
-    controller.assign_container(env=env_vars, host_version="4")
-    return controller
+        host_version="4",
+        docker_flags=[
+            "-v", r"D:\OneDrive\OneDrive - Microsoft\Documents\jw\repos\azure-functions-java-worker\java:/azure-functions-host/workers/java"
+        ]
+    ) as env:
+        
+        # List available apps
+        print("\n📋 Available apps:")
+        for app_name in env.list_uploaded_apps().keys():
+            print(f"   - {app_name}")
+        
+        # Spawn Functions container
+        env.spawn_functions_container()
+        
+        # Get app URL and assign container directly through the controller
+        app_url = env.get_blob_sas_url('app')  # Supports with or without extension
+        env.functions_controller.assign_container(
+            env={
+                'SCM_RUN_FROM_PACKAGE': app_url,
+                'JAVA_ENABLE_SDK_TYPES': 'false',
+                'AzureWebJobsStorage': env.docker_storage_connection_string,
+                'PDFProcessorSTORAGE': env.docker_storage_connection_string
+            },
+            host_version=env.host_version
+        )
+        
+        # Wait for initialization
+        print("\n⏳ Waiting 30 seconds for container to initialize...")
+        time.sleep(30)
+        
+        # Check logs
+        test_sdk_types_flag_in_logs(env.functions_controller)
+
+        time.sleep(120)
+        
+        # Test an endpoint if you have one
+        # test_function_endpoint(env.functions_controller, "/api/YourFunction")
+        
+    print("\n✅ Test completed - containers automatically cleaned up")
 
 
-def assign_java_container_with_spawn():
-    """Example: Spawn a new Java container and assign it (with context manager)"""
-    cs_azurite = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;TableEndpoint=http://172.17.0.1:10002/devstoreaccount1;"
+def example_with_controller_only():
+    """Example: Use FunctionsContainerController directly (manual setup required)"""
+    print("=" * 80)
+    print("Example 2: Using FunctionsContainerController directly")
+    print("=" * 80)
     
-    # Use context manager for automatic cleanup
+    # You need to manually provide connection string and app package URL
+    # This assumes you have Azurite running separately on default ports
+    cs_azurite = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://host.docker.internal:10000/devstoreaccount1;QueueEndpoint=http://host.docker.internal:10001/devstoreaccount1;TableEndpoint=http://host.docker.internal:10002/devstoreaccount1;"
+    
     with FunctionsContainerController(
         runtime="java",
         runtime_version="21",
@@ -53,46 +90,68 @@ def assign_java_container_with_spawn():
         
         controller.assign_container(env=env_vars, host_version="4")
         
-        # Test the endpoint
-        # test_get_env_variables_endpoint(controller)
-        
-        # Check logs for SDK types flag
+        print("\n⏳ Waiting 30 seconds for container to initialize...")
         time.sleep(30)
+        
         test_sdk_types_flag_in_logs(controller)
         
-        # Container will be automatically cleaned up when exiting this block
-        return controller
+    print("\n✅ Container automatically cleaned up")
 
 
-def test_get_env_variables_endpoint(controller: FunctionsContainerController):
-    """Test the GetEnvVariables endpoint after container assignment"""
-    print("\n🧪 Testing GetEnvVariables endpoint...")
+def example_assign_existing_container():
+    """Example: Assign an already-running container (advanced use case)"""
+    print("=" * 80)
+    print("Example 3: Assigning existing container")
+    print("=" * 80)
     
-    # Wait a bit for the container to fully initialize after assignment
-    print("⏳ Waiting 30 seconds for container to initialize...")
+    # This assumes you have a container already running on port 8080
+    controller = FunctionsContainerController(
+        container_url="http://localhost:8080",
+        runtime="java",
+        runtime_version="21",
+        site_name="your-site-name"  # Must match the container's WEBSITE_SITE_NAME
+    )
+    
+    cs_azurite = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://host.docker.internal:10000/devstoreaccount1;QueueEndpoint=http://host.docker.internal:10001/devstoreaccount1;TableEndpoint=http://host.docker.internal:10002/devstoreaccount1;"
+    
+    env_vars = {
+        "SCM_RUN_FROM_PACKAGE": "http://host.docker.internal:10000/devstoreaccount1/app/app.squashfs?se=2025-12-31T23%3A59%3A59Z&sp=r&sv=2022-11-02&sr=b&sig=8cxj%2FQAfsJ7EOgW29Tl9rPHUc8P81kME%2FIYD9rB4fkE%3D",
+        "AzureWebJobsStorage": cs_azurite,
+        "PDFProcessorSTORAGE": cs_azurite,
+        "JAVA_ENABLE_SDK_TYPES": "false"
+    }
+    
+    controller.assign_container(env=env_vars, host_version="4")
+    
+    print("\n⏳ Waiting 30 seconds for container to initialize...")
     time.sleep(30)
+    
+    test_sdk_types_flag_in_logs(controller)
+    
+    print("\n✅ Assignment completed")
+    return controller
 
+
+def test_function_endpoint(controller: FunctionsContainerController, endpoint: str):
+    """Test a function endpoint after container assignment"""
+    print(f"\n🧪 Testing endpoint {endpoint}...")
+    
     try:
-        # Use the controller's send_request method with proper authentication
-        # This matches how LinuxConsumptionWebHostController sends requests
-        req = requests.Request('GET', f'{controller.url}/api/GetEnvVariables')
+        req = requests.Request('GET', f'{controller.url}{endpoint}')
         response = controller.send_request(req)
         
         print(f"📊 Response Status: {response.status_code}")
-        print(f"📋 Response Headers: {dict(response.headers)}")
         
         if response.ok:
-            print("✅ GetEnvVariables endpoint responded successfully!")
+            print("✅ Endpoint responded successfully!")
             try:
-                # Try to parse as JSON if possible
                 json_data = response.json()
                 print(f"📄 Response JSON: {json_data}")
             except:
-                # If not JSON, print raw text
-                print(f"📄 Response Text: {response.text}")
+                print(f"📄 Response Text: {response.text[:200]}")
         else:
-            print(f"❌ GetEnvVariables endpoint failed with status {response.status_code}")
-            print(f"📄 Response Text: {response.text}")
+            print(f"❌ Endpoint failed with status {response.status_code}")
+            print(f"📄 Response Text: {response.text[:200]}")
             
     except requests.exceptions.RequestException as e:
         print(f"❌ Request failed: {e}")
@@ -120,30 +179,29 @@ def test_sdk_types_flag_in_logs(controller: FunctionsContainerController):
 
 
 if __name__ == "__main__":
-    print("🚀 Running container assignment examples...")
+    print("🚀 Azure Functions Container Testing Examples")
     print("\nChoose an option:")
-    print("1. Assign existing container (http://localhost:8080)")
-    print("2. Spawn new container automatically")
+    print("1. Use TestEnvironment (Recommended - handles everything)")
+    print("2. Use FunctionsContainerController only (manual setup)")
+    print("3. Assign existing container (advanced)")
     
-    choice = input("\nEnter choice (1 or 2): ").strip()
+    choice = input("\nEnter choice (1, 2, or 3): ").strip()
     
     try:
         if choice == "1":
-            print("\n☕ Assigning existing Java container...")
-            controller = assign_java_container_existing()
-            test_get_env_variables_endpoint(controller)
+            example_with_test_environment()
             
         elif choice == "2":
-            print("\n☕ Spawning and assigning new Java container...")
-            assign_java_container_with_spawn()
-            # Note: Container is automatically cleaned up when exiting the 'with' block
-            print("✅ Container has been cleaned up")
+            example_with_controller_only()
+            
+        elif choice == "3":
+            example_assign_existing_container()
             
         else:
-            print("❌ Invalid choice. Please enter 1 or 2.")
+            print("❌ Invalid choice. Please enter 1, 2, or 3.")
             exit(1)
         
     except Exception as e:
-        print(f"❌ Error during assignment: {e}")
+        print(f"❌ Error during execution: {e}")
         import traceback
         traceback.print_exc()
