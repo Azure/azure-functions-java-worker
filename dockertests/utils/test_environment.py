@@ -135,7 +135,8 @@ class TestEnvironment:
         # Upload app packages
         self._upload_app_packages()
         
-        # Initialize Functions container controller
+        # Initialize and spawn Functions container
+        print("🐳 Starting Functions container...")
         self.functions_controller = FunctionsContainerController(
             runtime=self.runtime,
             runtime_version=self.runtime_version,
@@ -143,8 +144,9 @@ class TestEnvironment:
             site_name=self.site_name,
             docker_flags=self.docker_flags
         )
+        self.functions_controller.spawn_container()
         
-        print(f"✅ Test environment '{self.environment_id}' initialized")
+        print(f"✅ Test environment '{self.environment_id}' ready")
         return self
     
     def stop(self) -> None:
@@ -327,22 +329,6 @@ class TestEnvironment:
             Dictionary mapping app blob names (with extensions) to SAS URLs
         """
         return self._uploaded_apps.copy()
-    
-    def spawn_functions_container(self, env: Optional[Dict[str, str]] = None) -> None:
-        """Spawn the Functions container.
-        
-        Args:
-            env: Additional environment variables
-        """
-        if not self.functions_controller:
-            raise RuntimeError("Test environment not started. Call start() first.")
-        
-        env = env or {}
-        
-        # Add storage connection string
-        env['AzureWebJobsStorage'] = self.docker_storage_connection_string
-        
-        self.functions_controller.spawn_container(env=env)
     
     def __enter__(self):
         """Context manager entry."""

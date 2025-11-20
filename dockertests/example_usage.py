@@ -32,9 +32,6 @@ def example_with_test_environment():
         for app_name in env.list_uploaded_apps().keys():
             print(f"   - {app_name}")
         
-        # Spawn Functions container
-        env.spawn_functions_container()
-        
         # Get app URL and assign container directly through the controller
         app_url = env.get_blob_sas_url('app')  # Supports with or without extension
         env.functions_controller.assign_container(
@@ -43,18 +40,15 @@ def example_with_test_environment():
                 'JAVA_ENABLE_SDK_TYPES': 'false',
                 'AzureWebJobsStorage': env.docker_storage_connection_string,
                 'PDFProcessorSTORAGE': env.docker_storage_connection_string
-            },
-            host_version=env.host_version
+            }
         )
         
-        # Wait for initialization
-        print("\n⏳ Waiting 30 seconds for container to initialize...")
-        time.sleep(30)
-        
-        # Check logs
-        test_sdk_types_flag_in_logs(env.functions_controller)
-
-        time.sleep(120)
+        # Wait for functions to be loaded
+        if env.functions_controller.wait_for_functions_loaded(timeout=120):
+            # Functions are loaded, proceed with tests
+            test_sdk_types_flag_in_logs(env.functions_controller)
+        else:
+            print("⚠️ Functions not loaded within timeout, but continuing...")
         
         # Test an endpoint if you have one
         # test_function_endpoint(env.functions_controller, "/api/YourFunction")
@@ -88,12 +82,11 @@ def example_with_controller_only():
             "JAVA_ENABLE_SDK_TYPES": "false"
         }
         
-        controller.assign_container(env=env_vars, host_version="4")
+        controller.assign_container(env=env_vars)
         
-        print("\n⏳ Waiting 30 seconds for container to initialize...")
-        time.sleep(30)
-        
-        test_sdk_types_flag_in_logs(controller)
+        # Wait for host to be running (use this when you don't have functions)
+        if controller.wait_for_host_running(timeout=120):
+            test_sdk_types_flag_in_logs(controller)
         
     print("\n✅ Container automatically cleaned up")
 
@@ -121,10 +114,10 @@ def example_assign_existing_container():
         "JAVA_ENABLE_SDK_TYPES": "false"
     }
     
-    controller.assign_container(env=env_vars, host_version="4")
+    controller.assign_container(env=env_vars)
     
-    print("\n⏳ Waiting 30 seconds for container to initialize...")
-    time.sleep(30)
+    # Wait for functions to load (or use wait_for_host_running if no functions expected)
+    controller.wait_for_functions_loaded(timeout=120)
     
     test_sdk_types_flag_in_logs(controller)
     

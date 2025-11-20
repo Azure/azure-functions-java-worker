@@ -248,18 +248,15 @@ class FunctionsContainerController:
         print(f"📦 Found latest mesh image: {image_tag}")
         return image_tag
 
-    def assign_container(self, env: Dict[str, str] = {}, host_version: str = "4", 
-                         secrets: Optional[Dict[str, any]] = None):
+    def assign_container(self, env: Dict[str, str] = {}):
         """Make a POST request to /admin/instance/assign to specialize the
         container with the given environment variables.
         
         Args:
             env: Environment variables to set in the container
-            host_version: Azure Functions host version (default: "4")
-            secrets: Optional secrets dictionary for host and function keys
         """
         # Add compulsory fields in specialization context
-        env["FUNCTIONS_EXTENSION_VERSION"] = f"~{host_version}"
+        env["FUNCTIONS_EXTENSION_VERSION"] = f"~{self._host_version}"
         env["FUNCTIONS_WORKER_RUNTIME"] = self._runtime
         env["FUNCTIONS_WORKER_RUNTIME_VERSION"] = self._runtime_version
         env["WEBSITE_SITE_NAME"] = self._site_name
@@ -301,7 +298,7 @@ class FunctionsContainerController:
             url=f"{self.url}/admin/instance/assign",
             data=json.dumps({
                 "encryptedContext": self._get_site_encrypted_context(
-                    self._site_name, env, secrets
+                    self._site_name, env
                 )
             })
         )
@@ -314,12 +311,140 @@ class FunctionsContainerController:
         print("✅ Container assignment successful!")
         return response
 
+    def wait_for_host_running(self, timeout: int = 120, check_interval: int = 5) -> bool:
+        """Wait for the Azure Functions host to reach 'Running' state.
+        
+        This method polls the /admin/host/status endpoint until the host reports
+        a 'Running' state or the timeout is reached. Use this after assign_container()
+        when you want to verify the host is running, even if no functions are loaded.
+        
+        Args:
+            timeout: Maximum time to wait in seconds (default: 120)
+            check_interval: Time between checks in seconds (default: 5)
+            
+        Returns:
+            bool: True if host is running, False if timeout reached
+            
+        Raises:
+            RuntimeError: If container is not running or URL not available
+        """
+        if not self.url:
+            raise RuntimeError("Container URL not available. Spawn or assign container first.")
+        
+        print(f"⏳ Waiting for host to reach 'Running' state (timeout: {timeout}s)...")
+        start_time = time.time()
+        last_error = None
+        last_state = None
+        
+        while time.time() - start_time < timeout:
+            try:
+                # Check host status
+                # Use post_assignment=True since this check happens after specialization
+                req = requests.Request('GET', f'{self.url}/admin/host/status')
+                response = self.send_request(req, post_assignment=True)
+                
+                if response.ok:
+                    status = response.json()
+                    state = status.get('state', 'Unknown')
+                    last_state = state
+                    
+                    if state == 'Running':
+                        elapsed = time.time() - start_time
+                        print(f"✅ Host is running (took {elapsed:.1f}s)")
+                        return True
+                    else:
+                        print(f"   Host state: {state} (waiting...)")
+                else:
+                    print(f"   Host status endpoint returned: {response.status_code} (waiting...)")
+                        
+            except Exception as e:
+                last_error = str(e)
+                # Continue waiting on errors (container might still be initializing)
+            
+            time.sleep(check_interval)
+        
+        # Timeout reached
+        elapsed = time.time() - start_time
+        print(f"❌ Host not running after {elapsed:.1f}s")
+        if last_state:
+            print(f"   Last state: {last_state}")
+        if last_error:
+            print(f"   Last error: {last_error}")
+        return False
+
+    def wait_for_functions_loaded(self, timeout: int = 120, check_interval: int = 5) -> bool:
+        """Wait for functions to be loaded and available.
+        
+        This method polls the /admin/functions endpoint until functions are loaded
+        or the timeout is reached. Use this after assign_container() to ensure
+        the container has completed specialization and loaded all functions.
+        
+        Args:
+            timeout: Maximum time to wait in seconds (default: 120)
+            check_interval: Time between checks in seconds (default: 5)
+            
+        Returns:
+            bool: True if functions are loaded, False if timeout reached
+            
+        Raises:
+            RuntimeError: If container is not running or URL not available
+        """
+        if not self.url:
+            raise RuntimeError("Container URL not available. Spawn or assign container first.")
+        
+        print(f"⏳ Waiting for functions to be loaded (timeout: {timeout}s)...")
+        start_time = time.time()
+        last_error = None
+        last_status = None
+        
+        while time.time() - start_time < timeout:
+            try:
+                # Check if functions are loaded
+                # Use post_assignment=True since this check happens after specialization
+                req = requests.Request('GET', f'{self.url}/admin/functions')
+                response = self.send_request(req, post_assignment=True)
+                
+                if response.ok:
+                    functions = response.json()
+                    if functions and len(functions) > 0:
+                        elapsed = time.time() - start_time
+                        print(f"✅ Functions loaded and ready (found {len(functions)} function(s), took {elapsed:.1f}s)")
+                        return True
+                    else:
+                        print(f"   No functions loaded yet (waiting...)")
+                else:
+                    last_status = response.status_code
+                    print(f"   Functions endpoint status: {response.status_code} (waiting...)")
+                        
+            except Exception as e:
+                last_error = str(e)
+                # Continue waiting on errors (container might still be initializing)
+            
+            time.sleep(check_interval)
+        
+        # Timeout reached
+        elapsed = time.time() - start_time
+        print(f"❌ Functions not ready after {elapsed:.1f}s")
+        if last_status:
+            print(f"   Last status code: {last_status}")
+        if last_error:
+            print(f"   Last error: {last_error}")
+        return False
+
     def send_request(
             self,
             req: requests.Request,
-            ses: requests.Session = None
+            ses: requests.Session = None,
+            post_assignment: bool = False
     ) -> requests.Response:
-        """Send a request with authorization token. Return a Response object"""
+        """Send a request with authorization token. Return a Response object
+        
+        Args:
+            req: The request to send
+            ses: Optional session to use
+            post_assignment: If True, use full URL format for JWT audience (for post-specialization calls)
+                            If False, use container name format (for pre-specialization calls like ping/assign)
+        """
         session = ses
         if session is None:
             session = requests.Session()
@@ -329,7 +454,7 @@ class FunctionsContainerController:
 
         # Generate token and set headers exactly like the original implementation
         try:
-            jwt_token = self._generate_jwt_token()
+            jwt_token = self._generate_jwt_token(post_assignment=post_assignment)
             # Use JWT token for newer Azure Functions host versions
             prepped.headers['Authorization'] = f'Bearer {jwt_token}'
         except ImportError:
@@ -357,8 +482,13 @@ class FunctionsContainerController:
         token = cls._encrypt_context(cls._shared_encryption_key, f'exp={exp_ns}')
         return token
 
-    def _generate_jwt_token(self) -> str:
-        """Generate a proper JWT token for newer Azure Functions host versions."""
+    def _generate_jwt_token(self, post_assignment: bool = False) -> str:
+        """Generate a proper JWT token for newer Azure Functions host versions.
+        
+        Args:
+            post_assignment: If True, use full URL format for audience (post-specialization)
+                            If False, use container name format (pre-specialization)
+        """
         try:
             import jwt
         except ImportError:
@@ -368,21 +498,25 @@ class FunctionsContainerController:
         # JWT payload matching Azure Functions host expectations
         exp_time = int(time.time()) + (24 * 60 * 60)  # 24 hours from now
 
-        # Use the site name consistently for issuer and audience validation
+        # Use the site name consistently
         site_name = self._site_name
-        container_name = self._site_name
 
-        # According to Azure Functions host analysis, use site-specific issuer format
-        # This matches the ValidIssuers array in ScriptJwtBearerExtensions.cs
+        # Issuer always uses the full URL format
         issuer = f"https://{site_name}.azurewebsites.net"
+
+        # Audience format changes based on whether host is in placeholder mode or specialized
+        if post_assignment:
+            # After specialization: audience should match issuer format
+            audience = issuer
+        else:
+            # Before/during specialization: audience is the container name
+            audience = site_name
 
         payload = {
             'exp': exp_time,
             'iat': int(time.time()),
-            # Use site-specific issuer format that matches ValidIssuers in the host
             'iss': issuer,
-            # For Linux Consumption in placeholder mode, audience is the container name
-            'aud': container_name
+            'aud': audience
         }
 
         # Use the same encryption key for JWT signing
@@ -395,14 +529,12 @@ class FunctionsContainerController:
     @classmethod
     def _get_site_encrypted_context(cls,
                                     site_name: str,
-                                    env: Dict[str, str],
-                                    secrets: Optional[Dict[str, any]] = None) -> str:
+                                    env: Dict[str, str]) -> str:
         """Get the encrypted context for placeholder mode specialization
         
         Args:
             site_name: The site name for the container
             env: Environment variables
-            secrets: Optional secrets dictionary with host keys and function keys
         """
         # Ensure WEBSITE_SITE_NAME is set to simulate production mode
         env["WEBSITE_SITE_NAME"] = site_name
@@ -412,10 +544,6 @@ class FunctionsContainerController:
             "SiteName": site_name,
             "Environment": env
         }
-        
-        # Add secrets if provided
-        if secrets:
-            ctx["Secrets"] = secrets
 
         json_ctx = json.dumps(ctx)
 
