@@ -47,10 +47,9 @@ public class JavaFunctionBroker {
 	private List<Middleware> serviceLoadedMiddlewares = new ArrayList<>();
 	private final Map<String, InvocationChainFactory> functionFactories = new ConcurrentHashMap<>();
 	private final SdkParameterAnalyzer sdkParameterAnalyzer = new SdkParameterAnalyzer();
-	private final WorkerObjectCache<CacheKey> workerObjectCache;
-	private static final boolean JAVA_ENABLE_SDK_TYPES_FLAG =
-			Boolean.parseBoolean(System.getenv(JAVA_ENABLE_SDK_TYPES));
+	private WorkerObjectCache<CacheKey> workerObjectCache = null;
 	private ClassLoader userContextClassLoader;
+	private volatile Boolean cachedSdkTypesEnabled = null;
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -64,11 +63,6 @@ public class JavaFunctionBroker {
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
-		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
-			this.workerObjectCache = new WorkerObjectCache<>();
-		} else {
-			this.workerObjectCache = null;
-		}
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -78,7 +72,7 @@ public class JavaFunctionBroker {
 		initializeOneTimeLogics();
 		FunctionDefinition functionDefinition = new FunctionDefinition(descriptor, bindings, classLoaderProvider);
 
-		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
+		if (isJavaSdkTypesEnabled()) {
 			createInvocationChainFactory(functionDefinition, bindings);
 		}
 
@@ -114,7 +108,8 @@ public class JavaFunctionBroker {
 				if (!oneTimeLogicInitialized) {
 					userContextClassLoader = classLoaderProvider.createClassLoader();
 
-					if (JAVA_ENABLE_SDK_TYPES_FLAG) {
+					if (isJavaSdkTypesEnabled()) {
+						this.workerObjectCache = new WorkerObjectCache<>();
 						loadGlobalMiddlewares();
 					} else {
 						initializeInvocationChainFactory();
@@ -192,7 +187,7 @@ public class JavaFunctionBroker {
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
 
-		if (JAVA_ENABLE_SDK_TYPES_FLAG) {
+		if (isJavaSdkTypesEnabled()) {
 			this.functionFactories.get(id).create().doNext(executionContextDataSource);
 		} else {
 			this.invocationChainFactory.create().doNext(executionContextDataSource);
@@ -319,5 +314,23 @@ public class JavaFunctionBroker {
 
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
+	}
+
+	private boolean isJavaSdkTypesEnabled() {
+		if (cachedSdkTypesEnabled == null) {
+			synchronized (this) {
+				if (cachedSdkTypesEnabled == null) {
+					String value = System.getenv(JAVA_ENABLE_SDK_TYPES);
+					// default to true
+					cachedSdkTypesEnabled = value == null ? true : Boolean.parseBoolean(value);
+					WorkerLogManager.getSystemLogger().info(
+						"Initialized SDK types enabled flag: " + cachedSdkTypesEnabled + 
+						" (from '" + JAVA_ENABLE_SDK_TYPES + "' environment variable : " + (value != null ? "'" + value + "'" : "null") + ")"
+					);
+				}
+			}
+		}
+
+		return cachedSdkTypesEnabled;
 	}
 }
