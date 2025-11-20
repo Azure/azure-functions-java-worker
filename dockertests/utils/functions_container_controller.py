@@ -43,8 +43,8 @@ class FunctionsContainerController:
 
     def __init__(self, container_url: str = None, runtime: str = "python", 
                  runtime_version: str = "3.9", site_name: Optional[str] = None,
-                 host_version: str = "4", docker_flags: list = None,
-                 override_docker_flags: bool = False):
+                 host_version: str = "4", worker_directory: Optional[str] = None,
+                 docker_flags: list = None, override_docker_flags: bool = False):
         """Initialize the controller.
         
         Args:
@@ -54,6 +54,8 @@ class FunctionsContainerController:
             runtime_version: The version of the runtime
             site_name: Optional site name, will generate UUID if not provided
             host_version: Azure Functions host version (default: "4")
+            worker_directory: Optional path to custom worker directory to mount.
+                            If provided, mounts to /azure-functions-host/workers/{runtime}
             docker_flags: Additional Docker flags to append or override defaults
                          Format: list of strings like ["--cap-add", "NET_ADMIN", "-e", "FOO=bar"]
             override_docker_flags: If True, replace default flags with docker_flags.
@@ -65,6 +67,7 @@ class FunctionsContainerController:
         self._host_version = host_version
         self._container_url = container_url.rstrip('/') if container_url else None
         self._container_name = None
+        self._worker_directory = worker_directory
         self._docker_flags = docker_flags or []
         self._override_docker_flags = override_docker_flags
         
@@ -113,6 +116,14 @@ class FunctionsContainerController:
             run_cmd.extend(["--name", self._container_name, "--privileged"])
             run_cmd.extend(["--cap-add", "SYS_ADMIN"])
             run_cmd.extend(["--device", "/dev/fuse"])
+            
+            # Mount worker directory if provided
+            if self._worker_directory:
+                host_worker_path = f"/azure-functions-host/workers/{self._runtime}"
+                run_cmd.extend(["-v", f"{self._worker_directory}:{host_worker_path}"])
+                print(f"📦 Mounting worker: {self._worker_directory} -> {host_worker_path}")
+            else:
+                print(f"⚠️  No worker directory provided, using built-in {self._runtime} worker from image")
             
             # Append custom flags
             run_cmd.extend(self._docker_flags)

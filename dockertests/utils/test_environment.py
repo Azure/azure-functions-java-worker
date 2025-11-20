@@ -4,6 +4,7 @@
 Test environment manager for Azure Functions container testing.
 Manages both Functions containers and storage (Azurite or real Azure Storage).
 """
+import os
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -24,51 +25,65 @@ class TestEnvironment:
     
     def __init__(
         self,
-        use_azurite: bool = True,
+        use_azurite: Optional[bool] = None,
         storage_connection_string: Optional[str] = None,
-        apps_directory: str = "./apps",
+        apps_directory: Optional[str] = None,
         apps_to_upload: Optional[List[str]] = None,
         apps_container_name: str = "app",
-        runtime: str = "java",
-        runtime_version: str = "21",
-        host_version: str = "4",
-        site_name: Optional[str] = None,
+        runtime: Optional[str] = None,
+        runtime_version: Optional[str] = None,
+        host_version: Optional[str] = None,
+        worker_directory: Optional[str] = None,
         docker_flags: Optional[List[str]] = None,
         environment_id: Optional[str] = None
     ):
         """Initialize the test environment.
         
         Args:
-            use_azurite: If True, use Azurite emulator. If False, use real Azure Storage
-            storage_connection_string: Connection string for real Azure Storage (required if use_azurite=False)
-            apps_directory: Directory containing app packages to upload
+            use_azurite: If True, use Azurite emulator. If False, use real Azure Storage.
+                        If None, reads from FUNCTIONS_TEST_USE_AZURITE env var (default: True)
+            storage_connection_string: Connection string for real Azure Storage (required if use_azurite=False).
+                                      If None, reads from FUNCTIONS_TEST_STORAGE_CONNECTION_STRING env var
+            apps_directory: Directory containing app packages to upload.
+                           If None, reads from FUNCTIONS_TEST_APPS_DIR env var (default: "./apps")
             apps_to_upload: Optional list of app names to upload (with or without extensions).
                           Examples: ['app1', 'app2.squashfs']
                           If specified without extension, will match any supported extension (.zip, .squashfs)
                           If None, all apps in apps_directory will be uploaded
             apps_container_name: Blob container name for storing app packages
-            runtime: Functions runtime (java, python, dotnet, node, etc.)
-            runtime_version: Runtime version
-            host_version: Azure Functions host version
-            site_name: Optional site name for the Functions container
+            runtime: Functions runtime (java, python, dotnet, node, etc.).
+                    If None, reads from FUNCTIONS_TEST_RUNTIME env var (default: "java")
+            runtime_version: Runtime version.
+                           If None, reads from FUNCTIONS_TEST_RUNTIME_VERSION env var (default: "21")
+            host_version: Azure Functions host version.
+                         If None, reads from FUNCTIONS_TEST_HOST_VERSION env var (default: "4")
+            worker_directory: Path to custom worker directory to mount.
+                            If None, reads from FUNCTIONS_TEST_WORKER_DIR env var.
+                            If still None, uses built-in worker from image.
             docker_flags: Additional Docker flags for the Functions container
             environment_id: Optional unique ID for this environment (auto-generated if not provided)
         """
-        self.use_azurite = use_azurite
-        self.apps_directory = Path(apps_directory)
+        # Read from environment variables with defaults
+        self.use_azurite = use_azurite if use_azurite is not None else \
+            os.getenv('FUNCTIONS_TEST_USE_AZURITE', 'true').lower() == 'true'
+        
+        self.runtime = runtime or os.getenv('FUNCTIONS_TEST_RUNTIME', 'java')
+        self.runtime_version = runtime_version or os.getenv('FUNCTIONS_TEST_RUNTIME_VERSION', '21')
+        self.host_version = host_version or os.getenv('FUNCTIONS_TEST_HOST_VERSION', '4')
+        
+        self.apps_directory = Path(apps_directory or os.getenv('FUNCTIONS_TEST_APPS_DIR', './apps'))
         self.apps_to_upload = apps_to_upload  # List of specific files to upload, or None for all
         self.apps_container_name = apps_container_name
-        self.runtime = runtime
-        self.runtime_version = runtime_version
-        self.host_version = host_version
-        self.site_name = site_name
         self.docker_flags = docker_flags or []
+        
+        # Worker directory - read from parameter or env var
+        self.worker_directory = worker_directory or os.getenv('FUNCTIONS_TEST_WORKER_DIR')
         
         # Generate unique environment ID for this test environment
         self.environment_id = environment_id or str(uuid.uuid4())[:8]
         
         # Storage configuration
-        if use_azurite:
+        if self.use_azurite:
             # Create unique Azurite container name using environment ID
             azurite_container_name = f"azurite-{self.environment_id}"
             self.azurite = AzuriteContainerController(
@@ -79,10 +94,15 @@ class TestEnvironment:
             )
             self._storage_connection_string = None
         else:
-            if not storage_connection_string:
-                raise ValueError("storage_connection_string is required when use_azurite=False")
+            # Use provided connection string or read from env var
+            conn_str = storage_connection_string or os.getenv('FUNCTIONS_TEST_STORAGE_CONNECTION_STRING')
+            if not conn_str:
+                raise ValueError(
+                    "storage_connection_string is required when use_azurite=False. "
+                    "Provide it as a parameter or set FUNCTIONS_TEST_STORAGE_CONNECTION_STRING env var"
+                )
             self.azurite = None
-            self._storage_connection_string = storage_connection_string
+            self._storage_connection_string = conn_str
         
         # Functions container controller
         self.functions_controller: Optional[FunctionsContainerController] = None
@@ -143,6 +163,7 @@ class TestEnvironment:
             runtime_version=self.runtime_version,
             host_version=self.host_version,
             site_name=functions_container_name,
+            worker_directory=self.worker_directory,
             docker_flags=self.docker_flags
         )
         self.functions_controller.spawn_container()

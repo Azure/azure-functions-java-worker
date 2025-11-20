@@ -5,7 +5,17 @@ Example usage script showing different ways to test Azure Functions containers.
 
 import time
 import requests
+from pathlib import Path
+from dotenv import load_dotenv
 from utils import TestEnvironment, FunctionsContainerController
+
+# Load environment variables from .env file
+env_file = Path(__file__).parent / '.env'
+if env_file.exists():
+    load_dotenv(env_file)
+    print(f"✅ Loaded configuration from {env_file}")
+else:
+    print(f"⚠️  No .env file found at {env_file}, using defaults")
 
 
 def example_with_test_environment():
@@ -15,16 +25,10 @@ def example_with_test_environment():
     print("=" * 80)
     
     # TestEnvironment handles Azurite, app uploads, and SAS token generation
+    # Configuration can be set via environment variables or parameters
+    # Set FUNCTIONS_TEST_WORKER_DIR env var or it will auto-detect ./worker directory
     with TestEnvironment(
-        use_azurite=True,
-        apps_directory="./apps",
-        apps_to_upload=["app"],  # List of app names (without extension) to upload
-        runtime="java",
-        runtime_version="21",
-        host_version="4",
-        docker_flags=[
-            "-v", r"D:\OneDrive\OneDrive - Microsoft\Documents\jw\repos\azure-functions-java-worker\java:/azure-functions-host/workers/java"
-        ]
+        apps_to_upload=["app"]  # Most config comes from env vars or defaults
     ) as env:
         
         # List available apps
@@ -47,11 +51,12 @@ def example_with_test_environment():
         if env.functions_controller.wait_for_functions_loaded(timeout=120):
             # Functions are loaded, proceed with tests
             test_sdk_types_flag_in_logs(env.functions_controller)
+            # Test an endpoint if you have one
+            test_function_endpoint(env.functions_controller, "/api/GetEnvVariables")
         else:
             print("⚠️ Functions not loaded within timeout, but continuing...")
         
-        # Test an endpoint if you have one
-        # test_function_endpoint(env.functions_controller, "/api/YourFunction")
+        
         
     print("\n✅ Test completed - containers automatically cleaned up")
 
@@ -131,7 +136,7 @@ def test_function_endpoint(controller: FunctionsContainerController, endpoint: s
     
     try:
         req = requests.Request('GET', f'{controller.url}{endpoint}')
-        response = controller.send_request(req)
+        response = controller.send_request(req, post_assignment=True)
         
         print(f"📊 Response Status: {response.status_code}")
         
@@ -145,6 +150,14 @@ def test_function_endpoint(controller: FunctionsContainerController, endpoint: s
         else:
             print(f"❌ Endpoint failed with status {response.status_code}")
             print(f"📄 Response Text: {response.text[:200]}")
+            
+            # Also print container logs for debugging
+            print("\n🔍 Container logs (last 50 lines):")
+            logs = controller.get_container_logs()
+            log_lines = logs.split('\n')
+            for line in log_lines[-50:]:
+                if line.strip():
+                    print(f"   {line}")
             
     except requests.exceptions.RequestException as e:
         print(f"❌ Request failed: {e}")
