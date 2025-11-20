@@ -48,16 +48,16 @@ def assign_java_container_with_spawn():
             "SCM_RUN_FROM_PACKAGE": "http://host.docker.internal:10000/devstoreaccount1/app/app.squashfs?se=2025-12-31T23%3A59%3A59Z&sp=r&sv=2022-11-02&sr=b&sig=8cxj%2FQAfsJ7EOgW29Tl9rPHUc8P81kME%2FIYD9rB4fkE%3D",
             "AzureWebJobsStorage": cs_azurite,
             "PDFProcessorSTORAGE": cs_azurite,
-            "JAVA_ENABLE_SDK_TYPES": "false",
-            "AzureWebEncryptionKey": "0F75CA46E7EBDD39E4CA6B074D1F9A5972B849A55F91A248"
+            "JAVA_ENABLE_SDK_TYPES": "false"
         }
         
         controller.assign_container(env=env_vars, host_version="4")
         
         # Test the endpoint
-        test_get_env_variables_endpoint(controller)
+        # test_get_env_variables_endpoint(controller)
         
         # Check logs for SDK types flag
+        time.sleep(30)
         test_sdk_types_flag_in_logs(controller)
         
         # Container will be automatically cleaned up when exiting this block

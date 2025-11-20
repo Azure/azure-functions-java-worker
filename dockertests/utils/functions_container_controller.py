@@ -14,7 +14,6 @@ import sys
 import time
 import uuid
 from typing import Dict, Optional
-from urllib.request import urlopen
 
 import requests
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -265,6 +264,7 @@ class FunctionsContainerController:
         env["FUNCTIONS_WORKER_RUNTIME_VERSION"] = self._runtime_version
         env["WEBSITE_SITE_NAME"] = self._site_name
         env["WEBSITE_HOSTNAME"] = f"{self._site_name}.azurewebsites.com"
+        env["AzureWebEncryptionKey"] = "0F75CA46E7EBDD39E4CA6B074D1F9A5972B849A55F91A248"
 
         # Debug: Print key environment variables
         print(f"🔍 DEBUG: Runtime: {self._runtime}")
