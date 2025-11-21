@@ -80,7 +80,8 @@ class TestEnvironment:
         self.worker_directory = worker_directory or os.getenv('FUNCTIONS_TEST_WORKER_DIR')
         
         # Generate unique environment ID for this test environment
-        self.environment_id = environment_id or str(uuid.uuid4())[:8]
+        # Use full UUID with hyphens (36 characters)
+        self.environment_id = environment_id or str(uuid.uuid4())
         
         # Storage configuration
         if self.use_azurite:
@@ -157,6 +158,7 @@ class TestEnvironment:
         
         # Initialize and spawn Functions container
         print("🐳 Starting Functions container...")
+        # Use environment_id as suffix
         functions_container_name = f"functions-{self.environment_id}"
         self.functions_controller = FunctionsContainerController(
             runtime=self.runtime,
