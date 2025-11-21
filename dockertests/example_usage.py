@@ -7,7 +7,7 @@ import time
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
-from utils import TestEnvironment, FunctionsContainerController
+from utils import FunctionsTestEnvironment, FunctionsContainerController
 
 # Load environment variables from .env file
 env_file = Path(__file__).parent / '.env'
@@ -27,7 +27,7 @@ def example_with_test_environment():
     # TestEnvironment handles Azurite, app uploads, and SAS token generation
     # Configuration can be set via environment variables or parameters
     # Set FUNCTIONS_TEST_WORKER_DIR env var or it will auto-detect ./worker directory
-    with TestEnvironment(
+    with FunctionsTestEnvironment(
         apps_to_upload=["app"]  # Most config comes from env vars or defaults
     ) as env:
         
@@ -42,17 +42,20 @@ def example_with_test_environment():
             env={
                 'SCM_RUN_FROM_PACKAGE': app_url,
                 'JAVA_ENABLE_SDK_TYPES': 'false',
+                'JAVA_ENABLE_OPENTELEMETRY': 'true',
                 'AzureWebJobsStorage': env.docker_storage_connection_string,
                 'PDFProcessorSTORAGE': env.docker_storage_connection_string
             }
         )
         
         # Wait for functions to be loaded
-        if env.functions_controller.wait_for_functions_loaded(timeout=120):
+        if env.functions_controller.wait_for_host_running(timeout=120):
             # Functions are loaded, proceed with tests
             test_sdk_types_flag_in_logs(env.functions_controller)
             # Test an endpoint if you have one
-            test_function_endpoint(env.functions_controller, "/api/GetEnvVariables")
+            # test_function_endpoint(env.functions_controller, "/api/GetEnvVariables")
+
+            time.sleep(1200)
         else:
             print("⚠️ Functions not loaded within timeout, but continuing...")
         

@@ -284,7 +284,7 @@ class FunctionsContainerController:
 
         # Wait for the container to be ready
         print("⏳ Waiting for container to be ready...")
-        max_retries = 60
+        max_retries = 360
         for i in range(max_retries):
             try:
                 ping_req = requests.Request(method="GET", url=f"{self.url}/admin/host/ping")

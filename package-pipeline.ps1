@@ -1,5 +1,7 @@
 param (
-    [string]$buildNumber
+    [string]$buildNumber,
+    [string]$outputDir = "pkg",
+    [switch]$skipNuget
 )
 
 # A helper function that stops the entire script if the last command failed.
@@ -17,30 +19,35 @@ mvn clean package --no-transfer-progress -B -P appinsights
 StopOnFailedExecution
 
 # --------------------------------------------------------------------
-# Prepare the final "pkg" folder and copy core worker artifacts
+# Prepare the final output folder and copy core worker artifacts
 # --------------------------------------------------------------------
-Write-Host "`n=== Creating NuGet package: Microsoft.Azure.Functions.JavaWorker ==="
-Write-Host "Using buildNumber: $buildNumber"
+Write-Host "`n=== Preparing worker package in '$outputDir' folder ==="
+if (-not $skipNuget) {
+    Write-Host "Creating NuGet package: Microsoft.Azure.Functions.JavaWorker"
+    Write-Host "Using buildNumber: $buildNumber"
+    
+    # Ensure 'nuget' command is available
+    Get-Command nuget | Out-Null
+    StopOnFailedExecution
+}
 
-# Ensure 'nuget' command is available
-Get-Command nuget | Out-Null
-StopOnFailedExecution
+Write-Host "Removing old '$outputDir' folder (if present)..."
+Remove-Item -Recurse -Force -ErrorAction Ignore .\$outputDir
 
-Write-Host "Removing old 'pkg' folder (if present)..."
-Remove-Item -Recurse -Force -ErrorAction Ignore .\pkg
+Write-Host "Creating new '$outputDir' folder..."
+New-Item -ItemType Directory -Path .\$outputDir | Out-Null
 
-Write-Host "Creating new 'pkg' folder..."
-New-Item -ItemType Directory -Path .\pkg | Out-Null
-
-Write-Host "Copying azure-functions-java-worker.jar to 'pkg'..."
+Write-Host "Copying azure-functions-java-worker.jar to '$outputDir'..."
 Get-ChildItem -Path .\target\* -Include 'azure*' -Exclude '*shaded.jar','*tests.jar' |
-        ForEach-Object { Copy-Item $_.FullName .\pkg\azure-functions-java-worker.jar }
+        ForEach-Object { Copy-Item $_.FullName .\$outputDir\azure-functions-java-worker.jar }
 StopOnFailedExecution
 
-Write-Host "Copying supporting files into 'pkg' folder..."
-Copy-Item .\worker.config.json .\pkg\
-Copy-Item .\tools\AzureFunctionsJavaWorker.nuspec .\pkg\
-Copy-Item .\annotationLib .\pkg\annotationLib -Recurse
+Write-Host "Copying supporting files into '$outputDir' folder..."
+Copy-Item .\worker.config.json .\$outputDir\
+if (-not $skipNuget) {
+    Copy-Item .\tools\AzureFunctionsJavaWorker.nuspec .\$outputDir\
+}
+Copy-Item .\annotationLib .\$outputDir\annotationLib -Recurse
 
 # --------------------------------------------------------------------
 # Locate the Application Insights agent built by the Maven profile
@@ -145,15 +152,19 @@ Write-Host "Done removing signature files from '$PackagedAgentFile'."
 Write-Host "`n=== Creating 'functions.codeless' marker file ==="
 New-Item -Path $AgentFolder -Name "functions.codeless" -ItemType File | Out-Null
 
-Write-Host "Copying 'agent' folder into the 'pkg' folder..."
-Copy-Item $AgentFolder (Join-Path $PSScriptRoot 'pkg\agent') -Recurse -Force -Verbose
+Write-Host "Copying 'agent' folder into the '$outputDir' folder..."
+Copy-Item $AgentFolder (Join-Path $PSScriptRoot "$outputDir\agent") -Recurse -Force -Verbose
 
 # --------------------------------------------------------------------
-# Package everything into the final NuGet package
+# Package everything into the final NuGet package (if not skipped)
 # --------------------------------------------------------------------
-Write-Host "`n=== Creating the NuGet package ==="
-Push-Location pkg
-nuget pack -Properties version=$buildNumber
-Pop-Location
-
-Write-Host "`n=== Script completed successfully. NuGet package created. ==="
+if (-not $skipNuget) {
+    Write-Host "`n=== Creating the NuGet package ==="
+    Push-Location $outputDir
+    nuget pack -Properties version=$buildNumber
+    Pop-Location
+    
+    Write-Host "`n=== Script completed successfully. NuGet package created. ==="
+} else {
+    Write-Host "`n=== Script completed successfully. Worker packaged to '$outputDir' (NuGet package skipped). ==="
+}

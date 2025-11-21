@@ -6,10 +6,10 @@ Utilities for Azure Functions container testing.
 
 from .functions_container_controller import FunctionsContainerController
 from .azurite_container_controller import AzuriteContainerController
-from .test_environment import TestEnvironment
+from .functions_test_environment import FunctionsTestEnvironment
 
 __all__ = [
     'FunctionsContainerController',
     'AzuriteContainerController',
-    'TestEnvironment',
+    'FunctionsTestEnvironment',
 ]
