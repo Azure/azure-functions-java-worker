@@ -5,19 +5,19 @@ parameters:
 
 jobs:
   - job: "TestDocker"
-    displayName: 'Docker Integration Tests - Windows'
+    displayName: 'Docker Integration Tests - Linux'
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-windows-2022
-      os: windows
+      image: 1es-ubuntu-22.04
+      os: linux
 
     steps:
-      - pwsh: |
-          Get-Command mvn
+      - bash: |
+          mvn --version
         displayName: 'Check Maven is installed'
 
-      - pwsh: |
+      - bash: |
           java -version
         displayName: 'Check default java version'
 
@@ -34,7 +34,7 @@ jobs:
           versionSpec: '3.11'
           addToPath: true
 
-      - pwsh: |
+      - bash: |
           python -m pip install --upgrade pip
           pip install pytest pytest-xdist python-dotenv azure-storage-blob requests pyjwt cryptography
         displayName: 'Install Python dependencies'
@@ -48,7 +48,7 @@ jobs:
           ./build-apps.ps1
         displayName: 'Build and package test apps'
 
-      - pwsh: |
+      - bash: |
           cd dockertests
           pytest . -v -n auto --tb=short
         displayName: 'Run Docker integration tests'
