@@ -1,0 +1,61 @@
+parameters:
+  - name: poolName
+    type: string
+    default: ''
+
+jobs:
+  - job: "TestDocker"
+    displayName: 'Docker Integration Tests - Windows'
+
+    pool:
+      name: ${{ parameters.poolName }}
+      image: 1es-windows-2022
+      os: windows
+
+    steps:
+      - pwsh: |
+          Get-Command mvn
+        displayName: 'Check Maven is installed'
+
+      - pwsh: |
+          java -version
+        displayName: 'Check default java version'
+
+      - task: JavaToolInstaller@0
+        displayName: 'Install Java 21'
+        inputs:
+          versionSpec: '21'
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
+
+      - task: UsePythonVersion@0
+        displayName: 'Use Python 3.11'
+        inputs:
+          versionSpec: '3.11'
+          addToPath: true
+
+      - pwsh: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-xdist python-dotenv azure-storage-blob requests pyjwt cryptography
+        displayName: 'Install Python dependencies'
+
+      - pwsh: |
+          ./package-pipeline.ps1 -outputDir 'java-worker' -skipNuget
+        displayName: 'Package Java worker'
+
+      - pwsh: |
+          cd dockertests
+          ./build-apps.ps1
+        displayName: 'Build and package test apps'
+
+      - pwsh: |
+          cd dockertests
+          pytest . -v -n auto --tb=short
+        displayName: 'Run Docker integration tests'
+        env:
+          FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
+          FUNCTIONS_TEST_USE_AZURITE: 'true'
+          FUNCTIONS_TEST_RUNTIME: 'java'
+          FUNCTIONS_TEST_RUNTIME_VERSION: '21'
+          FUNCTIONS_TEST_HOST_VERSION: '4'
+          DOCKER_BUILDKIT: 1
