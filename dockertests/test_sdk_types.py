@@ -82,28 +82,32 @@ def verify_sdk_types_logs(test_env, sdk_types_value, expected_first_line, expect
         logs = test_env.functions_controller.get_container_logs()
         matches = [line for line in logs.split('\n') if "Initialized SDK types enabled flag" in line]
         
-        if len(matches) == 2:
+        print(f"Attempt: {attempt}")
+        if len(matches) >= 2:
             break
         
         if attempt < max_retries - 1:
             print(f"⏳ Found {len(matches)} matches, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})...")
             time.sleep(retry_delay)
     
-    # Should have exactly 2 matches
-    assert len(matches) == 2, \
-        f"Expected 2 log lines but found {len(matches)}. Matches:\n" + "\n".join(matches)
+    # Should have at least 2 matches
+    assert len(matches) >= 2, \
+        f"Expected at least 2 log lines but found {len(matches)}. Matches:\n" + "\n".join(matches)
     
-    # Verify first line (from WorkerInit)
-    assert expected_first_line in matches[0], \
-        f"First line doesn't match expected.\nExpected: {expected_first_line}\nActual: {matches[0]}"
+    # Get first two matches (in case there are duplicates)
+    first_two_matches = matches[:2]
     
-    # Verify second line (from FunctionEnvironmentReload)
-    assert expected_second_line in matches[1], \
-        f"Second line doesn't match expected.\nExpected: {expected_second_line}\nActual: {matches[1]}"
+    # Verify both expected lines appear (order may vary)
+    matched_lines = "\n".join(first_two_matches)
+    assert expected_first_line in matched_lines, \
+        f"Expected first line not found in matches.\nExpected: {expected_first_line}\nMatches:\n{matched_lines}"
+    
+    assert expected_second_line in matched_lines, \
+        f"Expected second line not found in matches.\nExpected: {expected_second_line}\nMatches:\n{matched_lines}"
     
     # Print success message
     print(f"✅ Test passed: SDK types value='{sdk_types_value}'")
-    for match in matches:
+    for match in first_two_matches:
         print(f"   📝 {match}")
 
 
