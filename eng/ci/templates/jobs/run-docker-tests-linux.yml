@@ -47,7 +47,7 @@ jobs:
 
       - bash: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-xdist python-dotenv azure-storage-blob requests pyjwt cryptography
+          pip install -e dockertests/
         displayName: 'Install Python dependencies'
 
       - pwsh: |
