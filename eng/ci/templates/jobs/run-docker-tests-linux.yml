@@ -58,4 +58,5 @@ jobs:
           FUNCTIONS_TEST_RUNTIME: 'java'
           FUNCTIONS_TEST_RUNTIME_VERSION: '21'
           FUNCTIONS_TEST_HOST_VERSION: '4'
+          FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)/app-packages'
           DOCKER_BUILDKIT: 1
