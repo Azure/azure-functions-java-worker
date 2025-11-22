@@ -14,13 +14,13 @@ jobs:
 
     strategy:
       matrix:
-        Java_8:
+        Java-8:
           javaVersion: '8'
-        Java_11:
+        Java-11:
           javaVersion: '11'
-        Java_17:
+        Java-17:
           javaVersion: '17'
-        Java_21:
+        Java-21:
           javaVersion: '21'
 
     steps:
