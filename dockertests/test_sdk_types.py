@@ -6,6 +6,7 @@ processed during both WorkerInit and FunctionEnvironmentReload.
 """
 
 import pytest
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 from utils import FunctionsTestEnvironment
@@ -72,8 +73,21 @@ def verify_sdk_types_logs(test_env, sdk_types_value, expected_first_line, expect
         "Functions did not load within timeout"
     
     # Get container logs and search for SDK types initialization messages
-    logs = test_env.functions_controller.get_container_logs()
-    matches = [line for line in logs.split('\n') if "Initialized SDK types enabled flag" in line]
+    # Retry logic: Some Java versions have delay between function load and log appearance
+    matches = []
+    max_retries = 10
+    retry_delay = 10
+    
+    for attempt in range(max_retries):
+        logs = test_env.functions_controller.get_container_logs()
+        matches = [line for line in logs.split('\n') if "Initialized SDK types enabled flag" in line]
+        
+        if len(matches) == 2:
+            break
+        
+        if attempt < max_retries - 1:
+            print(f"⏳ Found {len(matches)} matches, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})...")
+            time.sleep(retry_delay)
     
     # Should have exactly 2 matches
     assert len(matches) == 2, \
