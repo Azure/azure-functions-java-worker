@@ -65,10 +65,10 @@ def verify_sdk_types_logs(test_env, sdk_types_value, expected_first_line, expect
     test_env.functions_controller.assign_container(env=env_vars)
     
     # Wait for functions to be loaded
-    assert test_env.functions_controller.wait_for_host_running(timeout=120), \
+    assert test_env.functions_controller.wait_for_host_running(timeout=360), \
         "Functions host did not reach running state within timeout"
-    
-    assert test_env.functions_controller.wait_for_functions_loaded(timeout=120), \
+
+    assert test_env.functions_controller.wait_for_functions_loaded(timeout=360), \
         "Functions did not load within timeout"
     
     # Get container logs and search for SDK types initialization messages

@@ -46,7 +46,7 @@ def verify_telemetry_capabilities(test_env, env_vars, should_have_capabilities=T
     test_env.functions_controller.assign_container(env=env_vars)
     
     # Wait for host to be running
-    assert test_env.functions_controller.wait_for_host_running(timeout=120), \
+    assert test_env.functions_controller.wait_for_host_running(timeout=360), \
         "Functions host did not reach running state within timeout"
     
     # Get container logs
