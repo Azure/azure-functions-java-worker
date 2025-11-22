@@ -75,7 +75,7 @@ def verify_sdk_types_logs(test_env, sdk_types_value, expected_first_line, expect
     # Get container logs and search for SDK types initialization messages
     # Retry logic: Some Java versions have delay between function load and log appearance
     matches = []
-    max_retries = 10
+    max_retries = 50
     retry_delay = 10
     
     for attempt in range(max_retries):
