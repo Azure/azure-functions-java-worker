@@ -12,6 +12,17 @@ jobs:
       image: 1es-ubuntu-22.04
       os: linux
 
+    strategy:
+      matrix:
+        Java_8:
+          javaVersion: '8'
+        Java_11:
+          javaVersion: '11'
+        Java_17:
+          javaVersion: '17'
+        Java_21:
+          javaVersion: '21'
+
     steps:
       - bash: |
           mvn --version
@@ -22,9 +33,9 @@ jobs:
         displayName: 'Check default java version'
 
       - task: JavaToolInstaller@0
-        displayName: 'Install Java 21'
+        displayName: 'Install Java $(javaVersion)'
         inputs:
-          versionSpec: '21'
+          versionSpec: '$(javaVersion)'
           jdkArchitectureOption: 'x64'
           jdkSourceOption: 'PreInstalled'
 
@@ -56,7 +67,6 @@ jobs:
           FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
           FUNCTIONS_TEST_USE_AZURITE: 'true'
           FUNCTIONS_TEST_RUNTIME: 'java'
-          FUNCTIONS_TEST_RUNTIME_VERSION: '21'
+          FUNCTIONS_TEST_RUNTIME_VERSION: '$(javaVersion)'
           FUNCTIONS_TEST_HOST_VERSION: '4'
           FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)/dockertests/app-packages'
-          DOCKER_BUILDKIT: 1
