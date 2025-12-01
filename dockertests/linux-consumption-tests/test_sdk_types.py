@@ -12,11 +12,13 @@ from utils import LinuxConsumptionTestEnvironment
 
 # Configuration
 APP_NAME = "BlobSdkType"
+NONSENSE_VALUE = "nonsense"
 
 # Expected log line patterns
 EXPECTED_RELOAD_FALSE = "Initialized SDK types enabled flag: false (from 'JAVA_ENABLE_SDK_TYPES' environment variable : 'false')"
 EXPECTED_RELOAD_TRUE = "Initialized SDK types enabled flag: true (from 'JAVA_ENABLE_SDK_TYPES' environment variable : 'true')"
 EXPECTED_RELOAD_TRUE_NULL = "Initialized SDK types enabled flag: true (from 'JAVA_ENABLE_SDK_TYPES' environment variable : null)"
+EXPECTED_RELOAD_TRUE_NONSENSE = f"Initialized SDK types enabled flag: true (from 'JAVA_ENABLE_SDK_TYPES' environment variable : '{NONSENSE_VALUE}')"
 
 
 @pytest.fixture
@@ -123,6 +125,20 @@ def test_sdk_types_default_when_not_specified(test_env):
         test_env=test_env,
         sdk_types_value=None,  # Don't include JAVA_ENABLE_SDK_TYPES in env vars
         expected_reload_line=EXPECTED_RELOAD_TRUE_NULL
+    )
+
+
+def test_sdk_types_enabled_with_nonsense_value(test_env):
+    """
+    Test that SDK types flag defaults to true when set to a nonsense value.
+    
+    Any value other than 'false' should enable SDK types.
+    Expects reload log line: "Initialized SDK types enabled flag: true" (from env var 'nonsense')
+    """
+    verify_sdk_types_logs(
+        test_env=test_env,
+        sdk_types_value=NONSENSE_VALUE,
+        expected_reload_line=EXPECTED_RELOAD_TRUE_NONSENSE
     )
 
 

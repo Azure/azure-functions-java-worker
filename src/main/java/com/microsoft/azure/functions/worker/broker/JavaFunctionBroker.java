@@ -321,8 +321,8 @@ public class JavaFunctionBroker {
 			synchronized (this) {
 				if (cachedSdkTypesEnabled == null) {
 					String value = System.getenv(JAVA_ENABLE_SDK_TYPES);
-					// default to true
-					cachedSdkTypesEnabled = value == null ? true : Boolean.parseBoolean(value);
+					// default to true unless explicitly set to "false"
+					cachedSdkTypesEnabled = !"false".equalsIgnoreCase(value);
 					WorkerLogManager.getSystemLogger().info(
 						"Initialized SDK types enabled flag: " + cachedSdkTypesEnabled + 
 						" (from '" + JAVA_ENABLE_SDK_TYPES + "' environment variable : " + (value != null ? "'" + value + "'" : "null") + ")"
