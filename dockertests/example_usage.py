@@ -49,13 +49,9 @@ def example_with_test_environment():
         )
         
         # Wait for functions to be loaded
-        if env.functions_controller.wait_for_host_running(timeout=120):
-            # Functions are loaded, proceed with tests
-            test_sdk_types_flag_in_logs(env.functions_controller)
+        if env.functions_controller.wait_for_functions_loaded(timeout=120):
             # Test an endpoint if you have one
-            # test_function_endpoint(env.functions_controller, "/api/GetEnvVariables")
-
-            time.sleep(1200)
+            test_function_endpoint(env.functions_controller, "/api/GetEnvVariables")
         else:
             print("⚠️ Functions not loaded within timeout, but continuing...")
         
@@ -93,27 +89,6 @@ def test_function_endpoint(controller: FunctionsContainerController, endpoint: s
             
     except requests.exceptions.RequestException as e:
         print(f"❌ Request failed: {e}")
-
-
-def test_sdk_types_flag_in_logs(controller: FunctionsContainerController):
-    """Check container logs for SDK types initialization messages"""
-    print("\n🔍 Checking container logs for SDK types flag...")
-    
-    try:
-        logs = controller.get_container_logs()
-        
-        # Search for lines containing "Initialized SDK types enabled flag"
-        matches = [line for line in logs.split('\n') if "Initialized SDK types enabled flag" in line]
-        
-        if matches:
-            print(f"✅ Found {len(matches)} matching log line(s):")
-            for match in matches:
-                print(f"   📝 {match}")
-        else:
-            print("❌ No matching log lines found for 'Initialized SDK types enabled flag'")
-            
-    except Exception as e:
-        print(f"❌ Failed to check logs: {e}")
 
 
 if __name__ == "__main__":
