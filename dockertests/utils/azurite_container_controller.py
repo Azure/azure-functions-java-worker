@@ -3,6 +3,8 @@
 """
 Azurite container controller for Azure Storage emulation.
 """
+import base64
+import secrets
 import subprocess
 import time
 from typing import Optional
@@ -11,14 +13,13 @@ from typing import Optional
 class AzuriteContainerController:
     """Controller for managing Azurite storage emulator container."""
     
-    # Fixed account key for Azurite
-    AZURITE_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-    
     def __init__(self, container_name: str = "azurite-test", 
                  docker_cmd: str = "docker",
                  blob_port: int = 0,
                  queue_port: int = 0,
-                 table_port: int = 0):
+                 table_port: int = 0,
+                 account_name: str = "devstoreaccount1",
+                 account_key: Optional[str] = None):
         """Initialize the Azurite controller.
         
         Args:
@@ -27,6 +28,9 @@ class AzuriteContainerController:
             blob_port: Port for blob service (0 = auto-assign)
             queue_port: Port for queue service (0 = auto-assign)
             table_port: Port for table service (0 = auto-assign)
+            account_name: Custom storage account name (default: devstoreaccount1)
+            account_key: Custom account key as base64 string (default: Azurite default key)
+                        If None, generates a random 512-bit key
         """
         self._container_name = container_name
         self._docker_cmd = docker_cmd
@@ -38,6 +42,10 @@ class AzuriteContainerController:
         self._actual_table_port: Optional[int] = None
         self._is_running = False
         
+        # Set account name and generate key if not provided
+        self._account_name = account_name
+        self._account_key = account_key or base64.b64encode(secrets.token_bytes(64)).decode('utf-8')
+        
     @property
     def connection_string(self) -> str:
         """Get the connection string for local access."""
@@ -46,11 +54,11 @@ class AzuriteContainerController:
         
         return (
             f"DefaultEndpointsProtocol=http;"
-            f"AccountName=devstoreaccount1;"
-            f"AccountKey={self.AZURITE_ACCOUNT_KEY};"
-            f"BlobEndpoint=http://127.0.0.1:{self._actual_blob_port}/devstoreaccount1;"
-            f"QueueEndpoint=http://127.0.0.1:{self._actual_queue_port}/devstoreaccount1;"
-            f"TableEndpoint=http://127.0.0.1:{self._actual_table_port}/devstoreaccount1;"
+            f"AccountName={self._account_name};"
+            f"AccountKey={self._account_key};"
+            f"BlobEndpoint=http://127.0.0.1:{self._actual_blob_port}/{self._account_name};"
+            f"QueueEndpoint=http://127.0.0.1:{self._actual_queue_port}/{self._account_name};"
+            f"TableEndpoint=http://127.0.0.1:{self._actual_table_port}/{self._account_name};"
         )
     
     @property
@@ -63,11 +71,11 @@ class AzuriteContainerController:
         # For Windows/WSL, try bridge IP first as it's more reliable
         return (
             f"DefaultEndpointsProtocol=http;"
-            f"AccountName=devstoreaccount1;"
-            f"AccountKey={self.AZURITE_ACCOUNT_KEY};"
-            f"BlobEndpoint=http://172.17.0.1:{self._actual_blob_port}/devstoreaccount1;"
-            f"QueueEndpoint=http://172.17.0.1:{self._actual_queue_port}/devstoreaccount1;"
-            f"TableEndpoint=http://172.17.0.1:{self._actual_table_port}/devstoreaccount1;"
+            f"AccountName={self._account_name};"
+            f"AccountKey={self._account_key};"
+            f"BlobEndpoint=http://172.17.0.1:{self._actual_blob_port}/{self._account_name};"
+            f"QueueEndpoint=http://172.17.0.1:{self._actual_queue_port}/{self._account_name};"
+            f"TableEndpoint=http://172.17.0.1:{self._actual_table_port}/{self._account_name};"
         )
     
     @property
@@ -75,7 +83,7 @@ class AzuriteContainerController:
         """Get the blob endpoint URL."""
         if not self._is_running or self._actual_blob_port is None:
             raise RuntimeError("Azurite container not running. Call spawn_container() first.")
-        return f"http://127.0.0.1:{self._actual_blob_port}/devstoreaccount1"
+        return f"http://127.0.0.1:{self._actual_blob_port}/{self._account_name}"
     
     @property
     def is_running(self) -> bool:
@@ -110,8 +118,11 @@ class AzuriteContainerController:
             "-p", blob_port_arg,
             "-p", queue_port_arg,
             "-p", table_port_arg,
+            "-e", f"AZURITE_ACCOUNTS={self._account_name}:{self._account_key}",
             "mcr.microsoft.com/azure-storage/azurite"
         ]
+        
+        print(f"🔑 Using account: {self._account_name}")
         
         run_process = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         

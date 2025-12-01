@@ -38,8 +38,9 @@ class FunctionsContainerController:
     _ports: Dict[str, str] = {}  # { container_name: port }
     _mesh_images: Dict[str, str] = {}  # { host version: image tag }
     
-    # Generate shared encryption key once for all instances
-    _shared_encryption_key: str = base64.b64encode(secrets.token_bytes(32)).decode('utf-8')
+    # Generate shared encryption keys once for all instances
+    _container_encryption_key: str = base64.b64encode(secrets.token_bytes(32)).decode('utf-8')
+    _azure_web_encryption_key: str = secrets.token_bytes(24).hex().upper()
 
     def __init__(self, container_url: str = None, runtime: str = "python", 
                  runtime_version: str = "3.9", site_name: Optional[str] = None,
@@ -130,7 +131,7 @@ class FunctionsContainerController:
             
             # Add required environment variables
             run_cmd.extend(["-e", f"CONTAINER_NAME={self._container_name}"])
-            run_cmd.extend(["-e", f"CONTAINER_ENCRYPTION_KEY={self._shared_encryption_key}"])
+            run_cmd.extend(["-e", f"CONTAINER_ENCRYPTION_KEY={self._container_encryption_key}"])
             run_cmd.extend(["-e", "WEBSITE_PLACEHOLDER_MODE=1"])
             run_cmd.extend(["-e", f"WEBSITE_SITE_NAME={self._site_name}"])
             run_cmd.extend(["-e", "WEBSITE_SKU=Dynamic"])
@@ -272,7 +273,7 @@ class FunctionsContainerController:
         env["FUNCTIONS_WORKER_RUNTIME_VERSION"] = self._runtime_version
         env["WEBSITE_SITE_NAME"] = self._site_name
         env["WEBSITE_HOSTNAME"] = f"{self._site_name}.azurewebsites.com"
-        env["AzureWebEncryptionKey"] = "0F75CA46E7EBDD39E4CA6B074D1F9A5972B849A55F91A248"
+        env["AzureWebEncryptionKey"] = self._azure_web_encryption_key
 
         # Debug: Print key environment variables
         print(f"🔍 DEBUG: Runtime: {self._runtime}")
@@ -490,7 +491,7 @@ class FunctionsContainerController:
         # For compatibility with older Azure Functions host versions,
         # try the old SWT format first
         exp_ns = int((time.time() + 24 * 60 * 60) * 1000000000)
-        token = cls._encrypt_context(cls._shared_encryption_key, f'exp={exp_ns}')
+        token = cls._encrypt_context(cls._container_encryption_key, f'exp={exp_ns}')
         return token
 
     def _generate_jwt_token(self, post_assignment: bool = False) -> str:
@@ -531,7 +532,7 @@ class FunctionsContainerController:
         }
 
         # Use the same encryption key for JWT signing
-        key = base64.b64decode(self._shared_encryption_key.encode())
+        key = base64.b64decode(self._container_encryption_key.encode())
 
         # Generate JWT token using HMAC SHA256 (matches Azure Functions host)
         jwt_token = jwt.encode(payload, key, algorithm='HS256')
@@ -558,7 +559,7 @@ class FunctionsContainerController:
 
         json_ctx = json.dumps(ctx)
 
-        encrypted = cls._encrypt_context(cls._shared_encryption_key, json_ctx)
+        encrypted = cls._encrypt_context(cls._container_encryption_key, json_ctx)
         return encrypted
 
     @classmethod
