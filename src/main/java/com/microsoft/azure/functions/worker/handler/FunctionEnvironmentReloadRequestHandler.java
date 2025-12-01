@@ -35,8 +35,15 @@ public class FunctionEnvironmentReloadRequestHandler
 			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is empty.";
 		}
 		setEnv(environmentVariables);
+		setCapabilities(response, environmentVariables);
 		
-		// Check for telemetry capabilities from environment variables
+		return "FunctionEnvironmentReloadRequest completed";
+	}
+
+	/*
+	 * Sets telemetry capabilities based on environment variables
+	 */
+	private void setCapabilities(FunctionEnvironmentReloadResponse.Builder response, Map<String, String> environmentVariables) {
 		String openTelemetryEnabled = environmentVariables.get(JAVA_ENABLE_OPENTELEMETRY);
 		String appInsightsEnabled = environmentVariables.get(JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY);
 		
@@ -44,9 +51,6 @@ public class FunctionEnvironmentReloadRequestHandler
 			response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
 			response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
 		}
-
-		
-		return "FunctionEnvironmentReloadRequest completed";
 	}
 
 	/*
