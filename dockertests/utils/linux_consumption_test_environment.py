@@ -16,7 +16,7 @@ from .azurite_container_controller import AzuriteContainerController
 from .functions_container_controller import FunctionsContainerController
 
 
-class FunctionsTestEnvironment:
+class LinuxConsumptionTestEnvironment:
     """Manages the complete test environment including storage and Functions containers."""
     
     # Supported app package extensions
@@ -136,7 +136,7 @@ class FunctionsTestEnvironment:
             )
         return self._blob_service_client
     
-    def start(self) -> 'FunctionsTestEnvironment':
+    def start(self) -> 'LinuxConsumptionTestEnvironment':
         """Start the test environment (storage and Functions container)."""
         print(f"🚀 Starting test environment '{self.environment_id}'...")
         

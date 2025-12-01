@@ -7,9 +7,7 @@ processed during both WorkerInit and FunctionEnvironmentReload.
 
 import pytest
 import time
-from pathlib import Path
-from dotenv import load_dotenv
-from utils import FunctionsTestEnvironment
+from utils import LinuxConsumptionTestEnvironment
 
 
 # Configuration
@@ -21,22 +19,10 @@ EXPECTED_RELOAD_TRUE = "Initialized SDK types enabled flag: true (from 'JAVA_ENA
 EXPECTED_RELOAD_TRUE_NULL = "Initialized SDK types enabled flag: true (from 'JAVA_ENABLE_SDK_TYPES' environment variable : null)"
 
 
-# Load environment variables from .env file
-@pytest.fixture(scope="session", autouse=True)
-def load_env():
-    """Load .env file before running tests"""
-    env_file = Path(__file__).parent / '.env'
-    if env_file.exists():
-        load_dotenv(env_file)
-        print(f"✅ Loaded configuration from {env_file}")
-    else:
-        print(f"⚠️  No .env file found at {env_file}, using defaults")
-
-
 @pytest.fixture
 def test_env():
     """Create a fresh test environment for each test"""
-    with FunctionsTestEnvironment(apps_to_upload=[APP_NAME]) as env:
+    with LinuxConsumptionTestEnvironment(apps_to_upload=[APP_NAME]) as env:
         yield env
 
 

@@ -22,6 +22,7 @@ packages = ["."]
 
 [tool.pytest.ini_options]
 testpaths = ["."]
+pythonpath = ["."]
 python_files = ["test_*.py"]
 python_classes = ["Test*", "!TestEnvironment"]
 addopts = ["-v", "--tb=short"]

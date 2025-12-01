@@ -7,7 +7,7 @@ import time
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
-from utils import FunctionsTestEnvironment, FunctionsContainerController
+from utils import LinuxConsumptionTestEnvironment, FunctionsContainerController
 
 # Load environment variables from .env file
 env_file = Path(__file__).parent / '.env'
@@ -27,7 +27,7 @@ def example_with_test_environment():
     # TestEnvironment handles Azurite, app uploads, and SAS token generation
     # Configuration can be set via environment variables or parameters
     # Set FUNCTIONS_TEST_WORKER_DIR env var or it will auto-detect ./worker directory
-    with FunctionsTestEnvironment(
+    with LinuxConsumptionTestEnvironment(
         apps_to_upload=["app"]  # Most config comes from env vars or defaults
     ) as env:
         

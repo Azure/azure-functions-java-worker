@@ -6,27 +6,13 @@ capabilities are set based on environment variables during FunctionEnvironmentRe
 """
 
 import pytest
-from pathlib import Path
-from dotenv import load_dotenv
-from utils import FunctionsTestEnvironment
-
-
-# Load environment variables from .env file
-@pytest.fixture(scope="session", autouse=True)
-def load_env():
-    """Load .env file before running tests"""
-    env_file = Path(__file__).parent / '.env'
-    if env_file.exists():
-        load_dotenv(env_file)
-        print(f"✅ Loaded configuration from {env_file}")
-    else:
-        print(f"⚠️  No .env file found at {env_file}, using defaults")
+from utils import LinuxConsumptionTestEnvironment
 
 
 @pytest.fixture
 def test_env():
     """Create a fresh test environment for each test with no apps uploaded"""
-    with FunctionsTestEnvironment(apps_to_upload=[]) as env:
+    with LinuxConsumptionTestEnvironment(apps_to_upload=[]) as env:
         yield env
 
 
