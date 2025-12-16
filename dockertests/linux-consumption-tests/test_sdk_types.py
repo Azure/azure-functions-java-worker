@@ -7,7 +7,7 @@ processed during both WorkerInit and FunctionEnvironmentReload.
 
 import pytest
 import time
-from utils import LinuxConsumptionTestEnvironment
+from azure_functions_test_kit import LinuxConsumptionTestEnvironment
 
 
 # Configuration

@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "azure-functions-test-kit"
+version = "0.1.0"
+description = "Reusable test kit for Azure Functions workers"
+requires-python = ">=3.8"
+dependencies = [
+    "pytest>=7.0",
+    "pytest-xdist>=3.0",
+    "azure-storage-blob>=12.19.0",
+    "requests>=2.31.0",
+    "cryptography>=41.0.0",
+    "python-dotenv>=1.0.0",
+    "pyjwt>=2.8.0"
+]
+
+[project.entry-points.pytest11]
+azure_functions_test_kit = "azure_functions_test_kit.plugin"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/azure_functions_test_kit"]
