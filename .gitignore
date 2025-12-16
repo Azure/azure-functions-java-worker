@@ -281,3 +281,10 @@ obj/
 
 # Certificate files (downloaded dynamically)
 confluent_cloud_cacert.pem
+
+# Python compiled files
+*.pyc
+__pycache__/
+
+# Environment configuration files
+.env

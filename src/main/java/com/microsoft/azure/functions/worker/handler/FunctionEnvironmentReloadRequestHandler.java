@@ -8,8 +8,12 @@ import java.util.logging.Level;
 
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.rpc.messages.FunctionEnvironmentReloadResponse.Builder;
+import com.microsoft.azure.functions.worker.Application;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
+
+import static com.microsoft.azure.functions.worker.Constants.JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY;
+import static com.microsoft.azure.functions.worker.Constants.JAVA_ENABLE_OPENTELEMETRY;
 
 public class FunctionEnvironmentReloadRequestHandler
 		extends MessageHandler<FunctionEnvironmentReloadRequest, FunctionEnvironmentReloadResponse.Builder> {
@@ -31,7 +35,22 @@ public class FunctionEnvironmentReloadRequestHandler
 			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is empty.";
 		}
 		setEnv(environmentVariables);
+		setCapabilities(response, environmentVariables);
+		
 		return "FunctionEnvironmentReloadRequest completed";
+	}
+
+	/*
+	 * Sets telemetry capabilities based on environment variables
+	 */
+	private void setCapabilities(FunctionEnvironmentReloadResponse.Builder response, Map<String, String> environmentVariables) {
+		String openTelemetryEnabled = environmentVariables.get(JAVA_ENABLE_OPENTELEMETRY);
+		String appInsightsEnabled = environmentVariables.get(JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY);
+		
+		if (Boolean.parseBoolean(openTelemetryEnabled) || Boolean.parseBoolean(appInsightsEnabled)) {
+			response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
+			response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
+		}
 	}
 
 	/*
