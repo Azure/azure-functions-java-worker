@@ -65,3 +65,10 @@ extends:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
             parameters:
               poolName: 1es-pool-azfunc-public
+
+      - stage: TestDocker
+        dependsOn: []
+        jobs:
+          - template: /eng/ci/templates/jobs/run-docker-tests-linux.yml@self
+            parameters:
+              poolName: 1es-pool-azfunc-public

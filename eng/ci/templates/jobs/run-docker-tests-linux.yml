@@ -1,0 +1,72 @@
+parameters:
+  - name: poolName
+    type: string
+    default: ''
+
+jobs:
+  - job: "TestDocker"
+    displayName: 'Docker Integration Tests - Linux'
+
+    pool:
+      name: ${{ parameters.poolName }}
+      image: 1es-ubuntu-22.04
+      os: linux
+
+    strategy:
+      matrix:
+        Java-8:
+          javaVersion: '8'
+        Java-11:
+          javaVersion: '11'
+        Java-17:
+          javaVersion: '17'
+        Java-21:
+          javaVersion: '21'
+
+    steps:
+      - bash: |
+          mvn --version
+        displayName: 'Check Maven is installed'
+
+      - bash: |
+          java -version
+        displayName: 'Check default java version'
+
+      - task: JavaToolInstaller@0
+        displayName: 'Install Java $(javaVersion)'
+        inputs:
+          versionSpec: '$(javaVersion)'
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
+
+      - task: UsePythonVersion@0
+        displayName: 'Use Python 3.11'
+        inputs:
+          versionSpec: '3.11'
+          addToPath: true
+
+      - bash: |
+          python -m pip install --upgrade pip
+          pip install -e dockertests/
+        displayName: 'Install Python dependencies'
+
+      - pwsh: |
+          ./package-pipeline.ps1 -outputDir 'java-worker' -skipNuget
+        displayName: 'Package Java worker'
+
+      - pwsh: |
+          cd dockertests
+          ./build-apps.ps1
+        displayName: 'Build and package test apps'
+
+      - bash: |
+          cd dockertests
+          pytest . -v -n auto --tb=short
+        displayName: 'Run Docker integration tests'
+        env:
+          FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
+          FUNCTIONS_TEST_USE_AZURITE: 'true'
+          FUNCTIONS_TEST_RUNTIME: 'java'
+          FUNCTIONS_TEST_RUNTIME_VERSION: '$(javaVersion)'
+          FUNCTIONS_TEST_HOST_VERSION: '4'
+          FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)/dockertests/app-packages'
