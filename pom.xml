@@ -22,6 +22,7 @@
     <jupiter.version>5.9.1</jupiter.version>
     <mockito-core.version>4.11.0</mockito-core.version>
     <appinsights.agents.version>3.7.2</appinsights.agents.version>
+    <grpc.version>1.75.0</grpc.version>
   </properties>
   <licenses>
     <license>
@@ -79,17 +80,17 @@
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf</artifactId>
-      <version>1.64.0</version>
+      <version>${grpc.version}</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
-      <version>1.64.0</version>
+      <version>${grpc.version}</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-netty-shaded</artifactId>
-      <version>1.64.0</version>
+      <version>${grpc.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -148,7 +149,7 @@
         <configuration>
           <protocArtifact>com.google.protobuf:protoc:3.25.5:exe:${os.detected.classifier}</protocArtifact>
           <pluginId>grpc-java</pluginId>
-          <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.64.0:exe:${os.detected.classifier}</pluginArtifact>
+          <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
           <protoSourceRoot>${basedir}/src/main/azure-functions-language-worker-protobuf/src/proto</protoSourceRoot>
         </configuration>
         <executions>
