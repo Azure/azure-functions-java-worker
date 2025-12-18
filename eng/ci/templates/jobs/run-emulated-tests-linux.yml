@@ -119,6 +119,5 @@ jobs:
             emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
         env:
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
-          JAVA_ENABLE_SDK_TYPES: "true"
         displayName: 'Build & Run tests'
         continueOnError: false
