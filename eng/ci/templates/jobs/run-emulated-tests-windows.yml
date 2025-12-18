@@ -105,6 +105,10 @@ jobs:
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
           func --version
         displayName: 'Setup Core Tools - Windows'
+      - pwsh: |
+          Write-Host "=== Debug: JAVA_TOOL_OPTIONS ==="
+          Write-Host "JAVA_TOOL_OPTIONS: $env:JAVA_TOOL_OPTIONS"
+        displayName: 'Debug: Show JAVA_TOOL_OPTIONS'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
@@ -114,5 +118,6 @@ jobs:
         env:
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
           JAVA_ENABLE_SDK_TYPES: "true"
+          JAVA_TOOL_OPTIONS: ""  # Clear any pre-set Java agent to avoid OpenTelemetry/Logback conflicts on Java 25
         displayName: 'Build & Run tests'
         continueOnError: false
