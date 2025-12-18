@@ -41,7 +41,7 @@ extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
   parameters:
     pool:
-      name: 1es-pool-azfunc
+      name: 1es-pool-azfunc-public
       image: 1es-windows-2022
       os: windows
       ${{ if eq( variables['Build.Reason'], 'Schedule' ) }}:
@@ -58,11 +58,11 @@ extends:
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-windows.yml@self
             parameters:
-              poolName: 1es-pool-azfunc
+              poolName: 1es-pool-azfunc-public
 
       - stage: TestLinux
         dependsOn: []
         jobs:
           - template: /eng/ci/templates/jobs/run-emulated-tests-linux.yml@self
             parameters:
-              poolName: 1es-pool-azfunc
+              poolName: 1es-pool-azfunc-public
