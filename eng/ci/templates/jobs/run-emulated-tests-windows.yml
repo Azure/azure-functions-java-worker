@@ -118,7 +118,5 @@ jobs:
         env:
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
           JAVA_ENABLE_SDK_TYPES: "true"
-          APPLICATIONINSIGHTS_ENABLE_AGENT: "true"
-          JAVA_TOOL_OPTIONS: ""  # Clear any pre-set Java agent to avoid OpenTelemetry/Logback conflicts on Java 25
         displayName: 'Build & Run tests'
         continueOnError: false
