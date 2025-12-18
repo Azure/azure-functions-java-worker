@@ -111,10 +111,6 @@ jobs:
           export PATH=$PATH:./Azure.Functions.Cli
           func --version
         displayName: 'Setup Core Tools - Linux'
-      - bash: |
-          echo "=== Debug: JAVA_TOOL_OPTIONS ==="
-          echo "JAVA_TOOL_OPTIONS: $JAVA_TOOL_OPTIONS"
-        displayName: 'Debug: Show JAVA_TOOL_OPTIONS'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
@@ -123,6 +119,5 @@ jobs:
             emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
         env:
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
-          APPLICATIONINSIGHTS_ENABLE_AGENT: "true"
         displayName: 'Build & Run tests'
         continueOnError: false

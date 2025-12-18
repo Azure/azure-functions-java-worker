@@ -105,10 +105,6 @@ jobs:
           $Env:Path = $Env:Path+";$currDir/Azure.Functions.Cli"
           func --version
         displayName: 'Setup Core Tools - Windows'
-      - pwsh: |
-          Write-Host "=== Debug: JAVA_TOOL_OPTIONS ==="
-          Write-Host "JAVA_TOOL_OPTIONS: $env:JAVA_TOOL_OPTIONS"
-        displayName: 'Debug: Show JAVA_TOOL_OPTIONS'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
@@ -117,6 +113,5 @@ jobs:
             emulatedtests/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E/Azure.Functions.Java.Tests.E2E.csproj
         env:
           AzureWebJobsStorage: "UseDevelopmentStorage=true"
-          APPLICATIONINSIGHTS_ENABLE_AGENT: "true"
         displayName: 'Build & Run tests'
         continueOnError: false
