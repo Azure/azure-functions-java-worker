@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Pytest tests for timezone handling in Azure Functions Java worker.
-Tests verify that the TZ environment variable is correctly applied
+Tests verify that the WEBSITE_TIME_ZONE and TZ environment variables are correctly applied
 and the Java runtime returns the expected timezone.
+WEBSITE_TIME_ZONE takes precedence over TZ.
 """
 
 import pytest
@@ -22,13 +23,14 @@ def test_env():
         yield env
 
 
-def verify_timezone(test_env, tz_value, expected_timezone):
+def verify_timezone(test_env, website_tz=None, tz=None, expected_timezone=DEFAULT_TIMEZONE):
     """
-    Helper function to verify timezone is correctly set based on TZ env variable.
+    Helper function to verify timezone is correctly set based on env variables.
     
     Args:
         test_env: TestEnvironment fixture
-        tz_value: Value for TZ environment variable (None to omit)
+        website_tz: Value for WEBSITE_TIME_ZONE environment variable (None to omit)
+        tz: Value for TZ environment variable (None to omit)
         expected_timezone: Expected timezone ID returned by the function
     """
     # Build environment variables
@@ -38,9 +40,11 @@ def verify_timezone(test_env, tz_value, expected_timezone):
         'AzureWebJobsStorage': test_env.docker_storage_connection_string
     }
     
-    # Add TZ if specified
-    if tz_value is not None:
-        env_vars['TZ'] = tz_value
+    # Add timezone variables if specified
+    if website_tz is not None:
+        env_vars['WEBSITE_TIME_ZONE'] = website_tz
+    if tz is not None:
+        env_vars['TZ'] = tz
     
     # Assign container with environment variables
     test_env.functions_controller.assign_container(env=env_vars)
@@ -66,31 +70,62 @@ def verify_timezone(test_env, tz_value, expected_timezone):
     assert actual_timezone == expected_timezone, \
         f"Timezone mismatch. Expected: {expected_timezone}, Actual: {actual_timezone}"
     
-    tz_display = tz_value if tz_value is not None else "not set (default)"
-    print(f"✅ Test passed: TZ='{tz_display}' returned timezone '{actual_timezone}'")
+    # Build display message
+    tz_sources = []
+    if website_tz is not None:
+        tz_sources.append(f"WEBSITE_TIME_ZONE='{website_tz}'")
+    if tz is not None:
+        tz_sources.append(f"TZ='{tz}'")
+    if not tz_sources:
+        tz_sources.append("not set (default)")
+    
+    print(f"✅ Test passed: {', '.join(tz_sources)} returned timezone '{actual_timezone}'")
 
 
 def test_timezone_default_when_not_set(test_env):
     """
-    Test that timezone defaults to Etc/UTC when TZ env variable is not set.
+    Test that timezone defaults to Etc/UTC when neither WEBSITE_TIME_ZONE nor TZ is set.
     """
     verify_timezone(
         test_env=test_env,
-        tz_value=None,  # Don't include TZ in env vars
+        website_tz=None,
+        tz=None,
         expected_timezone=DEFAULT_TIMEZONE
     )
 
 
-def test_timezone_america_new_york(test_env):
+def test_timezone_website_time_zone_takes_precedence(test_env):
     """
-    Test that TZ=America/New_York returns the correct timezone.
+    Test that WEBSITE_TIME_ZONE takes precedence over TZ when both are set.
     """
     verify_timezone(
         test_env=test_env,
-        tz_value='America/New_York',
+        website_tz='America/New_York',
+        tz='Europe/London',  # This should be ignored
         expected_timezone='America/New_York'
     )
 
+
+def test_timezone_website_time_zone_america_new_york(test_env):
+    """
+    Test that WEBSITE_TIME_ZONE=America/New_York returns the correct timezone.
+    """
+    verify_timezone(
+        test_env=test_env,
+        website_tz='America/New_York',
+        expected_timezone='America/New_York'
+    )
+
+
+def test_timezone_tz_fallback_when_website_time_zone_not_set(test_env):
+    """
+    Test that TZ is used as fallback when WEBSITE_TIME_ZONE is not set.
+    """
+    verify_timezone(
+        test_env=test_env,
+        tz='Europe/London',
+        expected_timezone='Europe/London'
+    )
 
 if __name__ == "__main__":
     """Allow running tests directly with python"""

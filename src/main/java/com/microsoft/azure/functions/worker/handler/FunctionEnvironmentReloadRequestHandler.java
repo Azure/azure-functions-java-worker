@@ -59,19 +59,27 @@ public class FunctionEnvironmentReloadRequestHandler
 	 * Sets the default timezone based on the TZ environment variable
 	 */
 	private void setTimeZone(Map<String, String> environmentVariables) {
-		String tzValue = environmentVariables.get("TZ");
+		// Check WEBSITE_TIME_ZONE first, fall back to TZ if not set
+		String tzValue = environmentVariables.get("WEBSITE_TIME_ZONE");
+		String tzSource = "WEBSITE_TIME_ZONE";
+		
+		if (tzValue == null || tzValue.isEmpty()) {
+			tzValue = environmentVariables.get("TZ");
+			tzSource = "TZ";
+		}
+		
 		if (tzValue != null && !tzValue.isEmpty()) {
 			try {
 				TimeZone timeZone = TimeZone.getTimeZone(tzValue);
 				TimeZone.setDefault(timeZone);
 				System.setProperty("user.timezone", timeZone.getID());
 				WorkerLogManager.getSystemLogger().log(Level.INFO, 
-					String.format("Set default timezone to: %s (from TZ environment variable: %s)", 
-						timeZone.getID(), tzValue));
+					String.format("Set default timezone to: %s (from %s environment variable: %s)", 
+						timeZone.getID(), tzSource, tzValue));
 			} catch (Exception e) {
 				WorkerLogManager.getSystemLogger().log(Level.WARNING, 
-					String.format("Failed to set timezone from TZ environment variable '%s': %s", 
-						tzValue, e.getMessage()));
+					String.format("Failed to set timezone from %s environment variable '%s': %s", 
+						tzSource, tzValue, e.getMessage()));
 			}
 		}
 	}
