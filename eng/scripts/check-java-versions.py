@@ -14,7 +14,6 @@ import subprocess
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
-import yaml
 
 
 # JDK versions to check (excluding JDK 8 as it's not from Microsoft)
@@ -176,11 +175,21 @@ def check_jdk_version(jdk_version, os_type):
 
 def load_current_versions(yaml_file):
     """
-    Load current versions from java-versions.yml
+    Load current versions from java-versions.yml using regex (no YAML library needed)
     """
     with open(yaml_file, 'r') as f:
-        data = yaml.safe_load(f)
-    return data.get('variables', {})
+        content = f.read()
+    
+    versions = {}
+    # Pattern to match variables like: JDK11_LINUX_VERSION: '11.0.26'
+    pattern = r"(JDK\d+_(?:LINUX|WINDOWS)_VERSION):\s*'([^']+)'"
+    
+    for match in re.finditer(pattern, content):
+        var_name = match.group(1)
+        value = match.group(2)
+        versions[var_name] = value
+    
+    return versions
 
 
 def update_yaml_file(yaml_file, new_versions):

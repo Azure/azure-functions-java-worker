@@ -65,11 +65,6 @@ extends:
             addToPath: true
         
         - script: |
-            python -m pip install --upgrade pip
-            pip install pyyaml
-          displayName: 'Install Python dependencies'
-        
-        - script: |
             python eng/scripts/check-java-versions.py --os linux
           displayName: 'Check and validate Linux Java versions'
           continueOnError: false
@@ -104,11 +99,6 @@ extends:
             addToPath: true
         
         - script: |
-            python -m pip install --upgrade pip
-            pip install pyyaml
-          displayName: 'Install Python dependencies'
-        
-        - script: |
             python eng/scripts/check-java-versions.py --os windows
           displayName: 'Check and validate Windows Java versions'
           continueOnError: false
@@ -131,16 +121,6 @@ extends:
         - checkout: self
           persistCredentials: true
           clean: true
-        
-        - script: |
-            pip install pyyaml
-          displayName: 'Install Python dependencies'
-        
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Download Linux artifact'
-          inputs:
-            artifactName: 'java-versions-linux'
-            targetPath: '$(Pipeline.Workspace)/java-versions-linux'
         
         - task: DownloadPipelineArtifact@2
           displayName: 'Download Linux artifact'

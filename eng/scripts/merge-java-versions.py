@@ -5,21 +5,28 @@ Script to merge Linux and Windows Java version updates into a single YAML file.
 
 import argparse
 import sys
-import yaml
+import re
 from pathlib import Path
 
 
 def load_yaml_with_formatting(file_path):
     """
     Load YAML file and preserve its content as a string for formatting.
+    Uses regex instead of yaml library.
     """
     with open(file_path, 'r') as f:
         content = f.read()
     
-    with open(file_path, 'r') as f:
-        data = yaml.safe_load(f)
+    # Extract variables using regex
+    variables = {}
+    pattern = r"(JDK\d+_(?:LINUX|WINDOWS)_(?:VERSION|BUILD)):\s*'([^']+)'"
     
-    return content, data
+    for match in re.finditer(pattern, content):
+        var_name = match.group(1)
+        value = match.group(2)
+        variables[var_name] = value
+    
+    return content, variables
 
 
 def merge_versions(linux_data, windows_data):
@@ -28,27 +35,23 @@ def merge_versions(linux_data, windows_data):
     """
     merged = {}
     
-    # Get variables from both
-    linux_vars = linux_data.get('variables', {})
-    windows_vars = windows_data.get('variables', {})
-    
     # Merge all unique keys
-    all_keys = set(linux_vars.keys()) | set(windows_vars.keys())
+    all_keys = set(linux_data.keys()) | set(windows_data.keys())
     
     for key in sorted(all_keys):
         # Skip JDK8 as it's not managed by Microsoft
         if 'JDK8' in key:
-            merged[key] = linux_vars.get(key, windows_vars.get(key))
+            merged[key] = linux_data.get(key, windows_data.get(key))
             continue
         
         # Use the appropriate source based on OS in the key name
         if 'LINUX' in key:
-            merged[key] = linux_vars.get(key)
+            merged[key] = linux_data.get(key)
         elif 'WINDOWS' in key:
-            merged[key] = windows_vars.get(key)
+            merged[key] = windows_data.get(key)
         else:
             # Fallback: use whichever source has it
-            merged[key] = linux_vars.get(key, windows_vars.get(key))
+            merged[key] = linux_data.get(key, windows_data.get(key))
     
     return merged
 
