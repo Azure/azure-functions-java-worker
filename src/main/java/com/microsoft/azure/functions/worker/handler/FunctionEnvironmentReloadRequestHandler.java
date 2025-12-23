@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.Level;
 
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -35,6 +36,7 @@ public class FunctionEnvironmentReloadRequestHandler
 			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is empty.";
 		}
 		setEnv(environmentVariables);
+		setTimeZone(environmentVariables);
 		setCapabilities(response, environmentVariables);
 		
 		return "FunctionEnvironmentReloadRequest completed";
@@ -50,6 +52,27 @@ public class FunctionEnvironmentReloadRequestHandler
 		if (Boolean.parseBoolean(openTelemetryEnabled) || Boolean.parseBoolean(appInsightsEnabled)) {
 			response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
 			response.putCapabilities("WorkerApplicationInsightsLoggingEnabled", "true");
+		}
+	}
+
+	/*
+	 * Sets the default timezone based on the TZ environment variable
+	 */
+	private void setTimeZone(Map<String, String> environmentVariables) {
+		String tzValue = environmentVariables.get("TZ");
+		if (tzValue != null && !tzValue.isEmpty()) {
+			try {
+				TimeZone timeZone = TimeZone.getTimeZone(tzValue);
+				TimeZone.setDefault(timeZone);
+				System.setProperty("user.timezone", timeZone.getID());
+				WorkerLogManager.getSystemLogger().log(Level.INFO, 
+					String.format("Set default timezone to: %s (from TZ environment variable: %s)", 
+						timeZone.getID(), tzValue));
+			} catch (Exception e) {
+				WorkerLogManager.getSystemLogger().log(Level.WARNING, 
+					String.format("Failed to set timezone from TZ environment variable '%s': %s", 
+						tzValue, e.getMessage()));
+			}
 		}
 	}
 
