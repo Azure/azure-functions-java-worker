@@ -1,0 +1,235 @@
+schedules:
+  - cron: "0 8 * * MON"  # Weekly on Monday at 8 AM UTC
+    displayName: Weekly Java Version Check
+    branches:
+      include:
+        - dev
+    always: true
+
+trigger: none  # Manual trigger only, no CI builds
+
+pr: none  # Not triggered by PRs
+
+resources:
+  repositories:
+    - repository: 1es
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+variables:
+  - name: System.Debug
+    value: false
+
+extends:
+  template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
+  parameters:
+    pool:
+      name: 1es-pool-azfunc-public
+      image: 1es-ubuntu-22.04
+      os: linux
+
+    stages:
+    - stage: ValidateLinux
+      displayName: 'Validate Linux JDK Versions'
+      jobs:
+      - job: ValidateLinuxJDKs
+        displayName: 'Detect and Validate Linux JDKs'
+        timeoutInMinutes: 60
+        pool:
+          name: 1es-pool-azfunc-public
+          image: 1es-ubuntu-22.04
+          os: linux
+        
+        steps:
+        - checkout: self
+          persistCredentials: true
+          clean: true
+        
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.11'
+          inputs:
+            versionSpec: '3.11'
+            addToPath: true
+        
+        - script: |
+            python -m pip install --upgrade pip
+            pip install pyyaml
+          displayName: 'Install Python dependencies'
+        
+        - script: |
+            python eng/scripts/check-java-versions.py --os linux
+          displayName: 'Check and validate Linux Java versions'
+          continueOnError: false
+        
+        - publish: $(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml
+          artifact: java-versions-linux
+          displayName: 'Publish updated java-versions.yml'
+    
+    - stage: ValidateWindows
+      displayName: 'Validate Windows JDK Versions'
+      dependsOn: []  # Run in parallel with Linux
+      jobs:
+      - job: ValidateWindowsJDKs
+        displayName: 'Detect and Validate Windows JDKs'
+        timeoutInMinutes: 60
+        pool:
+          name: 1es-pool-azfunc-public
+          image: 1es-windows-2022
+          os: windows
+        
+        steps:
+        - checkout: self
+          persistCredentials: true
+          clean: true
+        
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.11'
+          inputs:
+            versionSpec: '3.11'
+            addToPath: true
+        
+        - script: |
+            python -m pip install --upgrade pip
+            pip install pyyaml
+          displayName: 'Install Python dependencies'
+        
+        - script: |
+            python eng/scripts/check-java-versions.py --os windows
+          displayName: 'Check and validate Windows Java versions'
+          continueOnError: false
+        
+        - publish: $(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml
+          artifact: java-versions-windows
+          displayName: 'Publish updated java-versions.yml'
+    
+    - stage: CreatePR
+      displayName: 'Create Pull Request'
+      dependsOn:
+        - ValidateLinux
+        - ValidateWindows
+      jobs:
+      - job: MergeAndCreatePR
+        displayName: 'Merge Changes and Create PR'
+        timeoutInMinutes: 30
+        pool:
+          name: 1es-pool-azfunc-public
+          image: 1es-ubuntu-22.04
+          os: linux
+        
+        steps:
+        - checkout: self
+          persistCredentials: true
+          clean: true
+        
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.11'
+          inputs:
+            versionSpec: '3.11'
+            addToPath: true
+        
+        - script: |
+            pip install pyyaml
+          displayName: 'Install Python dependencies'
+        
+        - download: current
+          artifact: java-versions-linux
+          displayName: 'Download Linux artifact'
+        
+        - download: current
+          artifact: java-versions-windows
+          displayName: 'Download Windows artifact'
+        
+        - script: |
+            python eng/scripts/merge-java-versions.py \
+              --linux $(Pipeline.Workspace)/java-versions-linux/java-versions.yml \
+              --windows $(Pipeline.Workspace)/java-versions-windows/java-versions.yml \
+              --output eng/ci/templates/java-versions.yml
+          displayName: 'Merge version updates'
+        
+        - bash: |
+            # Configure git
+            git config user.email "azfunc-java-worker-bot@microsoft.com"
+            git config user.name "Azure Functions Java Worker Bot"
+            
+            # Check if there are changes
+            if git diff --quiet eng/ci/templates/java-versions.yml; then
+              echo "No changes detected in java-versions.yml"
+              echo "##vso[task.setvariable variable=HasChanges]false"
+            else
+              echo "Changes detected in java-versions.yml"
+              echo "##vso[task.setvariable variable=HasChanges]true"
+              
+              # Show the diff
+              echo "Changes:"
+              git diff eng/ci/templates/java-versions.yml
+            fi
+          displayName: 'Check for changes'
+        
+        - bash: |
+            # Create a new branch
+            BRANCH_NAME="automated/update-java-versions-$(date +%Y%m%d-%H%M%S)"
+            echo "Creating branch: $BRANCH_NAME"
+            git checkout -b $BRANCH_NAME
+            
+            # Stage and commit changes
+            git add eng/ci/templates/java-versions.yml
+            git commit -m "Update Java versions
+
+            Auto-detected new Java versions from Microsoft OpenJDK releases.
+            
+            This PR was automatically generated by the Java version check pipeline.
+            
+            Pipeline Run: $(Build.BuildNumber)
+            "
+            
+            # Push the branch
+            git push origin $BRANCH_NAME
+            
+            # Store branch name for PR creation
+            echo "##vso[task.setvariable variable=BranchName]$BRANCH_NAME"
+          displayName: 'Commit and push changes'
+          condition: eq(variables['HasChanges'], 'true')
+        
+        - bash: |
+            # Install Azure DevOps CLI extension
+            az extension add --name azure-devops
+            
+            # Authenticate using the system access token
+            echo "$(System.AccessToken)" | az devops login --organization "$(System.CollectionUri)"
+            
+            # Create pull request
+            az repos pr create \
+              --organization "$(System.CollectionUri)" \
+              --project "$(System.TeamProject)" \
+              --repository "$(Build.Repository.Name)" \
+              --source-branch "$(BranchName)" \
+              --target-branch "dev" \
+              --title "Update Java versions to latest Microsoft OpenJDK releases" \
+              --description "This PR updates the Java version variables in \`eng/ci/templates/java-versions.yml\` to the latest versions available from Microsoft OpenJDK.
+
+            ## Changes
+            - Auto-detected and validated new Java versions
+            - Linux JDKs validated on Linux pool
+            - Windows JDKs validated on Windows pool
+            - All JDK installations were validated using \`java --version\`
+
+            ## Automated Process
+            This PR was automatically created by the [Java Version Check Pipeline]($(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)).
+
+            ## Review Checklist
+            - [ ] Verify version numbers are correct
+            - [ ] Check that both Linux and Windows versions are updated
+            - [ ] Ensure CI tests pass with new versions
+
+            **Pipeline Run:** $(Build.BuildNumber)  
+            **Date:** $(Build.StartTime)" \
+              --auto-complete false \
+              --squash false \
+              --delete-source-branch true
+            
+            echo "Pull request created successfully"
+          displayName: 'Create Pull Request'
+          condition: eq(variables['HasChanges'], 'true')
+          env:
+            AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
