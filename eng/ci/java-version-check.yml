@@ -29,6 +29,12 @@ extends:
       image: 1es-ubuntu-22.04
       os: linux
 
+    sdl:
+      sourceAnalysisPool:
+        name: 1es-pool-azfunc-public
+        image: 1es-windows-2022
+        os: windows
+
     stages:
     - stage: ValidateLinux
       displayName: 'Validate Linux JDK Versions'
@@ -40,6 +46,12 @@ extends:
           name: 1es-pool-azfunc-public
           image: 1es-ubuntu-22.04
           os: linux
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            targetPath: '$(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml'
+            artifactName: 'java-versions-linux'
+            displayName: 'Publish Linux java-versions.yml'
         
         steps:
         - checkout: self
@@ -61,10 +73,6 @@ extends:
             python eng/scripts/check-java-versions.py --os linux
           displayName: 'Check and validate Linux Java versions'
           continueOnError: false
-        
-        - publish: $(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml
-          artifact: java-versions-linux
-          displayName: 'Publish updated java-versions.yml'
     
     - stage: ValidateWindows
       displayName: 'Validate Windows JDK Versions'
@@ -77,6 +85,12 @@ extends:
           name: 1es-pool-azfunc-public
           image: 1es-windows-2022
           os: windows
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            targetPath: '$(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml'
+            artifactName: 'java-versions-windows'
+            displayName: 'Publish Windows java-versions.yml'
         
         steps:
         - checkout: self
@@ -98,10 +112,6 @@ extends:
             python eng/scripts/check-java-versions.py --os windows
           displayName: 'Check and validate Windows Java versions'
           continueOnError: false
-        
-        - publish: $(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml
-          artifact: java-versions-windows
-          displayName: 'Publish updated java-versions.yml'
     
     - stage: CreatePR
       displayName: 'Create Pull Request'
@@ -122,23 +132,27 @@ extends:
           persistCredentials: true
           clean: true
         
-        - task: UsePythonVersion@0
-          displayName: 'Use Python 3.11'
-          inputs:
-            versionSpec: '3.11'
-            addToPath: true
-        
         - script: |
             pip install pyyaml
           displayName: 'Install Python dependencies'
         
-        - download: current
-          artifact: java-versions-linux
+        - task: DownloadPipelineArtifact@2
           displayName: 'Download Linux artifact'
+          inputs:
+            artifactName: 'java-versions-linux'
+            targetPath: '$(Pipeline.Workspace)/java-versions-linux'
         
-        - download: current
-          artifact: java-versions-windows
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Linux artifact'
+          inputs:
+            artifactName: 'java-versions-linux'
+            targetPath: '$(Pipeline.Workspace)/java-versions-linux'
+        
+        - task: DownloadPipelineArtifact@2
           displayName: 'Download Windows artifact'
+          inputs:
+            artifactName: 'java-versions-windows'
+            targetPath: '$(Pipeline.Workspace)/java-versions-windows'
         
         - script: |
             python eng/scripts/merge-java-versions.py \
