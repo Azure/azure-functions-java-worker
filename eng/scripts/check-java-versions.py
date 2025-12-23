@@ -121,17 +121,17 @@ def validate_jdk_version(jdk_path, os_type, expected_version):
         
         # Check if expected version is in the output
         if expected_version in result.stdout:
-            print(f"  ✓ Validation successful: Found version {expected_version}")
+            print(f"  [OK] Validation successful: Found version {expected_version}")
             return True
         else:
-            print(f"  ✗ Validation failed: Expected version {expected_version} not found in output")
+            print(f"  [FAIL] Validation failed: Expected version {expected_version} not found in output")
             return False
             
     except subprocess.TimeoutExpired:
-        print(f"  ✗ Validation failed: java --version command timed out")
+        print(f"  [FAIL] Validation failed: java --version command timed out")
         return False
     except Exception as e:
-        print(f"  ✗ Validation failed: {e}")
+        print(f"  [FAIL] Validation failed: {e}")
         return False
 
 
@@ -214,7 +214,7 @@ def update_yaml_file(yaml_file, new_versions):
     with open(yaml_file, 'w') as f:
         f.write(content)
     
-    print("✓ YAML file updated successfully")
+    print("[OK] YAML file updated successfully")
 
 
 def main():
@@ -271,11 +271,11 @@ def main():
         current_version = current_versions.get(var_name, 'N/A')
         
         if current_version != new_version:
-            print(f"🔄 {var_name}: {current_version} -> {new_version}")
+            print(f"[UPDATE] {var_name}: {current_version} -> {new_version}")
             updates_needed[var_name] = new_version
             changes_detected = True
         else:
-            print(f"✓ {var_name}: {current_version} (up to date)")
+            print(f"[OK] {var_name}: {current_version} (up to date)")
     
     # Update YAML file if needed
     if changes_detected:
@@ -283,10 +283,10 @@ def main():
         print("Updates Required")
         print("=" * 80)
         update_yaml_file(yaml_file, updates_needed)
-        print(f"\n✓ Version check complete - {os_type} updates applied")
+        print(f"\n[OK] Version check complete - {os_type} updates applied")
         sys.exit(0)
     else:
-        print(f"\n✓ All {os_type} versions are up to date - no changes needed")
+        print(f"\n[OK] All {os_type} versions are up to date - no changes needed")
         sys.exit(0)
 
 

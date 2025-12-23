@@ -114,7 +114,7 @@ def main():
     print(f"\nUpdating output file: {args.output}")
     update_yaml_file(args.output, merged_versions)
     
-    print("\n✓ Merge complete")
+    print("\n[OK] Merge complete")
 
 
 if __name__ == '__main__':
