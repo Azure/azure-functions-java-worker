@@ -192,11 +192,18 @@ extends:
             # Authenticate using the system access token
             echo "$(System.AccessToken)" | az devops login --organization "$(System.CollectionUri)"
             
-            # Create pull request
+            # Get the current date
+            CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            
+            # Set default project and organization
+            az devops configure --defaults organization="$(System.CollectionUri)" project="$(System.TeamProject)"
+            
+            echo "Repository ID: $(Build.Repository.ID)"
+            echo "Branch name: $(BranchName)"
+            
+            # Create pull request using repository ID
             az repos pr create \
-              --organization "$(System.CollectionUri)" \
-              --project "$(System.TeamProject)" \
-              --repository "$(Build.Repository.Name)" \
+              --repository "$(Build.Repository.ID)" \
               --source-branch "$(BranchName)" \
               --target-branch "dev" \
               --title "Update Java versions to latest Microsoft OpenJDK releases" \
@@ -217,7 +224,7 @@ extends:
             - [ ] Ensure CI tests pass with new versions
 
             **Pipeline Run:** $(Build.BuildNumber)  
-            **Date:** $(Build.StartTime)" \
+            **Date:** ${CURRENT_DATE}" \
               --auto-complete false \
               --squash false \
               --delete-source-branch true
