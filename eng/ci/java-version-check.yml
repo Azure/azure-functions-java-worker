@@ -10,6 +10,16 @@ trigger: none  # Manual trigger only, no CI builds
 
 pr: none  # Not triggered by PRs
 
+parameters:
+  - name: skipValidation
+    displayName: 'Skip validation stages (for testing PR creation)'
+    type: boolean
+    default: false
+  - name: existingBranch
+    displayName: 'Existing branch name (if skipping validation)'
+    type: string
+    default: ''
+
 resources:
   repositories:
     - repository: 1es
@@ -38,6 +48,7 @@ extends:
     stages:
     - stage: ValidateLinux
       displayName: 'Validate Linux JDK Versions'
+      condition: eq(${{ parameters.skipValidation }}, false)
       jobs:
       - job: ValidateLinuxJDKs
         displayName: 'Detect and Validate Linux JDKs'
@@ -71,6 +82,7 @@ extends:
     
     - stage: ValidateWindows
       displayName: 'Validate Windows JDK Versions'
+      condition: eq(${{ parameters.skipValidation }}, false)
       dependsOn: []  # Run in parallel with Linux
       jobs:
       - job: ValidateWindowsJDKs
@@ -106,8 +118,10 @@ extends:
     - stage: CreatePR
       displayName: 'Create Pull Request'
       dependsOn:
-        - ValidateLinux
-        - ValidateWindows
+        - ${{ if eq(parameters.skipValidation, false) }}:
+          - ValidateLinux
+          - ValidateWindows
+      condition: or(succeeded(), eq(${{ parameters.skipValidation }}, true))
       jobs:
       - job: MergeAndCreatePR
         displayName: 'Merge Changes and Create PR'
@@ -122,53 +136,62 @@ extends:
           persistCredentials: true
           clean: true
         
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Download Linux artifact'
-          inputs:
-            artifactName: 'java-versions-linux'
-            targetPath: '$(Pipeline.Workspace)/java-versions-linux'
-        
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Download Windows artifact'
-          inputs:
-            artifactName: 'java-versions-windows'
-            targetPath: '$(Pipeline.Workspace)/java-versions-windows'
-        
-        - script: |
-            python eng/scripts/merge-java-versions.py \
-              --linux $(Pipeline.Workspace)/java-versions-linux/java-versions.yml \
-              --windows $(Pipeline.Workspace)/java-versions-windows/java-versions.yml \
-              --output eng/ci/templates/java-versions.yml
-          displayName: 'Merge version updates'
+        - ${{ if eq(parameters.skipValidation, false) }}:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Linux artifact'
+            inputs:
+              artifactName: 'java-versions-linux'
+              targetPath: '$(Pipeline.Workspace)/java-versions-linux'
+          
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Windows artifact'
+            inputs:
+              artifactName: 'java-versions-windows'
+              targetPath: '$(Pipeline.Workspace)/java-versions-windows'
+          
+          - script: |
+              python eng/scripts/merge-java-versions.py \
+                --linux $(Pipeline.Workspace)/java-versions-linux/java-versions.yml \
+                --windows $(Pipeline.Workspace)/java-versions-windows/java-versions.yml \
+                --output eng/ci/templates/java-versions.yml
+            displayName: 'Merge version updates'
         
         - bash: |
-            # Configure git
-            git config user.email "azfunc-java-worker-bot@microsoft.com"
-            git config user.name "Azure Functions Java Worker Bot"
-            
-            # Check if there are changes
-            if git diff --quiet eng/ci/templates/java-versions.yml; then
-              echo "No changes detected in java-versions.yml"
-              echo "##vso[task.setvariable variable=HasChanges]false"
-            else
-              echo "Changes detected in java-versions.yml"
+            # Set branch name from parameter or check for changes
+            if [ -n "${{ parameters.existingBranch }}" ]; then
+              echo "Using existing branch: ${{ parameters.existingBranch }}"
+              echo "##vso[task.setvariable variable=BranchName]${{ parameters.existingBranch }}"
               echo "##vso[task.setvariable variable=HasChanges]true"
+            else
+              # Configure git
+              git config user.email "azfunc-java-worker-bot@microsoft.com"
+              git config user.name "Azure Functions Java Worker Bot"
               
-              # Show the diff
-              echo "Changes:"
-              git diff eng/ci/templates/java-versions.yml
+              # Check if there are changes
+              if git diff --quiet eng/ci/templates/java-versions.yml; then
+                echo "No changes detected in java-versions.yml"
+                echo "##vso[task.setvariable variable=HasChanges]false"
+              else
+                echo "Changes detected in java-versions.yml"
+                echo "##vso[task.setvariable variable=HasChanges]true"
+                
+                # Show the diff
+                echo "Changes:"
+                git diff eng/ci/templates/java-versions.yml
+              fi
             fi
-          displayName: 'Check for changes'
+          displayName: 'Check for changes or use existing branch'
         
         - bash: |
-            # Create a new branch
-            BRANCH_NAME="automated/update-java-versions-$(date +%Y%m%d-%H%M%S)"
-            echo "Creating branch: $BRANCH_NAME"
-            git checkout -b $BRANCH_NAME
-            
-            # Stage and commit changes
-            git add eng/ci/templates/java-versions.yml
-            git commit -m "Update Java versions
+            # Create a new branch only if not using existing branch
+            if [ -z "${{ parameters.existingBranch }}" ]; then
+              BRANCH_NAME="automated/update-java-versions-$(date +%Y%m%d-%H%M%S)"
+              echo "Creating branch: $BRANCH_NAME"
+              git checkout -b $BRANCH_NAME
+              
+              # Stage and commit changes
+              git add eng/ci/templates/java-versions.yml
+              git commit -m "Update Java versions
 
             Auto-detected new Java versions from Microsoft OpenJDK releases.
             
@@ -176,61 +199,99 @@ extends:
             
             Pipeline Run: $(Build.BuildNumber)
             "
-            
-            # Push the branch
-            git push origin $BRANCH_NAME
-            
-            # Store branch name for PR creation
-            echo "##vso[task.setvariable variable=BranchName]$BRANCH_NAME"
+              
+              # Push the branch
+              git push origin $BRANCH_NAME
+              
+              # Store branch name for PR creation
+              echo "##vso[task.setvariable variable=BranchName]$BRANCH_NAME"
+            else
+              echo "Skipping branch creation - using existing branch: ${{ parameters.existingBranch }}"
+            fi
           displayName: 'Commit and push changes'
-          condition: eq(variables['HasChanges'], 'true')
+          condition: and(eq(variables['HasChanges'], 'true'), eq('${{ parameters.existingBranch }}', ''))
         
         - bash: |
-            # Install Azure DevOps CLI extension
-            az extension add --name azure-devops
+            set -e
             
-            # Authenticate using the system access token
-            echo "$(System.AccessToken)" | az devops login --organization "$(System.CollectionUri)"
+            BRANCH_NAME="$(BranchName)"
+            GITHUB_REPO="Azure/azure-functions-java-worker"
             
-            # Get the current date
+            echo "Branch name: $BRANCH_NAME"
+            echo "GitHub repository: $GITHUB_REPO"
+            
+            # Extract GitHub token from the git remote URL credentials
+            # Azure Pipelines injects the token into the git config
+            GIT_TOKEN=$(git config --get-urlmatch http.extraheader https://github.com/${GITHUB_REPO} | sed -n 's/.*AUTHORIZATION: basic \(.*\)/\1/p' | base64 -d | cut -d: -f2)
+            
+            if [ -z "$GIT_TOKEN" ]; then
+              echo "WARNING: Could not extract GitHub token from git config"
+              echo "Attempting to use System.AccessToken directly..."
+              GIT_TOKEN="$(System.AccessToken)"
+            fi
+            
+            # Check if PR already exists
+            echo "Checking for existing PR from branch: $BRANCH_NAME"
+            EXISTING_PR=$(curl -s \
+              -H "Authorization: token ${GIT_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPO}/pulls?head=Azure:${BRANCH_NAME}&state=open")
+            
+            PR_COUNT=$(echo "$EXISTING_PR" | grep -c '"number":' || true)
+            
+            if [ "$PR_COUNT" -gt 0 ]; then
+              PR_NUMBER=$(echo "$EXISTING_PR" | grep -o '"number":[0-9]*' | head -1 | grep -o '[0-9]*')
+              echo "PR already exists for branch $BRANCH_NAME"
+              echo "Existing PR: https://github.com/${GITHUB_REPO}/pull/${PR_NUMBER}"
+              exit 0
+            fi
+            
             CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            BUILD_NUM="$(Build.BuildNumber)"
             
-            # Set default project and organization
-            az devops configure --defaults organization="$(System.CollectionUri)" project="$(System.TeamProject)"
+            # Create JSON payload for PR
+            cat > /tmp/pr_payload.json << 'JSONEOF'
+            {
+              "title": "Update Java versions to latest Microsoft OpenJDK releases",
+              "body": "This PR updates the Java version variables in `eng/ci/templates/java-versions.yml` to the latest versions available from Microsoft OpenJDK.\n\n## Changes\n- Auto-detected and validated new Java versions\n- Linux JDKs validated on Linux pool\n- Windows JDKs validated on Windows pool\n- All JDK installations were validated using `java --version`\n\n## Automated Process\nThis PR was automatically created by the Java Version Check Pipeline.\n\n## Review Checklist\n- [ ] Verify version numbers are correct\n- [ ] Check that both Linux and Windows versions are updated\n- [ ] Ensure CI tests pass with new versions\n\n**Pipeline Run:** BUILDNUMBER_PLACEHOLDER\n**Date:** CURRENTDATE_PLACEHOLDER",
+              "head": "BRANCHNAME_PLACEHOLDER",
+              "base": "dev"
+            }
+            JSONEOF
             
-            echo "Repository ID: $(Build.Repository.ID)"
-            echo "Branch name: $(BranchName)"
+            # Replace placeholders
+            sed -i "s|BRANCHNAME_PLACEHOLDER|${BRANCH_NAME}|g" /tmp/pr_payload.json
+            sed -i "s|BUILDNUMBER_PLACEHOLDER|${BUILD_NUM}|g" /tmp/pr_payload.json
+            sed -i "s|CURRENTDATE_PLACEHOLDER|${CURRENT_DATE}|g" /tmp/pr_payload.json
             
-            # Create pull request using repository ID
-            az repos pr create \
-              --repository "$(Build.Repository.ID)" \
-              --source-branch "$(BranchName)" \
-              --target-branch "dev" \
-              --title "Update Java versions to latest Microsoft OpenJDK releases" \
-              --description "This PR updates the Java version variables in \`eng/ci/templates/java-versions.yml\` to the latest versions available from Microsoft OpenJDK.
-
-            ## Changes
-            - Auto-detected and validated new Java versions
-            - Linux JDKs validated on Linux pool
-            - Windows JDKs validated on Windows pool
-            - All JDK installations were validated using \`java --version\`
-
-            ## Automated Process
-            This PR was automatically created by the [Java Version Check Pipeline]($(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)).
-
-            ## Review Checklist
-            - [ ] Verify version numbers are correct
-            - [ ] Check that both Linux and Windows versions are updated
-            - [ ] Ensure CI tests pass with new versions
-
-            **Pipeline Run:** $(Build.BuildNumber)  
-            **Date:** ${CURRENT_DATE}" \
-              --auto-complete false \
-              --squash false \
-              --delete-source-branch true
+            echo "Creating pull request on GitHub..."
+            PR_RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              -H "Authorization: token ${GIT_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/json" \
+              -d @/tmp/pr_payload.json \
+              "https://api.github.com/repos/${GITHUB_REPO}/pulls")
             
-            echo "Pull request created successfully"
-          displayName: 'Create Pull Request'
+            HTTP_CODE=$(echo "$PR_RESPONSE" | tail -n1)
+            RESPONSE_BODY=$(echo "$PR_RESPONSE" | head -n-1)
+            
+            echo "HTTP Status: $HTTP_CODE"
+            
+            if [ "$HTTP_CODE" = "201" ]; then
+              PR_NUMBER=$(echo "$RESPONSE_BODY" | grep -o '"number":[0-9]*' | head -1 | grep -o '[0-9]*')
+              echo "Pull request created successfully! PR #$PR_NUMBER"
+              echo "URL: https://github.com/${GITHUB_REPO}/pull/${PR_NUMBER}"
+            else
+              echo "ERROR: Failed to create pull request"
+              echo "Response: $RESPONSE_BODY"
+              echo ""
+              echo "The branch has been pushed to: $BRANCH_NAME"
+              echo "You can manually create a PR at:"
+              echo "https://github.com/${GITHUB_REPO}/compare/dev...${BRANCH_NAME}"
+              exit 1
+            fi
+          displayName: 'Create Pull Request on GitHub'
           condition: eq(variables['HasChanges'], 'true')
           env:
-            AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
