@@ -21,7 +21,7 @@ jobs:
         value: $[variables.isTagTemp]
 
     strategy:
-      maxParallel: 4
+      maxParallel: 5
       matrix:
         open-jdk-8-windows:
           JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u$(JDK8_WINDOWS_VERSION)-b$(JDK8_WINDOWS_BUILD)/OpenJDK8U-jdk_x64_windows_hotspot_8u$(JDK8_WINDOWS_VERSION)b$(JDK8_WINDOWS_BUILD).zip'

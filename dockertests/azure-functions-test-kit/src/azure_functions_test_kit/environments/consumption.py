@@ -1,66 +1,61 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """
-Test environment manager for Azure Functions container testing.
-Manages both Functions containers and storage (Azurite or real Azure Storage).
+Linux Consumption test environment.
 """
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Dict, Optional, List
 
 from azure.storage.blob import BlobServiceClient, generate_container_sas, ContainerSasPermissions
 
-from .azurite_container_controller import AzuriteContainerController
-from .functions_container_controller import FunctionsContainerController
+from ..controllers.azurite_container_controller import AzuriteContainerController
+from ..controllers.functions_container_controller import FunctionsContainerController
 
 
 class LinuxConsumptionTestEnvironment:
-    """Manages the complete test environment including storage and Functions containers."""
+    """Test environment for Linux Consumption plan."""
     
     # Supported app package extensions
     SUPPORTED_EXTENSIONS = ['.zip', '.squashfs']
     
-    def __init__(
-        self,
-        use_azurite: Optional[bool] = None,
-        storage_connection_string: Optional[str] = None,
-        apps_directory: Optional[str] = None,
-        apps_to_upload: Optional[List[str]] = None,
-        apps_container_name: str = "app",
-        runtime: Optional[str] = None,
-        runtime_version: Optional[str] = None,
-        host_version: Optional[str] = None,
-        worker_directory: Optional[str] = None,
-        docker_flags: Optional[List[str]] = None,
-        environment_id: Optional[str] = None
-    ):
-        """Initialize the test environment.
+    def __init__(self,
+                 use_azurite: Optional[bool] = None,
+                 storage_connection_string: Optional[str] = None,
+                 apps_directory: Optional[str] = None,
+                 apps_to_upload: Optional[list] = None,
+                 apps_container_name: str = "app",
+                 runtime: Optional[str] = None,
+                 runtime_version: Optional[str] = None,
+                 host_version: Optional[str] = None,
+                 worker_directory: Optional[str] = None,
+                 docker_flags: Optional[list] = None,
+                 environment_id: Optional[str] = None):
+        """Initialize the environment.
         
         Args:
             use_azurite: If True, use Azurite emulator. If False, use real Azure Storage.
                         If None, reads from FUNCTIONS_TEST_USE_AZURITE env var (default: True)
-            storage_connection_string: Connection string for real Azure Storage (required if use_azurite=False).
+            storage_connection_string: Connection string for real Azure Storage.
                                       If None, reads from FUNCTIONS_TEST_STORAGE_CONNECTION_STRING env var
             apps_directory: Directory containing app packages to upload.
-                           If None, reads from FUNCTIONS_TEST_APPS_DIR env var (default: "./apps")
+                           If None, reads from FUNCTIONS_TEST_APPS_DIR env var (default: "./app-packages")
             apps_to_upload: Optional list of app names to upload (with or without extensions).
                           Examples: ['app1', 'app2.squashfs']
-                          If specified without extension, will match any supported extension (.zip, .squashfs)
                           If None, all apps in apps_directory will be uploaded
             apps_container_name: Blob container name for storing app packages
-            runtime: Functions runtime (java, python, dotnet, node, etc.).
+            runtime: Functions runtime (java, python, etc.).
                     If None, reads from FUNCTIONS_TEST_RUNTIME env var (default: "java")
             runtime_version: Runtime version.
                            If None, reads from FUNCTIONS_TEST_RUNTIME_VERSION env var (default: "21")
             host_version: Azure Functions host version.
                          If None, reads from FUNCTIONS_TEST_HOST_VERSION env var (default: "4")
             worker_directory: Path to custom worker directory to mount.
-                            If None, reads from FUNCTIONS_TEST_WORKER_DIR env var.
-                            If still None, uses built-in worker from image.
+                            If None, reads from FUNCTIONS_TEST_WORKER_DIR env var
             docker_flags: Additional Docker flags for the Functions container
-            environment_id: Optional unique ID for this environment (auto-generated if not provided)
+            environment_id: Unique identifier for this environment (auto-generated if None)
         """
         # Read from environment variables with defaults
         self.use_azurite = use_azurite if use_azurite is not None else \
@@ -80,6 +75,7 @@ class LinuxConsumptionTestEnvironment:
         
         # Generate unique environment ID for this test environment
         # Use full UUID with hyphens (36 characters)
+        import uuid
         self.environment_id = environment_id or str(uuid.uuid4())
         
         # Storage configuration
@@ -111,14 +107,23 @@ class LinuxConsumptionTestEnvironment:
         self._blob_service_client: Optional[BlobServiceClient] = None
         self._container_sas_token: Optional[str] = None
         self._uploaded_apps: Dict[str, str] = {}  # {blob_name_with_ext: blob_url}
-    
+        
+    def __enter__(self):
+        """Start the environment."""
+        self.start()
+        return self
+        
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Stop the environment."""
+        self.stop()
+        
     @property
     def storage_connection_string(self) -> str:
         """Get the storage connection string."""
         if self.use_azurite:
             return self.azurite.connection_string
         return self._storage_connection_string
-    
+
     @property
     def docker_storage_connection_string(self) -> str:
         """Get the storage connection string for use from Docker containers."""
@@ -126,7 +131,7 @@ class LinuxConsumptionTestEnvironment:
             return self.azurite.docker_connection_string
         # For real Azure Storage, the connection string is the same
         return self._storage_connection_string
-    
+
     @property
     def blob_service_client(self) -> BlobServiceClient:
         """Get or create the BlobServiceClient."""
@@ -135,7 +140,7 @@ class LinuxConsumptionTestEnvironment:
                 self.storage_connection_string
             )
         return self._blob_service_client
-    
+
     def start(self) -> 'LinuxConsumptionTestEnvironment':
         """Start the test environment (storage and Functions container)."""
         print(f"🚀 Starting test environment '{self.environment_id}'...")
@@ -171,7 +176,7 @@ class LinuxConsumptionTestEnvironment:
         
         print(f"✅ Test environment '{self.environment_id}' ready")
         return self
-    
+            
     def stop(self) -> None:
         """Stop the test environment and clean up resources."""
         print(f"🛑 Stopping test environment '{self.environment_id}'...")
@@ -183,7 +188,14 @@ class LinuxConsumptionTestEnvironment:
             self.azurite.safe_kill_container()
         
         print(f"✅ Test environment '{self.environment_id}' stopped")
-    
+            
+    @property
+    def url(self) -> str:
+        """Get the function app URL."""
+        if not self.functions_controller:
+            raise RuntimeError("Environment not started")
+        return self.functions_controller.url
+
     def _ensure_blob_container(self) -> None:
         """Ensure the blob container exists."""
         try:
@@ -213,7 +225,7 @@ class LinuxConsumptionTestEnvironment:
                 container_name=self.apps_container_name,
                 account_key=account_key,
                 permission=ContainerSasPermissions(read=True, list=True),
-                expiry=datetime.utcnow() + timedelta(days=7)
+                expiry=datetime.now(datetime.UTC if hasattr(datetime, 'UTC') else timezone.utc) + timedelta(days=7)
             )
             
             self._container_sas_token = sas_token
@@ -221,7 +233,7 @@ class LinuxConsumptionTestEnvironment:
             
         except Exception as e:
             raise RuntimeError(f"Failed to generate SAS token: {e}")
-    
+
     def _upload_app_packages(self) -> None:
         """Upload app packages from the apps directory to blob storage."""
         if not self.apps_directory.exists():
@@ -289,7 +301,7 @@ class LinuxConsumptionTestEnvironment:
             print(f"   ✅ Uploaded: {blob_url}")
         
         print(f"✅ Uploaded {len(app_files)} app package(s)")
-    
+
     def get_blob_sas_url(self, blob_name: str, container_name: Optional[str] = None) -> str:
         """Get a SAS URL for a specific blob.
         

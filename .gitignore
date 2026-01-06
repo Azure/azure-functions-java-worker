@@ -288,3 +288,6 @@ __pycache__/
 
 # Environment configuration files
 .env
+
+# Docker test packages
+dockertests/app-packages/

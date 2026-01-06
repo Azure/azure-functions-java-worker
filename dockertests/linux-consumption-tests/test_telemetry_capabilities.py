@@ -6,7 +6,7 @@ capabilities are set based on environment variables during FunctionEnvironmentRe
 """
 
 import pytest
-from utils import LinuxConsumptionTestEnvironment
+from azure_functions_test_kit import LinuxConsumptionTestEnvironment
 
 
 @pytest.fixture
