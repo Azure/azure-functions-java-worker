@@ -13,6 +13,7 @@ jobs:
       os: linux
 
     strategy:
+      maxParallel: 4
       matrix:
         Java-8:
           javaVersion: '8'
@@ -47,7 +48,7 @@ jobs:
 
       - bash: |
           python -m pip install --upgrade pip
-          pip install -e dockertests/
+          pip install -e dockertests/azure-functions-test-kit
         displayName: 'Install Python dependencies'
 
       - pwsh: |
