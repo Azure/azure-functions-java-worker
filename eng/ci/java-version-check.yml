@@ -1,0 +1,270 @@
+schedules:
+  - cron: "0 8 * * MON"  # Weekly on Monday at 8 AM UTC
+    displayName: Weekly Java Version Check
+    branches:
+      include:
+        - dev
+    always: true
+
+trigger: none  # Manual trigger only, no CI builds
+
+pr: none  # Not triggered by PRs
+
+resources:
+  repositories:
+    - repository: 1es
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+variables:
+  - name: System.Debug
+    value: false
+
+extends:
+  template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
+  parameters:
+    pool:
+      name: 1es-pool-azfunc-public
+      image: 1es-ubuntu-22.04
+      os: linux
+
+    sdl:
+      sourceAnalysisPool:
+        name: 1es-pool-azfunc-public
+        image: 1es-windows-2022
+        os: windows
+
+    stages:
+    - stage: ValidateLinux
+      displayName: 'Validate Linux JDK Versions'
+      jobs:
+      - job: ValidateLinuxJDKs
+        displayName: 'Detect and Validate Linux JDKs'
+        timeoutInMinutes: 60
+        pool:
+          name: 1es-pool-azfunc-public
+          image: 1es-ubuntu-22.04
+          os: linux
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            targetPath: '$(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml'
+            artifactName: 'java-versions-linux'
+            displayName: 'Publish Linux java-versions.yml'
+        
+        steps:
+        - checkout: self
+          persistCredentials: true
+          clean: true
+        
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.11'
+          inputs:
+            versionSpec: '3.11'
+            addToPath: true
+        
+        - script: |
+            python eng/scripts/check-java-versions.py --os linux
+          displayName: 'Check and validate Linux Java versions'
+          continueOnError: false
+    
+    - stage: ValidateWindows
+      displayName: 'Validate Windows JDK Versions'
+      dependsOn: []  # Run in parallel with Linux
+      jobs:
+      - job: ValidateWindowsJDKs
+        displayName: 'Detect and Validate Windows JDKs'
+        timeoutInMinutes: 60
+        pool:
+          name: 1es-pool-azfunc-public
+          image: 1es-windows-2022
+          os: windows
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            targetPath: '$(System.DefaultWorkingDirectory)/eng/ci/templates/java-versions.yml'
+            artifactName: 'java-versions-windows'
+            displayName: 'Publish Windows java-versions.yml'
+        
+        steps:
+        - checkout: self
+          persistCredentials: true
+          clean: true
+        
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.11'
+          inputs:
+            versionSpec: '3.11'
+            addToPath: true
+        
+        - script: |
+            python eng/scripts/check-java-versions.py --os windows
+          displayName: 'Check and validate Windows Java versions'
+          continueOnError: false
+    
+    - stage: CreatePR
+      displayName: 'Create Pull Request'
+      dependsOn:
+        - ValidateLinux
+        - ValidateWindows
+      condition: succeeded()
+      jobs:
+      - job: MergeAndCreatePR
+        displayName: 'Merge Changes and Create PR'
+        timeoutInMinutes: 30
+        pool:
+          name: 1es-pool-azfunc-public
+          image: 1es-ubuntu-22.04
+          os: linux
+        
+        steps:
+        - checkout: self
+          persistCredentials: true
+          clean: true
+        
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Linux artifact'
+          inputs:
+            artifactName: 'java-versions-linux'
+            targetPath: '$(Pipeline.Workspace)/java-versions-linux'
+        
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Windows artifact'
+          inputs:
+            artifactName: 'java-versions-windows'
+            targetPath: '$(Pipeline.Workspace)/java-versions-windows'
+        
+        - script: |
+            python eng/scripts/merge-java-versions.py \
+              --linux $(Pipeline.Workspace)/java-versions-linux/java-versions.yml \
+              --windows $(Pipeline.Workspace)/java-versions-windows/java-versions.yml \
+              --output eng/ci/templates/java-versions.yml
+          displayName: 'Merge version updates'
+        
+        - bash: |
+            # Configure git
+            git config user.email "azfunc-java-worker-bot@microsoft.com"
+            git config user.name "Azure Functions Java Worker Bot"
+            
+            # Check if there are changes
+            if git diff --quiet eng/ci/templates/java-versions.yml; then
+              echo "No changes detected in java-versions.yml"
+              echo "##vso[task.setvariable variable=HasChanges]false"
+            else
+              echo "Changes detected in java-versions.yml"
+              echo "##vso[task.setvariable variable=HasChanges]true"
+              
+              # Show the diff
+              echo "Changes:"
+              git diff eng/ci/templates/java-versions.yml
+            fi
+          displayName: 'Check for changes'
+        
+        - bash: |
+            BRANCH_NAME="automated/update-java-versions-$(date +%Y%m%d-%H%M%S)"
+            echo "Creating branch: $BRANCH_NAME"
+            git checkout -b $BRANCH_NAME
+            
+            # Stage and commit changes
+            git add eng/ci/templates/java-versions.yml
+            git commit -m "Update Java versions
+            
+            Auto-detected new Java versions from Microsoft OpenJDK releases.
+            
+            This PR was automatically generated by the Java version check pipeline.
+            
+            Pipeline Run: $(Build.BuildNumber)"
+            
+            # Push the branch
+            git push origin $BRANCH_NAME
+            
+            # Store branch name for PR creation
+            echo "##vso[task.setvariable variable=BranchName]$BRANCH_NAME"
+          displayName: 'Commit and push changes'
+          condition: eq(variables['HasChanges'], 'true')
+        
+        - bash: |
+            set -e
+            
+            BRANCH_NAME="$(BranchName)"
+            GITHUB_REPO="Azure/azure-functions-java-worker"
+            
+            echo "Branch name: $BRANCH_NAME"
+            echo "GitHub repository: $GITHUB_REPO"
+            
+            # Extract GitHub token from the git remote URL credentials
+            # Azure Pipelines injects the token into the git config
+            GIT_TOKEN=$(git config --get-urlmatch http.extraheader https://github.com/${GITHUB_REPO} | sed -n 's/.*AUTHORIZATION: basic \(.*\)/\1/p' | base64 -d | cut -d: -f2)
+            
+            if [ -z "$GIT_TOKEN" ]; then
+              echo "WARNING: Could not extract GitHub token from git config"
+              echo "Attempting to use System.AccessToken directly..."
+              GIT_TOKEN="$(System.AccessToken)"
+            fi
+            
+            # Check if PR already exists
+            echo "Checking for existing PR from branch: $BRANCH_NAME"
+            EXISTING_PR=$(curl -s \
+              -H "Authorization: token ${GIT_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPO}/pulls?head=Azure:${BRANCH_NAME}&state=open")
+            
+            PR_COUNT=$(echo "$EXISTING_PR" | grep -c '"number":' || true)
+            
+            if [ "$PR_COUNT" -gt 0 ]; then
+              PR_NUMBER=$(echo "$EXISTING_PR" | grep -o '"number":[0-9]*' | head -1 | grep -o '[0-9]*')
+              echo "PR already exists for branch $BRANCH_NAME"
+              echo "Existing PR: https://github.com/${GITHUB_REPO}/pull/${PR_NUMBER}"
+              exit 0
+            fi
+            
+            CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            BUILD_NUM="$(Build.BuildNumber)"
+            
+            # Create JSON payload for PR
+            cat > /tmp/pr_payload.json << 'JSONEOF'
+            {
+              "title": "Update Java versions to latest releases",
+              "body": "This PR updates the Java version variables in `eng/ci/templates/java-versions.yml` to the latest versions.\n\n## Changes\n- Auto-detected and validated new Java versions\n- **JDK 8**: From Adoptium (Eclipse Temurin)\n- **JDK 11, 17, 21, 25**: From Microsoft OpenJDK\n- Linux JDKs validated on Linux pool\n- Windows JDKs validated on Windows pool\n- All JDK installations were validated using `java -version`\n\n## Automated Process\nThis PR was automatically created by the Java Version Check Pipeline.\n\n## Review Checklist\n- [ ] Verify version numbers are correct\n- [ ] Check that both Linux and Windows versions are updated\n- [ ] Ensure CI tests pass with new versions\n\n**Pipeline Run:** BUILDNUMBER_PLACEHOLDER\n**Date:** CURRENTDATE_PLACEHOLDER",
+              "head": "BRANCHNAME_PLACEHOLDER",
+              "base": "dev"
+            }
+            JSONEOF
+            
+            # Replace placeholders
+            sed -i "s|BRANCHNAME_PLACEHOLDER|${BRANCH_NAME}|g" /tmp/pr_payload.json
+            sed -i "s|BUILDNUMBER_PLACEHOLDER|${BUILD_NUM}|g" /tmp/pr_payload.json
+            sed -i "s|CURRENTDATE_PLACEHOLDER|${CURRENT_DATE}|g" /tmp/pr_payload.json
+            
+            echo "Creating pull request on GitHub..."
+            PR_RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              -H "Authorization: token ${GIT_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/json" \
+              -d @/tmp/pr_payload.json \
+              "https://api.github.com/repos/${GITHUB_REPO}/pulls")
+            
+            HTTP_CODE=$(echo "$PR_RESPONSE" | tail -n1)
+            RESPONSE_BODY=$(echo "$PR_RESPONSE" | head -n-1)
+            
+            echo "HTTP Status: $HTTP_CODE"
+            
+            if [ "$HTTP_CODE" = "201" ]; then
+              PR_NUMBER=$(echo "$RESPONSE_BODY" | grep -o '"number":[0-9]*' | head -1 | grep -o '[0-9]*')
+              echo "Pull request created successfully! PR #$PR_NUMBER"
+              echo "URL: https://github.com/${GITHUB_REPO}/pull/${PR_NUMBER}"
+            else
+              echo "ERROR: Failed to create pull request"
+              echo "Response: $RESPONSE_BODY"
+              echo ""
+              echo "The branch has been pushed to: $BRANCH_NAME"
+              echo "You can manually create a PR at:"
+              echo "https://github.com/${GITHUB_REPO}/compare/dev...${BRANCH_NAME}"
+              exit 1
+            fi
+          displayName: 'Create Pull Request on GitHub'
+          condition: eq(variables['HasChanges'], 'true')
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
