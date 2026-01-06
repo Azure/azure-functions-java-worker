@@ -32,6 +32,7 @@ def load_yaml_with_formatting(file_path):
 def merge_versions(linux_data, windows_data):
     """
     Merge Linux and Windows version data.
+    JDK 8 is from Adoptium, JDK 11+ from Microsoft.
     """
     merged = {}
     
@@ -39,11 +40,6 @@ def merge_versions(linux_data, windows_data):
     all_keys = set(linux_data.keys()) | set(windows_data.keys())
     
     for key in sorted(all_keys):
-        # Skip JDK8 as it's not managed by Microsoft
-        if 'JDK8' in key:
-            merged[key] = linux_data.get(key, windows_data.get(key))
-            continue
-        
         # Use the appropriate source based on OS in the key name
         if 'LINUX' in key:
             merged[key] = linux_data.get(key)

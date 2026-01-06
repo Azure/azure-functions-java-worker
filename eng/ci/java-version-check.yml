@@ -225,8 +225,8 @@ extends:
             # Create JSON payload for PR
             cat > /tmp/pr_payload.json << 'JSONEOF'
             {
-              "title": "Update Java versions to latest Microsoft OpenJDK releases",
-              "body": "This PR updates the Java version variables in `eng/ci/templates/java-versions.yml` to the latest versions available from Microsoft OpenJDK.\n\n## Changes\n- Auto-detected and validated new Java versions\n- Linux JDKs validated on Linux pool\n- Windows JDKs validated on Windows pool\n- All JDK installations were validated using `java --version`\n\n## Automated Process\nThis PR was automatically created by the Java Version Check Pipeline.\n\n## Review Checklist\n- [ ] Verify version numbers are correct\n- [ ] Check that both Linux and Windows versions are updated\n- [ ] Ensure CI tests pass with new versions\n\n**Pipeline Run:** BUILDNUMBER_PLACEHOLDER\n**Date:** CURRENTDATE_PLACEHOLDER",
+              "title": "Update Java versions to latest releases",
+              "body": "This PR updates the Java version variables in `eng/ci/templates/java-versions.yml` to the latest versions.\n\n## Changes\n- Auto-detected and validated new Java versions\n- **JDK 8**: From Adoptium (Eclipse Temurin)\n- **JDK 11, 17, 21, 25**: From Microsoft OpenJDK\n- Linux JDKs validated on Linux pool\n- Windows JDKs validated on Windows pool\n- All JDK installations were validated using `java -version`\n\n## Automated Process\nThis PR was automatically created by the Java Version Check Pipeline.\n\n## Review Checklist\n- [ ] Verify version numbers are correct\n- [ ] Check that both Linux and Windows versions are updated\n- [ ] Ensure CI tests pass with new versions\n\n**Pipeline Run:** BUILDNUMBER_PLACEHOLDER\n**Date:** CURRENTDATE_PLACEHOLDER",
               "head": "BRANCHNAME_PLACEHOLDER",
               "base": "dev"
             }

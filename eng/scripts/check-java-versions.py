@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-Script to check for new Microsoft OpenJDK versions and update java-versions.yml
+Script to check for new JDK versions and update java-versions.yml
+- JDK 8: From Adoptium (Eclipse Temurin)
+- JDK 11+: From Microsoft OpenJDK
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -16,12 +19,47 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
 
-# JDK versions to check (excluding JDK 8 as it's not from Microsoft)
-JDK_VERSIONS = [11, 17, 21, 25]
+# JDK versions to check
+JDK_VERSIONS = [8, 11, 17, 21, 25]
 
-# Microsoft OpenJDK download URL patterns
+# Microsoft OpenJDK download URL patterns (JDK 11+)
 LINUX_URL_TEMPLATE = "https://aka.ms/download-jdk/microsoft-jdk-{version}-linux-x64.tar.gz"
 WINDOWS_URL_TEMPLATE = "https://aka.ms/download-jdk/microsoft-jdk-{version}-windows-x64.zip"
+
+# Adoptium API for JDK 8
+ADOPTIUM_API_URL = "https://api.adoptium.net/v3/info/release_versions?version=[8,9)&release_type=ga&sort_method=DATE&sort_order=DESC&page_size=1"
+ADOPTIUM_DOWNLOAD_URL_TEMPLATE = "https://api.adoptium.net/v3/binary/latest/8/ga/{os}/x64/jdk/hotspot/normal/eclipse"
+
+
+def get_jdk8_version_from_adoptium():
+    """
+    Get the latest JDK 8 version from Adoptium API.
+    Returns tuple: (security_version, build_number) e.g., ('472', '08')
+    """
+    try:
+        request = Request(ADOPTIUM_API_URL)
+        request.add_header('User-Agent', 'Mozilla/5.0 (compatible; Azure-Functions-Java-Worker-Version-Checker/1.0)')
+        
+        with urlopen(request, timeout=30) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            
+            if 'versions' in data and len(data['versions']) > 0:
+                version_info = data['versions'][0]
+                security = str(version_info['security'])
+                build = str(version_info['build']).zfill(2)  # Pad to 2 digits
+                semver = version_info['semver']
+                
+                print(f"  Detected version: {semver} (security: {security}, build: {build})")
+                return security, build
+            else:
+                print("  Warning: No version found in Adoptium API response")
+                return None, None
+    except (URLError, HTTPError) as e:
+        print(f"  Error fetching Adoptium API: {e}")
+        return None, None
+    except json.JSONDecodeError as e:
+        print(f"  Error parsing Adoptium API response: {e}")
+        return None, None
 
 
 def get_version_from_url(url):
@@ -58,7 +96,10 @@ def download_and_extract_jdk(url, os_type, extract_dir):
     print(f"  Downloading from {url}")
     
     try:
-        with urlopen(url, timeout=300) as response:
+        request = Request(url)
+        request.add_header('User-Agent', 'Mozilla/5.0 (compatible; Azure-Functions-Java-Worker-Version-Checker/1.0)')
+        
+        with urlopen(request, timeout=300) as response:
             archive_data = response.read()
         
         # Save to temporary file
@@ -95,7 +136,8 @@ def download_and_extract_jdk(url, os_type, extract_dir):
 
 def validate_jdk_version(jdk_path, os_type, expected_version):
     """
-    Validate the JDK by running 'java --version' and checking the output.
+    Validate the JDK by running 'java -version' or 'java --version' and checking the output.
+    JDK 8 uses -version, JDK 9+ uses --version (but both work with -version)
     """
     print(f"  Validating JDK installation...")
     
@@ -109,18 +151,21 @@ def validate_jdk_version(jdk_path, os_type, expected_version):
         raise FileNotFoundError(f"Java executable not found at {java_exe}")
     
     try:
-        # Run java --version
+        # Run java -version (works for all JDK versions)
+        # Note: -version outputs to stderr, not stdout
         result = subprocess.run(
-            [str(java_exe), '--version'],
+            [str(java_exe), '-version'],
             capture_output=True,
             text=True,
             timeout=10
         )
         
-        print(f"  Java version output:\n{result.stdout}")
+        # Check both stdout and stderr as -version outputs to stderr
+        output = result.stdout + result.stderr
+        print(f"  Java version output:\n{output}")
         
         # Check if expected version is in the output
-        if expected_version in result.stdout:
+        if expected_version in output:
             print(f"  [OK] Validation successful: Found version {expected_version}")
             return True
         else:
@@ -139,38 +184,74 @@ def check_jdk_version(jdk_version, os_type):
     """
     Check the latest version for a specific JDK major version and OS.
     Downloads, validates, and returns the version string.
+    For JDK 8, returns tuple: (security_version, build_number)
+    For JDK 11+, returns version string
     """
     print(f"\nChecking JDK {jdk_version} for {os_type}...")
     
-    # Determine URL template
-    if os_type == 'linux':
-        url = LINUX_URL_TEMPLATE.format(version=jdk_version)
-    else:
-        url = WINDOWS_URL_TEMPLATE.format(version=jdk_version)
-    
-    # Get version from URL redirect
-    version = get_version_from_url(url)
-    
-    if not version:
-        print(f"  Failed to detect version for JDK {jdk_version} on {os_type}")
-        return None
-    
-    print(f"  Detected version: {version}")
-    
-    # Download and validate
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        try:
-            jdk_path = download_and_extract_jdk(url, os_type, tmp_dir)
-            
-            if validate_jdk_version(jdk_path, os_type, version):
-                return version
-            else:
-                print(f"  Validation failed for JDK {jdk_version} {os_type} version {version}")
-                sys.exit(1)
+    # Special handling for JDK 8 (from Adoptium)
+    if jdk_version == 8:
+        # Get version info from API
+        security, build = get_jdk8_version_from_adoptium()
+        
+        if not security or not build:
+            print(f"  Failed to detect version for JDK 8")
+            return None
+        
+        # Determine download URL
+        adoptium_os = 'linux' if os_type == 'linux' else 'windows'
+        url = ADOPTIUM_DOWNLOAD_URL_TEMPLATE.format(os=adoptium_os)
+        
+        # For validation, construct the expected version string
+        # Adoptium uses format like "1.8.0_472"
+        expected_version = f"1.8.0_{security}"
+        
+        # Download and validate
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            try:
+                jdk_path = download_and_extract_jdk(url, os_type, tmp_dir)
                 
-        except Exception as e:
-            print(f"  Error during download/validation: {e}")
-            sys.exit(1)
+                if validate_jdk_version(jdk_path, os_type, expected_version):
+                    return (security, build)
+                else:
+                    print(f"  Validation failed for JDK 8 {os_type} version {expected_version}")
+                    sys.exit(1)
+                    
+            except Exception as e:
+                print(f"  Error during download/validation: {e}")
+                sys.exit(1)
+    
+    # Microsoft OpenJDK handling (JDK 11+)
+    else:
+        # Determine URL template
+        if os_type == 'linux':
+            url = LINUX_URL_TEMPLATE.format(version=jdk_version)
+        else:
+            url = WINDOWS_URL_TEMPLATE.format(version=jdk_version)
+        
+        # Get version from URL redirect
+        version = get_version_from_url(url)
+        
+        if not version:
+            print(f"  Failed to detect version for JDK {jdk_version} on {os_type}")
+            return None
+        
+        print(f"  Detected version: {version}")
+        
+        # Download and validate
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            try:
+                jdk_path = download_and_extract_jdk(url, os_type, tmp_dir)
+                
+                if validate_jdk_version(jdk_path, os_type, version):
+                    return version
+                else:
+                    print(f"  Validation failed for JDK {jdk_version} {os_type} version {version}")
+                    sys.exit(1)
+                    
+            except Exception as e:
+                print(f"  Error during download/validation: {e}")
+                sys.exit(1)
 
 
 def load_current_versions(yaml_file):
@@ -181,10 +262,18 @@ def load_current_versions(yaml_file):
         content = f.read()
     
     versions = {}
-    # Pattern to match variables like: JDK11_LINUX_VERSION: '11.0.26'
-    pattern = r"(JDK\d+_(?:LINUX|WINDOWS)_VERSION):\s*'([^']+)'"
+    # Pattern to match version variables like: JDK11_LINUX_VERSION: '11.0.26'
+    version_pattern = r"(JDK\d+_(?:LINUX|WINDOWS)_VERSION):\s*'([^']+)'"
     
-    for match in re.finditer(pattern, content):
+    for match in re.finditer(version_pattern, content):
+        var_name = match.group(1)
+        value = match.group(2)
+        versions[var_name] = value
+    
+    # Pattern to match build variables like: JDK8_LINUX_BUILD: '06'
+    build_pattern = r"(JDK8_(?:LINUX|WINDOWS)_BUILD):\s*'([^']+)'"
+    
+    for match in re.finditer(build_pattern, content):
         var_name = match.group(1)
         value = match.group(2)
         versions[var_name] = value
@@ -247,7 +336,7 @@ def main():
     current_versions = load_current_versions(yaml_file)
     print(f"\nCurrent {os_type} versions:")
     for key, value in sorted(current_versions.items()):
-        if 'JDK8' not in key and os_type.upper() in key:
+        if os_type.upper() in key:
             print(f"  {key}: {value}")
     
     # Check all JDK versions for this OS only
@@ -256,8 +345,16 @@ def main():
     for jdk_version in JDK_VERSIONS:
         version = check_jdk_version(jdk_version, os_type)
         if version:
-            var_name = f"JDK{jdk_version}_{os_type.upper()}_VERSION"
-            detected_versions[var_name] = version
+            # JDK 8 returns tuple (security, build), others return version string
+            if jdk_version == 8:
+                security, build = version
+                version_var = f"JDK8_{os_type.upper()}_VERSION"
+                build_var = f"JDK8_{os_type.upper()}_BUILD"
+                detected_versions[version_var] = security
+                detected_versions[build_var] = build
+            else:
+                var_name = f"JDK{jdk_version}_{os_type.upper()}_VERSION"
+                detected_versions[var_name] = version
     
     # Compare and determine if update is needed
     print("\n" + "=" * 80)
