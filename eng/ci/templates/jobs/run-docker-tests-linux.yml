@@ -5,12 +5,12 @@ parameters:
 
 jobs:
   - job: "TestDocker"
-    displayName: 'Docker Integration Tests - Windows'
+    displayName: 'Docker Integration Tests - Linux'
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-windows-2022
-      os: windows
+      image: 1es-ubuntu-22.04
+      os: linux
 
     strategy:
       maxParallel: 4
@@ -56,19 +56,18 @@ jobs:
         displayName: 'Package Java worker'
 
       - pwsh: |
-          .\dockertests\build-apps.ps1
+          cd dockertests
+          ./build-apps.ps1
         displayName: 'Build and package test apps'
 
-      - pwsh: |
+      - bash: |
           cd dockertests
-          python -m pytest . -v --tb=short
+          pytest . -v --tb=long
         displayName: 'Run Docker integration tests'
         env:
-          PYTHONUTF8: '1'
-          PYTHONIOENCODING: 'utf-8'
-          FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)\java-worker'
+          FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
           FUNCTIONS_TEST_USE_AZURITE: 'true'
           FUNCTIONS_TEST_RUNTIME: 'java'
           FUNCTIONS_TEST_RUNTIME_VERSION: '$(javaVersion)'
           FUNCTIONS_TEST_HOST_VERSION: '4'
-          FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)\dockertests\app-packages'
+          FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)/dockertests/app-packages'
