@@ -10,7 +10,7 @@ requires-python = ">=3.8"
 dependencies = [
     "pytest>=7.0",
     "pytest-xdist>=3.0",
-    "azure-storage-blob>=12.19.0",
+    "azure-storage-blob==12.27.1",
     "requests>=2.31.0",
     "cryptography>=41.0.0",
     "python-dotenv>=1.0.0",

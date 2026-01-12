@@ -62,7 +62,7 @@ jobs:
 
       - bash: |
           cd dockertests
-          pytest . -v --tb=long
+          pytest . -v -n auto --tb=long
         displayName: 'Run Docker integration tests'
         env:
           FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
