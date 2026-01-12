@@ -198,15 +198,26 @@ class LinuxConsumptionTestEnvironment:
 
     def _ensure_blob_container(self) -> None:
         """Ensure the blob container exists."""
-        try:
-            container_client = self.blob_service_client.get_container_client(self.apps_container_name)
-            if not container_client.exists():
-                print(f"📦 Creating blob container '{self.apps_container_name}'...")
-                container_client.create_container()
-            else:
-                print(f"📦 Using existing blob container '{self.apps_container_name}'")
-        except Exception as e:
-            raise RuntimeError(f"Failed to ensure blob container: {e}")
+        import time
+        max_retries = 5
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                container_client = self.blob_service_client.get_container_client(self.apps_container_name)
+                if not container_client.exists():
+                    print(f"📦 Creating blob container '{self.apps_container_name}'...")
+                    container_client.create_container()
+                else:
+                    print(f"📦 Using existing blob container '{self.apps_container_name}'")
+                return  # Success
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"⚠️  Failed to ensure blob container (attempt {attempt + 1}/{max_retries}): {e}")
+                    print(f"⏳ Retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                else:
+                    raise RuntimeError(f"Failed to ensure blob container after {max_retries} attempts: {e}")
     
     def _generate_container_sas(self) -> None:
         """Generate a SAS token for the container."""
