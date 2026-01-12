@@ -5,12 +5,12 @@ parameters:
 
 jobs:
   - job: "TestDocker"
-    displayName: 'Docker Integration Tests - Linux'
+    displayName: 'Docker Integration Tests - Windows'
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-22.04
-      os: linux
+      image: 1es-windows-2022
+      os: windows
 
     strategy:
       maxParallel: 4
@@ -65,6 +65,8 @@ jobs:
           pytest . -v -n auto --tb=short
         displayName: 'Run Docker integration tests'
         env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
           FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
           FUNCTIONS_TEST_USE_AZURITE: 'true'
           FUNCTIONS_TEST_RUNTIME: 'java'
