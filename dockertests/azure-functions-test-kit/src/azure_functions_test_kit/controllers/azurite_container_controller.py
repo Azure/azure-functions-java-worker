@@ -119,9 +119,7 @@ class AzuriteContainerController:
             "-p", queue_port_arg,
             "-p", table_port_arg,
             "-e", f"AZURITE_ACCOUNTS={self._account_name}:{self._account_key}",
-            "mcr.microsoft.com/azure-storage/azurite",
-            "azurite",
-            "--skipApiVersionCheck"
+            "mcr.microsoft.com/azure-storage/azurite"
         ]
         
         print(f"🔑 Using account: {self._account_name}")
