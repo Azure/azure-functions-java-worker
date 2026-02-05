@@ -20,6 +20,8 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Thread-Safety: Single thread.
  */
 public class JavaWorkerClient implements AutoCloseable {
+    private static final Logger logger = Logger.getLogger(JavaWorkerClient.class.getName());
+    
     public JavaWorkerClient(IApplication app) {
         WorkerLogManager.initialize(this, app.logToConsole());
         ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext();
@@ -101,18 +103,23 @@ public class JavaWorkerClient implements AutoCloseable {
 
         @Override
         public void onError(Throwable t) {
-            Logger logger = Logger.getLogger(JavaWorkerClient.class.getName());
             String statusCode = "Unknown";
             String statusDescription = t.getMessage();
             
             if (t instanceof io.grpc.StatusRuntimeException) {
                 io.grpc.StatusRuntimeException sre = (io.grpc.StatusRuntimeException) t;
                 statusCode = sre.getStatus().getCode().name();
-                statusDescription = sre.getStatus().getDescription();
+                String description = sre.getStatus().getDescription();
+                if (description != null) {
+                    statusDescription = description;
+                }
             } else if (t instanceof io.grpc.StatusException) {
                 io.grpc.StatusException se = (io.grpc.StatusException) t;
                 statusCode = se.getStatus().getCode().name();
-                statusDescription = se.getStatus().getDescription();
+                String description = se.getStatus().getDescription();
+                if (description != null) {
+                    statusDescription = description;
+                }
             }
             
             logger.severe(String.format(
