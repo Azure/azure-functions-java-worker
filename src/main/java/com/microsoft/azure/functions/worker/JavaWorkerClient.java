@@ -100,7 +100,27 @@ public class JavaWorkerClient implements AutoCloseable {
         public void onCompleted() { this.task.complete(null); }
 
         @Override
-        public void onError(Throwable t) { this.task.completeExceptionally(t); }
+        public void onError(Throwable t) {
+            Logger logger = Logger.getLogger(JavaWorkerClient.class.getName());
+            String statusCode = "Unknown";
+            String statusDescription = t.getMessage();
+            
+            if (t instanceof io.grpc.StatusRuntimeException) {
+                io.grpc.StatusRuntimeException sre = (io.grpc.StatusRuntimeException) t;
+                statusCode = sre.getStatus().getCode().name();
+                statusDescription = sre.getStatus().getDescription();
+            } else if (t instanceof io.grpc.StatusException) {
+                io.grpc.StatusException se = (io.grpc.StatusException) t;
+                statusCode = se.getStatus().getCode().name();
+                statusDescription = se.getStatus().getDescription();
+            }
+            
+            logger.severe(String.format(
+                "gRPC stream error. StatusCode: %s, Description: %s, Exception: %s",
+                statusCode, statusDescription, t.toString()));
+            
+            this.task.completeExceptionally(t);
+        }
 
         private CompletableFuture<Void> getListeningTask() { return this.task; }
 
