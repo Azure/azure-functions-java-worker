@@ -35,10 +35,8 @@ public class FunctionEnvironmentReloadRequestHandler
 		if (environmentVariables.isEmpty()) {
 			return "Ignoring FunctionEnvironmentReloadRequest as newSettings map is empty.";
 		}
-		
-		// Set timezone and get modified environment variables with TZ adjusted if needed
-		Map<String, String> modifiedEnvVars = setTimeZone(environmentVariables);
-		setEnv(modifiedEnvVars);
+		setEnv(environmentVariables);
+		setTimeZone(environmentVariables);
 		setCapabilities(response, environmentVariables);
 		
 		return "FunctionEnvironmentReloadRequest completed";
@@ -58,38 +56,32 @@ public class FunctionEnvironmentReloadRequestHandler
 	}
 
 	/*
-	 * Sets the default timezone based on the TZ environment variable.
-	 * Returns a modified map where both WEBSITE_TIME_ZONE and TZ are synchronized.
+	 * Sets the default timezone based on the TZ environment variable
 	 */
-	private Map<String, String> setTimeZone(Map<String, String> environmentVariables) {
-		String websiteTimeZone = environmentVariables.get("WEBSITE_TIME_ZONE");
-		String tz = environmentVariables.get("TZ");
-		
-		// Determine which timezone to use (WEBSITE_TIME_ZONE takes precedence)
-		String tzValue = (websiteTimeZone != null && !websiteTimeZone.isEmpty()) ? websiteTimeZone : tz;
+	private void setTimeZone(Map<String, String> environmentVariables) {
+		// Check WEBSITE_TIME_ZONE first, fall back to TZ if not set
+		String tzValue = environmentVariables.get("WEBSITE_TIME_ZONE");
+		String tzSource = "WEBSITE_TIME_ZONE";
 		
 		if (tzValue == null || tzValue.isEmpty()) {
-			return environmentVariables;
+			tzValue = environmentVariables.get("TZ");
+			tzSource = "TZ";
 		}
 		
-		// Set the JVM timezone
-		try {
-			TimeZone timeZone = TimeZone.getTimeZone(tzValue);
-			TimeZone.setDefault(timeZone);
-			System.setProperty("user.timezone", timeZone.getID());
-			WorkerLogManager.getSystemLogger().log(Level.INFO, 
-				String.format("Set default timezone to: %s", timeZone.getID()));
-		} catch (Exception e) {
-			WorkerLogManager.getSystemLogger().log(Level.WARNING, 
-				String.format("Failed to set timezone '%s': %s", tzValue, e.getMessage()));
+		if (tzValue != null && !tzValue.isEmpty()) {
+			try {
+				TimeZone timeZone = TimeZone.getTimeZone(tzValue);
+				TimeZone.setDefault(timeZone);
+				System.setProperty("user.timezone", timeZone.getID());
+				WorkerLogManager.getSystemLogger().log(Level.INFO, 
+					String.format("Set default timezone to: %s (from %s environment variable: %s)", 
+						timeZone.getID(), tzSource, tzValue));
+			} catch (Exception e) {
+				WorkerLogManager.getSystemLogger().log(Level.WARNING, 
+					String.format("Failed to set timezone from %s environment variable '%s': %s", 
+						tzSource, tzValue, e.getMessage()));
+			}
 		}
-		
-		// Synchronize both environment variables to the same value to prevent race conditions
-		Map<String, String> modifiedVars = new HashMap<>(environmentVariables);
-		modifiedVars.put("WEBSITE_TIME_ZONE", tzValue);
-		modifiedVars.put("TZ", tzValue);
-		
-		return modifiedVars;
 	}
 
 	/*
