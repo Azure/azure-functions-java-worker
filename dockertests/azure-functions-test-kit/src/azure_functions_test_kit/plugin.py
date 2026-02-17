@@ -6,14 +6,13 @@ Pytest plugin for Azure Functions Test Kit.
 Provides automatic .env file loading and optional helper fixtures.
 Tests are free to create their own fixtures using the exported classes.
 """
-import os
 from pathlib import Path
 from dotenv import load_dotenv
 import pytest
 
 
 def pytest_configure(config):
-    """Load .env file if it exists in the test directory and configure automatic retries."""
+    """Load .env file if it exists in the test directory."""
     # Try to find .env file in the test directory or parent directories
     test_dir = Path.cwd()
     env_file = test_dir / '.env'
@@ -31,23 +30,6 @@ def pytest_configure(config):
                 break
         else:
             print("ℹ️  [azure-functions-test-kit] No .env file found, using environment variables")
-    
-    # Configure automatic retries for flaky tests
-    # Read retry settings from environment variables
-    max_reruns = int(os.getenv('FUNCTIONS_TEST_MAX_RERUNS', '2'))
-    reruns_delay = int(os.getenv('FUNCTIONS_TEST_RERUNS_DELAY', '5'))
-    
-    # Set default values if not already set via command line
-    # pytest-rerunfailures must be installed for reruns to work
-    if hasattr(config.option, 'reruns'):
-        if config.option.reruns is None:
-            config.option.reruns = max_reruns
-        if config.option.reruns_delay is None:
-            config.option.reruns_delay = reruns_delay
-        if max_reruns > 0:
-            print(f"🔄 [azure-functions-test-kit] Automatic retries enabled: {max_reruns} retries with {reruns_delay}s delay")
-    else:
-        print("ℹ️  [azure-functions-test-kit] pytest-rerunfailures not installed, automatic retries disabled")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
