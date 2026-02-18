@@ -103,28 +103,19 @@ public class JavaWorkerClient implements AutoCloseable {
 
         @Override
         public void onError(Throwable t) {
-            String statusCode = "Unknown";
-            String statusDescription = t.getMessage();
+            // Extract gRPC status information from the throwable
+            Status status = Status.fromThrowable(t);
+            String statusCode = status.getCode().name();
+            String statusDescription = status.getDescription();
             
-            if (t instanceof io.grpc.StatusRuntimeException) {
-                io.grpc.StatusRuntimeException sre = (io.grpc.StatusRuntimeException) t;
-                statusCode = sre.getStatus().getCode().name();
-                String description = sre.getStatus().getDescription();
-                if (description != null) {
-                    statusDescription = description;
-                }
-            } else if (t instanceof io.grpc.StatusException) {
-                io.grpc.StatusException se = (io.grpc.StatusException) t;
-                statusCode = se.getStatus().getCode().name();
-                String description = se.getStatus().getDescription();
-                if (description != null) {
-                    statusDescription = description;
-                }
+            // Fallback to exception message if description is not available
+            if (statusDescription == null) {
+                statusDescription = t.getMessage() != null ? t.getMessage() : "No error description available";
             }
             
-            logger.severe(String.format(
-                "gRPC stream error. StatusCode: %s, Description: %s, Exception: %s",
-                statusCode, statusDescription, t.toString()));
+            logger.log(Level.SEVERE, String.format(
+                "gRPC stream error. StatusCode: %s, Description: %s",
+                statusCode, statusDescription), t);
             
             this.task.completeExceptionally(t);
         }
