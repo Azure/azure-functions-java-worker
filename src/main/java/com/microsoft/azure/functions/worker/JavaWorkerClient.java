@@ -20,6 +20,8 @@ import com.microsoft.azure.functions.rpc.messages.*;
  * Thread-Safety: Single thread.
  */
 public class JavaWorkerClient implements AutoCloseable {
+    private static final Logger logger = Logger.getLogger(JavaWorkerClient.class.getName());
+    
     public JavaWorkerClient(IApplication app) {
         WorkerLogManager.initialize(this, app.logToConsole());
         ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext();
@@ -100,7 +102,23 @@ public class JavaWorkerClient implements AutoCloseable {
         public void onCompleted() { this.task.complete(null); }
 
         @Override
-        public void onError(Throwable t) { this.task.completeExceptionally(t); }
+        public void onError(Throwable t) {
+            // Extract gRPC status information from the throwable
+            Status status = Status.fromThrowable(t);
+            String statusCode = status.getCode().name();
+            String statusDescription = status.getDescription();
+            
+            // Fallback to exception message if description is not available
+            if (statusDescription == null) {
+                statusDescription = t.getMessage() != null ? t.getMessage() : "No error description available";
+            }
+            
+            logger.log(Level.SEVERE, String.format(
+                "gRPC stream error. StatusCode: %s, Description: %s",
+                statusCode, statusDescription), t);
+            
+            this.task.completeExceptionally(t);
+        }
 
         private CompletableFuture<Void> getListeningTask() { return this.task; }
 
