@@ -4,6 +4,10 @@
 package com.microsoft.azure.functions.worker.binding.kafka;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.microsoft.azure.functions.KafkaHeader;
+import com.microsoft.azure.functions.KafkaRecord;
+import com.microsoft.azure.functions.KafkaTimestamp;
+import com.microsoft.azure.functions.KafkaTimestampType;
 import com.microsoft.azure.functions.worker.binding.kafka.proto.KafkaRecordProtos.KafkaRecordProto;
 import com.microsoft.azure.functions.worker.binding.kafka.proto.KafkaRecordProtos.KafkaHeaderProto;
 import com.microsoft.azure.functions.worker.binding.kafka.proto.KafkaRecordProtos.KafkaTimestampProto;

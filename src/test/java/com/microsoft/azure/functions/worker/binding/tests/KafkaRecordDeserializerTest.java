@@ -1,7 +1,10 @@
 package com.microsoft.azure.functions.worker.binding.tests;
 
 import com.google.protobuf.ByteString;
-import com.microsoft.azure.functions.worker.binding.kafka.*;
+import com.microsoft.azure.functions.KafkaHeader;
+import com.microsoft.azure.functions.KafkaRecord;
+import com.microsoft.azure.functions.KafkaTimestampType;
+import com.microsoft.azure.functions.worker.binding.kafka.KafkaRecordProtoDeserializer;
 import com.microsoft.azure.functions.worker.binding.kafka.proto.KafkaRecordProtos.*;
 import org.junit.jupiter.api.Test;
 
