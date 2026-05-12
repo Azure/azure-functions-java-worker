@@ -157,8 +157,13 @@ public final class Application implements IApplication {
         return this.port;
     }
 
-    public String getUri() {
+    @Override
+    public String getFunctionsUri() {
         return this.uri;
+    }
+
+    public String getUri() {
+        return this.getFunctionsUri();
     }
 
     @Override

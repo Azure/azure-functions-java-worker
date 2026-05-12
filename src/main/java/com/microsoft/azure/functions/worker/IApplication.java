@@ -5,4 +5,7 @@ public interface IApplication {
     String getHost();
     int getPort();
     Integer getMaxMessageSize();
+    default String getFunctionsUri() {
+        return null;
+    }
 }
