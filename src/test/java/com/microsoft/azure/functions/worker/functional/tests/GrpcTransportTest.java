@@ -21,8 +21,8 @@ public class GrpcTransportTest extends FunctionsTestBase {
 
     @Test
     public void legacyPlaintextTransportStillWorks() throws Exception {
-        System.setProperty("azure.functions.worker.java.skip.testing", "true");
-        try (FunctionsTestHost host = new FunctionsTestHost()) {
+        try (SkipTestingScope ignored = SkipTestingScope.enable();
+             FunctionsTestHost host = new FunctionsTestHost()) {
             InvocationResponse response = this.invokeReturnString(host, "plaintext-function", "plaintext-request");
 
             assertEquals(TypedData.DataCase.STRING, response.getReturnValue().getDataCase());
@@ -32,8 +32,8 @@ public class GrpcTransportTest extends FunctionsTestBase {
 
     @Test
     public void trustedHttpsFunctionsUriConnectsToTlsHost() throws Exception {
-        System.setProperty("azure.functions.worker.java.skip.testing", "true");
-        try (TrustStoreScope ignored = TrustStoreScope.use(TRUSTSTORE_RESOURCE, TRUSTSTORE_PASSWORD, "PKCS12");
+        try (SkipTestingScope ignored = SkipTestingScope.enable();
+             TrustStoreScope ignoredTrustStore = TrustStoreScope.use(TRUSTSTORE_RESOURCE, TRUSTSTORE_PASSWORD, "PKCS12");
              FunctionsTestHost host = new FunctionsTestHost(FunctionsTestHost.ServerTransport.TLS, FunctionsTestHost.ClientTransport.HTTPS)) {
             InvocationResponse response = this.invokeReturnString(host, "tls-function", "tls-request");
 
@@ -44,12 +44,11 @@ public class GrpcTransportTest extends FunctionsTestBase {
 
     @Test
     public void httpsFunctionsUriDoesNotDowngradeToPlaintextWhenTlsFails() {
-        System.setProperty("azure.functions.worker.java.skip.testing", "true");
-        ExecutionException exception = assertThrows(ExecutionException.class,
-                () -> {
-                    try (FunctionsTestHost ignored = new FunctionsTestHost(FunctionsTestHost.ServerTransport.PLAINTEXT, FunctionsTestHost.ClientTransport.HTTPS)) {
-                    }
-                });
+        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
+            try (SkipTestingScope ignored = SkipTestingScope.enable();
+                 FunctionsTestHost ignoredHost = new FunctionsTestHost(FunctionsTestHost.ServerTransport.PLAINTEXT, FunctionsTestHost.ClientTransport.HTTPS)) {
+            }
+        });
 
         assertTrue(hasCause(exception, SSLException.class), "Expected TLS failure but got: " + exception);
     }
@@ -112,6 +111,30 @@ public class GrpcTransportTest extends FunctionsTestBase {
                 System.clearProperty(key);
             } else {
                 System.setProperty(key, value);
+            }
+        }
+    }
+
+    private static final class SkipTestingScope implements AutoCloseable {
+        private static final String SKIP_TESTING_PROPERTY = "azure.functions.worker.java.skip.testing";
+        private final String originalValue;
+
+        private SkipTestingScope(String originalValue) {
+            this.originalValue = originalValue;
+        }
+
+        static SkipTestingScope enable() {
+            String originalValue = System.getProperty(SKIP_TESTING_PROPERTY);
+            System.setProperty(SKIP_TESTING_PROPERTY, "true");
+            return new SkipTestingScope(originalValue);
+        }
+
+        @Override
+        public void close() {
+            if (this.originalValue == null) {
+                System.clearProperty(SKIP_TESTING_PROPERTY);
+            } else {
+                System.setProperty(SKIP_TESTING_PROPERTY, this.originalValue);
             }
         }
     }
