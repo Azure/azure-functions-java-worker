@@ -203,14 +203,7 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
                     this.getResponseCondition(requestId).await(RESPONSE_POLL_MILLIS, TimeUnit.MILLISECONDS);
                     FunctionsTestHost.this.throwIfListeningFailed();
                 }
-                StreamingMessage message = this.respValue.get(requestId);
-                StreamingMessage response = null;
-                if (handler != null) {
-                    response = handler.apply(message);
-                }
-                if (response != null) {
-                    this.responder.get(requestId).onNext(response);
-                }
+                this.respondToMessage(requestId, handler);
             } finally {
                 this.lock.unlock();
             }
@@ -230,16 +223,20 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
                     long waitMillis = Math.max(1L, Math.min(TimeUnit.NANOSECONDS.toMillis(remainingNanos), RESPONSE_POLL_MILLIS));
                     this.getResponseCondition(requestId).await(waitMillis, TimeUnit.MILLISECONDS);
                 }
-                StreamingMessage message = this.respValue.get(requestId);
-                StreamingMessage response = null;
-                if (handler != null) {
-                    response = handler.apply(message);
-                }
-                if (response != null) {
-                    this.responder.get(requestId).onNext(response);
-                }
+                this.respondToMessage(requestId, handler);
             } finally {
                 this.lock.unlock();
+            }
+        }
+
+        private void respondToMessage(String requestId, Function<StreamingMessage, StreamingMessage> handler) {
+            StreamingMessage message = this.respValue.get(requestId);
+            StreamingMessage response = null;
+            if (handler != null) {
+                response = handler.apply(message);
+            }
+            if (response != null) {
+                this.responder.get(requestId).onNext(response);
             }
         }
 
