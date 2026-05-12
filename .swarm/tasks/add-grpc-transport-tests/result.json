@@ -1,0 +1,23 @@
+{
+  "taskId": "add-grpc-transport-tests",
+  "status": "Succeeded",
+  "summary": "Added configurable plaintext/TLS test host coverage plus GrpcTransportTest cases for legacy plaintext, trusted HTTPS/TLS, and HTTPS failure without plaintext downgrade; validated with the full Maven test suite.",
+  "filesTouched": [
+    "src/test/java/com/microsoft/azure/functions/worker/test/utilities/FunctionsTestHost.java",
+    "src/test/java/com/microsoft/azure/functions/worker/functional/tests/GrpcTransportTest.java",
+    "src/test/resources/grpc-tls/localhost-cert.pem",
+    "src/test/resources/grpc-tls/localhost-key.pem",
+    "src/test/resources/grpc-tls/localhost-truststore.p12"
+  ],
+  "testsRun": {
+    "executed": true,
+    "passed": 73,
+    "failed": 0,
+    "command": "mvn -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true test"
+  },
+  "failureExcerpt": null,
+  "designDeviations": null,
+  "followUps": [
+    "Maven dependency resolution in this worker environment required the insecure/allowall SSL flags shown in the test command."
+  ]
+}
