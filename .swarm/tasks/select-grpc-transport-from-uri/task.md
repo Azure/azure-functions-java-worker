@@ -7,4 +7,4 @@
 
 ## Description
 
-Refactor `src/main/java/com/microsoft/azure/functions/worker/JavaWorkerClient.java` so channel construction prefers the full endpoint URI when present instead of hard-coding `.usePlaintext()`. Use plaintext only for `http` or legacy host/port startup, use transport security for `https`, preserve the current message-size behavior, and add clear error/log handling for unsupported or misconfigured secure endpoints. Do not silently downgrade a secure URI back to plaintext.
+Refactor `src/main/java/com/microsoft/azure/functions/worker/JavaWorkerClient.java` so channel construction reads the endpoint scheme from `functions-uri` when present instead of hard-coding plaintext. If the URI is `https`, build the channel with transport security and let TLS or certificate failures surface; do not retry or downgrade to plaintext. If the URI is `http`, or no URI is available and startup fell back to legacy host+port args, keep the current plaintext behavior. Preserve the existing message-size behavior and fail fast with a clear error for unsupported schemes.

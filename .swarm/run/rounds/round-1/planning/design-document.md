@@ -1,14 +1,15 @@
 ## Summary
-`JavaWorkerClient` hard-codes `ManagedChannelBuilder.forAddress(...).usePlaintext()` and therefore can never participate in a secure host/worker gRPC channel. The host already emits `--functions-uri`, and `Application` already parses it, but the worker ignores it.
+`JavaWorkerClient` always builds `ManagedChannelBuilder.forAddress(...).usePlaintext()`, so the Java worker ignores the already-parsed `--functions-uri` and can never join a secure host/worker gRPC channel.
 
 ## Findings
-- **Fix necessary:** Yes. Today the Java worker guarantees plaintext and blocks any host-side secure transport rollout.
-- **Historical context:** Plaintext has been present since the file’s first 2018 revision, which matched the original localhost child-process trust model. In 2023 the worker added support for updated prefixed args (`functions-uri`, etc.), but the transport code stayed on legacy host/port; that looks like a missed follow-up gap, not a newly introduced behavior.
-- **Regression / breaking change:** Keep the existing CLI contract and fallback behavior. Prefer `functions-uri` when present, but keep HTTP/legacy host+port working so current hosts/customers do not break. If the host explicitly sends `https`, fail closed on TLS errors rather than downgrading to plaintext.
-- **Customer contract:** No new flags are needed; the worker will finally honor an existing argument. Full end-to-end mitigation still depends on the host advertising a secure URI (and a certificate the JVM can trust).
-- **Testing today:** `mvn test` currently passes (63 tests, 0 failures/errors/skips). CI also runs build plus emulated/E2E matrices, but there is no direct coverage of secure gRPC channel negotiation.
+- **Fix necessary:** Yes. Today the worker guarantees plaintext and blocks any host-side TLS rollout, leaving any non-local transport exposed to MITM tampering.
+- **Historical context:** Plaintext dates back to the early 2018 same-machine child-process design. In 2023 the worker added prefixed startup args, including `functions-uri`, plus fallback to legacy args, but `JavaWorkerClient` was not updated; this looks like an old assumption that became a gap once URI-based startup existed.
+- **TLS behavior clarification:** The fix should honor TLS, not ignore it. When `functions-uri` uses `https`, the worker should build a TLS gRPC channel and fail if handshake, certificate, or hostname validation fails. Only `http` URIs, or legacy startup that supplies just host+port, should continue to use plaintext.
+- **Regression / breaking change:** No new CLI or protocol contract. Existing `http` and legacy host+port launches keep their current behavior. The only observable behavior change is that a previously ignored or misconfigured `https` endpoint will stop connecting insecurely and instead fail closed.
+- **Customer contract:** No new flags are required. Trust still comes from the JVM trust configuration already available via existing Java options, so hosts using private CAs do not need a new worker-specific switch.
+- **Testing today:** `mvn test` currently passes (63 tests, 0 failures/errors/skips). Repo CI also runs build plus emulated, docker, and end-to-end matrices, but there is no direct secure gRPC transport coverage.
 
 ## Plan
-1. Surface the parsed endpoint URI through `IApplication` in a compatibility-safe way.
-2. Make `JavaWorkerClient` select plaintext vs TLS from the URI scheme instead of always calling `usePlaintext()`.
-3. Add explicit plaintext regression tests and TLS transport tests so the new path is exercised in CI.
+1. Expose the parsed `functions-uri` through `IApplication` in a compatibility-safe way.
+2. Make `JavaWorkerClient` choose transport from the URI scheme: `https` => TLS with no plaintext downgrade, `http` or legacy host+port => plaintext.
+3. Add focused plaintext/TLS transport tests and rerun `mvn test`.
