@@ -146,6 +146,9 @@ public class JavaWorkerClient implements AutoCloseable {
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
 
+    /**
+     * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.
+     */
     static boolean useTransportSecurity(String functionsUri) {
         if (functionsUri == null) {
             return false;
