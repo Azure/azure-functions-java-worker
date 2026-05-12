@@ -1,0 +1,34 @@
+{
+  "designDocument": "## Summary\n\u0060JavaWorkerClient\u0060 hard-codes \u0060ManagedChannelBuilder.forAddress(...).usePlaintext()\u0060 and therefore can never participate in a secure host/worker gRPC channel. The host already emits \u0060--functions-uri\u0060, and \u0060Application\u0060 already parses it, but the worker ignores it.\n\n## Findings\n- **Fix necessary:** Yes. Today the Java worker guarantees plaintext and blocks any host-side secure transport rollout.\n- **Historical context:** Plaintext has been present since the file\u2019s first 2018 revision, which matched the original localhost child-process trust model. In 2023 the worker added support for updated prefixed args (\u0060functions-uri\u0060, etc.), but the transport code stayed on legacy host/port; that looks like a missed follow-up gap, not a newly introduced behavior.\n- **Regression / breaking change:** Keep the existing CLI contract and fallback behavior. Prefer \u0060functions-uri\u0060 when present, but keep HTTP/legacy host\u002Bport working so current hosts/customers do not break. If the host explicitly sends \u0060https\u0060, fail closed on TLS errors rather than downgrading to plaintext.\n- **Customer contract:** No new flags are needed; the worker will finally honor an existing argument. Full end-to-end mitigation still depends on the host advertising a secure URI (and a certificate the JVM can trust).\n- **Testing today:** \u0060mvn test\u0060 currently passes (63 tests, 0 failures/errors/skips). CI also runs build plus emulated/E2E matrices, but there is no direct coverage of secure gRPC channel negotiation.\n\n## Plan\n1. Surface the parsed endpoint URI through \u0060IApplication\u0060 in a compatibility-safe way.\n2. Make \u0060JavaWorkerClient\u0060 select plaintext vs TLS from the URI scheme instead of always calling \u0060usePlaintext()\u0060.\n3. Add explicit plaintext regression tests and TLS transport tests so the new path is exercised in CI.",
+  "tasks": [
+    {
+      "id": "expose-functions-uri",
+      "title": "Expose functions-uri to worker startup code",
+      "description": "Update \u0060src/main/java/com/microsoft/azure/functions/worker/IApplication.java\u0060 and \u0060Application.java\u0060 so the parsed \u0060--functions-uri\u0060 value is available through a compatibility-safe accessor. Use a Java 8 default interface method (or equivalent non-breaking pattern) so existing implementers such as \u0060FunctionsTestHost\u0060 and any downstream consumers do not need source changes, while preserving the current fallback from prefixed args to legacy host/port/request identifiers.",
+      "dependencies": [],
+      "roundNumber": 1,
+      "branchName": "worker/task-1"
+    },
+    {
+      "id": "select-grpc-transport-from-uri",
+      "title": "Choose gRPC transport from endpoint scheme",
+      "description": "Refactor \u0060src/main/java/com/microsoft/azure/functions/worker/JavaWorkerClient.java\u0060 so channel construction prefers the full endpoint URI when present instead of hard-coding \u0060.usePlaintext()\u0060. Use plaintext only for \u0060http\u0060 or legacy host/port startup, use transport security for \u0060https\u0060, preserve the current message-size behavior, and add clear error/log handling for unsupported or misconfigured secure endpoints. Do not silently downgrade a secure URI back to plaintext.",
+      "dependencies": [
+        "expose-functions-uri"
+      ],
+      "roundNumber": 1,
+      "branchName": "worker/task-2"
+    },
+    {
+      "id": "add-grpc-transport-tests",
+      "title": "Add plaintext and TLS transport coverage",
+      "description": "Add focused tests under \u0060src/test/java\u0060 (and \u0060src/test/resources\u0060 if needed) that cover: (1) the existing plaintext path still working with the current test host, (2) a TLS-enabled gRPC host that succeeds when the worker is given a trusted secure \u0060functions-uri\u0060, and (3) a negative secure-path case that proves \u0060https\u0060 is not silently downgraded to plaintext. Keep the existing functional tests green and validate the final change set with \u0060mvn test\u0060.",
+      "dependencies": [
+        "select-grpc-transport-from-uri"
+      ],
+      "roundNumber": 1,
+      "branchName": "worker/task-3"
+    }
+  ],
+  "title": "Honor secure Functions host URIs in Java worker"
+}

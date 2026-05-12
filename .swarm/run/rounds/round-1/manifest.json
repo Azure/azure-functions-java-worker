@@ -1,0 +1,8 @@
+{
+  "roundNumber": 1,
+  "taskIds": [
+    "expose-functions-uri",
+    "select-grpc-transport-from-uri",
+    "add-grpc-transport-tests"
+  ]
+}
