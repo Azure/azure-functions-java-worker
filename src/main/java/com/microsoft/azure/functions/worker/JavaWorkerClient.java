@@ -7,7 +7,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.logging.*;
-import javax.annotation.*;
+import javax.annotation.PostConstruct;
 
 import io.grpc.*;
 import io.grpc.stub.*;
@@ -146,7 +146,7 @@ public class JavaWorkerClient implements AutoCloseable {
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
 
-    static boolean useTransportSecurity(@Nullable String functionsUri) {
+    static boolean useTransportSecurity(String functionsUri) {
         if (functionsUri == null) {
             return false;
         }

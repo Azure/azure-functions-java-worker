@@ -81,7 +81,11 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
     private void initializeClient() throws Exception {
         this.client = new JavaWorkerClient(this);
         this.listeningTask = this.client.listen("java-worker-test", HostGrpcImplementation.ESTABLISH_REQID);
-        this.grpcHost.handleMessage(HostGrpcImplementation.ESTABLISH_REQID, m -> this.grpcHost.initWorker());
+        this.grpcHost.handleMessageWithTimeout(
+                HostGrpcImplementation.ESTABLISH_REQID,
+                m -> this.grpcHost.initWorker(),
+                RESPONSE_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS);
     }
 
     @Override
@@ -195,7 +199,27 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
         void handleMessage(String requestId, Function<StreamingMessage, StreamingMessage> handler) throws Exception {
             this.lock.lock();
             try {
-                long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(RESPONSE_TIMEOUT_SECONDS);
+                while (this.responder.get(requestId) == null) {
+                    this.getResponseCondition(requestId).await();
+                }
+                StreamingMessage message = this.respValue.get(requestId);
+                StreamingMessage response = null;
+                if (handler != null) {
+                    response = handler.apply(message);
+                }
+                if (response != null) {
+                    this.responder.get(requestId).onNext(response);
+                }
+            } finally {
+                this.lock.unlock();
+            }
+        }
+
+        void handleMessageWithTimeout(String requestId, Function<StreamingMessage, StreamingMessage> handler,
+                                      long timeout, TimeUnit unit) throws Exception {
+            this.lock.lock();
+            try {
+                long deadlineNanos = System.nanoTime() + unit.toNanos(timeout);
                 while (this.responder.get(requestId) == null) {
                     FunctionsTestHost.this.throwIfListeningFailed();
                     long remainingNanos = deadlineNanos - System.nanoTime();
