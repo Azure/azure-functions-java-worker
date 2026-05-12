@@ -200,7 +200,8 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
             this.lock.lock();
             try {
                 while (this.responder.get(requestId) == null) {
-                    this.getResponseCondition(requestId).await();
+                    this.getResponseCondition(requestId).await(RESPONSE_POLL_MILLIS, TimeUnit.MILLISECONDS);
+                    FunctionsTestHost.this.throwIfListeningFailed();
                 }
                 StreamingMessage message = this.respValue.get(requestId);
                 StreamingMessage response = null;
