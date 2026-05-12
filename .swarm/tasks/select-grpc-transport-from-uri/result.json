@@ -1,0 +1,20 @@
+{
+  "taskId": "select-grpc-transport-from-uri",
+  "status": "Succeeded",
+  "summary": "Updated JavaWorkerClient to select TLS or plaintext from functions-uri scheme, fail fast on unsupported schemes, and added transport-selection tests; validated with full Maven test suite.",
+  "filesTouched": [
+    "src/main/java/com/microsoft/azure/functions/worker/JavaWorkerClient.java",
+    "src/test/java/com/microsoft/azure/functions/worker/JavaWorkerClientTest.java"
+  ],
+  "testsRun": {
+    "executed": true,
+    "passed": 70,
+    "failed": 0,
+    "command": "mvn -s /tmp/maven-settings.xml -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true test"
+  },
+  "failureExcerpt": null,
+  "designDeviations": null,
+  "followUps": [
+    "Task add-grpc-transport-tests can extend coverage to end-to-end TLS handshake behavior with a secure test host."
+  ]
+}
