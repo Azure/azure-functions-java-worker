@@ -1,7 +1,5 @@
 package com.microsoft.azure.functions.worker;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -150,34 +148,7 @@ public class JavaWorkerClient implements AutoCloseable {
      * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.
      */
     static boolean useTransportSecurity(String functionsUri) {
-        if (functionsUri == null) {
-            return false;
-        }
-
-        String scheme = parseFunctionsUriScheme(functionsUri);
-        switch (scheme.toLowerCase(Locale.ROOT)) {
-            case "http":
-                return false;
-            case "https":
-                return true;
-            default:
-                throw new IllegalArgumentException(String.format(
-                    "Unsupported functions URI scheme \"%s\" in functions URI \"%s\". Only http and https are supported.",
-                    scheme, functionsUri));
-        }
-    }
-
-    private static String parseFunctionsUriScheme(String functionsUri) {
-        try {
-            String scheme = new URI(functionsUri).getScheme();
-            if (scheme == null || scheme.isEmpty()) {
-                throw new IllegalArgumentException(String.format(
-                    "Unsupported functions URI \"%s\". Only http and https are supported.", functionsUri));
-            }
-            return scheme;
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException(String.format(
-                "Error parsing functions URI \"%s\". Please provide a valid http or https URI.", functionsUri), ex);
-        }
+        return functionsUri != null
+            && functionsUri.regionMatches(true, 0, "https://", 0, "https://".length());
     }
 }
