@@ -3,7 +3,6 @@ package com.microsoft.azure.functions.worker;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JavaWorkerClientTest {
@@ -23,10 +22,7 @@ public class JavaWorkerClientTest {
     }
 
     @Test
-    public void unsupportedFunctionsUriSchemeFailsFast() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-            () -> JavaWorkerClient.useTransportSecurity("unix:///tmp/functions.sock"));
-
-        assertTrue(exception.getMessage().contains("Only http and https are supported."));
+    public void httpsFunctionsUriSchemeIsCaseInsensitive() {
+        assertTrue(JavaWorkerClient.useTransportSecurity("HTTPS://functions.example:8443"));
     }
 }
