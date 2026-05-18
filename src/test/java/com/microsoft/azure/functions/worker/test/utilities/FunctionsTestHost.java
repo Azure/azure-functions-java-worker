@@ -1,8 +1,10 @@
 package com.microsoft.azure.functions.worker.test.utilities;
 
 import java.io.*;
-import java.net.ServerSocket;
+import java.net.*;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.function.*;
@@ -14,15 +16,44 @@ import com.google.protobuf.*;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import io.grpc.*;
+import io.grpc.netty.shaded.io.grpc.netty.*;
 import io.grpc.stub.*;
 import org.apache.commons.lang3.tuple.*;
 
 public final class FunctionsTestHost implements AutoCloseable, IApplication {
+    public enum ClientTransport {
+        LEGACY,
+        HTTP,
+        HTTPS
+    }
+
+    public enum ServerTransport {
+        PLAINTEXT,
+        TLS
+    }
+
+    private static final int RESPONSE_TIMEOUT_SECONDS = 10;
+    private static final long RESPONSE_POLL_MILLIS = 100L;
+    private static final String TLS_RESOURCE_ROOT = "grpc-tls/";
+    private static final String TLS_CERTIFICATE_RESOURCE = TLS_RESOURCE_ROOT + "localhost-cert.pem";
+    private static final String TLS_PRIVATE_KEY_RESOURCE = TLS_RESOURCE_ROOT + "localhost-key.pem";
+
     private int port;
     public FunctionsTestHost() throws Exception {
+        this(ServerTransport.PLAINTEXT, ClientTransport.LEGACY);
+    }
+
+    public FunctionsTestHost(ServerTransport serverTransport, ClientTransport clientTransport) throws Exception {
+        this.serverTransport = serverTransport;
+        this.clientTransport = clientTransport;
         this.port = populatePort();
-        this.initializeServer();
-        this.initializeClient();
+        try {
+            this.initializeServer();
+            this.initializeClient();
+        } catch (Exception ex) {
+            this.closeQuietly();
+            throw ex;
+        }
     }
 
     private final List<Integer> list = Arrays.asList(55005, 5005);
@@ -37,23 +68,42 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
 
     @PostConstruct
     private void initializeServer() throws IOException {
-        ServerBuilder<?> builder = ServerBuilder.forPort(this.getPort());
+        ServerBuilder<?> builder = this.serverTransport == ServerTransport.TLS
+                ? NettyServerBuilder.forPort(this.getPort())
+                    .sslContext(GrpcSslContexts.forServer(getTlsResource(TLS_CERTIFICATE_RESOURCE), getTlsResource(TLS_PRIVATE_KEY_RESOURCE)).build())
+                : ServerBuilder.forPort(this.getPort());
         this.grpcHost = new HostGrpcImplementation();
         this.server = builder.addService(this.grpcHost).build();
         this.server.start();
     }
 
     @PostConstruct
-    private void initializeClient() throws InterruptedException {
+    private void initializeClient() throws Exception {
         this.client = new JavaWorkerClient(this);
-        this.client.listen("java-worker-test", HostGrpcImplementation.ESTABLISH_REQID);
-        this.grpcHost.handleMessage(HostGrpcImplementation.ESTABLISH_REQID, m -> this.grpcHost.initWorker());
+        this.listeningTask = this.client.listen("java-worker-test", HostGrpcImplementation.ESTABLISH_REQID);
+        this.grpcHost.handleMessageWithTimeout(
+                HostGrpcImplementation.ESTABLISH_REQID,
+                m -> this.grpcHost.initWorker(),
+                RESPONSE_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS);
     }
 
     @Override
     public void close() throws Exception {
-        this.client.close();
-        this.server.shutdownNow().awaitTermination();
+        Exception closeException = null;
+        if (this.client != null) {
+            try {
+                this.client.close();
+            } catch (Exception ex) {
+                closeException = ex;
+            }
+        }
+        if (this.server != null) {
+            this.server.shutdownNow().awaitTermination(15, TimeUnit.SECONDS);
+        }
+        if (closeException != null) {
+            throw closeException;
+        }
     }
 
     public void loadFunction(String id, String reflectionName, Map<String, BindingInfo> bindings) throws Exception {
@@ -80,12 +130,51 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
     @Override
     public int getPort() { return this.port; }
     @Override
+    public String getFunctionsUri() {
+        switch (this.clientTransport) {
+            case HTTP:
+                return "http://" + this.getHost() + ":" + this.getPort();
+            case HTTPS:
+                return "https://" + this.getHost() + ":" + this.getPort();
+            default:
+                return null;
+        }
+    }
+    @Override
     public Integer getMaxMessageSize() { return null; }
 
     private JavaWorkerClient client;
     private HostGrpcImplementation grpcHost;
+    private final ServerTransport serverTransport;
+    private final ClientTransport clientTransport;
     private Server server;
+    private Future<Void> listeningTask;
     private String lastCallReqId = HostGrpcImplementation.LOADFUNC_REQID;
+
+    private void closeQuietly() {
+        try {
+            this.close();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static File getTlsResource(String resourcePath) {
+        URL resource = FunctionsTestHost.class.getClassLoader().getResource(resourcePath);
+        if (resource == null) {
+            throw new IllegalStateException("Missing test TLS resource: " + resourcePath);
+        }
+        try {
+            return Paths.get(resource.toURI()).toFile();
+        } catch (URISyntaxException ex) {
+            throw new IllegalStateException("Invalid test TLS resource path: " + resourcePath, ex);
+        }
+    }
+
+    private void throwIfListeningFailed() throws ExecutionException, InterruptedException {
+        if (this.listeningTask != null && this.listeningTask.isDone()) {
+            this.listeningTask.get();
+        }
+    }
 
 
     @ThreadSafe
@@ -107,22 +196,47 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
             this.getResponseCondition(requestId).signal();
         }
 
-        void handleMessage(String requestId, Function<StreamingMessage, StreamingMessage> handler) throws InterruptedException {
+        void handleMessage(String requestId, Function<StreamingMessage, StreamingMessage> handler) throws Exception {
             this.lock.lock();
             try {
-                if (this.responder.get(requestId) == null) {
-                    this.getResponseCondition(requestId).await();
+                while (this.responder.get(requestId) == null) {
+                    this.getResponseCondition(requestId).await(RESPONSE_POLL_MILLIS, TimeUnit.MILLISECONDS);
+                    FunctionsTestHost.this.throwIfListeningFailed();
                 }
-                StreamingMessage message = this.respValue.get(requestId);
-                StreamingMessage response = null;
-                if (handler != null) {
-                    response = handler.apply(message);
-                }
-                if (response != null) {
-                    this.responder.get(requestId).onNext(response);
-                }
+                this.respondToMessage(requestId, handler);
             } finally {
                 this.lock.unlock();
+            }
+        }
+
+        void handleMessageWithTimeout(String requestId, Function<StreamingMessage, StreamingMessage> handler,
+                                      long timeout, TimeUnit unit) throws Exception {
+            this.lock.lock();
+            try {
+                long deadlineNanos = System.nanoTime() + unit.toNanos(timeout);
+                while (this.responder.get(requestId) == null) {
+                    FunctionsTestHost.this.throwIfListeningFailed();
+                    long remainingNanos = deadlineNanos - System.nanoTime();
+                    if (remainingNanos <= 0) {
+                        throw new TimeoutException("Timed out waiting for gRPC request " + requestId);
+                    }
+                    long waitMillis = Math.max(1L, Math.min(TimeUnit.NANOSECONDS.toMillis(remainingNanos), RESPONSE_POLL_MILLIS));
+                    this.getResponseCondition(requestId).await(waitMillis, TimeUnit.MILLISECONDS);
+                }
+                this.respondToMessage(requestId, handler);
+            } finally {
+                this.lock.unlock();
+            }
+        }
+
+        private void respondToMessage(String requestId, Function<StreamingMessage, StreamingMessage> handler) {
+            StreamingMessage message = this.respValue.get(requestId);
+            StreamingMessage response = null;
+            if (handler != null) {
+                response = handler.apply(message);
+            }
+            if (response != null) {
+                this.responder.get(requestId).onNext(response);
             }
         }
 
