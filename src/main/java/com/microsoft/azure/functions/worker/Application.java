@@ -1,8 +1,8 @@
 package com.microsoft.azure.functions.worker;
 
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.util.Locale;
 import java.util.logging.*;
 import javax.annotation.*;
 
@@ -157,7 +157,8 @@ public final class Application implements IApplication {
         return this.port;
     }
 
-    public String getUri() {
+    @Override
+    public String getFunctionsUri() {
         return this.uri;
     }
 
@@ -185,17 +186,44 @@ public final class Application implements IApplication {
 
     private String parseUri(String uri) throws ParseException {
         try {
-            URL url = new URL(uri);
-            url.toURI();
-            this.host = url.getHost();
-            this.port = url.getPort();
+            URI parsedUri = new URI(uri);
+            String host = parsedUri.getHost();
+            String scheme = parsedUri.getScheme();
+            int port = parsedUri.getPort();
+
+            if (scheme == null || scheme.isEmpty()) {
+                throw new IllegalArgumentException("URI scheme is missing");
+            }
+
+            switch (scheme.toLowerCase(Locale.ROOT)) {
+                case "http":
+                    if (port == -1) {
+                        port = 80;
+                    }
+                    break;
+                case "https":
+                    if (port == -1) {
+                        port = 443;
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported URI scheme");
+            }
+
+            if (host == null || host.isEmpty()) {
+                throw new IllegalArgumentException("URI host is missing");
+            }
+
             if (port < 1 || port > 65535) {
                 throw new IndexOutOfBoundsException("port number out of range");
             }
+
+            this.host = host;
+            this.port = port;
             return uri;
-        } catch (MalformedURLException | URISyntaxException | IndexOutOfBoundsException e) {
+        } catch (URISyntaxException | IllegalArgumentException | IndexOutOfBoundsException e) {
             throw new ParseException(String.format(
-                    "Error parsing URI \"%s\". Please provide a valid URI", uri));
+                    "Error parsing URI \"%s\". Please provide a valid http or https URI", uri));
         }
     }
 
