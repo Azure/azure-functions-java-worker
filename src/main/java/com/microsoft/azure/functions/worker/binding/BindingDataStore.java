@@ -125,6 +125,31 @@ public final class BindingDataStore {
 		});
     }
 
+    /**
+     * Returns the raw, unserialized response body of the HTTP output target, or
+     * {@code null} if no HTTP output target is registered or its body is null.
+     *
+     * <p>Used by the HTTP proxy path to recover streaming bodies
+     * ({@link java.io.InputStream}, {@code HttpResponseMessage.IOConsumer}) that
+     * cannot be represented in a protobuf {@code TypedData} and must instead be
+     * written directly to the {@code HttpExchange} response stream.</p>
+     */
+    public Object getHttpResponseRawBody() {
+        if (this.promotedTargets == null) {
+            return null;
+        }
+        Map<String, DataTarget> promoted = this.targets.get(this.promotedTargets);
+        if (promoted == null) {
+            return null;
+        }
+        for (DataTarget target : promoted.values()) {
+            if (target instanceof RpcHttpDataTarget) {
+                return ((RpcHttpDataTarget) target).getBody();
+            }
+        }
+        return null;
+    }
+
     public Optional<BindingData> getOrAddDataTarget(UUID outputId, String name, Type target, boolean ignoreDefinition) {
         DataTarget output = null;
         if (this.isDataTargetValid(name, target)) {

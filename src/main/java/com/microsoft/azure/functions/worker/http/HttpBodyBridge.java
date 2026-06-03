@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.google.protobuf.ByteString;
+import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
@@ -97,6 +98,57 @@ public final class HttpBodyBridge {
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(bodyBytes);
             }
+        }
+    }
+
+    /**
+     * Streams the body of an HTTP response from an {@link InputStream} directly
+     * to the {@link HttpExchange} response stream using chunked transfer
+     * encoding (when the upstream client supports it). The {@code envelope}
+     * supplies status and headers; its body, if any, is ignored.
+     *
+     * <p>The supplied {@code body} stream is closed by this method regardless
+     * of outcome. The exchange is left open for the caller to close.</p>
+     */
+    public static void writeStreamingResponse(HttpExchange exchange, RpcHttp envelope, InputStream body)
+            throws IOException {
+        int status = parseStatus(envelope.getStatusCode());
+        applyResponseHeaders(exchange, envelope);
+        // length=0 ⇒ chunked transfer-encoding (or close-delimited for HTTP/1.0).
+        exchange.sendResponseHeaders(status, 0);
+        try (InputStream in = body; OutputStream os = exchange.getResponseBody()) {
+            byte[] chunk = new byte[READ_CHUNK];
+            int n;
+            while ((n = in.read(chunk)) != -1) {
+                os.write(chunk, 0, n);
+            }
+        }
+    }
+
+    /**
+     * Streams the body of an HTTP response by invoking the {@code writer}
+     * callback with the {@link HttpExchange} response stream. The {@code envelope}
+     * supplies status and headers; its body, if any, is ignored.
+     *
+     * <p>The response stream is opened (and chunked encoding selected) before
+     * {@code writer} is invoked; it is flushed and closed when {@code writer}
+     * returns. Any {@link IOException} thrown by {@code writer} propagates to
+     * the caller. The exchange is left open for the caller to close.</p>
+     */
+    public static void writeStreamingResponse(HttpExchange exchange, RpcHttp envelope, IOConsumer<OutputStream> writer)
+            throws IOException {
+        int status = parseStatus(envelope.getStatusCode());
+        applyResponseHeaders(exchange, envelope);
+        exchange.sendResponseHeaders(status, 0);
+        try (OutputStream os = exchange.getResponseBody()) {
+            writer.accept(os);
+            os.flush();
+        }
+    }
+
+    private static void applyResponseHeaders(HttpExchange exchange, RpcHttp envelope) {
+        for (Map.Entry<String, String> header : envelope.getHeadersMap().entrySet()) {
+            exchange.getResponseHeaders().add(header.getKey(), header.getValue());
         }
     }
 
