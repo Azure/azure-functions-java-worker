@@ -197,6 +197,61 @@ public class JavaFunctionBroker {
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
+	/**
+	 * Result returned by {@link #invokeMethodForHttpProxy(String, InvocationRequest, List)}.
+	 * Exposes both the protobuf return value (for the gRPC reply) and the raw
+	 * (unserialized) HTTP response body so the HTTP proxy path can stream
+	 * {@code InputStream} / {@code HttpResponseMessage.IOConsumer} bodies directly
+	 * to the {@code HttpExchange} response stream without first buffering them
+	 * through a protobuf {@code TypedData}.
+	 */
+	public static final class HttpInvocationOutcome {
+		private final Optional<TypedData> returnValue;
+		private final Object rawHttpResponseBody;
+
+		HttpInvocationOutcome(Optional<TypedData> returnValue, Object rawHttpResponseBody) {
+			this.returnValue = returnValue;
+			this.rawHttpResponseBody = rawHttpResponseBody;
+		}
+
+		public Optional<TypedData> getReturnValue() {
+			return returnValue;
+		}
+
+		/**
+		 * The raw response body object set by the user function (e.g. the
+		 * {@code InputStream} or {@code IOConsumer} passed to
+		 * {@code HttpResponseMessage.Builder.bodyStream(...)}), or {@code null}
+		 * if no HTTP response was produced or the body was already serialized.
+		 */
+		public Object getRawHttpResponseBody() {
+			return rawHttpResponseBody;
+		}
+	}
+
+	/**
+	 * Variant of {@link #invokeMethod(String, InvocationRequest, List)} for the
+	 * HTTP proxy dispatch path that, in addition to the protobuf reply, exposes
+	 * the unserialized HTTP response body so streaming bodies can be written
+	 * directly to the HTTP response.
+	 */
+	public HttpInvocationOutcome invokeMethodForHttpProxy(String id, InvocationRequest request, List<ParameterBinding> outputs)
+			throws Exception {
+		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
+
+		if (isJavaSdkTypesEnabled()) {
+			this.functionFactories.get(id).create().doNext(executionContextDataSource);
+		} else {
+			this.invocationChainFactory.create().doNext(executionContextDataSource);
+		}
+
+		BindingDataStore dataStore = executionContextDataSource.getDataStore();
+		Object rawHttpResponseBody = dataStore.getHttpResponseRawBody();
+		outputs.addAll(dataStore.getOutputParameterBindings(true));
+		Optional<TypedData> returnValue = dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+		return new HttpInvocationOutcome(returnValue, rawHttpResponseBody);
+	}
+
 	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
 			throws NoSuchMethodException {
 		ImmutablePair<String, FunctionDefinition> methodEntry = this.methods.get(id);

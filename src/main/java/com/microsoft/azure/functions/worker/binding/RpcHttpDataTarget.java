@@ -1,9 +1,11 @@
 package com.microsoft.azure.functions.worker.binding;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.microsoft.azure.functions.HttpResponseMessage;
+import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.HttpStatus;
 import com.microsoft.azure.functions.HttpStatusType;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
@@ -37,12 +39,29 @@ final class RpcHttpDataTarget extends DataTarget implements HttpResponseMessage,
         if (response != null) {
         	RpcHttp.Builder httpBuilder = RpcHttp.newBuilder().setStatusCode(Integer.toString(response.getStatusCode()));
             response.headers.forEach(httpBuilder::putHeaders);
-            RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
-            bodyTarget.setValue(response.getBody());
-            bodyTarget.computeFromValue().ifPresent(httpBuilder::setBody);
+            Object body = response.getBody();
+            if (isStreamingBody(body)) {
+                // Streaming bodies (InputStream / IOConsumer) cannot be serialized into a
+                // protobuf TypedData; they are written directly to the HTTP response by the
+                // HTTP proxy path. Leave the RpcHttp body unset so downstream code sees an
+                // empty envelope but can still read status + headers.
+            } else {
+                RpcUnspecifiedDataTarget bodyTarget = new RpcUnspecifiedDataTarget();
+                bodyTarget.setValue(body);
+                bodyTarget.computeFromValue().ifPresent(httpBuilder::setBody);
+            }
             dataBuilder.setHttp(httpBuilder);
         }
         return dataBuilder;
+    }
+
+    /**
+     * Returns {@code true} if {@code body} is a streaming response body type that
+     * should bypass protobuf serialization and be written directly to the HTTP
+     * response by the worker's HTTP proxy.
+     */
+    static boolean isStreamingBody(Object body) {
+        return body instanceof InputStream || body instanceof IOConsumer;
     }
 
     private static final DataOperations<Object, TypedData.Builder> HTTP_TARGET_OPERATIONS = new DataOperations<>();

@@ -217,6 +217,106 @@ public class HttpBodyBridgeTest {
         assertTrue(headers.getFirst("Content-Type").startsWith("text/plain"));
     }
 
+    @Test
+    public void writeStreamingResponseFromInputStreamUsesChunkedEncoding() throws Exception {
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        Headers responseHeaders = new Headers();
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(responseHeaders);
+        when(exchange.getResponseBody()).thenReturn(captured);
+
+        RpcHttp envelope = RpcHttp.newBuilder()
+            .setStatusCode("200")
+            .putHeaders("Content-Type", "text/event-stream")
+            .putHeaders("Cache-Control", "no-cache")
+            .build();
+        byte[] payload = "data: one\n\ndata: two\n\n".getBytes(StandardCharsets.UTF_8);
+        HttpBodyBridge.writeStreamingResponse(exchange, envelope, new ByteArrayInputStream(payload));
+
+        // length=0 selects chunked transfer-encoding (or close-delimited for HTTP/1.0).
+        verify(exchange).sendResponseHeaders(200, 0);
+        assertArrayEquals(payload, captured.toByteArray());
+        assertEquals("text/event-stream", responseHeaders.getFirst("Content-Type"));
+        assertEquals("no-cache", responseHeaders.getFirst("Cache-Control"));
+    }
+
+    @Test
+    public void writeStreamingResponseFromInputStreamHandlesLargePayload() throws Exception {
+        // Larger than the 8KB read chunk; verifies the copy loop iterates correctly.
+        byte[] big = new byte[32_768];
+        for (int i = 0; i < big.length; i++) {
+            big[i] = (byte) (i & 0xff);
+        }
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(new Headers());
+        when(exchange.getResponseBody()).thenReturn(captured);
+
+        RpcHttp envelope = RpcHttp.newBuilder().setStatusCode("200").build();
+        HttpBodyBridge.writeStreamingResponse(exchange, envelope, new ByteArrayInputStream(big));
+
+        verify(exchange).sendResponseHeaders(200, 0);
+        assertArrayEquals(big, captured.toByteArray());
+    }
+
+    @Test
+    public void writeStreamingResponseFromInputStreamClosesSource() throws Exception {
+        boolean[] closed = new boolean[]{false};
+        ByteArrayInputStream backing = new ByteArrayInputStream("x".getBytes(StandardCharsets.UTF_8));
+        java.io.InputStream tracking = new java.io.FilterInputStream(backing) {
+            @Override
+            public void close() throws IOException {
+                closed[0] = true;
+                super.close();
+            }
+        };
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(new Headers());
+        when(exchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
+
+        HttpBodyBridge.writeStreamingResponse(
+            exchange, RpcHttp.newBuilder().setStatusCode("200").build(), tracking);
+
+        assertTrue(closed[0], "Streaming InputStream body should be closed");
+    }
+
+    @Test
+    public void writeStreamingResponseFromIOConsumerInvokesWriterAndFlushes() throws Exception {
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        Headers responseHeaders = new Headers();
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(responseHeaders);
+        when(exchange.getResponseBody()).thenReturn(captured);
+
+        RpcHttp envelope = RpcHttp.newBuilder()
+            .setStatusCode("202")
+            .putHeaders("X-Trace", "abc")
+            .build();
+        HttpBodyBridge.writeStreamingResponse(exchange, envelope, out -> {
+            out.write("chunk-1\n".getBytes(StandardCharsets.UTF_8));
+            out.write("chunk-2\n".getBytes(StandardCharsets.UTF_8));
+        });
+
+        verify(exchange).sendResponseHeaders(202, 0);
+        assertEquals("chunk-1\nchunk-2\n", captured.toString("UTF-8"));
+        assertEquals("abc", responseHeaders.getFirst("X-Trace"));
+    }
+
+    @Test
+    public void writeStreamingResponseFromIOConsumerPropagatesIOException() {
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(new Headers());
+        when(exchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
+
+        IOException expected = new IOException("writer-failed");
+        IOException thrown = org.junit.jupiter.api.Assertions.assertThrows(IOException.class, () ->
+            HttpBodyBridge.writeStreamingResponse(
+                exchange,
+                RpcHttp.newBuilder().setStatusCode("200").build(),
+                out -> { throw expected; }));
+        assertSame(expected, thrown);
+    }
+
     private static HttpExchange mockExchangeWithBody(byte[] body, String contentType) throws IOException {
         HttpExchange exchange = mock(HttpExchange.class);
         Headers headers = new Headers();

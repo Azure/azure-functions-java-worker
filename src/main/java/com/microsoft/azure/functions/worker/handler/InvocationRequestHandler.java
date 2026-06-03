@@ -1,11 +1,14 @@
 package com.microsoft.azure.functions.worker.handler;
 
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.*;
 
+import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.worker.broker.*;
+import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker.HttpInvocationOutcome;
 import com.microsoft.azure.functions.worker.http.HttpBodyBridge;
 import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
 import com.microsoft.azure.functions.worker.http.HttpInvocationSlot;
@@ -71,10 +74,11 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
             }
             InvocationRequest enriched = HttpBodyBridge.enrichRequestWithBody(request, exchange);
             List<ParameterBinding> outputBindings = new ArrayList<>();
-            this.broker.invokeMethod(functionId, enriched, outputBindings).ifPresent(response::setReturnValue);
+            HttpInvocationOutcome outcome = this.broker.invokeMethodForHttpProxy(functionId, enriched, outputBindings);
+            outcome.getReturnValue().ifPresent(response::setReturnValue);
             response.addAllOutputData(outputBindings);
-            RpcHttp httpResponse = extractHttpResponse(response, outputBindings);
-            HttpBodyBridge.writeRpcHttpResponse(exchange, httpResponse);
+            RpcHttp httpEnvelope = extractHttpResponse(response, outputBindings);
+            writeHttpResponse(exchange, httpEnvelope, outcome.getRawHttpResponseBody());
             httpInvocationCoordinator.releaseInvocation(invocationId);
             return String.format("Function \"%s\" (Id: %s) invoked by Java Worker (HTTP proxy)",
                     this.broker.getMethodName(functionId).orElse("UNKNOWN"), invocationId);
@@ -82,6 +86,25 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
             httpInvocationCoordinator.failInvocation(invocationId, t);
             throw asException(t);
         }
+    }
+
+    /**
+     * Writes the HTTP response to the {@code HttpExchange}. If {@code rawBody}
+     * is a streaming body ({@link InputStream} or
+     * {@link IOConsumer}{@code <OutputStream>}), bypasses the buffered protobuf
+     * body and streams directly. Otherwise falls back to the buffered path.
+     */
+    @SuppressWarnings("unchecked")
+    private static void writeHttpResponse(HttpExchange exchange, RpcHttp envelope, Object rawBody) throws Exception {
+        if (rawBody instanceof InputStream) {
+            HttpBodyBridge.writeStreamingResponse(exchange, envelope, (InputStream) rawBody);
+            return;
+        }
+        if (rawBody instanceof IOConsumer) {
+            HttpBodyBridge.writeStreamingResponse(exchange, envelope, (IOConsumer<java.io.OutputStream>) rawBody);
+            return;
+        }
+        HttpBodyBridge.writeRpcHttpResponse(exchange, envelope);
     }
 
     private static boolean hasHttpInput(InvocationRequest request) {
