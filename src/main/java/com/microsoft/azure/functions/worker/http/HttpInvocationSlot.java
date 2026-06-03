@@ -17,14 +17,15 @@ import com.sun.net.httpserver.HttpExchange;
  * </ul>
  *
  * <p>Either side may arrive first. The slot exposes futures that the HTTP
- * handler thread and the gRPC dispatcher thread wait on. The {@code completion}
- * future is signaled once the invocation has fully responded, allowing the slot
- * to be released from the coordinator's map.</p>
+ * handler thread and the gRPC dispatcher thread wait on. The {@link #completion}
+ * future is signaled once the invocation has fully responded, allowing the HTTP
+ * handler to return from {@code handle()} so the server can close the exchange.</p>
  *
- * <p>Instances are package-private; use {@link HttpInvocationCoordinator} to
- * acquire and release slots.</p>
+ * <p>The class is mutable from the coordinator's perspective only; consumers
+ * see immutable {@link CompletableFuture} handles and use them to await
+ * rendezvous and completion.</p>
  */
-final class HttpInvocationSlot {
+public final class HttpInvocationSlot {
     private final String invocationId;
     private final CompletableFuture<HttpExchange> httpArrival = new CompletableFuture<>();
     private final CompletableFuture<InvocationRequest> grpcArrival = new CompletableFuture<>();
@@ -34,19 +35,32 @@ final class HttpInvocationSlot {
         this.invocationId = invocationId;
     }
 
-    String getInvocationId() {
+    public String getInvocationId() {
         return invocationId;
     }
 
-    CompletableFuture<HttpExchange> httpArrival() {
+    /**
+     * Future that resolves when the HTTP request for this invocation arrives.
+     * Consumed by the gRPC dispatcher thread.
+     */
+    public CompletableFuture<HttpExchange> httpArrival() {
         return httpArrival;
     }
 
-    CompletableFuture<InvocationRequest> grpcArrival() {
+    /**
+     * Future that resolves when the gRPC {@code InvocationRequest} for this
+     * invocation arrives. Consumed by the HTTP handler thread.
+     */
+    public CompletableFuture<InvocationRequest> grpcArrival() {
         return grpcArrival;
     }
 
-    CompletableFuture<Void> completion() {
+    /**
+     * Future that resolves when the invocation has fully completed (response
+     * written to HTTP, output bindings collected for the gRPC response).
+     * The HTTP handler thread waits on this before returning from {@code handle()}.
+     */
+    public CompletableFuture<Void> completion() {
         return completion;
     }
 }

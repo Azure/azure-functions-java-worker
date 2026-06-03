@@ -1,7 +1,6 @@
 package com.microsoft.azure.functions.worker.http;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -34,10 +33,12 @@ public final class HttpInvocationCoordinator {
 
     /**
      * Registers the arrival of an HTTP request for the given invocation.
-     * If the matching gRPC dispatch has not yet arrived, the returned future
-     * resolves once it does. Called by the HTTP proxy handler.
+     * Returns the slot so the HTTP handler can await
+     * {@link HttpInvocationSlot#completion()}.
+     *
+     * @throws IllegalStateException if HTTP arrival was already registered for this id
      */
-    public CompletableFuture<InvocationRequest> registerHttpArrival(String invocationId, HttpExchange exchange) {
+    public HttpInvocationSlot registerHttpArrival(String invocationId, HttpExchange exchange) {
         Objects.requireNonNull(invocationId, "invocationId");
         Objects.requireNonNull(exchange, "exchange");
         HttpInvocationSlot slot = slots.computeIfAbsent(invocationId, HttpInvocationSlot::new);
@@ -45,15 +46,17 @@ public final class HttpInvocationCoordinator {
             throw new IllegalStateException(
                 "HTTP arrival already registered for invocation " + invocationId);
         }
-        return slot.grpcArrival();
+        return slot;
     }
 
     /**
      * Registers the arrival of a gRPC InvocationRequest for the given invocation.
-     * If the matching HTTP request has not yet arrived, the returned future
-     * resolves once it does. Called by the gRPC invocation dispatcher.
+     * Returns the slot so the gRPC dispatcher can await
+     * {@link HttpInvocationSlot#httpArrival()}.
+     *
+     * @throws IllegalStateException if gRPC arrival was already registered for this id
      */
-    public CompletableFuture<HttpExchange> registerGrpcArrival(InvocationRequest request) {
+    public HttpInvocationSlot registerGrpcArrival(InvocationRequest request) {
         Objects.requireNonNull(request, "request");
         String invocationId = request.getInvocationId();
         HttpInvocationSlot slot = slots.computeIfAbsent(invocationId, HttpInvocationSlot::new);
@@ -61,7 +64,7 @@ public final class HttpInvocationCoordinator {
             throw new IllegalStateException(
                 "gRPC arrival already registered for invocation " + invocationId);
         }
-        return slot.httpArrival();
+        return slot;
     }
 
     /**
