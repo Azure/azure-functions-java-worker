@@ -22,7 +22,7 @@
     <jupiter.version>5.9.1</jupiter.version>
     <mockito-core.version>4.11.0</mockito-core.version>
     <appinsights.agents.version>3.7.6</appinsights.agents.version>
-    <grpc.version>1.75.0</grpc.version>
+    <grpc.version>1.81.0</grpc.version>
   </properties>
   <licenses>
     <license>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.25.5</version>
+      <version>3.25.8</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -147,7 +147,7 @@
         <artifactId>protobuf-maven-plugin</artifactId>
         <version>0.5.1</version>
         <configuration>
-          <protocArtifact>com.google.protobuf:protoc:3.25.5:exe:${os.detected.classifier}</protocArtifact>
+          <protocArtifact>com.google.protobuf:protoc:3.25.8:exe:${os.detected.classifier}</protocArtifact>
           <pluginId>grpc-java</pluginId>
           <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
           <protoSourceRoot>${basedir}/src/main/azure-functions-language-worker-protobuf/src/proto</protoSourceRoot>
