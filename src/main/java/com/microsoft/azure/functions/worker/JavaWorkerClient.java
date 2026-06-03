@@ -5,7 +5,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.logging.*;
-import javax.annotation.*;
+import javax.annotation.PostConstruct;
 
 import io.grpc.*;
 import io.grpc.stub.*;
@@ -24,7 +24,12 @@ public class JavaWorkerClient implements AutoCloseable {
     
     public JavaWorkerClient(IApplication app) {
         WorkerLogManager.initialize(this, app.logToConsole());
-        ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort()).usePlaintext();
+        ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort());
+        if (useTransportSecurity(app.getFunctionsUri())) {
+            chanBuilder.useTransportSecurity();
+        } else {
+            chanBuilder.usePlaintext();
+        }
         chanBuilder.maxInboundMessageSize(Integer.MAX_VALUE);
 
         this.channel = chanBuilder.build();
@@ -138,4 +143,12 @@ public class JavaWorkerClient implements AutoCloseable {
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
+
+    /**
+     * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.
+     */
+    static boolean useTransportSecurity(String functionsUri) {
+        return functionsUri != null
+            && functionsUri.regionMatches(true, 0, "https://", 0, "https://".length());
+    }
 }
