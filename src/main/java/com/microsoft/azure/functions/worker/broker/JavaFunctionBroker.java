@@ -3,10 +3,14 @@ package com.microsoft.azure.functions.worker.broker;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -284,6 +288,40 @@ public class JavaFunctionBroker {
 
 	public Optional<String> getMethodName(String id) {
 		return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
+	}
+
+	/**
+	 * Returns true when the function with the given id declares an
+	 * {@link HttpRequestMessage} parameter whose body type argument is
+	 * {@link InputStream} (or any subtype). The HTTP proxy dispatch path uses
+	 * this to decide whether to skip the buffered body read and instead expose
+	 * the live HTTP request body as an {@code InputStream}.
+	 */
+	public boolean methodHasStreamingHttpBody(String id) {
+		ImmutablePair<String, FunctionDefinition> entry = this.methods.get(id);
+		if (entry == null) {
+			return false;
+		}
+		MethodBindInfo mbi = entry.right.getCandidate();
+		for (ParamBindInfo p : mbi.getParams()) {
+			Type t = p.getType();
+			if (!(t instanceof ParameterizedType)) {
+				continue;
+			}
+			ParameterizedType pt = (ParameterizedType) t;
+			if (pt.getRawType() != HttpRequestMessage.class) {
+				continue;
+			}
+			Type[] args = pt.getActualTypeArguments();
+			if (args.length == 0) {
+				continue;
+			}
+			if (args[0] instanceof Class<?>
+					&& InputStream.class.isAssignableFrom((Class<?>) args[0])) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// TODO the scope should be package private for testability. Modify the package name as same as main package
