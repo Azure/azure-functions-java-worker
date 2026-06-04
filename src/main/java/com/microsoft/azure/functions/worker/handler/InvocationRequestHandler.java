@@ -7,6 +7,7 @@ import java.util.logging.*;
 
 import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.worker.*;
+import com.microsoft.azure.functions.worker.binding.RpcHttpRequestDataSource;
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker.HttpInvocationOutcome;
 import com.microsoft.azure.functions.worker.http.HttpBodyBridge;
@@ -65,6 +66,7 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
                                       String invocationId) throws Exception {
         HttpInvocationSlot slot = httpInvocationCoordinator.registerGrpcArrival(request);
         HttpExchange exchange = null;
+        boolean streamingInput = false;
         try {
             try {
                 exchange = slot.httpArrival().get();
@@ -72,9 +74,27 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
                 Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
                 throw asException(cause);
             }
-            InvocationRequest enriched = HttpBodyBridge.enrichRequestWithBody(request, exchange);
+            // When the user function declares HttpRequestMessage<InputStream>,
+            // skip the eager body read so the live request stream remains
+            // available, and install the exchange on the per-thread side
+            // channel that RpcHttpRequestDataSource consults at construction
+            // time.
+            streamingInput = broker.methodHasStreamingHttpBody(functionId);
+            InvocationRequest enriched = streamingInput
+                    ? request
+                    : HttpBodyBridge.enrichRequestWithBody(request, exchange);
             List<ParameterBinding> outputBindings = new ArrayList<>();
-            HttpInvocationOutcome outcome = this.broker.invokeMethodForHttpProxy(functionId, enriched, outputBindings);
+            HttpInvocationOutcome outcome;
+            if (streamingInput) {
+                RpcHttpRequestDataSource.setCurrentExchange(exchange);
+            }
+            try {
+                outcome = this.broker.invokeMethodForHttpProxy(functionId, enriched, outputBindings);
+            } finally {
+                if (streamingInput) {
+                    RpcHttpRequestDataSource.setCurrentExchange(null);
+                }
+            }
             outcome.getReturnValue().ifPresent(response::setReturnValue);
             response.addAllOutputData(outputBindings);
             RpcHttp httpEnvelope = extractHttpResponse(response, outputBindings);
