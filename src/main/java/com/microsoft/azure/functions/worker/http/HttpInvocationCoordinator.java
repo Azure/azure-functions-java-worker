@@ -100,7 +100,7 @@ public final class HttpInvocationCoordinator {
     }
 
     /** Visible for tests. */
-    int activeInvocationCount() {
+    public int activeInvocationCount() {
         return slots.size();
     }
 }

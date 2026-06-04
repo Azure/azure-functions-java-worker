@@ -213,7 +213,7 @@ public class JavaFunctionBroker {
 		private final Optional<TypedData> returnValue;
 		private final Object rawHttpResponseBody;
 
-		HttpInvocationOutcome(Optional<TypedData> returnValue, Object rawHttpResponseBody) {
+		public HttpInvocationOutcome(Optional<TypedData> returnValue, Object rawHttpResponseBody) {
 			this.returnValue = returnValue;
 			this.rawHttpResponseBody = rawHttpResponseBody;
 		}
