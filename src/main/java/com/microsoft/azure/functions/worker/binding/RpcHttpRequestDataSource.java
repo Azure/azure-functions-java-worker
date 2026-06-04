@@ -43,6 +43,17 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 		}
 	}
 
+	/**
+	 * Returns the per-thread {@code HttpExchange} currently installed by
+	 * {@link #setCurrentExchange(HttpExchange)}, or {@code null} if none.
+	 * Exposed primarily for integration tests that need to assert the dispatch
+	 * layer correctly installs and clears the side channel around the broker
+	 * invocation.
+	 */
+	public static HttpExchange currentExchange() {
+		return CURRENT_EXCHANGE.get();
+	}
+
 	public RpcHttpRequestDataSource(String name, RpcHttp value) {
 		super(name, null, HTTP_DATA_OPERATIONS);
 		this.httpPayload = value;
