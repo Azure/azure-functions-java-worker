@@ -21,19 +21,27 @@ pr:
 # build a custom branch of azure-functions-java-additions (e.g. a fork) before
 # the worker's mvn build. Defaults to a no-op so normal PRs continue to resolve
 # the library from Maven Central.
+#
+# TEMPORARY: defaults are flipped to build the fork branch
+# (ahmedmuhsin/azure-functions-java-additions @ feat/http-response-bodystream)
+# so GitHub-triggered PR CI for #877 picks up the unpublished
+# `azure-functions-java-core-library:1.4.0-SNAPSHOT`. Revert to the upstream
+# defaults (buildAdditionsFromSource=false, Azure repo, dev branch) once the
+# companion PR (Azure/azure-functions-java-additions#55) is merged and a
+# matching library version is published to Maven Central.
 parameters:
   - name: buildAdditionsFromSource
     displayName: 'Build azure-functions-java-additions from source (instead of resolving from Maven Central)'
     type: boolean
-    default: false
+    default: true
   - name: additionsRepoUrl
     displayName: 'Git URL for azure-functions-java-additions (used only when buildAdditionsFromSource is true)'
     type: string
-    default: 'https://github.com/Azure/azure-functions-java-additions.git'
+    default: 'https://github.com/ahmedmuhsin/azure-functions-java-additions.git'
   - name: additionsBranch
     displayName: 'Branch of azure-functions-java-additions to build (used only when buildAdditionsFromSource is true)'
     type: string
-    default: 'dev'
+    default: 'feat/http-response-bodystream'
 
 resources:
   repositories:
