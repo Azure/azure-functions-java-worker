@@ -2,6 +2,15 @@ parameters:
   - name: poolName
     type: string
     default: ''
+  - name: buildAdditionsFromSource
+    type: boolean
+    default: false
+  - name: additionsRepoUrl
+    type: string
+    default: 'https://github.com/Azure/azure-functions-java-additions.git'
+  - name: additionsBranch
+    type: string
+    default: 'dev'
 
 jobs:
   - job: "TestLinux"
@@ -83,6 +92,10 @@ jobs:
           docker compose -f emulatedtests/utils/docker-compose.yml pull
           docker compose -f emulatedtests/utils/docker-compose.yml up -d
         displayName: 'Install Azurite and Start Emulators'
+      - ${{ if eq(parameters.buildAdditionsFromSource, true) }}:
+        - pwsh: |
+            ./installAdditionsLocally.ps1 -AdditionsRepoUrl '${{ parameters.additionsRepoUrl }}' -AdditionsBranch '${{ parameters.additionsBranch }}'
+          displayName: 'Install azure-functions-java-additions from source'
       - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
