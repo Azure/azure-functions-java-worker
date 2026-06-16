@@ -3,6 +3,8 @@ package com.microsoft.azure.functions.worker.test.utilities;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
+import java.security.*;
+import java.security.cert.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -17,6 +19,7 @@ import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import io.grpc.*;
 import io.grpc.netty.shaded.io.grpc.netty.*;
+import io.grpc.netty.shaded.io.netty.handler.ssl.*;
 import io.grpc.stub.*;
 import org.apache.commons.lang3.tuple.*;
 
@@ -34,9 +37,6 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
 
     private static final int RESPONSE_TIMEOUT_SECONDS = 10;
     private static final long RESPONSE_POLL_MILLIS = 100L;
-    private static final String TLS_RESOURCE_ROOT = "grpc-tls/";
-    private static final String TLS_CERTIFICATE_RESOURCE = TLS_RESOURCE_ROOT + "localhost-cert.pem";
-    private static final String TLS_PRIVATE_KEY_RESOURCE = TLS_RESOURCE_ROOT + "localhost-key.pem";
 
     private int port;
     public FunctionsTestHost() throws Exception {
@@ -67,14 +67,28 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
     }
 
     @PostConstruct
-    private void initializeServer() throws IOException {
+    private void initializeServer() throws Exception {
         ServerBuilder<?> builder = this.serverTransport == ServerTransport.TLS
-                ? NettyServerBuilder.forPort(this.getPort())
-                    .sslContext(GrpcSslContexts.forServer(getTlsResource(TLS_CERTIFICATE_RESOURCE), getTlsResource(TLS_PRIVATE_KEY_RESOURCE)).build())
+                ? NettyServerBuilder.forPort(this.getPort()).sslContext(buildServerSslContext())
                 : ServerBuilder.forPort(this.getPort());
         this.grpcHost = new HostGrpcImplementation();
         this.server = builder.addService(this.grpcHost).build();
         this.server.start();
+    }
+
+    private static SslContext buildServerSslContext() throws Exception {
+        TestTlsMaterial material = TestTlsMaterial.getInstance();
+        KeyStore keyStore = KeyStore.getInstance(TestTlsMaterial.STORE_TYPE);
+        try (InputStream in = Files.newInputStream(material.serverKeyStorePath())) {
+            keyStore.load(in, TestTlsMaterial.PASSWORD.toCharArray());
+        }
+        PrivateKey privateKey = (PrivateKey) keyStore.getKey(TestTlsMaterial.ALIAS, TestTlsMaterial.PASSWORD.toCharArray());
+        java.security.cert.Certificate[] chain = keyStore.getCertificateChain(TestTlsMaterial.ALIAS);
+        X509Certificate[] certificates = new X509Certificate[chain.length];
+        for (int i = 0; i < chain.length; i++) {
+            certificates[i] = (X509Certificate) chain[i];
+        }
+        return GrpcSslContexts.configure(SslContextBuilder.forServer(privateKey, certificates)).build();
     }
 
     @PostConstruct
@@ -155,18 +169,6 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
         try {
             this.close();
         } catch (Exception ignored) {
-        }
-    }
-
-    private static File getTlsResource(String resourcePath) {
-        URL resource = FunctionsTestHost.class.getClassLoader().getResource(resourcePath);
-        if (resource == null) {
-            throw new IllegalStateException("Missing test TLS resource: " + resourcePath);
-        }
-        try {
-            return Paths.get(resource.toURI()).toFile();
-        } catch (URISyntaxException ex) {
-            throw new IllegalStateException("Invalid test TLS resource path: " + resourcePath, ex);
         }
     }
 

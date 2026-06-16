@@ -291,3 +291,10 @@ __pycache__/
 
 # Docker test packages
 dockertests/app-packages/
+
+# Test TLS material is generated at runtime by keytool (see TestTlsMaterial);
+# never commit private keys or keystores.
+src/test/resources/grpc-tls/
+*.p12
+*.pfx
+*-key.pem
