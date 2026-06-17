@@ -291,3 +291,4 @@ __pycache__/
 
 # Docker test packages
 dockertests/app-packages/
+.protoc-dependencies
