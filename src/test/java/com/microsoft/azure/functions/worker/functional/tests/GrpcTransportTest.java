@@ -1,7 +1,6 @@
 package com.microsoft.azure.functions.worker.functional.tests;
 
-import java.net.*;
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.util.concurrent.*;
 import javax.net.ssl.*;
 

@@ -3,8 +3,10 @@ package com.microsoft.azure.functions.worker.test.utilities;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
-import java.security.*;
-import java.security.cert.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -19,7 +21,8 @@ import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import io.grpc.*;
 import io.grpc.netty.shaded.io.grpc.netty.*;
-import io.grpc.netty.shaded.io.netty.handler.ssl.*;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.*;
 import org.apache.commons.lang3.tuple.*;
 
@@ -67,7 +70,7 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
     }
 
     @PostConstruct
-    private void initializeServer() throws Exception {
+    private void initializeServer() throws GeneralSecurityException, IOException {
         ServerBuilder<?> builder = this.serverTransport == ServerTransport.TLS
                 ? NettyServerBuilder.forPort(this.getPort()).sslContext(buildServerSslContext())
                 : ServerBuilder.forPort(this.getPort());
@@ -76,7 +79,7 @@ public final class FunctionsTestHost implements AutoCloseable, IApplication {
         this.server.start();
     }
 
-    private static SslContext buildServerSslContext() throws Exception {
+    private SslContext buildServerSslContext() throws GeneralSecurityException, IOException {
         TestTlsMaterial material = TestTlsMaterial.getInstance();
         KeyStore keyStore = KeyStore.getInstance(TestTlsMaterial.STORE_TYPE);
         try (InputStream in = Files.newInputStream(material.serverKeyStorePath())) {

@@ -93,7 +93,8 @@ public final class TestTlsMaterial {
                 "-alias", ALIAS,
                 "-keyalg", "RSA",
                 "-keysize", "2048",
-                "-validity", "7300",
+                // Short-lived: the material only needs to outlive a single test run.
+                "-validity", "2",
                 "-dname", "CN=localhost",
                 "-ext", "san=dns:localhost,ip:127.0.0.1",
                 "-keystore", keyStore.toString(),
@@ -156,21 +157,25 @@ public final class TestTlsMaterial {
 
         if (!process.waitFor(KEYTOOL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
             process.destroyForcibly();
-            throw new IllegalStateException("keytool timed out running: " + arguments[0]);
+            throw new IOException("keytool timed out running: " + arguments[0]);
         }
         drainer.join(TimeUnit.SECONDS.toMillis(5));
 
         if (process.exitValue() != 0) {
             synchronized (output) {
-                throw new IllegalStateException(
+                throw new IOException(
                         "keytool " + arguments[0] + " failed (exit " + process.exitValue() + "):\n" + output);
             }
         }
     }
 
-    private static String keytoolPath() {
+    private static String keytoolPath() throws IOException {
         String javaHome = System.getProperty("java.home");
         boolean windows = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
-        return Paths.get(javaHome, "bin", windows ? "keytool.exe" : "keytool").toString();
+        Path keytool = Paths.get(javaHome, "bin", windows ? "keytool.exe" : "keytool");
+        if (!Files.isExecutable(keytool)) {
+            throw new IOException("keytool not found or not executable at: " + keytool);
+        }
+        return keytool.toString();
     }
 }
