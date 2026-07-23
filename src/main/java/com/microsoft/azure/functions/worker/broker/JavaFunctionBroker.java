@@ -115,8 +115,12 @@ public class JavaFunctionBroker {
 						initializeInvocationChainFactory();
 					}
 
-					oneTimeLogicInitialized = true;
+					// Initialize the injector before flipping the flag. The outer check on
+					// oneTimeLogicInitialized is lock-free, so a concurrent load thread that sees the
+					// flag set will skip init and can invoke while functionInstanceInjector is still
+					// null. See issue #879.
 					initializeFunctionInstanceInjector();
+					oneTimeLogicInitialized = true;
 				}
 			}
 		}
