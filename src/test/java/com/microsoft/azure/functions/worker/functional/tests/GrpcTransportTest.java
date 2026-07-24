@@ -1,6 +1,6 @@
 package com.microsoft.azure.functions.worker.functional.tests;
 
-import java.net.*;
+import java.nio.file.Path;
 import java.util.concurrent.*;
 import javax.net.ssl.*;
 
@@ -12,8 +12,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class GrpcTransportTest extends FunctionsTestBase {
     private static final String RETURN_VALUE = "transport-ok";
-    private static final String TRUSTSTORE_RESOURCE = "grpc-tls/localhost-truststore.p12";
-    private static final String TRUSTSTORE_PASSWORD = "changeit";
 
     public String ReturnStringFunction() {
         return RETURN_VALUE;
@@ -33,7 +31,7 @@ public class GrpcTransportTest extends FunctionsTestBase {
     @Test
     public void trustedHttpsFunctionsUriConnectsToTlsHost() throws Exception {
         try (SkipTestingScope ignored = SkipTestingScope.enable();
-             TrustStoreScope ignoredTrustStore = TrustStoreScope.use(TRUSTSTORE_RESOURCE, TRUSTSTORE_PASSWORD, "PKCS12");
+             TrustStoreScope ignoredTrustStore = TrustStoreScope.use();
              FunctionsTestHost host = new FunctionsTestHost(FunctionsTestHost.ServerTransport.TLS, FunctionsTestHost.ClientTransport.HTTPS)) {
             InvocationResponse response = this.invokeReturnString(host, "tls-function", "tls-request");
 
@@ -80,22 +78,15 @@ public class GrpcTransportTest extends FunctionsTestBase {
             this.originalTrustStoreType = originalTrustStoreType;
         }
 
-        static TrustStoreScope use(String resourceName, String password, String storeType) {
+        static TrustStoreScope use() {
             String originalTrustStore = System.getProperty("javax.net.ssl.trustStore");
             String originalTrustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
             String originalTrustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
-            URL resource = GrpcTransportTest.class.getClassLoader().getResource(resourceName);
-            if (resource == null) {
-                throw new IllegalStateException("Missing TLS truststore resource: " + resourceName);
-            }
 
-            try {
-                System.setProperty("javax.net.ssl.trustStore", new java.io.File(resource.toURI()).getAbsolutePath());
-            } catch (URISyntaxException ex) {
-                throw new IllegalStateException("Invalid TLS truststore resource path: " + resourceName, ex);
-            }
-            System.setProperty("javax.net.ssl.trustStorePassword", password);
-            System.setProperty("javax.net.ssl.trustStoreType", storeType);
+            Path trustStore = TestTlsMaterial.getInstance().trustStorePath();
+            System.setProperty("javax.net.ssl.trustStore", trustStore.toAbsolutePath().toString());
+            System.setProperty("javax.net.ssl.trustStorePassword", TestTlsMaterial.PASSWORD);
+            System.setProperty("javax.net.ssl.trustStoreType", TestTlsMaterial.STORE_TYPE);
             return new TrustStoreScope(originalTrustStore, originalTrustStorePassword, originalTrustStoreType);
         }
 
