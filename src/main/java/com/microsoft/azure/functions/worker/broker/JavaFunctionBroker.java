@@ -3,10 +3,14 @@ package com.microsoft.azure.functions.worker.broker;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -201,6 +205,61 @@ public class JavaFunctionBroker {
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
+	/**
+	 * Result returned by {@link #invokeMethodForHttpProxy(String, InvocationRequest, List)}.
+	 * Exposes both the protobuf return value (for the gRPC reply) and the raw
+	 * (unserialized) HTTP response body so the HTTP proxy path can stream
+	 * {@code InputStream} / {@code HttpResponseMessage.IOConsumer} bodies directly
+	 * to the {@code HttpExchange} response stream without first buffering them
+	 * through a protobuf {@code TypedData}.
+	 */
+	public static final class HttpInvocationOutcome {
+		private final Optional<TypedData> returnValue;
+		private final Object rawHttpResponseBody;
+
+		public HttpInvocationOutcome(Optional<TypedData> returnValue, Object rawHttpResponseBody) {
+			this.returnValue = returnValue;
+			this.rawHttpResponseBody = rawHttpResponseBody;
+		}
+
+		public Optional<TypedData> getReturnValue() {
+			return returnValue;
+		}
+
+		/**
+		 * The raw response body object set by the user function (e.g. the
+		 * {@code InputStream} or {@code IOConsumer} passed to
+		 * {@code HttpResponseMessage.Builder.bodyStream(...)}), or {@code null}
+		 * if no HTTP response was produced or the body was already serialized.
+		 */
+		public Object getRawHttpResponseBody() {
+			return rawHttpResponseBody;
+		}
+	}
+
+	/**
+	 * Variant of {@link #invokeMethod(String, InvocationRequest, List)} for the
+	 * HTTP proxy dispatch path that, in addition to the protobuf reply, exposes
+	 * the unserialized HTTP response body so streaming bodies can be written
+	 * directly to the HTTP response.
+	 */
+	public HttpInvocationOutcome invokeMethodForHttpProxy(String id, InvocationRequest request, List<ParameterBinding> outputs)
+			throws Exception {
+		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
+
+		if (isJavaSdkTypesEnabled()) {
+			this.functionFactories.get(id).create().doNext(executionContextDataSource);
+		} else {
+			this.invocationChainFactory.create().doNext(executionContextDataSource);
+		}
+
+		BindingDataStore dataStore = executionContextDataSource.getDataStore();
+		Object rawHttpResponseBody = dataStore.getHttpResponseRawBody();
+		outputs.addAll(dataStore.getOutputParameterBindings(true));
+		Optional<TypedData> returnValue = dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+		return new HttpInvocationOutcome(returnValue, rawHttpResponseBody);
+	}
+
 	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
 			throws NoSuchMethodException {
 		ImmutablePair<String, FunctionDefinition> methodEntry = this.methods.get(id);
@@ -233,6 +292,40 @@ public class JavaFunctionBroker {
 
 	public Optional<String> getMethodName(String id) {
 		return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
+	}
+
+	/**
+	 * Returns true when the function with the given id declares an
+	 * {@link HttpRequestMessage} parameter whose body type argument is
+	 * {@link InputStream} (or any subtype). The HTTP proxy dispatch path uses
+	 * this to decide whether to skip the buffered body read and instead expose
+	 * the live HTTP request body as an {@code InputStream}.
+	 */
+	public boolean methodHasStreamingHttpBody(String id) {
+		ImmutablePair<String, FunctionDefinition> entry = this.methods.get(id);
+		if (entry == null) {
+			return false;
+		}
+		MethodBindInfo mbi = entry.right.getCandidate();
+		for (ParamBindInfo p : mbi.getParams()) {
+			Type t = p.getType();
+			if (!(t instanceof ParameterizedType)) {
+				continue;
+			}
+			ParameterizedType pt = (ParameterizedType) t;
+			if (pt.getRawType() != HttpRequestMessage.class) {
+				continue;
+			}
+			Type[] args = pt.getActualTypeArguments();
+			if (args.length == 0) {
+				continue;
+			}
+			if (args[0] instanceof Class<?>
+					&& InputStream.class.isAssignableFrom((Class<?>) args[0])) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// TODO the scope should be package private for testability. Modify the package name as same as main package

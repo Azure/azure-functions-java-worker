@@ -3,7 +3,11 @@ package com.microsoft.azure.functions.worker.handler;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
+import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
+import com.microsoft.azure.functions.worker.http.HttpProxyHandler;
+import com.microsoft.azure.functions.worker.http.HttpProxyServer;
 
+import java.io.IOException;
 import java.util.logging.Level;
 
 import static com.microsoft.azure.functions.worker.Constants.JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY;
@@ -11,11 +15,19 @@ import static com.microsoft.azure.functions.worker.Constants.JAVA_ENABLE_OPENTEL
 
 public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, WorkerInitResponse.Builder> {
     public WorkerInitRequestHandler(JavaFunctionBroker broker) {
+        this(broker, null, null);
+    }
+
+    public WorkerInitRequestHandler(JavaFunctionBroker broker,
+                                    HttpProxyServer httpProxyServer,
+                                    HttpInvocationCoordinator httpInvocationCoordinator) {
         super(StreamingMessage::getWorkerInitRequest,
               WorkerInitResponse::newBuilder,
               WorkerInitResponse.Builder::setResult,
               StreamingMessage.Builder::setWorkerInitResponse);
         this.broker = broker;
+        this.httpProxyServer = httpProxyServer;
+        this.httpInvocationCoordinator = httpInvocationCoordinator;
     }
 
     @Override
@@ -30,6 +42,8 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.putCapabilities("HandlesWorkerTerminateMessage", "HandlesWorkerTerminateMessage");
         response.putCapabilities("HandlesWorkerWarmupMessage", "HandlesWorkerWarmupMessage");
 
+        advertiseHttpProxy(response);
+
         if (Boolean.parseBoolean(System.getenv(JAVA_ENABLE_OPENTELEMETRY)) ||
                 Boolean.parseBoolean(System.getenv(JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY))) {
             response.putCapabilities("WorkerOpenTelemetryEnabled", "true");
@@ -39,6 +53,23 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
         response.setWorkerMetadata(composeWorkerMetadata());
 
         return "Worker initialized";
+    }
+
+    private void advertiseHttpProxy(WorkerInitResponse.Builder response) {
+        if (httpProxyServer == null || httpInvocationCoordinator == null) {
+            return;
+        }
+        try {
+            String uri = httpProxyServer.start(new HttpProxyHandler(httpInvocationCoordinator));
+            response.putCapabilities("HttpUri", uri);
+            response.putCapabilities("RequiresRouteParameters", "true");
+            WorkerLogManager.getSystemLogger().log(Level.INFO,
+                "Java worker HTTP proxy listening on " + uri);
+        } catch (IOException ex) {
+            // Fall back to gRPC-only path: simply do not advertise HttpUri.
+            WorkerLogManager.getSystemLogger().log(Level.WARNING,
+                "Failed to start HTTP proxy server; continuing without HttpUri capability", ex);
+        }
     }
 
     private WorkerMetadata.Builder composeWorkerMetadata(){
@@ -51,4 +82,6 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
     }
 
     private final JavaFunctionBroker broker;
+    private final HttpProxyServer httpProxyServer;
+    private final HttpInvocationCoordinator httpInvocationCoordinator;
 }

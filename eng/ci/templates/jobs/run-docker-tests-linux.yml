@@ -2,6 +2,15 @@ parameters:
   - name: poolName
     type: string
     default: ''
+  - name: buildAdditionsFromSource
+    type: boolean
+    default: false
+  - name: additionsRepoUrl
+    type: string
+    default: 'https://github.com/Azure/azure-functions-java-additions.git'
+  - name: additionsBranch
+    type: string
+    default: 'dev'
 
 jobs:
   - job: "TestDocker"
@@ -50,6 +59,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e dockertests/azure-functions-test-kit
         displayName: 'Install Python dependencies'
+
+      - ${{ if eq(parameters.buildAdditionsFromSource, true) }}:
+        - pwsh: |
+            ./installAdditionsLocally.ps1 -AdditionsRepoUrl '${{ parameters.additionsRepoUrl }}' -AdditionsBranch '${{ parameters.additionsBranch }}'
+          displayName: 'Install azure-functions-java-additions from source'
 
       - pwsh: |
           ./package-pipeline.ps1 -outputDir 'java-worker' -skipNuget

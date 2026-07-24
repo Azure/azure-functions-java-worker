@@ -1,3 +1,14 @@
+parameters:
+  - name: buildAdditionsFromSource
+    type: boolean
+    default: false
+  - name: additionsRepoUrl
+    type: string
+    default: 'https://github.com/Azure/azure-functions-java-additions.git'
+  - name: additionsBranch
+    type: string
+    default: 'dev'
+
 jobs:
   - job: "Build"
     displayName: 'Build java worker'
@@ -14,6 +25,10 @@ jobs:
     - pwsh: |
         java -version
       displayName: 'Check default java version'
+    - ${{ if eq(parameters.buildAdditionsFromSource, true) }}:
+      - pwsh: |
+          ./installAdditionsLocally.ps1 -AdditionsRepoUrl '${{ parameters.additionsRepoUrl }}' -AdditionsBranch '${{ parameters.additionsBranch }}'
+        displayName: 'Install azure-functions-java-additions from source'
     - pwsh: |
         mvn clean package
       displayName: 'Build java worker'

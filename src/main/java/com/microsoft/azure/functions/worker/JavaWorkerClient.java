@@ -12,6 +12,9 @@ import io.grpc.stub.*;
 
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.worker.handler.*;
+import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
+import com.microsoft.azure.functions.worker.http.HttpProxyServer;
+import com.microsoft.azure.functions.worker.http.ProxyConfig;
 import com.microsoft.azure.functions.worker.reflect.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 
@@ -36,19 +39,28 @@ public class JavaWorkerClient implements AutoCloseable {
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
         this.classPathProvider = new FactoryClassLoader().createClassLoaderProvider();
-        
+        this.httpInvocationCoordinator = new HttpInvocationCoordinator();
+        this.httpProxyServer = httpProxyEnabled() ? new HttpProxyServer(ProxyConfig.defaults()) : null;
+
         this.addHandlers();
+    }
+
+    private static boolean httpProxyEnabled() {
+        String value = System.getenv(Constants.FUNCTIONS_JAVA_DISABLE_HTTP_PROXY);
+        return !Boolean.parseBoolean(value);
     }
 
     @PostConstruct
     private void addHandlers() {
         JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
-        
-        this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
+
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST,
+            () -> new WorkerInitRequestHandler(broker, this.httpProxyServer, this.httpInvocationCoordinator));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_WARMUP_REQUEST, WorkerWarmupHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_ENVIRONMENT_RELOAD_REQUEST, () -> new FunctionEnvironmentReloadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));
-        this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST, () -> new InvocationRequestHandler(broker));
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST,
+            () -> new InvocationRequestHandler(broker, this.httpInvocationCoordinator));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_STATUS_REQUEST, WorkerStatusRequestHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_TERMINATE, WorkerTerminateRequestHandler::new);
     }
@@ -68,6 +80,15 @@ public class JavaWorkerClient implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        // Stop accepting HTTP proxy requests before tearing down the gRPC peer
+        // so in-flight HTTP handlers can drain on completion futures cleanly.
+        if (this.httpProxyServer != null) {
+            try {
+                this.httpProxyServer.close();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Failed to close HTTP proxy server cleanly", ex);
+            }
+        }
         this.peer.get().close();
         this.peer.set(null);
         this.channel.shutdownNow();
@@ -143,6 +164,8 @@ public class JavaWorkerClient implements AutoCloseable {
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
+    private final HttpInvocationCoordinator httpInvocationCoordinator;
+    private final HttpProxyServer httpProxyServer;
 
     /**
      * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.
