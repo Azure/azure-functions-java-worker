@@ -11,8 +11,19 @@ resources:
     name: engineering
     ref: refs/tags/release
 
+parameters:
+- name: forcePush
+  displayName: 'Force Push (Manual runs only)'
+  type: boolean
+  default: false
+
 variables:
   - template: ci/variables/cfs.yml@eng
 
 extends:
   template: ci/code-mirror.yml@eng
+  parameters:
+    ${{ if and(eq(parameters.forcePush, true), eq(variables['Build.Reason'], 'Manual')) }}:
+      extraPushArgs: '-f'
+    ${{ else }}:
+      extraPushArgs: ''
