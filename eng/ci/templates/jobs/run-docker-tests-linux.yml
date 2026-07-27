@@ -26,6 +26,17 @@ jobs:
 
     steps:
       - bash: |
+          echo "=== disk BEFORE cleanup ==="
+          df -h /
+          echo "=== freeing space (toolsets this job does not use) ==="
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift \
+                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/PyPy 2>/dev/null || true
+          sudo apt-get clean || true
+          echo "=== disk AFTER cleanup ==="
+          df -h /
+        displayName: 'Free up disk space'
+
+      - bash: |
           mvn --version
         displayName: 'Check Maven is installed'
 

@@ -76,7 +76,7 @@ jobs:
       - bash: |
           npm install -g azurite
           mkdir azurite
-          azurite --silent --location azurite --debug azurite\debug.log &
+          azurite --skipApiVersionCheck --silent --location azurite --debug azurite\debug.log &
         displayName: 'Install and Run Azurite'
       - pwsh: |
           if ("$(isTag)"){
