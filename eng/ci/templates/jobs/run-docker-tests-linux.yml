@@ -57,6 +57,12 @@ jobs:
           versionSpec: '3.11'
           addToPath: true
 
+      - task: PipAuthenticate@1
+        displayName: 'Authenticate pip to CFS'
+        inputs:
+          artifactFeeds: 'public/upstream-public'
+          onlyAddExtraIndex: false
+
       - bash: |
           python -m pip install --upgrade pip
           pip install -e dockertests/azure-functions-test-kit

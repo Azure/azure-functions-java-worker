@@ -11,6 +11,12 @@ $FUNC_RUNTIME_VERSION = 'latest'
 
 Write-Host "Installing Core Tools globlally using npm, version: $FUNC_RUNTIME_VERSION ..."
 
+$env:NPM_CONFIG_USERCONFIG = if ($env:NPM_CONFIG_USERCONFIG) {
+    $env:NPM_CONFIG_USERCONFIG
+} else {
+    Join-Path $PSScriptRoot '.npmrc'
+}
+
 $FUNC_CLI_DIRECTORY = Join-Path $PSScriptRoot 'Azure.Functions.Cli'
 $InstallDir         = $FUNC_CLI_DIRECTORY
 
