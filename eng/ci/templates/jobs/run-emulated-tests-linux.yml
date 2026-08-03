@@ -92,11 +92,17 @@ jobs:
           jdkDestinationDirectory: "$(downloadPath)/externals"
           cleanDestinationDirectory: true
         displayName: 'Setup Java for Linux'
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: '$(Build.SourcesDirectory)/.npmrc'
+        displayName: 'Authenticate npm to CFS'
       - bash: |
           npm install -g azurite
           mkdir azurite
           azurite --skipApiVersionCheck --silent --location azurite --debug azurite/debug.log &
         displayName: 'Install and Run Azurite'
+        env:
+          NPM_CONFIG_USERCONFIG: '$(Build.SourcesDirectory)/.npmrc'
       - pwsh: |
           if ("$(isTag)"){
             $buildNumber="$(Build.SourceBranchName)"
@@ -116,15 +122,23 @@ jobs:
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-emulatedtests"
         displayName: 'Download CA Bundle & Package Java for Emulated Tests'
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: '$(Build.SourcesDirectory)/.npmrc'
+        displayName: 'Authenticate npm to CFS'
       - pwsh: |
           .\setup-tests-pipeline.ps1
         displayName: 'Setup test environment -- Install the Core Tools'
+        env:
+          NPM_CONFIG_USERCONFIG: '$(Build.SourcesDirectory)/.npmrc'
       - bash: |
           chmod +x ./Azure.Functions.Cli/func
           chmod +x ./Azure.Functions.Cli/gozip
           export PATH=$PATH:./Azure.Functions.Cli
           func --version
         displayName: 'Setup Core Tools - Linux'
+      - task: NuGetAuthenticate@1
+        displayName: 'Authenticate NuGet to CFS'
       - task: DotNetCoreCLI@2
         retryCountOnTaskFailure: 3
         inputs:
