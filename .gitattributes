@@ -1,0 +1,7 @@
+# Shell scripts must retain LF endings on every platform.
+*.sh text eol=lf
+
+# Preserve the existing CRLF convention in these standalone sample projects.
+warmup-function/pom.xml whitespace=cr-at-eol
+samples/dependency-injection-example/dagger-function/pom.xml whitespace=cr-at-eol
+samples/dependency-injection-example/guice-function/pom.xml whitespace=cr-at-eol

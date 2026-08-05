@@ -15,6 +15,24 @@ Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
 * Run all maven commands under the root folder of this repository
 
+Maven packages and plugins are restored through the `upstream-public` Azure Artifacts feed. Every
+tracked `pom.xml` overrides Maven's `central` repository, and `settings.xml` mirrors early plugin and
+extension requests to the same feed.
+
+Packages already cached in the feed can be restored anonymously. When a new package version has not
+been cached yet, a Microsoft developer can install the Azure Artifacts credential provider:
+
+```powershell
+./eng/scripts/Install-MavenCredentialProvider.ps1
+```
+
+```bash
+./eng/scripts/install-maven-credprovider.sh
+```
+
+The helper creates a local `.mvn/extensions.xml`, which is intentionally ignored by Git. CI installs
+the repository `settings.xml` and authenticates with `MavenAuthenticate@0` before running Maven.
+
 ## IntelliJ
 
 * Import the root folder of this repository as an existing project in IntelliJ

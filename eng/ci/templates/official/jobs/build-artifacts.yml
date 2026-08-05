@@ -28,6 +28,17 @@ jobs:
       isRelease: $[variables.isReleaseTemp]
 
     steps:
+      # Maven resolves plugins and extensions before a pom's repositories are honored. Install the
+      # mirror before MavenAuthenticate@0, which adds credentials to the same settings file.
+      - pwsh: |
+          $m2 = Join-Path $HOME '.m2'
+          New-Item -ItemType Directory -Path $m2 -Force | Out-Null
+          Copy-Item '$(Build.SourcesDirectory)/settings.xml' (Join-Path $m2 'settings.xml') -Force
+        displayName: 'Install Maven settings.xml'
+      - task: MavenAuthenticate@0
+        displayName: 'Authenticate Maven to CFS'
+        inputs:
+          artifactsFeeds: upstream-public
       - task: NuGetToolInstaller@1
         inputs:
           checkLatest: true
