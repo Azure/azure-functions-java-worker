@@ -259,6 +259,9 @@ target/
 .project
 *.iml
 dependency-reduced-pom.xml
+# The Maven credential provider is an opt-in for ingesting uncached packages. CI authenticates
+# with MavenAuthenticate@0, and committing the extension would break anonymous restores.
+.mvn/
 /functions-coffee-order-demo/src/main/functions/functions-coffee-order.jar
 /functions-coffee-order-demo/src/main/arduino/.build/
 pkg/

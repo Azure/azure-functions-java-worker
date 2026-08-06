@@ -34,6 +34,17 @@ jobs:
           JDK_PATH: 'jdk-21.0.1+12'
 
     steps:
+      # Maven resolves plugins and extensions before a pom's repositories are honored. Install the
+      # mirror before MavenAuthenticate@0, which adds credentials to the same settings file.
+      - pwsh: |
+          $m2 = Join-Path $HOME '.m2'
+          New-Item -ItemType Directory -Path $m2 -Force | Out-Null
+          Copy-Item '$(Build.SourcesDirectory)/settings.xml' (Join-Path $m2 'settings.xml') -Force
+        displayName: 'Install Maven settings.xml'
+      - task: MavenAuthenticate@0
+        displayName: 'Authenticate Maven to CFS'
+        inputs:
+          artifactsFeeds: upstream-public
       - task: NuGetToolInstaller@1
         inputs:
           checkLatest: true
@@ -85,12 +96,11 @@ jobs:
           func --version
         displayName: 'Setup Core Tools - Windows'
       - pwsh: |
-          # Download Mozilla CA certificate bundle
-          Invoke-WebRequest -Uri "https://curl.se/ca/cacert.pem" -OutFile "./endtoendtests/confluent_cloud_cacert.pem"
+          ./eng/scripts/Export-JavaCacerts.ps1 -OutputPath "./endtoendtests/confluent_cloud_cacert.pem"
           cd ./endtoendtests
           mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
           Copy-Item "confluent_cloud_cacert.pem" "./target/azure-functions/azure-functions-java-endtoendtests"
-        displayName: 'Download CA Bundle & Package Java for E2E'
+        displayName: 'Export CA Bundle & Package Java for E2E'
       - task: NuGetAuthenticate@1
         displayName: 'Authenticate NuGet to CFS'
       - task: DotNetCoreCLI@2

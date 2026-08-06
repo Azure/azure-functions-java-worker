@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.1-SNAPSHOT</version>
+		<version>3.0.1</version>
 		<relativePath/>
 		<!-- lookup parent from repository -->
 	</parent>
@@ -31,6 +31,24 @@
 		<functionAppServicePlanName>sample-service-plan</functionAppServicePlanName>
 		<functionPricingTier>EP1</functionPricingTier>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>central</id>
+			<url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
+			<releases><enabled>true</enabled></releases>
+			<snapshots><enabled>true</enabled></snapshots>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
+			<releases><enabled>true</enabled></releases>
+			<snapshots><enabled>true</enabled></snapshots>
+		</pluginRepository>
+	</pluginRepositories>
 	<dependencies>
 
 		<dependency>
