@@ -1,6 +1,6 @@
-package example.hello;
+package com.example.hello;
 
-import example.hello.model.*;
+import com.example.model.*;
 import org.springframework.stereotype.Component;
 import java.util.function.Function;
 
