@@ -15,12 +15,49 @@ Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
 * Run all maven commands under the root folder of this repository
 
-Maven packages and plugins are restored through the `upstream-public` Azure Artifacts feed. Every
-tracked `pom.xml` overrides Maven's `central` repository, and `settings.xml` mirrors early plugin and
-extension requests to the same feed.
+### Package feed
 
-Packages already cached in the feed can be restored anonymously. When a new package version has not
-been cached yet, a Microsoft developer can install the Azure Artifacts credential provider:
+All Maven packages and plugins are restored from the `upstream-public` Azure Artifacts feed
+(`https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1`), which is configured
+as the `central` repository in every `pom.xml` in this repository.
+
+The repository root also has a [`settings.xml`](settings.xml) that mirrors `central` to the same
+feed. It exists because a `pom.xml` cannot cover everything:
+
+- Maven resolves build extensions and plugin prefixes *before* a pom's `<repositories>` are honored,
+	so those requests would otherwise go straight to Maven Central.
+- `MavenAuthenticate@0` and the credential provider key credentials off the Azure Artifacts *feed
+	name* (`upstream-public`), while the pom repository id must be `central` in order to override the
+	id Maven inherits from the Super POM. The mirror id bridges the two.
+
+CI installs this file to `~/.m2/settings.xml`. Locally you only need it when pulling a package or
+version the feed has not cached yet, in which case pass it explicitly with `mvn -s settings.xml`.
+
+#### Anonymous restore (default)
+
+The feed allows anonymous reads, so no credentials are required to build once a package version has
+been saved to the feed. External contributors and fresh clones need no setup. `mvn` just works.
+Never commit credentials or a `<server>` entry to `settings.xml` in this repository because doing so
+would force authentication on everyone.
+
+#### Authenticating (Microsoft developers only)
+
+Authentication is only needed to *ingest* a package version that the feed has not cached yet. The
+first restore of any new or upgraded dependency will fail anonymously with:
+
+> No local versions of package '...'; please provide authentication to access versions from upstream
+> that have not yet been saved to your feed.
+
+When that happens, a Microsoft developer with access to the `azfunc/public` project must run the
+restore once with credentials, which pulls the version from upstream and saves it to the feed. Every
+subsequent anonymous restore then succeeds.
+
+The recommended way to authenticate is the `artifacts-maven-credprovider`, which acquires a token via
+Entra ID so you do not have to manage a PAT.
+
+Run the helper script for your shell from the root of your clone. It installs the credential provider
+into your local Maven repository if it is missing, then writes `.mvn/extensions.xml`. Both scripts
+are idempotent, so re-running them is safe:
 
 ```powershell
 ./eng/scripts/Install-MavenCredentialProvider.ps1
@@ -30,8 +67,59 @@ been cached yet, a Microsoft developer can install the Azure Artifacts credentia
 ./eng/scripts/install-maven-credprovider.sh
 ```
 
-The helper creates a local `.mvn/extensions.xml`, which is intentionally ignored by Git. CI installs
-the repository `settings.xml` and authenticates with `MavenAuthenticate@0` before running Maven.
+Pass `-Version` / `--version` to install a different release, and `-Force` / `--force` to reinstall or
+to overwrite an `.mvn/extensions.xml` the script does not manage.
+
+If you would rather do it by hand, the equivalent steps are:
+
+1. Bootstrap the credential provider once per machine. Run this from a directory outside any Maven
+	 project, such as your home directory. It downloads the extension from the public `AzureArtifacts`
+	 tools feed, which needs no authentication:
+
+	 ```powershell
+	 mvn dependency:get "-Dartifact=com.microsoft.azure:artifacts-maven-credprovider:3.2.1" "-DremoteRepositories=central::::https://pkgs.dev.azure.com/artifacts-public/PublicTools/_packaging/AzureArtifacts/maven/v1"
+	 ```
+
+	 Using the repository id `central` matters. Maven records the extension as having come from
+	 `central`, which is the same id this repository's `pom.xml` files declare, so the cached copy
+	 validates during later builds.
+
+2. Create `.mvn/extensions.xml` at the root of your clone:
+
+	 ```xml
+	 <extensions xmlns="http://maven.apache.org/EXTENSIONS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/EXTENSIONS/1.1.0 https://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
+		 <extension>
+			 <groupId>com.microsoft.azure</groupId>
+			 <artifactId>artifacts-maven-credprovider</artifactId>
+			 <version>3.2.1</version>
+		 </extension>
+	 </extensions>
+	 ```
+
+`.mvn/` is deliberately listed in `.gitignore`. Do not commit it. The extension exits when it
+detects a build context, and committing it would break anonymous restores for everyone else.
+
+If you would rather not use the credential provider, you can instead add a `<server>` entry to your
+user-level `~/.m2/settings.xml` (never to a file inside this repository), using an Azure DevOps
+personal access token with Packaging read and write scope:
+
+```xml
+<settings>
+	<servers>
+		<server>
+			<!-- Must match the <id> of the repository declared in the pom.xml files. -->
+			<id>central</id>
+			<username>azfunc</username>
+			<password>[PERSONAL_ACCESS_TOKEN]</password>
+		</server>
+	</servers>
+</settings>
+```
+
+CI covers this automatically. The `MavenAuthenticate@0` task in the build templates authenticates the
+`central` repository, so merged changes to dependency versions are ingested by the pipeline. The
+credential provider is not used in pipelines.
 
 ## IntelliJ
 
