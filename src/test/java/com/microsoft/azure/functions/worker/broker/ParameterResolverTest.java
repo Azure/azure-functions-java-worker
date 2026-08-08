@@ -35,7 +35,8 @@ public class ParameterResolverTest {
     @BeforeEach
     public void setup() {
         String invocationId = "testInvocationId";
-        ExecutionTraceContext traceContext = new ExecutionTraceContext("traceParent", "traceState", new HashMap<>());
+        ExecutionTraceContext traceContext = new ExecutionTraceContext("traceParent", "traceState", new HashMap<>(),
+                new HashMap<>());
         ExecutionRetryContext retryContext = new ExecutionRetryContext(1, 2, RpcException.newBuilder().build());
         String functionName = "ParameterResolverTest";
         BindingDataStore dataStore = new BindingDataStore();
