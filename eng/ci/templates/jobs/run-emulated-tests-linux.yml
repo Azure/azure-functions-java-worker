@@ -9,7 +9,7 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-22.04
+      image: 1es-ubuntu-24.04-min
       os: linux
 
     variables:
@@ -57,18 +57,11 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          echo "=== disk BEFORE cleanup ==="
+          echo "=== disk space (no cleanup: measuring 1es-ubuntu-24.04-min baseline) ==="
           df -h /
-          echo "=== top consumers on / (baseline) ==="
+          echo "=== top consumers on / ==="
           sudo du -xh --max-depth=2 / 2>/dev/null | sort -rh | head -20 || true
-          echo "=== freeing space (toolsets this job does not use) ==="
-          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift \
-                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/PyPy 2>/dev/null || true
-          docker image prune -af || true
-          sudo apt-get clean || true
-          echo "=== disk AFTER cleanup ==="
-          df -h /
-        displayName: 'Free up disk space'
+        displayName: 'Report disk space'
       - task: NuGetToolInstaller@1
         inputs:
           checkLatest: true

@@ -9,7 +9,7 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-22.04
+      image: 1es-ubuntu-24.04-min
       os: linux
 
     strategy:
@@ -37,15 +37,11 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          echo "=== disk BEFORE cleanup ==="
+          echo "=== disk space (no cleanup: measuring 1es-ubuntu-24.04-min baseline) ==="
           df -h /
-          echo "=== freeing space (toolsets this job does not use) ==="
-          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift \
-                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/PyPy 2>/dev/null || true
-          sudo apt-get clean || true
-          echo "=== disk AFTER cleanup ==="
-          df -h /
-        displayName: 'Free up disk space'
+          echo "=== top consumers on / ==="
+          sudo du -xh --max-depth=2 / 2>/dev/null | sort -rh | head -20 || true
+        displayName: 'Report disk space'
 
       - bash: |
           mvn --version
