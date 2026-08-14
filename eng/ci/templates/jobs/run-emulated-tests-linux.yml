@@ -57,11 +57,21 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          echo "=== disk space (no cleanup: measuring 1es-ubuntu-24.04-min baseline) ==="
+          set +e
+          echo "=== disk ==="
           df -h /
-          echo "=== top consumers on / ==="
-          sudo du -xh --max-depth=2 / 2>/dev/null | sort -rh | head -20 || true
-        displayName: 'Report disk space'
+          echo "=== toolchain ==="
+          for t in mvn java javac docker python3 node npm dotnet; do
+            printf '%-10s %s\n' "$t" "$(command -v $t 2>/dev/null || echo MISSING)"
+          done
+          echo "=== /opt/hostedtoolcache ==="
+          ls -1 /opt/hostedtoolcache 2>/dev/null || echo "(absent)"
+          echo "=== JDKs (/usr/lib/jvm) ==="
+          ls -1 /usr/lib/jvm 2>/dev/null || echo "(none)"
+          echo "=== docker daemon ==="
+          docker info >/dev/null 2>&1 && echo "available" || echo "NOT available"
+          exit 0
+        displayName: 'Probe: disk + toolchain'
       - task: NuGetToolInstaller@1
         inputs:
           checkLatest: true
