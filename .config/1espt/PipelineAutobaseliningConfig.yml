@@ -25,9 +25,9 @@ pipelines:
     retail:
       source:
         eslint:
-          lastModifiedDate: 2026-01-06
+          lastModifiedDate: 2026-08-17
         armory:
-          lastModifiedDate: 2026-01-06
+          lastModifiedDate: 2026-08-17
       binary:
         binskim:
-          lastModifiedDate: 2026-01-06
+          lastModifiedDate: 2026-08-17
