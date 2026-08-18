@@ -9,7 +9,7 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-24.04
+      image: 1es-ubuntu-22.04
       os: linux
 
     strategy:
@@ -37,21 +37,15 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          set +e
-          echo "=== disk ==="
+          echo "=== disk BEFORE cleanup ==="
           df -h /
-          echo "=== toolchain ==="
-          for t in mvn java javac docker python3 node npm dotnet; do
-            printf '%-10s %s\n' "$t" "$(command -v $t 2>/dev/null || echo MISSING)"
-          done
-          echo "=== /opt/hostedtoolcache ==="
-          ls -1 /opt/hostedtoolcache 2>/dev/null || echo "(absent)"
-          echo "=== JDKs (/usr/lib/jvm) ==="
-          ls -1 /usr/lib/jvm 2>/dev/null || echo "(none)"
-          echo "=== docker daemon ==="
-          docker info >/dev/null 2>&1 && echo "available" || echo "NOT available"
-          exit 0
-        displayName: 'Probe: disk + toolchain'
+          echo "=== freeing space (toolsets this job does not use) ==="
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift \
+                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/PyPy 2>/dev/null || true
+          sudo apt-get clean || true
+          echo "=== disk AFTER cleanup ==="
+          df -h /
+        displayName: 'Free up disk space'
 
       - bash: |
           mvn --version

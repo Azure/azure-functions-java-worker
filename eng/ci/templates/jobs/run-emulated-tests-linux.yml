@@ -9,7 +9,7 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-24.04
+      image: 1es-ubuntu-24.04-min
       os: linux
 
     variables:
@@ -45,6 +45,16 @@ jobs:
           JAVA_VERSION_SPEC: '25'
 
     steps:
+      # The -min image ships no Maven and no Node, so install them up front.
+      - bash: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y maven
+        displayName: 'Install Maven'
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '20.x'
+        displayName: 'Install Node.js'
       # Maven resolves plugins and extensions before a pom's repositories are honored. Install the
       # mirror before MavenAuthenticate@0, which adds credentials to the same settings file.
       - pwsh: |
@@ -57,21 +67,8 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          set +e
-          echo "=== disk ==="
           df -h /
-          echo "=== toolchain ==="
-          for t in mvn java javac docker python3 node npm dotnet; do
-            printf '%-10s %s\n' "$t" "$(command -v $t 2>/dev/null || echo MISSING)"
-          done
-          echo "=== /opt/hostedtoolcache ==="
-          ls -1 /opt/hostedtoolcache 2>/dev/null || echo "(absent)"
-          echo "=== JDKs (/usr/lib/jvm) ==="
-          ls -1 /usr/lib/jvm 2>/dev/null || echo "(none)"
-          echo "=== docker daemon ==="
-          docker info >/dev/null 2>&1 && echo "available" || echo "NOT available"
-          exit 0
-        displayName: 'Probe: disk + toolchain'
+        displayName: 'Report disk space'
       - task: NuGetToolInstaller@1
         inputs:
           checkLatest: true
@@ -79,12 +76,6 @@ jobs:
       - pwsh: |
           Get-Command mvn
         displayName: 'Check Maven is installed'
-      - task: JavaToolInstaller@0 # This step is necessary as Linux image has Java 11 as default
-        inputs:
-          versionSpec: '8'
-          jdkArchitectureOption: 'x64'
-          jdkSourceOption: 'PreInstalled'
-        displayName: 'Setup Java for Linux'
       - pwsh: |
           java -version
         displayName: 'Check default java version'
