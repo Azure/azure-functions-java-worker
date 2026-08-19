@@ -47,6 +47,15 @@ jobs:
           df -h /
         displayName: 'Free up disk space'
 
+      # build-apps.ps1 packages the test apps with mksquashfs. Provide it on the agent so the
+      # script does not fall back to pulling an image from Docker Hub, which CI cannot reach.
+      - bash: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y squashfs-tools
+          mksquashfs -version | head -1
+        displayName: 'Install squashfs-tools'
+
       - bash: |
           mvn --version
         displayName: 'Check Maven is installed'
