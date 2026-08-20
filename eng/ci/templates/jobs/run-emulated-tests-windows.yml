@@ -56,10 +56,6 @@ jobs:
         displayName: 'Authenticate Maven to CFS'
         inputs:
           artifactsFeeds: upstream-public
-      - task: NuGetToolInstaller@1
-        inputs:
-          checkLatest: true
-        displayName: 'Install NuGet Tool'
       - pwsh: |
           Get-Command mvn
         displayName: 'Check Maven is installed'
@@ -105,7 +101,8 @@ jobs:
             Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
           }
           Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
-          .\package-pipeline.ps1 -buildNumber $buildNumber
+          # -skipNuget: these tests consume the worker from target/, never the .nupkg.
+          .\package-pipeline.ps1 -buildNumber $buildNumber -skipNuget
         displayName: 'Executing build script'
       - pwsh: |
           ./eng/scripts/Export-JavaCacerts.ps1 -OutputPath "./emulatedtests/confluent_cloud_cacert.pem"
