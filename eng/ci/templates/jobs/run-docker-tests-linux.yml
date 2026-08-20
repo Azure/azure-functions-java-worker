@@ -17,6 +17,9 @@ jobs:
 
     strategy:
       maxParallel: 4
+      # JDK vendors mirror production and the emulated jobs: Temurin for 8, Microsoft OpenJDK
+      # from 11 up. The previous PreInstalled lookup resolved to the agent image's Temurin for
+      # every version, so 11+ silently diverged from what we ship.
       matrix:
         Java-8:
           javaVersion: '8'
