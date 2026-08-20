@@ -9,22 +9,41 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-22.04
+      image: 1es-ubuntu-24.04-min
       os: linux
+
+    variables:
+      - template: ../java-versions.yml
 
     strategy:
       maxParallel: 4
       matrix:
         Java-8:
           javaVersion: '8'
+          JDK_DOWNLOAD_LINK: 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u$(JDK8_LINUX_VERSION)-b$(JDK8_LINUX_BUILD)/OpenJDK8U-jdk_x64_linux_hotspot_8u$(JDK8_LINUX_VERSION)b$(JDK8_LINUX_BUILD).tar.gz'
+          JAVA_VERSION: 'OpenJDK8U-jdk_x64_linux_hotspot_8u$(JDK8_LINUX_VERSION)b$(JDK8_LINUX_BUILD)'
         Java-11:
           javaVersion: '11'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK11_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK11_LINUX_VERSION)-linux-x64'
         Java-17:
           javaVersion: '17'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK17_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK17_LINUX_VERSION)-linux-x64'
         Java-21:
           javaVersion: '21'
+          JDK_DOWNLOAD_LINK: 'https://aka.ms/download-jdk/microsoft-jdk-$(JDK21_LINUX_VERSION)-linux-x64.tar.gz'
+          JAVA_VERSION: 'microsoft-jdk-$(JDK21_LINUX_VERSION)-linux-x64'
 
     steps:
+      # The -min image ships no Maven. squashfs-tools backs the packaging in build-apps.ps1, and
+      # python3-venv provides the venv module the pip steps below rely on.
+      - bash: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y maven squashfs-tools python3-venv
+        displayName: 'Install build tools'
+
       # Maven resolves plugins and extensions before a pom's repositories are honored. Install the
       # mirror before MavenAuthenticate@0, which adds credentials to the same settings file.
       - pwsh: |
@@ -37,26 +56,6 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          echo "=== disk BEFORE cleanup ==="
-          df -h /
-          echo "=== freeing space (toolsets this job does not use) ==="
-          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift \
-                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/PyPy 2>/dev/null || true
-          sudo apt-get clean || true
-          echo "=== disk AFTER cleanup ==="
-          df -h /
-        displayName: 'Free up disk space'
-
-      # build-apps.ps1 packages the test apps with mksquashfs. Provide it on the agent so the
-      # script does not fall back to pulling an image from Docker Hub, which CI cannot reach.
-      - bash: |
-          set -e
-          sudo apt-get update
-          sudo apt-get install -y squashfs-tools
-          mksquashfs -version | head -1
-        displayName: 'Install squashfs-tools'
-
-      - bash: |
           mvn --version
         displayName: 'Check Maven is installed'
 
@@ -64,18 +63,31 @@ jobs:
           java -version
         displayName: 'Check default java version'
 
-      - task: JavaToolInstaller@0
+      - pwsh: | # Download JDK for later installation
+          Invoke-WebRequest $(JDK_DOWNLOAD_LINK) -OutFile "$(JAVA_VERSION).tar.gz"
+          $current = get-location | select -ExpandProperty Path
+          Write-Host "##vso[task.setvariable variable=downloadPath;]$current"
+        displayName: 'Download jdk for Linux'
+
+      - task: JavaToolInstaller@0 # Install the JDK downloaded above; -min has no preinstalled JDKs
         displayName: 'Install Java $(javaVersion)'
         inputs:
           versionSpec: '$(javaVersion)'
           jdkArchitectureOption: 'x64'
-          jdkSourceOption: 'PreInstalled'
+          jdkSourceOption: LocalDirectory
+          jdkFile: "$(downloadPath)/$(JAVA_VERSION).tar.gz"
+          jdkDestinationDirectory: "$(downloadPath)/externals"
+          cleanDestinationDirectory: true
 
-      - task: UsePythonVersion@0
-        displayName: 'Use Python 3.11'
-        inputs:
-          versionSpec: '3.11'
-          addToPath: true
+      # -min carries no Python in the tool cache, so UsePythonVersion cannot resolve one. The
+      # system python3 satisfies the test kit (requires-python >= 3.8); install into a venv so
+      # pip is not refused by PEP 668 on the externally managed system interpreter.
+      - bash: |
+          set -e
+          python3 -m venv "$(Agent.TempDirectory)/venv"
+          echo "##vso[task.prependpath]$(Agent.TempDirectory)/venv/bin"
+          python3 --version
+        displayName: 'Create Python virtual environment'
 
       - task: PipAuthenticate@1
         displayName: 'Authenticate pip to CFS'
