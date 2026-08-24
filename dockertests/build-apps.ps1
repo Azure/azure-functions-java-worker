@@ -125,30 +125,39 @@ foreach ($appDir in $appDirs) {
         Write-Host "[INFO] Source: $functionAppPath" -ForegroundColor Gray
         Write-Host "[INFO] Output: $packagePath" -ForegroundColor Gray
         
-        # Create squashfs package using Docker
-        # Use Ubuntu image and install squashfs-tools on the fly
-        # Mount both source and destination directories
-        $dockerArgs = @(
-            "run"
-            "--rm"
-            "-v"
-            "${functionAppPath}:/source"
-            "-v"
-            "${packageDir}:/output"
-            "ubuntu:22.04"
-            "bash"
-            "-c"
-            "apt-get update -qq && apt-get install -y -qq squashfs-tools > /dev/null 2>&1 && mksquashfs /source /output/$packageFileName -noappend -comp gzip"
-        )
+        # Prefer mksquashfs on the host. The CI agents cannot reach Docker Hub, and running the
+        # tool directly also avoids an apt-get from inside the container.
+        $mksquashfs = Get-Command mksquashfs -ErrorAction SilentlyContinue
+
+        if ($mksquashfs) {
+            Write-Host "[INFO] Creating squashfs package with mksquashfs..." -ForegroundColor DarkGray
+            $packageOutput = & mksquashfs $functionAppPath $packagePath -noappend -comp gzip 2>&1
+            $packageExitCode = $LASTEXITCODE
+        }
+        else {
+            # Fallback for machines without squashfs-tools (e.g. Windows dev boxes). Uses the MCR
+            # mirror because Docker Hub is not reachable from CI.
+            Write-Host "[INFO] mksquashfs not found; falling back to Docker..." -ForegroundColor DarkGray
+            $dockerArgs = @(
+                "run"
+                "--rm"
+                "-v"
+                "${functionAppPath}:/source"
+                "-v"
+                "${packageDir}:/output"
+                "mcr.microsoft.com/mirror/docker/library/ubuntu:22.04"
+                "bash"
+                "-c"
+                "apt-get update -qq && apt-get install -y -qq squashfs-tools > /dev/null 2>&1 && mksquashfs /source /output/$packageFileName -noappend -comp gzip"
+            )
+
+            $packageOutput = & docker @dockerArgs 2>&1
+            $packageExitCode = $LASTEXITCODE
+        }
         
-        Write-Host "[INFO] Running Docker container to create squashfs package..." -ForegroundColor DarkGray
-        
-        $dockerOutput = & docker @dockerArgs 2>&1
-        $dockerExitCode = $LASTEXITCODE
-        
-        if ($dockerExitCode -ne 0) {
+        if ($packageExitCode -ne 0) {
             Write-Host "[ERROR] Failed to create squashfs package for $appName" -ForegroundColor Red
-            Write-Host $dockerOutput -ForegroundColor DarkGray
+            Write-Host $packageOutput -ForegroundColor DarkGray
             $failCount++
             continue
         }

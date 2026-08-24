@@ -9,7 +9,7 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      image: 1es-ubuntu-22.04
+      image: 1es-ubuntu-24.04-min
       os: linux
 
     variables:
@@ -45,6 +45,16 @@ jobs:
           JAVA_VERSION_SPEC: '25'
 
     steps:
+      # The -min image ships no Maven and no Node, so install them up front.
+      - bash: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y maven
+        displayName: 'Install Maven'
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '20.x'
+        displayName: 'Install Node.js'
       # Maven resolves plugins and extensions before a pom's repositories are honored. Install the
       # mirror before MavenAuthenticate@0, which adds credentials to the same settings file.
       - pwsh: |
@@ -57,31 +67,11 @@ jobs:
         inputs:
           artifactsFeeds: upstream-public
       - bash: |
-          echo "=== disk BEFORE cleanup ==="
           df -h /
-          echo "=== top consumers on / (baseline) ==="
-          sudo du -xh --max-depth=2 / 2>/dev/null | sort -rh | head -20 || true
-          echo "=== freeing space (toolsets this job does not use) ==="
-          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift \
-                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/PyPy 2>/dev/null || true
-          docker image prune -af || true
-          sudo apt-get clean || true
-          echo "=== disk AFTER cleanup ==="
-          df -h /
-        displayName: 'Free up disk space'
-      - task: NuGetToolInstaller@1
-        inputs:
-          checkLatest: true
-        displayName: 'Install NuGet Tool'
+        displayName: 'Report disk space'
       - pwsh: |
           Get-Command mvn
         displayName: 'Check Maven is installed'
-      - task: JavaToolInstaller@0 # This step is necessary as Linux image has Java 11 as default
-        inputs:
-          versionSpec: '8'
-          jdkArchitectureOption: 'x64'
-          jdkSourceOption: 'PreInstalled'
-        displayName: 'Setup Java for Linux'
       - pwsh: |
           java -version
         displayName: 'Check default java version'
@@ -124,7 +114,9 @@ jobs:
             Write-Host "git tag not found. Setting package suffix to '$buildNumber'"
           }
           Write-Host "##vso[task.setvariable variable=buildNumber;isOutput=true;]$buildNumber"
-          .\package-pipeline.ps1 -buildNumber $buildNumber
+          # -skipNuget: these tests consume the worker from target/, never the .nupkg, and the
+          # nuget CLI needs mono, which the -min image does not ship.
+          .\package-pipeline.ps1 -buildNumber $buildNumber -skipNuget
         displayName: 'Executing build script'
       - pwsh: |
           ./eng/scripts/Export-JavaCacerts.ps1 -OutputPath "./emulatedtests/confluent_cloud_cacert.pem"
