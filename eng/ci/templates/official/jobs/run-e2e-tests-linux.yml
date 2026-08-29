@@ -146,5 +146,6 @@ jobs:
           ApplicationInsightAPIKey: $(ApplicationInsightAPIKey)
           ApplicationInsightAPPID: $(ApplicationInsightAPPID)
           ApplicationInsightAgentVersion: $(ApplicationInsightAgentVersion)
+          AzureWebJobsMySqlConnectionString: $(AzureWebJobsMySqlConnectionString)
         displayName: 'Build & Run tests'
         continueOnError: false
