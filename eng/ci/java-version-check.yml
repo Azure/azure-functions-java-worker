@@ -156,34 +156,37 @@ extends:
             BOT_BRANCH="automated/update-java-versions"
             echo "##vso[task.setvariable variable=BotBranch]$BOT_BRANCH"
 
-            if git diff --quiet -- "$VERSIONS_FILE"; then
-              echo "No changes versus dev. Nothing to do."
-              echo "##vso[task.setvariable variable=HasChanges]false"
-              exit 0
-            fi
-
-            echo "Changes versus dev:"
-            git --no-pager diff -- "$VERSIONS_FILE"
-            echo "##vso[task.setvariable variable=HasChanges]true"
-
-            # Record whether the bot branch already carries these exact versions.
-            # If it does and its PR is still open, the next step skips the push so we
-            # don't re-run CI and churn the PR every week for identical content.
+            HAS_CHANGES=true
             BRANCH_UP_TO_DATE=false
             BOT_REMOTE_SHA=""
-            if git fetch --quiet origin "+refs/heads/${BOT_BRANCH}:refs/remotes/origin/${BOT_BRANCH}"; then
-              BOT_REMOTE_SHA=$(git rev-parse "refs/remotes/origin/${BOT_BRANCH}" 2>/dev/null || true)
-              if git show "origin/${BOT_BRANCH}:${VERSIONS_FILE}" > /tmp/bot-branch-versions.yml 2>/dev/null \
-                 && cmp -s /tmp/bot-branch-versions.yml "$VERSIONS_FILE"; then
-                BRANCH_UP_TO_DATE=true
-                echo "origin/${BOT_BRANCH} already carries these versions."
-              else
-                echo "origin/${BOT_BRANCH} exists with different versions and will be refreshed."
-              fi
+
+            if git diff --quiet -- "$VERSIONS_FILE"; then
+              # Still hand off to the next step rather than exiting: an open PR may
+              # need a nudge even on a week when nothing new has shipped.
+              echo "No changes versus dev."
+              HAS_CHANGES=false
             else
-              echo "origin/${BOT_BRANCH} does not exist yet and will be created."
+              echo "Changes versus dev:"
+              git --no-pager diff -- "$VERSIONS_FILE"
+
+              # Record whether the bot branch already carries these exact versions.
+              # If it does and its PR is still open, the next step skips the push so we
+              # don't re-run CI and churn the PR every week for identical content.
+              if git fetch --quiet origin "+refs/heads/${BOT_BRANCH}:refs/remotes/origin/${BOT_BRANCH}"; then
+                BOT_REMOTE_SHA=$(git rev-parse "refs/remotes/origin/${BOT_BRANCH}" 2>/dev/null || true)
+                if git show "origin/${BOT_BRANCH}:${VERSIONS_FILE}" > /tmp/bot-branch-versions.yml 2>/dev/null \
+                   && cmp -s /tmp/bot-branch-versions.yml "$VERSIONS_FILE"; then
+                  BRANCH_UP_TO_DATE=true
+                  echo "origin/${BOT_BRANCH} already carries these versions."
+                else
+                  echo "origin/${BOT_BRANCH} exists with different versions and will be refreshed."
+                fi
+              else
+                echo "origin/${BOT_BRANCH} does not exist yet and will be created."
+              fi
             fi
 
+            echo "##vso[task.setvariable variable=HasChanges]$HAS_CHANGES"
             echo "##vso[task.setvariable variable=BranchUpToDate]$BRANCH_UP_TO_DATE"
             echo "##vso[task.setvariable variable=BotRemoteSha]$BOT_REMOTE_SHA"
           displayName: 'Check for changes'
@@ -192,6 +195,7 @@ extends:
             set -euo pipefail
 
             BOT_BRANCH="$(BotBranch)"
+            HAS_CHANGES="$(HasChanges)"
             BRANCH_UP_TO_DATE="$(BranchUpToDate)"
             BOT_REMOTE_SHA="$(BotRemoteSha)"
             GITHUB_REPO="Azure/azure-functions-java-worker"
@@ -247,8 +251,51 @@ extends:
             fi
             PR_NUMBER=$("$PY" -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["number"] if d else "")' < /tmp/gh_response.json)
 
+            # How long the PR has been sitting, so the nudge can say something useful.
+            # Embedded python has to stay on one line: a YAML block scalar cannot hold
+            # continuation lines at column zero, and python rejects them indented.
+            pr_age_days() {
+              gh_api GET "/repos/${GITHUB_REPO}/pulls/$1" > /dev/null
+              "$PY" -c 'import json,sys,datetime; d=json.load(open(sys.argv[1])); c=datetime.datetime.fromisoformat(d["created_at"].replace("Z","+00:00")); print((datetime.datetime.now(datetime.timezone.utc)-c).days)' /tmp/gh_response.json
+            }
+
+            # Comments on the PR, tagging whoever is currently requested for review.
+            # The list is read from the API rather than hardcoded so it follows
+            # CODEOWNERS instead of drifting from it.
+            nudge_reviewers() {
+              local pr_number="$1"
+              local message="$2"
+              local mentions=""
+
+              gh_api GET "/repos/${GITHUB_REPO}/pulls/${pr_number}/requested_reviewers"
+              if [ "$HTTP_CODE" = "200" ]; then
+                mentions=$("$PY" -c 'import json,sys; d=json.load(open(sys.argv[1])); print(" ".join(["@"+u["login"] for u in d.get("users",[])] + ["@"+t["slug"] for t in d.get("teams",[])]))' /tmp/gh_response.json)
+              else
+                echo "WARNING: Could not read requested reviewers (HTTP $HTTP_CODE), commenting without mentions"
+              fi
+
+              gh_api POST "/repos/${GITHUB_REPO}/issues/${pr_number}/comments" \
+                -d "$(json_obj "body=${mentions:+$mentions }$message")"
+              if [ "$HTTP_CODE" = "201" ]; then
+                echo "Nudged reviewers on PR #${pr_number}"
+              else
+                echo "WARNING: Could not comment on PR #${pr_number} (HTTP $HTTP_CODE)"
+              fi
+            }
+
+            if [ "$HAS_CHANGES" != "true" ]; then
+              if [ -n "$PR_NUMBER" ]; then
+                # dev already carries these versions, so the open PR is stale.
+                nudge_reviewers "$PR_NUMBER" "This PR has been open for $(pr_age_days "$PR_NUMBER") days, and \`dev\` already carries these Java versions, so it looks redundant. Please review, merge, or close it."
+              else
+                echo "No changes and no open PR. Nothing to do."
+              fi
+              exit 0
+            fi
+
             if [ -n "$PR_NUMBER" ] && [ "$BRANCH_UP_TO_DATE" = "true" ]; then
-              echo "PR #${PR_NUMBER} is already open with these exact versions. Nothing to do."
+              echo "PR #${PR_NUMBER} is already open with these exact versions."
+              nudge_reviewers "$PR_NUMBER" "This PR has been open for $(pr_age_days "$PR_NUMBER") days and still carries the latest JDK releases. Please review and merge it so the weekly check can move on."
               echo "https://github.com/${GITHUB_REPO}/pull/${PR_NUMBER}"
               exit 0
             fi
@@ -317,7 +364,7 @@ extends:
               fi
 
               COMMENT="Refreshed with newer JDK releases detected on ${CURRENT_DATE} by pipeline run ${BUILD_NUM}."
-              gh_api POST "/repos/${GITHUB_REPO}/issues/${PR_NUMBER}/comments" -d "$(json_obj "body=$COMMENT")"
+              nudge_reviewers "$PR_NUMBER" "$COMMENT"
             else
               echo "Creating pull request on GitHub..."
               gh_api POST "/repos/${GITHUB_REPO}/pulls" \
@@ -371,6 +418,7 @@ extends:
             echo "Done. PR #${PR_NUMBER}"
             echo "https://github.com/${GITHUB_REPO}/pull/${PR_NUMBER}"
           displayName: 'Create or refresh Pull Request on GitHub'
-          condition: eq(variables['HasChanges'], 'true')
+          # No HasChanges condition: the step also runs on quiet weeks so it can
+          # nudge reviewers on a PR that is still sitting open.
           env:
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
