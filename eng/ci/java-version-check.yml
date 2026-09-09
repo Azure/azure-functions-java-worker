@@ -170,7 +170,9 @@ extends:
             # If it does and its PR is still open, the next step skips the push so we
             # don't re-run CI and churn the PR every week for identical content.
             BRANCH_UP_TO_DATE=false
+            BOT_REMOTE_SHA=""
             if git fetch --quiet origin "+refs/heads/${BOT_BRANCH}:refs/remotes/origin/${BOT_BRANCH}"; then
+              BOT_REMOTE_SHA=$(git rev-parse "refs/remotes/origin/${BOT_BRANCH}" 2>/dev/null || true)
               if git show "origin/${BOT_BRANCH}:${VERSIONS_FILE}" > /tmp/bot-branch-versions.yml 2>/dev/null \
                  && cmp -s /tmp/bot-branch-versions.yml "$VERSIONS_FILE"; then
                 BRANCH_UP_TO_DATE=true
@@ -183,6 +185,7 @@ extends:
             fi
 
             echo "##vso[task.setvariable variable=BranchUpToDate]$BRANCH_UP_TO_DATE"
+            echo "##vso[task.setvariable variable=BotRemoteSha]$BOT_REMOTE_SHA"
           displayName: 'Check for changes'
         
         - bash: |
@@ -190,6 +193,7 @@ extends:
 
             BOT_BRANCH="$(BotBranch)"
             BRANCH_UP_TO_DATE="$(BranchUpToDate)"
+            BOT_REMOTE_SHA="$(BotRemoteSha)"
             GITHUB_REPO="Azure/azure-functions-java-worker"
             VERSIONS_FILE="eng/ci/templates/java-versions.yml"
             LABEL="automation:java-versions"
@@ -261,10 +265,12 @@ extends:
 
             Pipeline Run: ${BUILD_NUM}"
 
-            # The bot owns this branch exclusively; --force-with-lease still guards
-            # against clobbering anything pushed since the fetch above.
-            if git rev-parse --verify --quiet "refs/remotes/origin/${BOT_BRANCH}" > /dev/null; then
-              git push --force-with-lease origin "$BOT_BRANCH"
+            # The bot owns this branch exclusively, but the lease still guards against
+            # clobbering anything pushed since the fetch above. It has to name the
+            # expected SHA explicitly, because the bare --force-with-lease form fails
+            # with "stale info" unless the remote's fetch refspec maps the bot branch.
+            if [ -n "$BOT_REMOTE_SHA" ]; then
+              git push --force-with-lease="${BOT_BRANCH}:${BOT_REMOTE_SHA}" origin "$BOT_BRANCH"
             else
               git push origin "$BOT_BRANCH"
             fi
