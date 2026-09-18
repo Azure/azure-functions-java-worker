@@ -74,8 +74,11 @@ def get_version_from_url(url):
             print(f"  Redirect URL: {final_url}")
             
             # Extract version from URL like: microsoft-jdk-11.0.26-linux-x64.tar.gz
-            # or: microsoft-jdk-21.0.6+7.1-windows-x64.zip
-            pattern = r'microsoft-jdk-(\d+\.\d+\.\d+)'
+            # Microsoft OpenJDK publishes three, four and five component versions
+            # (11.0.32, 21.0.12.1, 11.0.13.8.1), so capture every dotted component.
+            # Stopping at three pins the older three component build, which still
+            # downloads successfully, so the truncation would ship silently.
+            pattern = r'microsoft-jdk-(\d+(?:\.\d+)+)'
             match = re.search(pattern, final_url)
             
             if match:
