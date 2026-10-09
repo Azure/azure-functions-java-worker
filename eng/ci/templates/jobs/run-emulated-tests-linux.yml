@@ -49,7 +49,8 @@ jobs:
       - bash: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y maven
+          # Allow the agent's unattended upgrades up to five minutes to release dpkg locks.
+          sudo apt-get -o DPkg::Lock::Timeout=300 install -y maven
         displayName: 'Install Maven'
       - task: NodeTool@0
         inputs:

@@ -44,7 +44,8 @@ jobs:
       - bash: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y maven squashfs-tools python3-venv
+          # Allow the agent's unattended upgrades up to five minutes to release dpkg locks.
+          sudo apt-get -o DPkg::Lock::Timeout=300 install -y maven squashfs-tools python3-venv
         displayName: 'Install build tools'
 
       # Maven resolves plugins and extensions before a pom's repositories are honored. Install the

@@ -173,6 +173,13 @@ YAML validation alone does not establish runtime compliance. Check the applied p
 **Start Network Isolation** and the blocked connections and policy violations in
 **Stop Network Isolation** on subsequent pipeline runs.
 
+## Linux CI package setup
+
+The shared emulated-test and Docker-test jobs wait up to 300 seconds for dpkg locks during
+`apt-get install`, allowing the agent's unattended upgrades to finish. Installation still fails if
+the lock remains held after that wait or another error occurs. `apt-get update` is unchanged: its
+separate package-list lock is not covered by `DPkg::Lock::Timeout`.
+
 ## Updating Dependencies and Plugins
 * Update dependencies
 ```
