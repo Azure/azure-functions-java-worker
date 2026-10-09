@@ -150,6 +150,29 @@ And the binary will be built to `"./azure-functions-java-worker/target/azure-fun
 
 If you have updated the core interface (azure-functions-java-core), a `mvn clean install` is required for your test functions app to reference the latest core package.
 
+## Pipeline network isolation
+
+The weekly JDK version check and official build use `DefaultDeny` network isolation while retaining
+the `CFSClean`, `CFSClean2`, and `CFSClean3` policies. Temurin 8 metadata and platform archives come
+from Adoptium's GitHub releases; each archive is pinned to the detected GA release. Microsoft
+OpenJDK version discovery is unchanged.
+
+The official build sets `FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI` to
+`https://cdn-staging.functions.azure.com/public`, the canonical staging CDN hostname, instead of the
+legacy hostname configured in the pipeline UI. This keeps staging bundle coverage under network
+isolation. Changes to the official YAML reach the internal repository through the code-mirror
+pipeline after merging to `dev`.
+
+Both JDK validation jobs run the version-detection regression tests. To run them locally:
+
+```sh
+python -m unittest discover -s eng/scripts/tests -p test_check_java_versions.py
+```
+
+YAML validation alone does not establish runtime compliance. Check the applied policies in
+**Start Network Isolation** and the blocked connections and policy violations in
+**Stop Network Isolation** on subsequent pipeline runs.
+
 ## Updating Dependencies and Plugins
 * Update dependencies
 ```

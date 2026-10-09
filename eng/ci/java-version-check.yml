@@ -24,6 +24,9 @@ variables:
 extends:
   template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
   parameters:
+    settings:
+      networkIsolationPolicy: DefaultDeny,CFSClean,CFSClean2,CFSClean3
+
     pool:
       name: 1es-pool-azfunc-public
       image: 1es-ubuntu-22.04
@@ -65,6 +68,10 @@ extends:
             addToPath: true
         
         - script: |
+            python -m unittest discover -s eng/scripts/tests -p test_check_java_versions.py
+          displayName: 'Test Java version detection'
+
+        - script: |
             python eng/scripts/check-java-versions.py --os linux
           displayName: 'Check and validate Linux Java versions'
           continueOnError: false
@@ -98,6 +105,10 @@ extends:
             versionSpec: '3.11'
             addToPath: true
         
+        - script: |
+            python -m unittest discover -s eng/scripts/tests -p test_check_java_versions.py
+          displayName: 'Test Java version detection'
+
         - script: |
             python eng/scripts/check-java-versions.py --os windows
           displayName: 'Check and validate Windows Java versions'

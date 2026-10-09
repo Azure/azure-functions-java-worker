@@ -36,10 +36,15 @@ variables:
     value: java_worker_official
   - name: codeql.excludePathPatterns
     value: extract/inst
+  - name: FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI
+    value: https://cdn-staging.functions.azure.com/public
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
   parameters:
+    settings:
+      networkIsolationPolicy: DefaultDeny,CFSClean,CFSClean2,CFSClean3
+
     pool:
       name: 1es-pool-azfunc
       image: 1es-windows-2022
