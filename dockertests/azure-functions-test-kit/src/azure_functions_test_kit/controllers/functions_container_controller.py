@@ -13,6 +13,8 @@ import subprocess
 import sys
 import time
 import uuid
+from contextlib import nullcontext
+from tempfile import TemporaryDirectory
 from typing import Dict, Optional
 
 import requests
@@ -27,6 +29,7 @@ _DOCKER_DEFAULT_PATH = "docker"
 _MESH_IMAGE_URL = "https://mcr.microsoft.com/v2/azure-functions/mesh/tags/list"
 _MESH_IMAGE_REPO = "mcr.microsoft.com/azure-functions/mesh"
 _CUSTOM_IMAGE = "CUSTOM_IMAGE"
+_EXTENSION_BUNDLE_SOURCE_URI = "FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI"
 
 
 class FunctionsContainerController:
@@ -147,11 +150,23 @@ class FunctionsContainerController:
         
         run_cmd.append(image)
         
-        print(f"🚀 Spawning container: {' '.join(run_cmd)}")
-        
-        run_process = subprocess.run(args=run_cmd,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE)
+        bundle_source = None if self._override_docker_flags else os.getenv(_EXTENSION_BUNDLE_SOURCE_URI)
+        if bundle_source is not None and ('\n' in bundle_source or '\r' in bundle_source):
+            raise ValueError(f'{_EXTENSION_BUNDLE_SOURCE_URI} must not contain line breaks')
+
+        with TemporaryDirectory(prefix='functions-bundle-source-') if bundle_source is not None \
+                else nullcontext() as config_directory:
+            if bundle_source is not None:
+                # A default env file preserves precedence of caller env files and inline -e flags.
+                env_file = os.path.join(config_directory, 'bundle-source.env')
+                with open(env_file, 'w', encoding='utf-8') as file:
+                    file.write(f'{_EXTENSION_BUNDLE_SOURCE_URI}={bundle_source}\n')
+                run_cmd[2:2] = ['--env-file', env_file]
+
+            print(f"🚀 Spawning container: {' '.join(run_cmd)}")
+            run_process = subprocess.run(args=run_cmd,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE)
 
         if run_process.returncode != 0:
             raise RuntimeError(f'Failed to spawn docker container for {image} '

@@ -60,6 +60,9 @@ FUNCTIONS_TEST_RUNTIME=java                        # Runtime: java, python, etc.
 FUNCTIONS_TEST_RUNTIME_VERSION=21                  # Runtime version (default: 21)
 FUNCTIONS_TEST_HOST_VERSION=4                      # Functions host version (default: 4)
 
+# Optional Functions host configuration
+FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI=https://example.com/bundles
+
 # Test Configuration
 FUNCTIONS_TEST_APPS_DIR=./app-packages            # Directory with app packages (default: ./app-packages)
 FUNCTIONS_TEST_WORKER_DIR=/path/to/worker         # Custom worker directory to mount
@@ -67,6 +70,14 @@ FUNCTIONS_TEST_WORKER_DIR=/path/to/worker         # Custom worker directory to m
 # Retry Configuration: use PYTEST_ADDOPTS or pyproject.toml addopts
 # See "Automatic Test Retries" section above
 ```
+
+When configured, `FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI` is forwarded to the Functions container at
+startup. When absent, the image's bundle source is unchanged. Explicit Docker env files, flags or
+`spawn_container(env=...)` values override the inherited source, and explicit
+`assign_container(env=...)` app settings retain their specialization precedence. Full
+`override_docker_flags=True` continues to leave the container environment entirely caller-owned.
+No other process environment variables are forwarded by this addition. The temporary default env
+file is removed after Docker reads it; line breaks in the inherited URI are rejected.
 
 ## Installation
 
