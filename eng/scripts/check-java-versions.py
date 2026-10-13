@@ -26,14 +26,17 @@ JDK_VERSIONS = [8, 11, 17, 21, 25]
 LINUX_URL_TEMPLATE = "https://aka.ms/download-jdk/microsoft-jdk-{version}-linux-x64.tar.gz"
 WINDOWS_URL_TEMPLATE = "https://aka.ms/download-jdk/microsoft-jdk-{version}-windows-x64.zip"
 
-# Adoptium API for JDK 8
-ADOPTIUM_API_URL = "https://api.adoptium.net/v3/info/release_versions?version=[8,9)&release_type=ga&sort_method=DATE&sort_order=DESC&page_size=1"
-ADOPTIUM_DOWNLOAD_URL_TEMPLATE = "https://api.adoptium.net/v3/binary/latest/8/ga/{os}/x64/jdk/hotspot/normal/eclipse"
+# Adoptium publishes Temurin 8 releases on GitHub, which is covered by DefaultDeny.
+ADOPTIUM_API_URL = "https://api.github.com/repos/adoptium/temurin8-binaries/releases/latest"
+ADOPTIUM_DOWNLOAD_URL_TEMPLATE = (
+    "https://github.com/adoptium/temurin8-binaries/releases/download/"
+    "jdk8u{security}-b{build}/OpenJDK8U-jdk_x64_{os}_hotspot_8u{security}b{build}.{extension}"
+)
 
 
 def get_jdk8_version_from_adoptium():
     """
-    Get the latest JDK 8 version from Adoptium API.
+    Get the latest JDK 8 GA version from Adoptium's GitHub releases.
     Returns tuple: (security_version, build_number) e.g., ('472', '08')
     """
     try:
@@ -43,17 +46,15 @@ def get_jdk8_version_from_adoptium():
         with urlopen(request, timeout=30) as response:
             data = json.loads(response.read().decode('utf-8'))
             
-            if 'versions' in data and len(data['versions']) > 0:
-                version_info = data['versions'][0]
-                security = str(version_info['security'])
-                build = str(version_info['build']).zfill(2)  # Pad to 2 digits
-                semver = version_info['semver']
-                
-                print(f"  Detected version: {semver} (security: {security}, build: {build})")
-                return security, build
-            else:
-                print("  Warning: No version found in Adoptium API response")
-                return None, None
+            tag = data.get('tag_name') if isinstance(data, dict) else None
+            match = re.fullmatch(r'jdk8u(\d+)-b(\d+)', tag) if isinstance(tag, str) else None
+            if not match:
+                raise ValueError(f"Unexpected Temurin 8 release tag: {tag!r}")
+            security, build = match.groups()
+            build = build.zfill(2)
+
+            print(f"  Detected version: {tag} (security: {security}, build: {build})")
+            return security, build
     except (URLError, HTTPError) as e:
         print(f"  Error fetching Adoptium API: {e}")
         return None, None
@@ -203,7 +204,10 @@ def check_jdk_version(jdk_version, os_type):
         
         # Determine download URL
         adoptium_os = 'linux' if os_type == 'linux' else 'windows'
-        url = ADOPTIUM_DOWNLOAD_URL_TEMPLATE.format(os=adoptium_os)
+        extension = 'tar.gz' if os_type == 'linux' else 'zip'
+        url = ADOPTIUM_DOWNLOAD_URL_TEMPLATE.format(
+            security=security, build=build, os=adoptium_os, extension=extension
+        )
         
         # For validation, construct the expected version string
         # Adoptium uses format like "1.8.0_472"
