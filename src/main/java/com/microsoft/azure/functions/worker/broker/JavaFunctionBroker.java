@@ -213,7 +213,8 @@ public class JavaFunctionBroker {
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(),
-				request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
+				request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap(),
+				request.getTraceContext().getBaggageMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(),
 				request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(
