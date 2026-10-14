@@ -1,6 +1,7 @@
 package com.microsoft.azure.functions.endtoend;
 
 import com.microsoft.azure.functions.annotation.*;
+import com.microsoft.azure.eventhubs.EventData;
 import com.microsoft.azure.functions.*;
 import java.util.*;
 
@@ -23,15 +24,14 @@ public class EventHubTriggerTests {
 
     @FunctionName("EventHubTriggerAndOutputString")
     public void EventHubTriggerAndOutputString(
-        @EventHubTrigger(name = "messages", eventHubName = "test-input-java", connection = "AzureWebJobsEventHubSender", dataType = "string", cardinality = Cardinality.MANY) String[] messages,
+        @EventHubTrigger(name = "messages", eventHubName = "test-input-java", connection = "AzureWebJobsEventHubSender", dataType = "string", cardinality = Cardinality.MANY) EventData[] messages,
         @BindingName("SystemPropertiesArray") SystemProperty[] systemPropertiesArray,
         @EventHubOutput(name = "output", eventHubName = "test-output-java", connection = "AzureWebJobsEventHubSender") OutputBinding<String> output,
         final ExecutionContext context
     ) {
         context.getLogger().info("Java Event Hub trigger received " + messages.length +" messages");
         context.getLogger().info("SystemProperties for message[0]: EnqueuedTimeUtc=" + systemPropertiesArray[0].EnqueuedTimeUtc +" Offset=" +systemPropertiesArray[0].Offset);
-        output.setValue(messages[0]);
-        
+        context.getLogger().info("SystemProperties from EventData message[0]: EnqueuedTimeUtc=" + messages[0].getSystemProperties().getEnqueuedTime() +" Offset=" +systemPropertiesArray[0].Offset);
     }
 
     @FunctionName("EventHubTriggerCardinalityOne")
