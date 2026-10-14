@@ -187,9 +187,10 @@ public class JavaFunctionBroker {
 		return functionExecutionMiddleware;
 	}
 
-	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
+	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs,
+			Map<String, String> traceContextAttributes)
 			throws Exception {
-		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
+		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request, traceContextAttributes);
 
 		if (isJavaSdkTypesEnabled()) {
 			this.functionFactories.get(id).create().doNext(executionContextDataSource);
@@ -201,7 +202,8 @@ public class JavaFunctionBroker {
 		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
-	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
+	private ExecutionContextDataSource buildExecutionContext(String id, InvocationRequest request,
+			Map<String, String> traceContextAttributes)
 			throws NoSuchMethodException {
 		ImmutablePair<String, FunctionDefinition> methodEntry = this.methods.get(id);
 		FunctionDefinition functionDefinition = methodEntry.right;
@@ -213,7 +215,7 @@ public class JavaFunctionBroker {
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
 		dataStore.addParameterSources(request.getInputDataList());
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(),
-				request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
+				request.getTraceContext().getTraceState(), traceContextAttributes);
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(),
 				request.getRetryContext().getMaxRetryCount(), request.getRetryContext().getException());
 		ExecutionContextDataSource executionContextDataSource = new ExecutionContextDataSource(
