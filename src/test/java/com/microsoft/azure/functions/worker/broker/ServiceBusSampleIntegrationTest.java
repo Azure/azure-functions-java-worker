@@ -119,8 +119,10 @@ class ServiceBusSampleIntegrationTest {
         JsonObject trigger = metadata.getAsJsonArray("bindings").get(0).getAsJsonObject();
         assertEquals("serviceBusTrigger", trigger.get("type").getAsString());
         assertEquals(bindingName, trigger.get("name").getAsString());
-        assertTrue(trigger.has("supportsDeferredBinding"), function + " must request raw SDK envelopes");
-        assertTrue(trigger.get("supportsDeferredBinding").getAsBoolean());
+        assertTrue(trigger.has("properties"), function + " must request raw SDK envelopes");
+        JsonObject properties = trigger.getAsJsonObject("properties");
+        assertTrue(properties.has("supportsDeferredBinding"), function + " must request raw SDK envelopes");
+        assertTrue(properties.get("supportsDeferredBinding").getAsBoolean());
         if (batch) {
             assertEquals("many", trigger.get("cardinality").getAsString().toLowerCase(java.util.Locale.ROOT));
         } else {

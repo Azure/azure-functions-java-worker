@@ -66,7 +66,7 @@ mvn azure-functions:run
 
 After packaging, inspect each generated `function.json` under
 `target\azure-functions\servicebus-sdk-binding`. The manual function must have one
-Service Bus trigger named `message`, `supportsDeferredBinding: true` and
+Service Bus trigger named `message`, `properties.supportsDeferredBinding: "true"` and
 `autoCompleteMessages: false`. It must not have an extra input binding for `actions`.
 The batch trigger must have cardinality `many`.
 
