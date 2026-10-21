@@ -1,6 +1,8 @@
 package com.microsoft.azure.functions.worker.binding;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.microsoft.azure.functions.ExecutionContext;
+import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
@@ -32,9 +35,21 @@ public final class BindingDataStore {
     ///////////////////////// region Input Binding Data
 
     public void addParameterSources(List<ParameterBinding> parameters) {
+        addParameterSources(parameters, null);
+    }
+
+    /**
+     * @param httpRequestBody live HTTP request body exposed to
+     *                        {@code HttpRequestMessage<InputStream>} parameters,
+     *                        or {@code null} when bodies are buffered
+     */
+    public void addParameterSources(List<ParameterBinding> parameters, InputStream httpRequestBody) {
         assert parameters != null;
         for (ParameterBinding parameter : parameters) {
-        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);
+            TypedData data = parameter.getData();
+            DataSource<?> inputValue = data.hasHttp()
+                ? new RpcHttpRequestDataSource(parameter.getName(), data.getHttp(), httpRequestBody)
+                : rpcSourceFromTypedData(parameter.getName(), data);
             this.inputSources.put(parameter.getName(), inputValue);
         }
     }
@@ -94,10 +109,6 @@ public final class BindingDataStore {
         }
     }
 
-    private static DataSource<?> rpcSourceFromParameter(ParameterBinding parameter) {
-        return rpcSourceFromTypedData(parameter.getName(), parameter.getData());
-    }
-
     ///////////////////////// end region Input Binding Data
 
     ///////////////////////// region Output Binding Data
@@ -125,12 +136,43 @@ public final class BindingDataStore {
 		});
     }
 
+    /**
+     * Returns the raw, unserialized response body of the HTTP output target, or
+     * {@code null} if no HTTP output target is registered or its body is null.
+     *
+     * <p>Used by the HTTP proxy path to recover streaming bodies
+     * ({@link java.io.InputStream}, {@code HttpResponseMessage.IOConsumer}) that
+     * cannot be represented in a protobuf {@code TypedData} and must instead be
+     * written directly to the {@code HttpExchange} response stream.</p>
+     */
+    public Object getHttpResponseRawBody() {
+        if (this.promotedTargets == null) {
+            return null;
+        }
+        Map<String, DataTarget> promoted = this.targets.get(this.promotedTargets);
+        if (promoted == null) {
+            return null;
+        }
+        DataTarget returnTarget = promoted.get(RETURN_NAME);
+        if (returnTarget != null && returnTarget.getValue() instanceof HttpResponseMessage) {
+            return ((HttpResponseMessage) returnTarget.getValue()).getBody();
+        }
+        for (DataTarget target : promoted.values()) {
+            if (target.getValue() instanceof HttpResponseMessage) {
+                return ((HttpResponseMessage) target.getValue()).getBody();
+            }
+        }
+        return null;
+    }
+
     public Optional<BindingData> getOrAddDataTarget(UUID outputId, String name, Type target, boolean ignoreDefinition) {
         DataTarget output = null;
         if (this.isDataTargetValid(name, target)) {
             output = this.getTarget(outputId).get(name);
             if (output == null && (this.isDefinitionOutput(name) || ignoreDefinition)) {
-                this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
+                Type valueType = name.equals(RETURN_NAME)
+                    ? target : CoreTypeResolver.getParameterizedActualTypeArgumentsType(target);
+                this.getTarget(outputId).put(name, output = rpcDataTargetFromType(valueType));
             }
         }
         return Optional.ofNullable(output).map(out -> new BindingData(out));
@@ -157,7 +199,8 @@ public final class BindingDataStore {
     }
 
     private static DataTarget rpcDataTargetFromType(Type target) {
-        if (CoreTypeResolver.isHttpResponse(target)) {
+        if ((target instanceof Class<?> || target instanceof ParameterizedType)
+                && CoreTypeResolver.isHttpResponse(target)) {
             return new RpcHttpDataTarget();
         }
         return new RpcUnspecifiedDataTarget();
