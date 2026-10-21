@@ -37,7 +37,11 @@ public class ParameterResolver {
                 Type paramType = param.getType();
                 String paramBindingNameAnnotation = param.getBindingNameAnnotation();
                 Optional<BindingData> argument;
-                if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(paramType, null))) {
+                Optional<BindingData> sdkArgument = executionContextDataSource.getSdkParameterValue(param.getParameter());
+                if (sdkArgument.isPresent()) {
+                    argument = sdkArgument;
+                }
+                else if (OutputBinding.class.isAssignableFrom(TypeUtils.getRawType(paramType, null))) {
                     argument = dataStore.getOrAddDataTarget(invokeInfo.getOutputsId(), paramName, paramType, false);
                 }
                 else if (paramName != null && !paramName.isEmpty()) {

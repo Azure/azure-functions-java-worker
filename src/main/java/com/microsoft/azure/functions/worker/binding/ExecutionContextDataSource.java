@@ -14,6 +14,7 @@ import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,8 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     private final BindingDataStore dataStore;
     private final MethodBindInfo methodBindInfo;
     private final Class<?> containingClass;
+    private final WorkerSdkInvocationContext sdkInvocationContext;
+    private final Map<Parameter, Object> sdkParameterValues = new HashMap<>();
 
     /*
     Key is the name defined on customer function parameters. For ex:
@@ -65,6 +68,15 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
                                       String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
                                       Class<?> containingClass, List<ParameterBinding> parameterBindings, FunctionInstanceInjector functionInstanceInjector,
                                       WorkerObjectCache<CacheKey> workerObjectCache){
+        this(invocationId, traceContext, retryContext, funcname, dataStore, methodBindInfo, containingClass,
+                parameterBindings, functionInstanceInjector, workerObjectCache, null);
+    }
+
+    public ExecutionContextDataSource(String invocationId, TraceContext traceContext, RetryContext retryContext,
+                                      String funcname, BindingDataStore dataStore, MethodBindInfo methodBindInfo,
+                                      Class<?> containingClass, List<ParameterBinding> parameterBindings,
+                                      FunctionInstanceInjector functionInstanceInjector,
+                                      WorkerObjectCache<CacheKey> workerObjectCache, URI hostEndpoint) {
         super(null, null, EXECONTEXT_DATA_OPERATIONS);
         this.invocationId = invocationId;
         this.traceContext = traceContext;
@@ -78,6 +90,7 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
         this.functionInstanceInjector = functionInstanceInjector;
         this.workerObjectCache = workerObjectCache;
+        this.sdkInvocationContext = new WorkerSdkInvocationContext(invocationId, hostEndpoint, parameterBindings);
         this.setValue(this);
     }
 
@@ -98,6 +111,18 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
 
     public BindingDataStore getDataStore() {
         return dataStore;
+    }
+
+    public WorkerSdkInvocationContext getSdkInvocationContext() {
+        return sdkInvocationContext;
+    }
+
+    public void updateSdkParameterValue(Parameter parameter, Object value) {
+        sdkParameterValues.put(parameter, value);
+    }
+
+    public Optional<BindingData> getSdkParameterValue(Parameter parameter) {
+        return Optional.ofNullable(sdkParameterValues.get(parameter)).map(BindingData::new);
     }
 
     public MethodBindInfo getMethodBindInfo() {

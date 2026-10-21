@@ -54,11 +54,20 @@ public class SdkTypeMiddleware implements Middleware {
             ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
-            for (SdkTypeMetaData metaData : this.sdkTypesMetaData) {
-                Parameter param = metaData.getParam();
+            for (SdkTypeMetaData template : this.sdkTypesMetaData) {
+                Parameter param = template.getParam();
                 ParamBindInfo paramBindInfo = new ParamBindInfo(param);
+                SdkTypeMetaData metaData = this.sdkTypeRegistry.createMetaData(template.getFqcn(), param);
+                String sourceName = paramBindInfo.getName();
+                if (sourceName == null || sourceName.isEmpty()) {
+                    sourceName = paramBindInfo.getBindingNameAnnotation();
+                }
+                if (sourceName == null || sourceName.isEmpty()) {
+                    throw new IllegalArgumentException("SDK parameter '" + param.getName()
+                            + "' must declare a binding name or @BindingName");
+                }
 
-                fillMetaData(execCtx, metaData, paramBindInfo.getName());
+                fillMetaData(execCtx, metaData, sourceName);
                 SdkType<?> sdkType = this.sdkTypeRegistry.createSdkType(metaData);
 
                 Object instance = null;
@@ -69,18 +78,21 @@ public class SdkTypeMiddleware implements Middleware {
                             key,
                             () -> {
                                 try {
-                                    return sdkType.buildInstance();
+                                    return sdkType.buildInstance(execCtx.getSdkInvocationContext());
                                 } catch (Exception ex) {
                                     throw new RuntimeException(ex);
                                 }
                             }
                     );
                 } else {
-                    instance = sdkType.buildInstance();
+                    instance = sdkType.buildInstance(execCtx.getSdkInvocationContext());
                 }
 
                 // update in data store
-                execCtx.updateParameterValue(paramBindInfo.getName(), instance);
+                execCtx.updateSdkParameterValue(param, instance);
+                if (paramBindInfo.getName() != null) {
+                    execCtx.updateParameterValue(paramBindInfo.getName(), instance);
+                }
 
                 LOGGER.info("SdkTypeMiddleware: Successfully created instance for param "
                         + param.getName() + " of type " + param.getType());

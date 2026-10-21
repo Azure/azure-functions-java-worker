@@ -150,6 +150,34 @@ And the binary will be built to `"./azure-functions-java-worker/target/azure-fun
 
 If you have updated the core interface (azure-functions-java-core), a `mvn clean install` is required for your test functions app to reference the latest core package.
 
+## Service Bus SDK bindings
+
+The worker preserves single and batched `ModelBindingData` envelopes, including their binary
+content, for SDK hydrators. It does not decode AMQP, create Service Bus receivers, or implement
+settlement RPCs. Those operations belong to the optional
+`azure-functions-java-servicebus` module in
+[azure-functions-java-additions](https://github.com/Azure/azure-functions-java-additions).
+
+SDK hydrators share one invocation context containing the invocation ID, ordered raw envelopes
+by binding name, and the Functions host endpoint from `--functions-uri` or `--host` and `--port`.
+The context stays active through all middleware and becomes inactive in a `finally` block.
+Invocation resources registered by SDK hydrators are then closed once, in reverse registration
+order. Cleanup preserves the invocation failure and attaches cleanup failures as suppressed
+exceptions. Shared transport channels are not invocation resources.
+Message hydration does not require an endpoint. Manual settlement requires the host endpoint
+and must report a missing endpoint explicitly rather than falling back to a separate receiver.
+Companion actions use `@BindingName` to refer to the Service Bus trigger and do not create
+another host input binding.
+
+This branch requires the matching SPI `1.2.0-SNAPSHOT` and SDK types `1.1.0-SNAPSHOT` from
+the additions repository. These are development coordinates, not published release guarantees.
+Install those projects locally before building this worker. Plain body bindings and
+`JAVA_ENABLE_SDK_TYPES=false` keep their existing behavior. Blob SDK clients retain required
+string metadata hydration and worker caching.
+
+See the [native message and manual settlement sample](samples/servicebus-sdk-binding/README.md)
+for the coordinated package prerequisites and local host verification steps.
+
 ## Pipeline network isolation
 
 The weekly JDK version check and official build use `DefaultDeny` network isolation while retaining
