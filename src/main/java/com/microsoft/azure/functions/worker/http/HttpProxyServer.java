@@ -5,8 +5,10 @@ import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import com.microsoft.azure.functions.worker.WorkerLogManager;
@@ -32,34 +34,58 @@ public final class HttpProxyServer implements AutoCloseable {
     private static final long SERVER_STOP_SECONDS = 5L;
 
     private final ProxyConfig config;
+    private final HttpInvocationCoordinator coordinator;
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     private HttpServer server;
     private ExecutorService executor;
     private String boundUri;
 
-    public HttpProxyServer(ProxyConfig config) {
+    public HttpProxyServer(ProxyConfig config, HttpInvocationCoordinator coordinator) {
         this.config = Objects.requireNonNull(config, "config");
+        this.coordinator = Objects.requireNonNull(coordinator, "coordinator");
+    }
+
+    /** Coordinator that correlates proxied HTTP requests with gRPC invocations. */
+    public HttpInvocationCoordinator coordinator() {
+        return coordinator;
     }
 
     /**
-     * Binds the server, attaches {@code rootHandler} to {@code "/"}, and starts
-     * serving requests. Returns the absolute {@code http://host:port} URI that
-     * should be advertised to the Functions host via the {@code HttpUri}
-     * capability.
+     * Returns {@code true} once the server is bound and serving. Invocations
+     * may only expect a proxied HTTP request while this is {@code true}.
+     */
+    public boolean isRunning() {
+        return started.get();
+    }
+
+    /**
+     * Starts serving requests with an {@link HttpProxyHandler} bound to this
+     * server's coordinator. Returns the absolute {@code http://host:port} URI
+     * to advertise to the Functions host via the {@code HttpUri} capability.
      *
      * @throws IllegalStateException if start has already been called
      * @throws IOException           if the server cannot bind
      */
-    public synchronized String start(HttpHandler rootHandler) throws IOException {
+    public String start() throws IOException {
+        return start(new HttpProxyHandler(coordinator));
+    }
+
+    /** Visible for tests that need to substitute the root handler. */
+    synchronized String start(HttpHandler rootHandler) throws IOException {
         Objects.requireNonNull(rootHandler, "rootHandler");
         if (!started.compareAndSet(false, true)) {
             throw new IllegalStateException("HttpProxyServer already started");
         }
         InetSocketAddress bindAddress = new InetSocketAddress(
             config.getBindAddress(), config.getBindPort());
-        // Backlog 0 → JDK default.
-        this.server = HttpServer.create(bindAddress, 0);
+        try {
+            // Backlog 0 → JDK default.
+            this.server = HttpServer.create(bindAddress, 0);
+        } catch (IOException ex) {
+            started.set(false);
+            throw ex;
+        }
         this.executor = Executors.newCachedThreadPool(new ProxyThreadFactory());
         this.server.setExecutor(this.executor);
         this.server.createContext("/", rootHandler);
@@ -113,8 +139,8 @@ public final class HttpProxyServer implements AutoCloseable {
      * Thread factory that names worker threads for diagnostics. Daemon threads
      * so they do not block JVM shutdown if the server is not explicitly closed.
      */
-    private static final class ProxyThreadFactory implements java.util.concurrent.ThreadFactory {
-        private final java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger();
+    private static final class ProxyThreadFactory implements ThreadFactory {
+        private final AtomicInteger counter = new AtomicInteger();
 
         @Override
         public Thread newThread(Runnable r) {

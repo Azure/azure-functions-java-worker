@@ -102,7 +102,7 @@ public class HttpProxyHandlerTest {
         handlerDone.get();
         verify(exchange).sendResponseHeaders(500, captured.size());
         verify(exchange).close();
-        assertTrue(new String(captured.toByteArray()).contains("user fn crashed"));
+        assertEquals("Invocation failed", new String(captured.toByteArray()));
     }
 
     @Test

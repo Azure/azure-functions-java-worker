@@ -1,6 +1,7 @@
 package com.microsoft.azure.functions.worker.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,7 +34,7 @@ public class HttpProxyServerTest {
 
     @Test
     public void startBindsToEphemeralPortAndReturnsUri() throws Exception {
-        server = new HttpProxyServer(ProxyConfig.defaults());
+        server = newServer();
         String uri = server.start(noOpHandler());
         assertNotNull(uri);
         assertTrue(uri.startsWith("http://127.0.0.1:"), "Expected loopback URI, got " + uri);
@@ -44,27 +45,27 @@ public class HttpProxyServerTest {
 
     @Test
     public void getBoundUriReturnsNullBeforeStart() {
-        server = new HttpProxyServer(ProxyConfig.defaults());
+        server = newServer();
         assertNull(server.getBoundUri());
     }
 
     @Test
     public void closeBeforeStartIsNoop() {
-        server = new HttpProxyServer(ProxyConfig.defaults());
+        server = newServer();
         server.close();
         assertNull(server.getBoundUri());
     }
 
     @Test
     public void doubleStartThrows() throws Exception {
-        server = new HttpProxyServer(ProxyConfig.defaults());
+        server = newServer();
         server.start(noOpHandler());
         assertThrows(IllegalStateException.class, () -> server.start(noOpHandler()));
     }
 
     @Test
     public void routesIncomingRequestToHandler() throws Exception {
-        server = new HttpProxyServer(ProxyConfig.defaults());
+        server = newServer();
         AtomicReference<String> seenPath = new AtomicReference<>();
         AtomicReference<String> seenHeader = new AtomicReference<>();
         String uri = server.start(exchange -> {
@@ -95,7 +96,7 @@ public class HttpProxyServerTest {
 
     @Test
     public void closeStopsAcceptingConnections() throws Exception {
-        server = new HttpProxyServer(ProxyConfig.defaults());
+        server = newServer();
         String uri = server.start(noOpHandler());
         server.close();
         server = null;
@@ -104,6 +105,20 @@ public class HttpProxyServerTest {
         conn.setReadTimeout(500);
         // After close, the next connect attempt must fail (connection refused).
         assertThrows(Exception.class, conn::connect);
+    }
+
+    @Test
+    public void isRunningReflectsLifecycle() throws Exception {
+        server = newServer();
+        assertFalse(server.isRunning());
+        server.start();
+        assertTrue(server.isRunning());
+        server.close();
+        assertFalse(server.isRunning());
+    }
+
+    private static HttpProxyServer newServer() {
+        return new HttpProxyServer(ProxyConfig.defaults(), new HttpInvocationCoordinator());
     }
 
     private static HttpHandler noOpHandler() {

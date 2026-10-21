@@ -93,11 +93,11 @@ public class HttpProxyEndToEndTest {
                 .thenReturn(Logger.getAnonymousLogger());
 
         coordinator = new HttpInvocationCoordinator();
-        server = new HttpProxyServer(ProxyConfig.defaults());
-        proxyUri = server.start(new HttpProxyHandler(coordinator));
+        server = new HttpProxyServer(ProxyConfig.defaults(), coordinator);
+        proxyUri = server.start();
         brokerMock = mock(JavaFunctionBroker.class);
         when(brokerMock.getMethodName(anyString())).thenReturn(Optional.of("TestFn"));
-        handler = new InvocationRequestHandler(brokerMock, coordinator);
+        handler = new InvocationRequestHandler(brokerMock, server);
     }
 
     @AfterEach
@@ -116,11 +116,11 @@ public class HttpProxyEndToEndTest {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
 
         AtomicReference<InvocationRequest> seenRequest = new AtomicReference<>();
-        AtomicReference<HttpExchange> seenExchange = new AtomicReference<>();
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        AtomicReference<InputStream> seenBody = new AtomicReference<>();
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenAnswer((InvocationOnMock inv) -> {
                     seenRequest.set(inv.getArgument(1));
-                    seenExchange.set(RpcHttpRequestDataSource.currentExchange());
+                    seenBody.set(inv.getArgument(2));
                     RpcHttp respHttp = RpcHttp.newBuilder()
                             .setStatusCode("200")
                             .putHeaders("Content-Type", "text/plain")
@@ -147,8 +147,7 @@ public class HttpProxyEndToEndTest {
         // (mirrors host PopulateBody behavior).
         TypedData httpInput = seenRequest.get().getInputDataList().get(0).getData();
         assertEquals("ping", httpInput.getHttp().getBody().getString());
-        // For non-streaming requests the per-thread exchange must NOT be set.
-        assertNull(seenExchange.get(), "Buffered-input invocations must not install a thread-local exchange");
+        assertNull(seenBody.get(), "Buffered-input invocations must not receive a streaming request body");
     }
 
     // -------- 2. Buffered request, streaming response (commit #5 path) --------
@@ -157,7 +156,7 @@ public class HttpProxyEndToEndTest {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
 
         byte[] payload = repeat("stream-chunk-", 5000); // ~65KB to force multi-chunk write
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenAnswer((InvocationOnMock inv) -> {
                     RpcHttp envelope = RpcHttp.newBuilder()
                             .setStatusCode("200")
@@ -196,7 +195,7 @@ public class HttpProxyEndToEndTest {
                 out.write(("event: tick\ndata: " + i + "\n\n").getBytes(StandardCharsets.UTF_8));
             }
         };
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenAnswer((InvocationOnMock inv) -> {
                     RpcHttp envelope = RpcHttp.newBuilder()
                             .setStatusCode("200")
@@ -229,16 +228,15 @@ public class HttpProxyEndToEndTest {
         byte[] uploadPayload = repeat("upload-frag-", 4096); // ~50KB
         AtomicReference<byte[]> consumedByBroker = new AtomicReference<>();
         AtomicReference<InvocationRequest> seenRequest = new AtomicReference<>();
-        AtomicReference<HttpExchange> seenExchange = new AtomicReference<>();
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        AtomicReference<InputStream> seenBody = new AtomicReference<>();
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenAnswer((InvocationOnMock inv) -> {
                     seenRequest.set(inv.getArgument(1));
-                    HttpExchange exch = RpcHttpRequestDataSource.currentExchange();
-                    seenExchange.set(exch);
+                    InputStream body = inv.getArgument(2);
+                    seenBody.set(body);
                     // Consume the live request body to validate the streaming path actually wired through.
-                    if (exch != null) {
-                        byte[] consumed = readAll(exch.getRequestBody());
-                        consumedByBroker.set(consumed);
+                    if (body != null) {
+                        consumedByBroker.set(readAll(body));
                     }
                     RpcHttp respHttp = RpcHttp.newBuilder()
                             .setStatusCode("201")
@@ -264,15 +262,11 @@ public class HttpProxyEndToEndTest {
         TypedData httpInput = seenRequest.get().getInputDataList().get(0).getData();
         assertEquals(0, httpInput.getHttp().getBody().getBytes().size(),
                 "Streaming-input request must leave the protobuf body untouched (empty)");
-        assertNotNull(seenExchange.get(), "Streaming-input invocation must install the thread-local exchange");
+        assertNotNull(seenBody.get(), "Streaming-input invocation must receive the live request body");
         // The bytes the broker read off the live exchange must equal what the client sent.
         assertNotNull(consumedByBroker.get());
         assertTrue(java.util.Arrays.equals(uploadPayload, consumedByBroker.get()),
                 "Bytes read from the live exchange must equal the bytes the client sent");
-        // After the invocation completes, the thread-local must be cleared so the
-        // worker thread can be safely reused.
-        assertNull(RpcHttpRequestDataSource.currentExchange(),
-                "InvocationRequestHandler must clear the thread-local exchange in its finally block");
     }
 
     // -------- 5. Full streaming: streaming request + streaming response --------
@@ -282,10 +276,9 @@ public class HttpProxyEndToEndTest {
 
         byte[] uploadPayload = repeat("full-stream-", 1024);
         AtomicReference<byte[]> echoedBack = new AtomicReference<>();
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenAnswer((InvocationOnMock inv) -> {
-                    HttpExchange exch = RpcHttpRequestDataSource.currentExchange();
-                    byte[] consumed = readAll(exch.getRequestBody());
+                    byte[] consumed = readAll(inv.<InputStream>getArgument(2));
                     echoedBack.set(consumed);
                     RpcHttp envelope = RpcHttp.newBuilder()
                             .setStatusCode("200")
@@ -315,7 +308,7 @@ public class HttpProxyEndToEndTest {
     @Test
     public void coordinatorSlotReleasedAfterSuccessfulInvocation() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenAnswer((InvocationOnMock inv) -> {
                     RpcHttp respHttp = RpcHttp.newBuilder()
                             .setStatusCode("204")
@@ -343,7 +336,7 @@ public class HttpProxyEndToEndTest {
     @Test
     public void brokerExceptionPropagatesAsHttp500() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
-        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any()))
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
                 .thenThrow(new RuntimeException("user function blew up"));
 
         CompletableFuture<HttpClientResult> futureResp = sendHttpRequestAsync(
@@ -360,8 +353,8 @@ public class HttpProxyEndToEndTest {
 
         HttpClientResult resp = futureResp.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS);
         assertEquals(500, resp.statusCode);
-        assertTrue(new String(resp.body, StandardCharsets.UTF_8).contains("user function blew up"),
-                "500 body must surface the underlying failure message");
+        assertEquals("Invocation failed", new String(resp.body, StandardCharsets.UTF_8),
+                "500 body must not leak the underlying failure message");
     }
 
     // -------- Helpers --------

@@ -1,18 +1,18 @@
 package com.microsoft.azure.functions.worker.handler;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.*;
 
 import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.worker.*;
-import com.microsoft.azure.functions.worker.binding.RpcHttpRequestDataSource;
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker.HttpInvocationOutcome;
 import com.microsoft.azure.functions.worker.http.HttpBodyBridge;
 import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
-import com.microsoft.azure.functions.worker.http.HttpInvocationSlot;
+import com.microsoft.azure.functions.worker.http.HttpProxyServer;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -21,14 +21,18 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         this(broker, null);
     }
 
-    public InvocationRequestHandler(JavaFunctionBroker broker, HttpInvocationCoordinator httpInvocationCoordinator) {
+    /**
+     * @param httpProxyServer embedded HTTP proxy, or {@code null} when HTTP
+     *                        invocations are carried entirely over gRPC
+     */
+    public InvocationRequestHandler(JavaFunctionBroker broker, HttpProxyServer httpProxyServer) {
         super(StreamingMessage::getInvocationRequest,
               InvocationResponse::newBuilder,
               InvocationResponse.Builder::setResult,
               StreamingMessage.Builder::setInvocationResponse);
         assert broker != null;
         this.broker = broker;
-        this.httpInvocationCoordinator = httpInvocationCoordinator;
+        this.httpProxyServer = httpProxyServer;
         this.invocationLogger = super.getLogger();
     }
 
@@ -44,11 +48,10 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         this.invocationLogger = WorkerLogManager.getInvocationLogger(invocationId);
         response.setInvocationId(invocationId);
 
-        // For HTTP-triggered invocations dispatched via the HttpUri capability, the
-        // gRPC request carries trigger metadata but an empty body. We rendezvous
-        // with the HTTP arrival via the coordinator, fold the body bytes back into
-        // the request, and write the response to the held HttpExchange.
-        if (httpInvocationCoordinator != null && hasHttpInput(request)) {
+        // Once the proxy is serving, the host forwards HTTP triggers to it: the gRPC
+        // request carries trigger metadata but an empty body, and the body and
+        // response travel over the matching HttpExchange.
+        if (httpProxyServer != null && httpProxyServer.isRunning() && hasHttpInput(request)) {
             return executeProxiedHttp(request, response, functionId, invocationId);
         }
 
@@ -64,47 +67,31 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
                                       InvocationResponse.Builder response,
                                       String functionId,
                                       String invocationId) throws Exception {
-        HttpInvocationSlot slot = httpInvocationCoordinator.registerGrpcArrival(request);
-        HttpExchange exchange = null;
-        boolean streamingInput = false;
+        HttpInvocationCoordinator coordinator = httpProxyServer.coordinator();
         try {
-            try {
-                exchange = slot.httpArrival().get();
-            } catch (ExecutionException ex) {
-                Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-                throw asException(cause);
-            }
-            // When the user function declares HttpRequestMessage<InputStream>,
-            // skip the eager body read so the live request stream remains
-            // available, and install the exchange on the per-thread side
-            // channel that RpcHttpRequestDataSource consults at construction
-            // time.
-            streamingInput = broker.methodHasStreamingHttpBody(functionId);
+            HttpExchange exchange = coordinator.slotFor(invocationId).httpArrival().get();
+
+            // A streaming-input function reads the live request body itself, so the
+            // body is not folded into the gRPC request.
+            boolean streamingInput = broker.methodHasStreamingHttpBody(functionId);
             InvocationRequest enriched = streamingInput
                     ? request
                     : HttpBodyBridge.enrichRequestWithBody(request, exchange);
+            InputStream streamingBody = streamingInput ? exchange.getRequestBody() : null;
+
             List<ParameterBinding> outputBindings = new ArrayList<>();
-            HttpInvocationOutcome outcome;
-            if (streamingInput) {
-                RpcHttpRequestDataSource.setCurrentExchange(exchange);
-            }
-            try {
-                outcome = this.broker.invokeMethodForHttpProxy(functionId, enriched, outputBindings);
-            } finally {
-                if (streamingInput) {
-                    RpcHttpRequestDataSource.setCurrentExchange(null);
-                }
-            }
+            HttpInvocationOutcome outcome =
+                    broker.invokeMethodForHttpProxy(functionId, enriched, streamingBody, outputBindings);
             outcome.getReturnValue().ifPresent(response::setReturnValue);
             response.addAllOutputData(outputBindings);
-            RpcHttp httpEnvelope = extractHttpResponse(response, outputBindings);
-            writeHttpResponse(exchange, httpEnvelope, outcome.getRawHttpResponseBody());
-            httpInvocationCoordinator.releaseInvocation(invocationId);
+
+            writeHttpResponse(exchange, extractHttpResponse(response, outputBindings), outcome.getRawHttpResponseBody());
+            coordinator.releaseInvocation(invocationId);
             return String.format("Function \"%s\" (Id: %s) invoked by Java Worker (HTTP proxy)",
                     this.broker.getMethodName(functionId).orElse("UNKNOWN"), invocationId);
-        } catch (Throwable t) {
-            httpInvocationCoordinator.failInvocation(invocationId, t);
-            throw asException(t);
+        } catch (Exception | Error ex) {
+            coordinator.failInvocation(invocationId, ex);
+            throw ex;
         }
     }
 
@@ -115,16 +102,14 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
      * body and streams directly. Otherwise falls back to the buffered path.
      */
     @SuppressWarnings("unchecked")
-    private static void writeHttpResponse(HttpExchange exchange, RpcHttp envelope, Object rawBody) throws Exception {
+    private static void writeHttpResponse(HttpExchange exchange, RpcHttp envelope, Object rawBody) throws IOException {
         if (rawBody instanceof InputStream) {
             HttpBodyBridge.writeStreamingResponse(exchange, envelope, (InputStream) rawBody);
-            return;
+        } else if (rawBody instanceof IOConsumer) {
+            HttpBodyBridge.writeStreamingResponse(exchange, envelope, (IOConsumer<OutputStream>) rawBody);
+        } else {
+            HttpBodyBridge.writeRpcHttpResponse(exchange, envelope);
         }
-        if (rawBody instanceof IOConsumer) {
-            HttpBodyBridge.writeStreamingResponse(exchange, envelope, (IOConsumer<java.io.OutputStream>) rawBody);
-            return;
-        }
-        HttpBodyBridge.writeRpcHttpResponse(exchange, envelope);
     }
 
     private static boolean hasHttpInput(InvocationRequest request) {
@@ -151,17 +136,7 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         return RpcHttp.newBuilder().setStatusCode("200").build();
     }
 
-    private static Exception asException(Throwable t) {
-        if (t instanceof Exception) {
-            return (Exception) t;
-        }
-        if (t instanceof Error) {
-            throw (Error) t;
-        }
-        return new RuntimeException(t);
-    }
-
     private final JavaFunctionBroker broker;
-    private final HttpInvocationCoordinator httpInvocationCoordinator;
+    private final HttpProxyServer httpProxyServer;
     private Logger invocationLogger;
 }

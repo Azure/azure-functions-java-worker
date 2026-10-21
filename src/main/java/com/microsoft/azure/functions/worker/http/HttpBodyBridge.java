@@ -51,9 +51,9 @@ public final class HttpBodyBridge {
      * by the body read from {@code exchange}. If no input parameter holds an
      * {@code RpcHttp} payload, {@code request} is returned unchanged.
      *
-     * <p>The body is read eagerly into memory. Streaming support (InputStream
-     * as a parameter type) is layered on in a later commit and bypasses this
-     * eager read.</p>
+     * <p>The body is read eagerly into memory. Functions that declare
+     * {@code HttpRequestMessage<InputStream>} bypass this method and read the
+     * live request stream instead.</p>
      */
     public static InvocationRequest enrichRequestWithBody(InvocationRequest request, HttpExchange exchange)
             throws IOException {
@@ -86,9 +86,7 @@ public final class HttpBodyBridge {
      */
     public static void writeRpcHttpResponse(HttpExchange exchange, RpcHttp response) throws IOException {
         int status = parseStatus(response.getStatusCode());
-        for (Map.Entry<String, String> header : response.getHeadersMap().entrySet()) {
-            exchange.getResponseHeaders().add(header.getKey(), header.getValue());
-        }
+        applyResponseHeaders(exchange, response);
         byte[] bodyBytes = extractBodyBytes(response.getBody(), response.getHeadersMap());
         if (bodyBytes.length == 0) {
             // -1 == no response body; the response body stream does not need to be opened.

@@ -1,5 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,9 +33,21 @@ public final class BindingDataStore {
     ///////////////////////// region Input Binding Data
 
     public void addParameterSources(List<ParameterBinding> parameters) {
+        addParameterSources(parameters, null);
+    }
+
+    /**
+     * @param httpRequestBody live HTTP request body exposed to
+     *                        {@code HttpRequestMessage<InputStream>} parameters,
+     *                        or {@code null} when bodies are buffered
+     */
+    public void addParameterSources(List<ParameterBinding> parameters, InputStream httpRequestBody) {
         assert parameters != null;
         for (ParameterBinding parameter : parameters) {
-        	DataSource<?> inputValue = rpcSourceFromParameter(parameter);
+            TypedData data = parameter.getData();
+            DataSource<?> inputValue = data.hasHttp()
+                ? new RpcHttpRequestDataSource(parameter.getName(), data.getHttp(), httpRequestBody)
+                : rpcSourceFromTypedData(parameter.getName(), data);
             this.inputSources.put(parameter.getName(), inputValue);
         }
     }
@@ -92,10 +105,6 @@ public final class BindingDataStore {
             case MODEL_BINDING_DATA: return new RpcModelBindingDataSource(name, data.getModelBindingData());
             default:     throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
         }
-    }
-
-    private static DataSource<?> rpcSourceFromParameter(ParameterBinding parameter) {
-        return rpcSourceFromTypedData(parameter.getName(), parameter.getData());
     }
 
     ///////////////////////// end region Input Binding Data

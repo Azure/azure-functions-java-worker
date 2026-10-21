@@ -3,8 +3,6 @@ package com.microsoft.azure.functions.worker.handler;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
-import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
-import com.microsoft.azure.functions.worker.http.HttpProxyHandler;
 import com.microsoft.azure.functions.worker.http.HttpProxyServer;
 
 import java.io.IOException;
@@ -15,19 +13,21 @@ import static com.microsoft.azure.functions.worker.Constants.JAVA_ENABLE_OPENTEL
 
 public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, WorkerInitResponse.Builder> {
     public WorkerInitRequestHandler(JavaFunctionBroker broker) {
-        this(broker, null, null);
+        this(broker, null);
     }
 
-    public WorkerInitRequestHandler(JavaFunctionBroker broker,
-                                    HttpProxyServer httpProxyServer,
-                                    HttpInvocationCoordinator httpInvocationCoordinator) {
+    /**
+     * @param httpProxyServer embedded HTTP proxy to start and advertise via the
+     *                        {@code HttpUri} capability, or {@code null} to
+     *                        keep all HTTP traffic on the gRPC path
+     */
+    public WorkerInitRequestHandler(JavaFunctionBroker broker, HttpProxyServer httpProxyServer) {
         super(StreamingMessage::getWorkerInitRequest,
               WorkerInitResponse::newBuilder,
               WorkerInitResponse.Builder::setResult,
               StreamingMessage.Builder::setWorkerInitResponse);
         this.broker = broker;
         this.httpProxyServer = httpProxyServer;
-        this.httpInvocationCoordinator = httpInvocationCoordinator;
     }
 
     @Override
@@ -56,17 +56,14 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
     }
 
     private void advertiseHttpProxy(WorkerInitResponse.Builder response) {
-        if (httpProxyServer == null || httpInvocationCoordinator == null) {
+        if (httpProxyServer == null) {
             return;
         }
         try {
-            String uri = httpProxyServer.start(new HttpProxyHandler(httpInvocationCoordinator));
-            response.putCapabilities("HttpUri", uri);
+            response.putCapabilities("HttpUri", httpProxyServer.start());
             response.putCapabilities("RequiresRouteParameters", "true");
-            WorkerLogManager.getSystemLogger().log(Level.INFO,
-                "Java worker HTTP proxy listening on " + uri);
         } catch (IOException ex) {
-            // Fall back to gRPC-only path: simply do not advertise HttpUri.
+            // Without the capability the host keeps using the gRPC-only path.
             WorkerLogManager.getSystemLogger().log(Level.WARNING,
                 "Failed to start HTTP proxy server; continuing without HttpUri capability", ex);
         }
@@ -83,5 +80,4 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
 
     private final JavaFunctionBroker broker;
     private final HttpProxyServer httpProxyServer;
-    private final HttpInvocationCoordinator httpInvocationCoordinator;
 }

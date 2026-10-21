@@ -39,8 +39,9 @@ public class JavaWorkerClient implements AutoCloseable {
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
         this.classPathProvider = new FactoryClassLoader().createClassLoaderProvider();
-        this.httpInvocationCoordinator = new HttpInvocationCoordinator();
-        this.httpProxyServer = httpProxyEnabled() ? new HttpProxyServer(ProxyConfig.defaults()) : null;
+        this.httpProxyServer = httpProxyEnabled()
+            ? new HttpProxyServer(ProxyConfig.defaults(), new HttpInvocationCoordinator())
+            : null;
 
         this.addHandlers();
     }
@@ -55,12 +56,12 @@ public class JavaWorkerClient implements AutoCloseable {
         JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
 
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST,
-            () -> new WorkerInitRequestHandler(broker, this.httpProxyServer, this.httpInvocationCoordinator));
+            () -> new WorkerInitRequestHandler(broker, this.httpProxyServer));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_WARMUP_REQUEST, WorkerWarmupHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_ENVIRONMENT_RELOAD_REQUEST, () -> new FunctionEnvironmentReloadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.INVOCATION_REQUEST,
-            () -> new InvocationRequestHandler(broker, this.httpInvocationCoordinator));
+            () -> new InvocationRequestHandler(broker, this.httpProxyServer));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_STATUS_REQUEST, WorkerStatusRequestHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_TERMINATE, WorkerTerminateRequestHandler::new);
     }
@@ -164,7 +165,6 @@ public class JavaWorkerClient implements AutoCloseable {
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
-    private final HttpInvocationCoordinator httpInvocationCoordinator;
     private final HttpProxyServer httpProxyServer;
 
     /**

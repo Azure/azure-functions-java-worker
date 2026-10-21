@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.sun.net.httpserver.HttpExchange;
 
 /**
@@ -19,8 +18,7 @@ import com.sun.net.httpserver.HttpExchange;
  *       the matching {@code invocationId}.</li>
  * </ol>
  *
- * <p>This coordinator owns the per-invocation slot, exposes rendezvous methods
- * that block until the other half arrives, and releases the slot when the
+ * <p>This coordinator owns the per-invocation slot and releases it when the
  * invocation completes. Slot lookup and creation are atomic so the two halves
  * can race without losing one another.</p>
  *
@@ -32,6 +30,15 @@ public final class HttpInvocationCoordinator {
     private final ConcurrentMap<String, HttpInvocationSlot> slots = new ConcurrentHashMap<>();
 
     /**
+     * Returns the slot for the given invocation, creating it if the other half
+     * of the invocation has not arrived yet. Lookup and creation are atomic.
+     */
+    public HttpInvocationSlot slotFor(String invocationId) {
+        Objects.requireNonNull(invocationId, "invocationId");
+        return slots.computeIfAbsent(invocationId, HttpInvocationSlot::new);
+    }
+
+    /**
      * Registers the arrival of an HTTP request for the given invocation.
      * Returns the slot so the HTTP handler can await
      * {@link HttpInvocationSlot#completion()}.
@@ -39,9 +46,8 @@ public final class HttpInvocationCoordinator {
      * @throws IllegalStateException if HTTP arrival was already registered for this id
      */
     public HttpInvocationSlot registerHttpArrival(String invocationId, HttpExchange exchange) {
-        Objects.requireNonNull(invocationId, "invocationId");
         Objects.requireNonNull(exchange, "exchange");
-        HttpInvocationSlot slot = slots.computeIfAbsent(invocationId, HttpInvocationSlot::new);
+        HttpInvocationSlot slot = slotFor(invocationId);
         if (!slot.httpArrival().complete(exchange)) {
             throw new IllegalStateException(
                 "HTTP arrival already registered for invocation " + invocationId);
@@ -50,26 +56,7 @@ public final class HttpInvocationCoordinator {
     }
 
     /**
-     * Registers the arrival of a gRPC InvocationRequest for the given invocation.
-     * Returns the slot so the gRPC dispatcher can await
-     * {@link HttpInvocationSlot#httpArrival()}.
-     *
-     * @throws IllegalStateException if gRPC arrival was already registered for this id
-     */
-    public HttpInvocationSlot registerGrpcArrival(InvocationRequest request) {
-        Objects.requireNonNull(request, "request");
-        String invocationId = request.getInvocationId();
-        HttpInvocationSlot slot = slots.computeIfAbsent(invocationId, HttpInvocationSlot::new);
-        if (!slot.grpcArrival().complete(request)) {
-            throw new IllegalStateException(
-                "gRPC arrival already registered for invocation " + invocationId);
-        }
-        return slot;
-    }
-
-    /**
-     * Marks the invocation as complete and removes its slot. Idempotent. Any
-     * outstanding rendezvous futures are cancelled to unblock callers.
+     * Marks the invocation as complete and removes its slot. Idempotent.
      */
     public void releaseInvocation(String invocationId) {
         Objects.requireNonNull(invocationId, "invocationId");
@@ -78,7 +65,6 @@ public final class HttpInvocationCoordinator {
             return;
         }
         slot.httpArrival().cancel(false);
-        slot.grpcArrival().cancel(false);
         slot.completion().complete(null);
     }
 
@@ -95,7 +81,6 @@ public final class HttpInvocationCoordinator {
             return;
         }
         slot.httpArrival().completeExceptionally(cause);
-        slot.grpcArrival().completeExceptionally(cause);
         slot.completion().completeExceptionally(cause);
     }
 

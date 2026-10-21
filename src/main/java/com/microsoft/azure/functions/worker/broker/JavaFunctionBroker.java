@@ -193,16 +193,9 @@ public class JavaFunctionBroker {
 
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
-		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-
-		if (isJavaSdkTypesEnabled()) {
-			this.functionFactories.get(id).create().doNext(executionContextDataSource);
-		} else {
-			this.invocationChainFactory.create().doNext(executionContextDataSource);
-		}
-
-		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
-		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+		BindingDataStore dataStore = invoke(id, request, null);
+		outputs.addAll(dataStore.getOutputParameterBindings(true));
+		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
 	/**
@@ -242,26 +235,35 @@ public class JavaFunctionBroker {
 	 * HTTP proxy dispatch path that, in addition to the protobuf reply, exposes
 	 * the unserialized HTTP response body so streaming bodies can be written
 	 * directly to the HTTP response.
+	 *
+	 * @param streamingRequestBody live request body for
+	 *                             {@code HttpRequestMessage<InputStream>} parameters,
+	 *                             or {@code null} when the body is already buffered
+	 *                             in {@code request}
 	 */
-	public HttpInvocationOutcome invokeMethodForHttpProxy(String id, InvocationRequest request, List<ParameterBinding> outputs)
-			throws Exception {
-		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
-
-		if (isJavaSdkTypesEnabled()) {
-			this.functionFactories.get(id).create().doNext(executionContextDataSource);
-		} else {
-			this.invocationChainFactory.create().doNext(executionContextDataSource);
-		}
-
-		BindingDataStore dataStore = executionContextDataSource.getDataStore();
+	public HttpInvocationOutcome invokeMethodForHttpProxy(String id, InvocationRequest request,
+			InputStream streamingRequestBody, List<ParameterBinding> outputs) throws Exception {
+		BindingDataStore dataStore = invoke(id, request, streamingRequestBody);
 		Object rawHttpResponseBody = dataStore.getHttpResponseRawBody();
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		Optional<TypedData> returnValue = dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 		return new HttpInvocationOutcome(returnValue, rawHttpResponseBody);
 	}
 
-	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
-			throws NoSuchMethodException {
+	private BindingDataStore invoke(String id, InvocationRequest request, InputStream streamingRequestBody)
+			throws Exception {
+		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request, streamingRequestBody);
+
+		if (isJavaSdkTypesEnabled()) {
+			this.functionFactories.get(id).create().doNext(executionContextDataSource);
+		} else {
+			this.invocationChainFactory.create().doNext(executionContextDataSource);
+		}
+		return executionContextDataSource.getDataStore();
+	}
+
+	private ExecutionContextDataSource buildExecutionContext(String id, InvocationRequest request,
+			InputStream streamingRequestBody) throws NoSuchMethodException {
 		ImmutablePair<String, FunctionDefinition> methodEntry = this.methods.get(id);
 		FunctionDefinition functionDefinition = methodEntry.right;
 		if (functionDefinition == null) {
@@ -270,7 +272,7 @@ public class JavaFunctionBroker {
 		BindingDataStore dataStore = new BindingDataStore();
 		dataStore.setBindingDefinitions(functionDefinition.getBindingDefinitions());
 		dataStore.addTriggerMetadataSource(getTriggerMetadataMap(request));
-		dataStore.addParameterSources(request.getInputDataList());
+		dataStore.addParameterSources(request.getInputDataList(), streamingRequestBody);
 		ExecutionTraceContext traceContext = new ExecutionTraceContext(request.getTraceContext().getTraceParent(),
 				request.getTraceContext().getTraceState(), request.getTraceContext().getAttributesMap());
 		ExecutionRetryContext retryContext = new ExecutionRetryContext(request.getRetryContext().getRetryCount(),

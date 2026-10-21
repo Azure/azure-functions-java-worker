@@ -85,7 +85,7 @@ public final class HttpProxyHandler implements HttpHandler {
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
             LOGGER.log(Level.WARNING, "Invocation " + invocationId + " failed before responding", cause);
-            tryWriteError(exchange, 500, "Invocation failed: " + cause.getMessage());
+            tryWriteError(exchange, 500, "Invocation failed");
         } finally {
             exchange.close();
         }
