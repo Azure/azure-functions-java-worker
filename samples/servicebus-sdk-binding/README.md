@@ -70,6 +70,17 @@ Service Bus trigger named `message`, `supportsDeferredBinding: true` and
 `autoCompleteMessages: false`. It must not have an extra input binding for `actions`.
 The batch trigger must have cardinality `many`.
 
+From the repository root, run the optional packaged-sample integration test:
+
+```powershell
+mvn -s settings.xml "-Dtest=ServiceBusSampleIntegrationTest" "-Dservicebus.sample.root=$PWD\samples\servicebus-sdk-binding\target\azure-functions\servicebus-sdk-binding" test
+```
+
+This exercises the real function classloader, shared worker SPI, optional provider
+discovery, native message and batch hydration, and companion actions construction
+using a fixed binary host envelope. It does not invoke the sample functions or
+make a settlement request. The test is skipped unless the sample path property is set.
+
 Send messages to each queue and check that message IDs and bodies are logged. Verify
 the manually completed message is removed. For a failure exercise, throw before
 `completeMessage` and verify normal Service Bus retry and delivery-count behavior.
