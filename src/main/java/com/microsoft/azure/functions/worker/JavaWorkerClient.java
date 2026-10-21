@@ -5,6 +5,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.logging.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.annotation.PostConstruct;
 
 import io.grpc.*;
@@ -36,13 +38,14 @@ public class JavaWorkerClient implements AutoCloseable {
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
         this.classPathProvider = new FactoryClassLoader().createClassLoaderProvider();
+        this.hostEndpoint = getHostEndpoint(app);
         
         this.addHandlers();
     }
 
     @PostConstruct
     private void addHandlers() {
-        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
+        JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider, hostEndpoint);
         
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_WARMUP_REQUEST, WorkerWarmupHandler::new);
@@ -143,6 +146,21 @@ public class JavaWorkerClient implements AutoCloseable {
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
+    private final URI hostEndpoint;
+
+    static URI getHostEndpoint(IApplication app) {
+        if (app.getFunctionsUri() != null) {
+            return URI.create(app.getFunctionsUri());
+        }
+        if (app.getHost() == null || app.getPort() <= 0) {
+            return null;
+        }
+        try {
+            return new URI("http", null, app.getHost(), app.getPort(), null, null, null);
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("Invalid Functions host endpoint", ex);
+        }
+    }
 
     /**
      * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.

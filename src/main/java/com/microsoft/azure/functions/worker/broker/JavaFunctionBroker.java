@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,6 +18,7 @@ import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
+import com.microsoft.azure.functions.worker.binding.WorkerSdkInvocationContext;
 import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.microsoft.azure.functions.worker.chain.FunctionExecutionMiddleware;
 import com.microsoft.azure.functions.worker.chain.InvocationChainFactory;
@@ -39,6 +41,7 @@ public class JavaFunctionBroker {
 	//TODO: build dedicate ImmutablePair class with meaningful fields.
 	private final Map<String, ImmutablePair<String, FunctionDefinition>> methods;
 	private final ClassLoaderProvider classLoaderProvider;
+	private final URI hostEndpoint;
 	private String workerDirectory;
 	private volatile boolean oneTimeLogicInitialized = false;
 	private volatile InvocationChainFactory invocationChainFactory;
@@ -61,8 +64,13 @@ public class JavaFunctionBroker {
 	}
 
 	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider) {
+		this(classLoaderProvider, null);
+	}
+
+	public JavaFunctionBroker(ClassLoaderProvider classLoaderProvider, URI hostEndpoint) {
 		this.methods = new ConcurrentHashMap<>();
 		this.classLoaderProvider = classLoaderProvider;
+		this.hostEndpoint = hostEndpoint;
 	}
 
 	public void loadMethod(FunctionMethodDescriptor descriptor, Map<String, BindingInfo> bindings)
@@ -191,14 +199,16 @@ public class JavaFunctionBroker {
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request);
 
-		if (isJavaSdkTypesEnabled()) {
-			this.functionFactories.get(id).create().doNext(executionContextDataSource);
-		} else {
-			this.invocationChainFactory.create().doNext(executionContextDataSource);
-		}
+		try (WorkerSdkInvocationContext sdkContext = executionContextDataSource.getSdkInvocationContext()) {
+			if (isJavaSdkTypesEnabled()) {
+				this.functionFactories.get(id).create().doNext(executionContextDataSource);
+			} else {
+				this.invocationChainFactory.create().doNext(executionContextDataSource);
+			}
 
-		outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
-		return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+			outputs.addAll(executionContextDataSource.getDataStore().getOutputParameterBindings(true));
+			return executionContextDataSource.getDataStore().getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+		}
 	}
 
 	private ExecutionContextDataSource buildExecutionContext(String id,  InvocationRequest request)
@@ -226,7 +236,8 @@ public class JavaFunctionBroker {
 				functionDefinition.getContainingClass(),
 				request.getInputDataList(),
 				this.functionInstanceInjector,
-				this.workerObjectCache);
+				this.workerObjectCache,
+				this.hostEndpoint);
 		dataStore.addExecutionContextSource(executionContextDataSource);
 		return executionContextDataSource;
 	}

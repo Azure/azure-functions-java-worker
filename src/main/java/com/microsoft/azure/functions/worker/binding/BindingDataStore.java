@@ -90,6 +90,7 @@ public final class BindingDataStore {
             case COLLECTION_SINT64: return new RpcCollectionLongDataSource(name, data.getCollectionSint64());
             case DATA_NOT_SET: return new RpcEmptyDataSource(name);
             case MODEL_BINDING_DATA: return new RpcModelBindingDataSource(name, data.getModelBindingData());
+            case COLLECTION_MODEL_BINDING_DATA: return new RpcCollectionModelBindingDataSource(name, data.getCollectionModelBindingData());
             default:     throw new UnsupportedOperationException("Input data type \"" + data.getDataCase() + "\" is not supported");
         }
     }
