@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,6 +62,13 @@ public final class HttpProxyHandler implements HttpHandler {
         HttpInvocationSlot slot;
         try {
             slot = coordinator.registerHttpArrival(invocationId, exchange);
+        } catch (RejectedExecutionException ex) {
+            try {
+                HttpBodyBridge.writeErrorResponse(exchange, 503, "HTTP proxy is shutting down");
+            } finally {
+                exchange.close();
+            }
+            return;
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.WARNING, "Duplicate HTTP arrival for invocation " + invocationId, ex);
             try {
@@ -75,13 +84,18 @@ public final class HttpProxyHandler implements HttpHandler {
             // Block until the gRPC dispatcher signals invocation completion.
             // The dispatcher is responsible for writing the response to this
             // exchange; we simply hold the connection open in the meantime.
+            coordinator.awaitInvocation(slot);
             slot.completion().get();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            coordinator.failInvocation(invocationId, ex);
             tryWriteError(exchange, 503, "Worker interrupted while waiting for invocation");
+        } catch (TimeoutException ex) {
+            LOGGER.log(Level.WARNING, "Timed out waiting for invocation " + invocationId, ex);
+            coordinator.failInvocation(invocationId, ex);
+            tryWriteError(exchange, 504, "Timed out waiting for invocation");
         } catch (CancellationException ex) {
-            // Coordinator cancelled the futures via releaseInvocation();
-            // the gRPC side has already written (or chosen not to write) the response.
+            tryWriteError(exchange, 503, "HTTP invocation cancelled");
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
             LOGGER.log(Level.WARNING, "Invocation " + invocationId + " failed before responding", cause);
@@ -92,6 +106,9 @@ public final class HttpProxyHandler implements HttpHandler {
     }
 
     private static void tryWriteError(HttpExchange exchange, int status, String message) {
+        if (exchange.getResponseCode() >= 100) {
+            return;
+        }
         try {
             HttpBodyBridge.writeErrorResponse(exchange, status, message);
         } catch (IOException ioe) {

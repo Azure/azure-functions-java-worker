@@ -39,16 +39,17 @@ public class JavaWorkerClient implements AutoCloseable {
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
         this.classPathProvider = new FactoryClassLoader().createClassLoaderProvider();
-        this.httpProxyServer = httpProxyEnabled()
+        this.httpProxyServer = httpProxyEnabled(
+            System.getenv(Constants.FUNCTIONS_JAVA_ENABLE_HTTP_STREAMING),
+            System.getenv(Constants.FUNCTIONS_JAVA_DISABLE_HTTP_PROXY))
             ? new HttpProxyServer(ProxyConfig.defaults(), new HttpInvocationCoordinator())
             : null;
 
         this.addHandlers();
     }
 
-    private static boolean httpProxyEnabled() {
-        String value = System.getenv(Constants.FUNCTIONS_JAVA_DISABLE_HTTP_PROXY);
-        return !Boolean.parseBoolean(value);
+    static boolean httpProxyEnabled(String enabled, String disabled) {
+        return Boolean.parseBoolean(enabled) && !Boolean.parseBoolean(disabled);
     }
 
     @PostConstruct
@@ -81,8 +82,7 @@ public class JavaWorkerClient implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        // Stop accepting HTTP proxy requests before tearing down the gRPC peer
-        // so in-flight HTTP handlers can drain on completion futures cleanly.
+        // Release HTTP handoffs before waiting for the gRPC dispatch pool.
         if (this.httpProxyServer != null) {
             try {
                 this.httpProxyServer.close();

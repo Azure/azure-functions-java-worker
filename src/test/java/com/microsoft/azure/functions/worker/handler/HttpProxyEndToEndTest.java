@@ -1,23 +1,28 @@
 package com.microsoft.azure.functions.worker.handler;
 
-import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
+import com.microsoft.azure.functions.HttpRequestMessage;
+import com.microsoft.azure.functions.HttpStatus;
+import com.microsoft.azure.functions.annotation.HttpTrigger;
+import com.microsoft.azure.functions.annotation.HttpOutput;
+import com.microsoft.azure.functions.annotation.QueueOutput;
+import com.microsoft.azure.functions.OutputBinding;
+import com.microsoft.azure.functions.rpc.messages.BindingInfo;
 import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.InvocationResponse;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
-import com.microsoft.azure.functions.rpc.messages.StreamingMessage;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
-import com.microsoft.azure.functions.worker.binding.RpcHttpRequestDataSource;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker.HttpInvocationOutcome;
+import com.microsoft.azure.functions.worker.description.FunctionMethodDescriptor;
+import com.microsoft.azure.functions.worker.reflect.ClassLoaderProvider;
 import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
 import com.microsoft.azure.functions.worker.http.HttpProxyHandler;
 import com.microsoft.azure.functions.worker.http.HttpProxyServer;
 import com.microsoft.azure.functions.worker.http.ProxyConfig;
-import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,18 +31,19 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -50,23 +56,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * End-to-end integration tests for the HTTP proxy dispatch path. These wire
- * the real {@link HttpProxyServer}, {@link HttpProxyHandler}, and
- * {@link HttpInvocationCoordinator} together with a real
- * {@link InvocationRequestHandler} backed by a mocked {@link JavaFunctionBroker}.
- *
- * <p>Each test sends an actual HTTP request through the embedded proxy on one
- * thread while simulating the gRPC {@code InvocationRequest} arrival on the
- * test thread, exercising the rendezvous and validating the full pipeline:
- * HTTP arrival, body propagation (buffered or streamed), broker invocation,
- * and response writeback (buffered or streamed).</p>
- *
- * <p>The mocked broker captures the {@link InvocationRequest} it sees and the
- * thread-local exchange that was active during {@code invokeMethodForHttpProxy}
- * so the tests can assert that the streaming pre-check and the body-read skip
- * behaved correctly.</p>
+ * Real-socket integration of HTTP handoffs and simulated gRPC invocations.
+ * Mocked brokers isolate transport behavior; real brokers exercise request
+ * binding, user function execution and response serialization together.
  */
 public class HttpProxyEndToEndTest {
 
@@ -97,6 +95,7 @@ public class HttpProxyEndToEndTest {
         proxyUri = server.start();
         brokerMock = mock(JavaFunctionBroker.class);
         when(brokerMock.getMethodName(anyString())).thenReturn(Optional.of("TestFn"));
+        when(brokerMock.isHttpTrigger(anyString())).thenReturn(true);
         handler = new InvocationRequestHandler(brokerMock, server);
     }
 
@@ -110,7 +109,6 @@ public class HttpProxyEndToEndTest {
         }
     }
 
-    // -------- 1. Buffered request, buffered response (existing path) --------
     @Test
     public void bufferedRequest_bufferedResponse_roundTrips() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
@@ -140,7 +138,7 @@ public class HttpProxyEndToEndTest {
 
         assertEquals(200, resp.statusCode);
         assertEquals("pong", new String(resp.body, StandardCharsets.UTF_8));
-        assertEquals("text/plain", resp.contentType);
+        assertEquals("text/plain; charset=utf-8", resp.contentType);
 
         // The buffered path must have folded the HTTP body into the RpcHttp envelope.
         // For text/* content types the bridge stores the body as a string, not bytes
@@ -150,7 +148,6 @@ public class HttpProxyEndToEndTest {
         assertNull(seenBody.get(), "Buffered-input invocations must not receive a streaming request body");
     }
 
-    // -------- 2. Buffered request, streaming response (commit #5 path) --------
     @Test
     public void bufferedRequest_streamingInputStreamResponse_streamsBackUnbuffered() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
@@ -185,7 +182,6 @@ public class HttpProxyEndToEndTest {
                 "Streaming-output path must use chunked transfer-encoding (no Content-Length)");
     }
 
-    // -------- 3. Buffered request, streaming response via IOConsumer --------
     @Test
     public void bufferedRequest_streamingIOConsumerResponse_streamsBack() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
@@ -220,7 +216,6 @@ public class HttpProxyEndToEndTest {
         assertTrue(body.endsWith("event: tick\ndata: 99\n\n"));
     }
 
-    // -------- 4. Streaming request, buffered response (commit #6 path) --------
     @Test
     public void streamingRequest_bufferedResponse_skipsBodyReadAndExposesLiveStream() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(true);
@@ -269,7 +264,6 @@ public class HttpProxyEndToEndTest {
                 "Bytes read from the live exchange must equal the bytes the client sent");
     }
 
-    // -------- 5. Full streaming: streaming request + streaming response --------
     @Test
     public void streamingRequest_streamingResponse_endToEnd() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(true);
@@ -304,7 +298,6 @@ public class HttpProxyEndToEndTest {
                 "Streaming response body must equal what the broker echoed");
     }
 
-    // -------- 6. Coordinator slot is released after success --------
     @Test
     public void coordinatorSlotReleasedAfterSuccessfulInvocation() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
@@ -332,7 +325,6 @@ public class HttpProxyEndToEndTest {
                 "Coordinator must release the slot after a successful invocation");
     }
 
-    // -------- 7. Broker exception surfaces as a 500 on the HTTP side --------
     @Test
     public void brokerExceptionPropagatesAsHttp500() throws Exception {
         when(brokerMock.methodHasStreamingHttpBody(anyString())).thenReturn(false);
@@ -343,13 +335,7 @@ public class HttpProxyEndToEndTest {
                 "GET", "/api/boom", null, new byte[0]);
 
         awaitHttpArrival();
-        // The gRPC-side execute throws; handle() catches it. We invoke directly so
-        // the caller (this test) doesn't need to deal with gRPC marshalling.
-        try {
-            runGrpcArrival();
-        } catch (Exception ignored) {
-            // Expected: the broker's RuntimeException propagates out of execute().
-        }
+        assertThrows(RuntimeException.class, this::runGrpcArrival);
 
         HttpClientResult resp = futureResp.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS);
         assertEquals(500, resp.statusCode);
@@ -357,7 +343,245 @@ public class HttpProxyEndToEndTest {
                 "500 body must not leak the underlying failure message");
     }
 
-    // -------- Helpers --------
+    @Test
+    public void legacyHostDoesNotWaitForAnHttpHandoff() throws Exception {
+        InvocationRequest legacyRequest = buildInvocationRequest().toBuilder().setInputData(0,
+            ParameterBinding.newBuilder().setName("req").setData(TypedData.newBuilder().setHttp(
+                RpcHttp.newBuilder().setMethod("POST").setUrl("https://example.test/api/echo")
+                    .setBody(TypedData.newBuilder().setString("legacy"))))).build();
+        handler.execute(legacyRequest, InvocationResponse.newBuilder());
+        verify(brokerMock).invokeMethod(anyString(), any(), any());
+        verify(brokerMock, never()).invokeMethodForHttpProxy(anyString(), any(), any(), any());
+        assertEquals(0, coordinator.activeInvocationCount());
+    }
+
+    @Test
+    public void stoppedProxyUsesGrpcPath() throws Exception {
+        server.close();
+        handler.execute(buildInvocationRequest(), InvocationResponse.newBuilder());
+        verify(brokerMock).invokeMethod(anyString(), any(), any());
+        assertEquals(0, coordinator.activeInvocationCount());
+    }
+
+    @Test
+    public void disabledProxyUsesGrpcPath() throws Exception {
+        new InvocationRequestHandler(brokerMock).execute(buildInvocationRequest(), InvocationResponse.newBuilder());
+        verify(brokerMock).invokeMethod(anyString(), any(), any());
+        assertEquals(0, coordinator.activeInvocationCount());
+    }
+
+    @Test
+    public void httpTypedInputOnNonHttpTriggerDoesNotWaitForProxy() throws Exception {
+        when(brokerMock.isHttpTrigger(FUNCTION_ID)).thenReturn(false);
+        handler.execute(buildInvocationRequest(), InvocationResponse.newBuilder());
+        verify(brokerMock).invokeMethod(anyString(), any(), any());
+        assertEquals(0, coordinator.activeInvocationCount());
+    }
+
+    @Test
+    public void realBrokerStreamsAssignedReturnBody() throws Exception {
+        JavaFunctionBroker broker = loadFunction("echo");
+        handler = new InvocationRequestHandler(broker, server);
+        byte[] payload = repeat("real-broker-", 4096);
+        CompletableFuture<HttpClientResult> response = sendHttpRequestAsync(
+            "POST", "/api/real", "application/octet-stream", payload);
+        awaitHttpArrival();
+        InvocationResponse.Builder grpcResponse = InvocationResponse.newBuilder();
+        handler.execute(buildInvocationRequest(), grpcResponse);
+
+        HttpClientResult http = response.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS);
+        assertEquals(200, http.statusCode);
+        org.junit.jupiter.api.Assertions.assertArrayEquals(payload, http.body);
+        assertFalse(grpcResponse.hasReturnValue(), "HTTP output must travel only over HTTP");
+        assertEquals(0, coordinator.activeInvocationCount());
+    }
+
+    @Test
+    public void realBrokerPreservesNonHttpOutputBindings() throws Exception {
+        handler = new InvocationRequestHandler(loadFunction("sideOutput"), server);
+        CompletableFuture<HttpClientResult> response = sendHttpRequestAsync(
+            "POST", "/api/side-output", "text/plain", new byte[0]);
+        awaitHttpArrival();
+        InvocationResponse.Builder grpcResponse = InvocationResponse.newBuilder();
+        handler.execute(buildInvocationRequest(), grpcResponse);
+
+        assertEquals("ok", new String(response.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS).body, StandardCharsets.UTF_8));
+        assertFalse(grpcResponse.hasReturnValue());
+        assertEquals(1, grpcResponse.getOutputDataCount());
+        assertEquals("queue", grpcResponse.getOutputData(0).getName());
+        assertEquals("side effect", grpcResponse.getOutputData(0).getData().getString());
+    }
+
+    @Test
+    public void realBrokerStreamsNamedHttpOutput() throws Exception {
+        handler = new InvocationRequestHandler(loadFunction("namedOutput"), server);
+        byte[] payload = repeat("named-output-", 4096);
+        CompletableFuture<HttpClientResult> response = sendHttpRequestAsync(
+            "POST", "/api/named-output", "application/octet-stream", payload);
+        awaitHttpArrival();
+        InvocationResponse.Builder grpcResponse = InvocationResponse.newBuilder();
+        handler.execute(buildInvocationRequest(), grpcResponse);
+
+        org.junit.jupiter.api.Assertions.assertArrayEquals(payload,
+            response.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS).body);
+        assertEquals(0, grpcResponse.getOutputDataCount());
+    }
+
+    @Test
+    public void realBrokerClosesAssignedResponseWhenFunctionThrows() throws Exception {
+        try {
+            for (boolean proxied : new boolean[]{true, false}) {
+                InputStream source = mock(InputStream.class);
+                Functions.failedResponseBody = source;
+                JavaFunctionBroker broker = loadFunction("namedFailure");
+                assertThrows(Exception.class, () -> {
+                    if (proxied) {
+                        broker.invokeMethodForHttpProxy(FUNCTION_ID, buildInvocationRequest(), null, new ArrayList<>());
+                    } else {
+                        broker.invokeMethod(FUNCTION_ID, buildInvocationRequest(), new ArrayList<>());
+                    }
+                });
+                verify(source).close();
+            }
+        } finally {
+            Functions.failedResponseBody = null;
+        }
+    }
+
+    @Test
+    public void realBrokerPreservesPlainStringHttpReturn() throws Exception {
+        handler = new InvocationRequestHandler(loadFunction("plain"), server);
+        CompletableFuture<HttpClientResult> response = sendHttpRequestAsync(
+            "GET", "/api/plain", null, new byte[0]);
+        awaitHttpArrival();
+        runGrpcArrival();
+        HttpClientResult http = response.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS);
+        assertEquals("plain", new String(http.body, StandardCharsets.UTF_8));
+        assertEquals("text/plain; charset=utf-8", http.contentType);
+    }
+
+    @Test
+    public void realBrokerRejectsStreamingResponseWithoutProxy() throws Exception {
+        JavaFunctionBroker broker = loadFunction("download");
+        InvocationRequest legacyRequest = buildInvocationRequest().toBuilder().setInputData(0,
+            ParameterBinding.newBuilder().setName("req").setData(TypedData.newBuilder().setHttp(
+                RpcHttp.newBuilder().setMethod("GET").setUrl("https://example.test/api/download")
+                    .setBody(TypedData.newBuilder().setString("request"))))).build();
+
+        UnsupportedOperationException error = assertThrows(UnsupportedOperationException.class,
+            () -> new InvocationRequestHandler(broker).execute(legacyRequest, InvocationResponse.newBuilder()));
+        assertTrue(error.getMessage().contains("HTTP proxy"));
+    }
+
+    @Test
+    public void firstResponseBytesArriveBeforeInputStreamCompletes() throws Exception {
+        CountDownLatch firstChunkReceived = new CountDownLatch(1);
+        byte[] first = "first\n".getBytes(StandardCharsets.UTF_8);
+        InputStream source = new ByteArrayInputStream(first) {
+            private boolean waiting;
+
+            @Override
+            public synchronized int read(byte[] bytes, int offset, int length) {
+                int result = super.read(bytes, offset, length);
+                if (result == -1 && !waiting) {
+                    waiting = true;
+                    try {
+                        assertTrue(firstChunkReceived.await(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS),
+                            "First chunk must be visible while the source is still open");
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                        throw new AssertionError(ex);
+                    }
+                }
+                return result;
+            }
+        };
+        when(brokerMock.invokeMethodForHttpProxy(anyString(), any(), any(), any()))
+            .thenReturn(new HttpInvocationOutcome(Optional.of(TypedData.newBuilder()
+                .setHttp(RpcHttp.newBuilder().setStatusCode("200")).build()), source));
+        CompletableFuture<byte[]> received = CompletableFuture.supplyAsync(() -> {
+            try {
+                HttpURLConnection connection = openConnection("GET", "/api/progressive");
+                try (InputStream body = connection.getInputStream()) {
+                    byte[] bytes = new byte[first.length];
+                    for (int offset = 0; offset < bytes.length;) {
+                        int count = body.read(bytes, offset, bytes.length - offset);
+                        if (count == -1) {
+                            throw new IOException("Response ended before first chunk");
+                        }
+                        offset += count;
+                    }
+                    firstChunkReceived.countDown();
+                    assertEquals(-1, body.read());
+                    return bytes;
+                } finally {
+                    connection.disconnect();
+                }
+            } catch (IOException ex) {
+                throw new java.io.UncheckedIOException(ex);
+            }
+        });
+        awaitHttpArrival();
+        runGrpcArrival();
+        org.junit.jupiter.api.Assertions.assertArrayEquals(first,
+            received.get(HTTP_AWAIT_MS, TimeUnit.MILLISECONDS));
+    }
+
+    private JavaFunctionBroker loadFunction(String method) throws Exception {
+        ClassLoaderProvider classLoaders = mock(ClassLoaderProvider.class);
+        when(classLoaders.createClassLoader()).thenReturn(getClass().getClassLoader());
+        JavaFunctionBroker broker = new JavaFunctionBroker(classLoaders);
+        Map<String, BindingInfo> bindings = new HashMap<>();
+        bindings.put("req", BindingInfo.newBuilder().setType("httpTrigger")
+            .setDirection(BindingInfo.Direction.in).build());
+        bindings.put("$return", BindingInfo.newBuilder().setType("http")
+            .setDirection(BindingInfo.Direction.out).build());
+        bindings.put("res", BindingInfo.newBuilder().setType("http")
+            .setDirection(BindingInfo.Direction.out).build());
+        bindings.put("queue", BindingInfo.newBuilder().setType("queue")
+            .setDirection(BindingInfo.Direction.out).build());
+        broker.loadMethod(new FunctionMethodDescriptor(FUNCTION_ID, "TestFn",
+            Functions.class.getName() + "." + method,
+            new java.io.File(System.getProperty("testing-project-jar")).getAbsolutePath(), true), bindings);
+        return broker;
+    }
+
+    public static class Functions {
+        static InputStream failedResponseBody;
+
+        public HttpResponseMessage echo(@HttpTrigger(name = "req") HttpRequestMessage<InputStream> request) {
+            assertEquals("POST", request.getHttpMethod().name());
+            assertEquals("/api/real", request.getUri().getPath());
+            return request.createResponseBuilder(HttpStatus.OK).bodyStream(request.getBody()).build();
+        }
+
+        public HttpResponseMessage download(@HttpTrigger(name = "req") HttpRequestMessage<String> request) {
+            return request.createResponseBuilder(HttpStatus.OK)
+                .bodyStream(new ByteArrayInputStream(new byte[]{1, 2, 3})).build();
+        }
+
+        public HttpResponseMessage sideOutput(@HttpTrigger(name = "req") HttpRequestMessage<InputStream> request,
+                @QueueOutput(name = "queue", queueName = "unused") OutputBinding<String> queue) {
+            queue.setValue("side effect");
+            return request.createResponseBuilder(HttpStatus.OK).body("ok").build();
+        }
+
+        public void namedOutput(@HttpTrigger(name = "req") HttpRequestMessage<InputStream> request,
+                @HttpOutput(name = "res") OutputBinding<HttpResponseMessage> response) {
+            response.setValue(request.createResponseBuilder(HttpStatus.OK).bodyStream(request.getBody()).build());
+        }
+
+        public void namedFailure(@HttpTrigger(name = "req") HttpRequestMessage<String> request,
+                @HttpOutput(name = "res") OutputBinding<HttpResponseMessage> response) {
+            response.setValue(request.createResponseBuilder(HttpStatus.OK).bodyStream(failedResponseBody).build());
+            throw new IllegalStateException("function failed after assigning its response");
+        }
+
+        public String plain(@HttpTrigger(name = "req") HttpRequestMessage<Optional<String>> request) {
+            return "plain";
+        }
+    }
+
 
     private void awaitHttpArrival() throws InterruptedException {
         long deadline = System.currentTimeMillis() + HTTP_AWAIT_MS;
@@ -376,10 +600,7 @@ public class HttpProxyEndToEndTest {
 
     private static InvocationRequest buildInvocationRequest() {
         // Trigger metadata only; body is empty (the host's HTTP proxy contract).
-        RpcHttp httpEnvelope = RpcHttp.newBuilder()
-                .setMethod("POST")
-                .setUrl("http://localhost/api/test")
-                .build();
+        RpcHttp httpEnvelope = RpcHttp.getDefaultInstance();
         TypedData inputData = TypedData.newBuilder().setHttp(httpEnvelope).build();
         ParameterBinding binding = ParameterBinding.newBuilder()
                 .setName("req")
@@ -396,9 +617,7 @@ public class HttpProxyEndToEndTest {
             String method, String path, String contentType, byte[] body) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                HttpURLConnection conn = (HttpURLConnection) URI.create(proxyUri + path).toURL().openConnection();
-                conn.setRequestMethod(method);
-                conn.setRequestProperty(HttpProxyHandler.INVOCATION_ID_HEADER, INVOCATION_ID);
+                HttpURLConnection conn = openConnection(method, path);
                 if (contentType != null) {
                     conn.setRequestProperty("Content-Type", contentType);
                 }
@@ -421,6 +640,15 @@ public class HttpProxyEndToEndTest {
                 throw new RuntimeException(ex);
             }
         });
+    }
+
+    private HttpURLConnection openConnection(String method, String path) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) URI.create(proxyUri + path).toURL().openConnection();
+        connection.setRequestMethod(method);
+        connection.setRequestProperty(HttpProxyHandler.INVOCATION_ID_HEADER, INVOCATION_ID);
+        connection.setConnectTimeout((int) HTTP_AWAIT_MS);
+        connection.setReadTimeout((int) HTTP_AWAIT_MS);
+        return connection;
     }
 
     private static byte[] readAll(InputStream in) throws IOException {

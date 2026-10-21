@@ -18,11 +18,8 @@ public final class Constants {
     public static final String JAVA_ENABLE_OPENTELEMETRY = "JAVA_ENABLE_OPENTELEMETRY";
     public static final String JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY = "JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY";
     public static final String JAVA_ENABLE_SDK_TYPES = "JAVA_ENABLE_SDK_TYPES";
-    /**
-     * If set to "true" (case-insensitive), the worker will NOT start the
-     * embedded HTTP proxy server and will NOT advertise the {@code HttpUri}
-     * capability. Useful as an escape hatch if the proxy path causes problems.
-     * Default: unset (proxy enabled).
-     */
+    /** Opts into native HTTP streaming while the API and transport are in preview. */
+    public static final String FUNCTIONS_JAVA_ENABLE_HTTP_STREAMING = "FUNCTIONS_JAVA_ENABLE_HTTP_STREAMING";
+    /** Overrides streaming enablement and keeps HTTP invocations on legacy gRPC. */
     public static final String FUNCTIONS_JAVA_DISABLE_HTTP_PROXY = "FUNCTIONS_JAVA_DISABLE_HTTP_PROXY";
 }

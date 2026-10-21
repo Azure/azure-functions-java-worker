@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpExchange;
 public final class HttpInvocationSlot {
     private final String invocationId;
     private final CompletableFuture<HttpExchange> httpArrival = new CompletableFuture<>();
+    private final CompletableFuture<Void> invocationArrival = new CompletableFuture<>();
     private final CompletableFuture<Void> completion = new CompletableFuture<>();
 
     HttpInvocationSlot(String invocationId) {
@@ -33,6 +34,10 @@ public final class HttpInvocationSlot {
     /** Resolves when the HTTP request for this invocation arrives. */
     public CompletableFuture<HttpExchange> httpArrival() {
         return httpArrival;
+    }
+
+    CompletableFuture<Void> invocationArrival() {
+        return invocationArrival;
     }
 
     /**

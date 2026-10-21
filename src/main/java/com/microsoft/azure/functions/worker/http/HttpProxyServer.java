@@ -19,15 +19,9 @@ import com.sun.net.httpserver.HttpServer;
  * Embedded HTTP proxy server used to receive HTTP-triggered invocations
  * directly from the Functions host (HttpUri capability).
  *
- * <p>Backed by {@link com.sun.net.httpserver.HttpServer}, a JDK built-in
- * since Java 6, so the worker takes on no new runtime dependencies.</p>
- *
- * <p>The server binds to the loopback address on an ephemeral port and is
- * started by {@link #start(HttpHandler)} with a single root handler.
- * Worker threads come from a cached executor that mirrors the gRPC dispatch
- * pool: unbounded growth, named for diagnostics, 15&nbsp;s drain on shutdown.
- * Capping concurrency is left to the platform, matching the Go, Python, and
- * .NET isolated workers.</p>
+ * <p>Uses the JDK HTTP server with a cached executor, matching the worker's
+ * gRPC dispatch pool. Production configuration binds to loopback on an
+ * ephemeral port. Closing the server cancels pending handoffs.</p>
  */
 public final class HttpProxyServer implements AutoCloseable {
     private static final long EXECUTOR_SHUTDOWN_SECONDS = 15L;
@@ -40,6 +34,7 @@ public final class HttpProxyServer implements AutoCloseable {
     private HttpServer server;
     private ExecutorService executor;
     private String boundUri;
+    private boolean closed;
 
     public HttpProxyServer(ProxyConfig config, HttpInvocationCoordinator coordinator) {
         this.config = Objects.requireNonNull(config, "config");
@@ -74,24 +69,30 @@ public final class HttpProxyServer implements AutoCloseable {
     /** Visible for tests that need to substitute the root handler. */
     synchronized String start(HttpHandler rootHandler) throws IOException {
         Objects.requireNonNull(rootHandler, "rootHandler");
-        if (!started.compareAndSet(false, true)) {
+        if (closed) {
+            throw new IllegalStateException("HttpProxyServer is closed");
+        }
+        if (started.get()) {
             throw new IllegalStateException("HttpProxyServer already started");
         }
         InetSocketAddress bindAddress = new InetSocketAddress(
             config.getBindAddress(), config.getBindPort());
+        this.server = HttpServer.create(bindAddress, 0);
         try {
-            // Backlog 0 → JDK default.
-            this.server = HttpServer.create(bindAddress, 0);
-        } catch (IOException ex) {
-            started.set(false);
+            this.executor = Executors.newCachedThreadPool(new ProxyThreadFactory());
+            this.server.setExecutor(this.executor);
+            this.server.createContext("/", rootHandler);
+            this.server.start();
+        } catch (RuntimeException | Error ex) {
+            this.server.stop(0);
+            if (this.executor != null) {
+                this.executor.shutdownNow();
+            }
             throw ex;
         }
-        this.executor = Executors.newCachedThreadPool(new ProxyThreadFactory());
-        this.server.setExecutor(this.executor);
-        this.server.createContext("/", rootHandler);
-        this.server.start();
         InetSocketAddress actual = this.server.getAddress();
         this.boundUri = "http://" + actual.getHostString() + ":" + actual.getPort();
+        started.set(true);
         WorkerLogManager.getSystemLogger().log(Level.INFO,
             "HTTP proxy server bound to " + boundUri);
         return boundUri;
@@ -101,12 +102,14 @@ public final class HttpProxyServer implements AutoCloseable {
      * Returns the URI the server is listening on, or {@code null} if the
      * server has not been started.
      */
-    public String getBoundUri() {
+    public synchronized String getBoundUri() {
         return boundUri;
     }
 
     @Override
     public synchronized void close() {
+        closed = true;
+        coordinator.close();
         if (!started.compareAndSet(true, false)) {
             return;
         }

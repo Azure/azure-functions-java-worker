@@ -103,4 +103,27 @@ public class HttpInvocationCoordinatorTest {
         coordinator.releaseInvocation(INVOCATION_ID);
         slot.completion().get(1, TimeUnit.SECONDS);
     }
+
+    @Test
+    public void missingHttpHandoffTimesOut() {
+        HttpInvocationCoordinator shortWait = new HttpInvocationCoordinator(1, TimeUnit.MILLISECONDS);
+        assertThrows(TimeoutException.class, () -> shortWait.awaitHttpArrival(INVOCATION_ID));
+        shortWait.failInvocation(INVOCATION_ID, new TimeoutException());
+        assertEquals(0, shortWait.activeInvocationCount());
+    }
+
+    @Test
+    public void closeFailsBothWaitersAndRejectsLateArrivals() {
+        HttpInvocationSlot pendingHttp = coordinator.slotFor("waiting-for-http");
+        HttpInvocationSlot pendingInvocation = coordinator.registerHttpArrival("waiting-for-invocation",
+            mock(HttpExchange.class));
+        coordinator.close();
+
+        assertTrue(pendingHttp.httpArrival().isCompletedExceptionally());
+        assertTrue(pendingInvocation.completion().isCompletedExceptionally());
+        assertEquals(0, coordinator.activeInvocationCount());
+        assertThrows(java.util.concurrent.RejectedExecutionException.class,
+            () -> coordinator.slotFor("late"));
+        coordinator.close();
+    }
 }

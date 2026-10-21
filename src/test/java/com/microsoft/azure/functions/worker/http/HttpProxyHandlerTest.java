@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.sun.net.httpserver.Headers;
@@ -89,7 +90,8 @@ public class HttpProxyHandlerTest {
         CompletableFuture<Void> handlerDone = CompletableFuture.runAsync(() -> {
             try {
                 handler.handle(exchange);
-            } catch (Exception ignored) {
+            } catch (java.io.IOException ex) {
+                throw new java.io.UncheckedIOException(ex);
             }
         });
 
@@ -103,6 +105,50 @@ public class HttpProxyHandlerTest {
         verify(exchange).sendResponseHeaders(500, captured.size());
         verify(exchange).close();
         assertEquals("Invocation failed", new String(captured.toByteArray()));
+    }
+
+    @Test
+    public void missingGrpcHandoffReturns504AndReleasesSlot() throws Exception {
+        HttpInvocationCoordinator coordinator = new HttpInvocationCoordinator(1, TimeUnit.MILLISECONDS);
+        HttpExchange exchange = mock(HttpExchange.class);
+        Headers requestHeaders = new Headers();
+        requestHeaders.set(HttpProxyHandler.INVOCATION_ID_HEADER, INVOCATION_ID);
+        when(exchange.getRequestHeaders()).thenReturn(requestHeaders);
+        when(exchange.getResponseHeaders()).thenReturn(new Headers());
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        when(exchange.getResponseBody()).thenReturn(body);
+
+        new HttpProxyHandler(coordinator).handle(exchange);
+
+        verify(exchange).sendResponseHeaders(504, body.size());
+        verify(exchange).close();
+        assertEquals(0, coordinator.activeInvocationCount());
+    }
+
+    @Test
+    public void failureAfterHeadersDoesNotWriteASecondResponse() throws Exception {
+        HttpInvocationCoordinator coordinator = new HttpInvocationCoordinator();
+        HttpExchange exchange = mock(HttpExchange.class);
+        Headers headers = new Headers();
+        headers.set(HttpProxyHandler.INVOCATION_ID_HEADER, INVOCATION_ID);
+        when(exchange.getRequestHeaders()).thenReturn(headers);
+        when(exchange.getResponseCode()).thenReturn(200);
+        CompletableFuture<Void> done = CompletableFuture.runAsync(() -> {
+            try {
+                new HttpProxyHandler(coordinator).handle(exchange);
+            } catch (java.io.IOException ex) {
+                throw new java.io.UncheckedIOException(ex);
+            }
+        });
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (coordinator.activeInvocationCount() == 0 && System.nanoTime() < deadline) {
+            Thread.sleep(1);
+        }
+        assertEquals(1, coordinator.activeInvocationCount());
+        coordinator.failInvocation(INVOCATION_ID, new java.io.IOException("writer failed"));
+        done.get(2, TimeUnit.SECONDS);
+        verify(exchange, never()).sendResponseHeaders(anyInt(), anyLong());
+        verify(exchange).close();
     }
 
     @Test

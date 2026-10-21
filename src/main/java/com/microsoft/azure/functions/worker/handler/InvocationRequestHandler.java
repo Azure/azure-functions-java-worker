@@ -10,9 +10,11 @@ import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.worker.*;
 import com.microsoft.azure.functions.worker.broker.*;
 import com.microsoft.azure.functions.worker.broker.JavaFunctionBroker.HttpInvocationOutcome;
+import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.http.HttpBodyBridge;
 import com.microsoft.azure.functions.worker.http.HttpInvocationCoordinator;
 import com.microsoft.azure.functions.worker.http.HttpProxyServer;
+import com.microsoft.azure.functions.worker.http.HttpRequestBody;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -48,10 +50,10 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         this.invocationLogger = WorkerLogManager.getInvocationLogger(invocationId);
         response.setInvocationId(invocationId);
 
-        // Once the proxy is serving, the host forwards HTTP triggers to it: the gRPC
-        // request carries trigger metadata but an empty body, and the body and
-        // response travel over the matching HttpExchange.
-        if (httpProxyServer != null && httpProxyServer.isRunning() && hasHttpInput(request)) {
+        // Proxy-mode envelopes omit method and URL. A legacy host still sends
+        // both, even for an empty body, and must not wait for an HTTP handoff.
+        if (httpProxyServer != null && httpProxyServer.isRunning()
+                && broker.isHttpTrigger(functionId) && hasProxiedHttpInput(request)) {
             return executeProxiedHttp(request, response, functionId, invocationId);
         }
 
@@ -69,28 +71,46 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
                                       String invocationId) throws Exception {
         HttpInvocationCoordinator coordinator = httpProxyServer.coordinator();
         try {
-            HttpExchange exchange = coordinator.slotFor(invocationId).httpArrival().get();
+            HttpExchange exchange = coordinator.awaitHttpArrival(invocationId);
 
             // A streaming-input function reads the live request body itself, so the
             // body is not folded into the gRPC request.
             boolean streamingInput = broker.methodHasStreamingHttpBody(functionId);
-            InvocationRequest enriched = streamingInput
-                    ? request
-                    : HttpBodyBridge.enrichRequestWithBody(request, exchange);
-            InputStream streamingBody = streamingInput ? exchange.getRequestBody() : null;
-
-            List<ParameterBinding> outputBindings = new ArrayList<>();
-            HttpInvocationOutcome outcome =
-                    broker.invokeMethodForHttpProxy(functionId, enriched, streamingBody, outputBindings);
-            outcome.getReturnValue().ifPresent(response::setReturnValue);
-            response.addAllOutputData(outputBindings);
-
-            writeHttpResponse(exchange, extractHttpResponse(response, outputBindings), outcome.getRawHttpResponseBody());
+            InvocationRequest enriched = HttpBodyBridge.enrichRequest(request, exchange, !streamingInput);
+            try (HttpRequestBody streamingBody = streamingInput ? new HttpRequestBody(exchange.getRequestBody()) : null) {
+                List<ParameterBinding> outputBindings = new ArrayList<>();
+                HttpInvocationOutcome outcome =
+                        broker.invokeMethodForHttpProxy(functionId, enriched,
+                            streamingBody == null ? null : streamingBody.getStream(), outputBindings);
+                try {
+                    if (streamingBody != null) {
+                        streamingBody.prepareForResponse();
+                    }
+                } catch (IOException ex) {
+                    if (outcome.getRawHttpResponseBody() instanceof InputStream) {
+                        try {
+                            ((InputStream) outcome.getRawHttpResponseBody()).close();
+                        } catch (IOException closeFailure) {
+                            ex.addSuppressed(closeFailure);
+                        }
+                    }
+                    throw ex;
+                }
+                writeHttpResponse(exchange, extractHttpResponse(functionId, outcome.getReturnValue(), outputBindings),
+                    outcome.getRawHttpResponseBody());
+                outcome.getReturnValue().filter(value -> !isHttpOutput(functionId, BindingDataStore.RETURN_NAME, value))
+                    .ifPresent(response::setReturnValue);
+                outputBindings.stream().filter(binding -> !isHttpOutput(functionId, binding.getName(), binding.getData()))
+                    .forEach(response::addOutputData);
+            }
             coordinator.releaseInvocation(invocationId);
             return String.format("Function \"%s\" (Id: %s) invoked by Java Worker (HTTP proxy)",
                     this.broker.getMethodName(functionId).orElse("UNKNOWN"), invocationId);
         } catch (Exception | Error ex) {
             coordinator.failInvocation(invocationId, ex);
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             throw ex;
         }
     }
@@ -112,28 +132,38 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         }
     }
 
-    private static boolean hasHttpInput(InvocationRequest request) {
+    private static boolean hasProxiedHttpInput(InvocationRequest request) {
         for (ParameterBinding binding : request.getInputDataList()) {
-            if (binding.getData().hasHttp()) {
+            if (binding.getData().hasHttp()
+                    && binding.getData().getHttp().getMethod().isEmpty()
+                    && binding.getData().getHttp().getUrl().isEmpty()) {
                 return true;
             }
         }
         return false;
     }
 
-    private static RpcHttp extractHttpResponse(InvocationResponse.Builder response,
+    private boolean isHttpOutput(String functionId, String name, TypedData value) {
+        return value.hasHttp() || broker.isHttpOutput(functionId, name);
+    }
+
+    private RpcHttp extractHttpResponse(String functionId, Optional<TypedData> returnValue,
                                                List<ParameterBinding> outputBindings) {
-        if (response.hasReturnValue() && response.getReturnValue().hasHttp()) {
-            return response.getReturnValue().getHttp();
+        if (returnValue.isPresent() && isHttpOutput(functionId, BindingDataStore.RETURN_NAME, returnValue.get())) {
+            return asHttpResponse(returnValue.get());
         }
         for (ParameterBinding binding : outputBindings) {
-            if (binding.getData().hasHttp()) {
-                return binding.getData().getHttp();
+            if (isHttpOutput(functionId, binding.getName(), binding.getData())) {
+                return asHttpResponse(binding.getData());
             }
         }
         // No HTTP response binding produced; respond with an empty 200 so the
         // host doesn't see a hung connection.
         return RpcHttp.newBuilder().setStatusCode("200").build();
+    }
+
+    private static RpcHttp asHttpResponse(TypedData value) {
+        return value.hasHttp() ? value.getHttp() : RpcHttp.newBuilder().setStatusCode("200").setBody(value).build();
     }
 
     private final JavaFunctionBroker broker;

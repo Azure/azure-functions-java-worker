@@ -8,6 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,15 +33,15 @@ public class HttpBodyBridgeTest {
     public void buildBodyTypedDataJsonContentType() {
         TypedData data = HttpBodyBridge.buildBodyTypedData(
             "{\"k\":1}".getBytes(StandardCharsets.UTF_8), "application/json");
-        assertEquals(TypedData.DataCase.JSON, data.getDataCase());
-        assertEquals("{\"k\":1}", data.getJson());
+        assertEquals(TypedData.DataCase.STRING, data.getDataCase());
+        assertEquals("{\"k\":1}", data.getString());
     }
 
     @Test
     public void buildBodyTypedDataJsonWithCharsetSuffix() {
         TypedData data = HttpBodyBridge.buildBodyTypedData(
             "{}".getBytes(StandardCharsets.UTF_8), "application/json; charset=utf-8");
-        assertEquals(TypedData.DataCase.JSON, data.getDataCase());
+        assertEquals(TypedData.DataCase.STRING, data.getDataCase());
     }
 
     @Test
@@ -57,11 +60,11 @@ public class HttpBodyBridgeTest {
     }
 
     @Test
-    public void buildBodyTypedDataBinaryWhenNoContentType() {
+    public void buildBodyTypedDataTextWhenNoContentType() {
         byte[] bytes = new byte[]{1, 2, 3};
         TypedData data = HttpBodyBridge.buildBodyTypedData(bytes, null);
-        assertEquals(TypedData.DataCase.BYTES, data.getDataCase());
-        assertArrayEquals(bytes, data.getBytes().toByteArray());
+        assertEquals(TypedData.DataCase.STRING, data.getDataCase());
+        assertEquals(new String(bytes, StandardCharsets.UTF_8), data.getString());
     }
 
     @Test
@@ -80,6 +83,46 @@ public class HttpBodyBridgeTest {
     }
 
     @Test
+    public void emptyBodyRemainsUnsetAndMultipartRemainsBinary() {
+        assertEquals(TypedData.DataCase.DATA_NOT_SET,
+            HttpBodyBridge.buildBodyTypedData(new byte[0], "text/plain").getDataCase());
+        byte[] body = new byte[]{0, (byte) 255};
+        assertArrayEquals(body, HttpBodyBridge.buildBodyTypedData(body,
+            "multipart/form-data; boundary=x").getBytes().toByteArray());
+    }
+
+    @Test
+    public void enrichesNativeMetadataWithoutConsumingStreamingBody() throws Exception {
+        InvocationRequest request = InvocationRequest.newBuilder().addInputData(
+            ParameterBinding.newBuilder().setName("req").setData(TypedData.newBuilder().setHttp(
+                RpcHttp.newBuilder().putParams("id", "host-resolved")))).build();
+        HttpExchange exchange = mockExchangeWithBody(new byte[]{1}, "application/octet-stream");
+        java.io.InputStream body = mock(java.io.InputStream.class);
+        when(exchange.getRequestBody()).thenReturn(body);
+        when(exchange.getRequestMethod()).thenReturn("PATCH");
+        when(exchange.getRequestURI()).thenReturn(java.net.URI.create(
+            "/api/items/a%2Fb?q=a+b&q=c%2Bd&empty=&encoded=%E2%82%AC"));
+        exchange.getRequestHeaders().set("X-Forwarded-Proto", "https");
+        exchange.getRequestHeaders().set("X-Forwarded-Host", "example.test:8443");
+        exchange.getRequestHeaders().add("X-Tag", "one");
+        exchange.getRequestHeaders().add("X-Tag", "two");
+
+        RpcHttp http = HttpBodyBridge.enrichRequest(request, exchange, false).getInputData(0).getData().getHttp();
+
+        assertEquals("PATCH", http.getMethod());
+        assertEquals("https://example.test:8443/api/items/a%2Fb?q=a+b&q=c%2Bd&empty=&encoded=%E2%82%AC",
+            http.getUrl());
+        assertEquals("host-resolved", http.getParamsOrThrow("id"));
+        assertEquals("example.test:8443", http.getHeadersOrThrow("host"));
+        assertEquals("one,two", http.getHeadersOrThrow("x-tag"));
+        assertEquals("a b,c+d", http.getQueryOrThrow("q"));
+        assertEquals("\u20ac", http.getQueryOrThrow("encoded"));
+        org.junit.jupiter.api.Assertions.assertFalse(http.containsQuery("empty"));
+        assertEquals(TypedData.DataCase.DATA_NOT_SET, http.getBody().getDataCase());
+        verifyNoInteractions(body);
+    }
+
+    @Test
     public void enrichRequestWithBodyReplacesHttpBody() throws Exception {
         InvocationRequest original = InvocationRequest.newBuilder()
             .setInvocationId("inv-1")
@@ -90,7 +133,7 @@ public class HttpBodyBridgeTest {
             .build();
         HttpExchange exchange = mockExchangeWithBody("payload".getBytes(StandardCharsets.UTF_8), "text/plain");
 
-        InvocationRequest enriched = HttpBodyBridge.enrichRequestWithBody(original, exchange);
+        InvocationRequest enriched = HttpBodyBridge.enrichRequest(original, exchange, true);
         assertNotSame(original, enriched);
         TypedData body = enriched.getInputData(0).getData().getHttp().getBody();
         assertEquals(TypedData.DataCase.STRING, body.getDataCase());
@@ -108,7 +151,7 @@ public class HttpBodyBridgeTest {
                 .setData(TypedData.newBuilder().setString("hello")))
             .build();
         HttpExchange exchange = mock(HttpExchange.class);
-        InvocationRequest result = HttpBodyBridge.enrichRequestWithBody(original, exchange);
+        InvocationRequest result = HttpBodyBridge.enrichRequest(original, exchange, true);
         assertSame(original, result, "Non-HTTP requests should not be modified");
     }
 
@@ -126,7 +169,7 @@ public class HttpBodyBridgeTest {
             .build();
         HttpExchange exchange = mockExchangeWithBody(big, "application/octet-stream");
 
-        InvocationRequest enriched = HttpBodyBridge.enrichRequestWithBody(original, exchange);
+        InvocationRequest enriched = HttpBodyBridge.enrichRequest(original, exchange, true);
         TypedData body = enriched.getInputData(0).getData().getHttp().getBody();
         assertEquals(TypedData.DataCase.BYTES, body.getDataCase());
         assertArrayEquals(big, body.getBytes().toByteArray());
@@ -152,7 +195,7 @@ public class HttpBodyBridgeTest {
         byte[] expected = "{\"ok\":true}".getBytes(StandardCharsets.UTF_8);
         verify(exchange).sendResponseHeaders(201, expected.length);
         assertArrayEquals(expected, captured.toByteArray());
-        assertEquals("application/json", responseHeaders.getFirst("Content-Type"));
+        assertEquals("application/json; charset=utf-8", responseHeaders.getFirst("Content-Type"));
         assertEquals("value", responseHeaders.getFirst("X-Custom"));
     }
 
@@ -189,16 +232,15 @@ public class HttpBodyBridgeTest {
     }
 
     @Test
-    public void writeRpcHttpResponseDefaultsInvalidStatusTo500() throws Exception {
+    public void writeRpcHttpResponseRejectsInvalidStatus() throws Exception {
         ByteArrayOutputStream captured = new ByteArrayOutputStream();
         HttpExchange exchange = mock(HttpExchange.class);
         when(exchange.getResponseHeaders()).thenReturn(new Headers());
         when(exchange.getResponseBody()).thenReturn(captured);
 
         RpcHttp response = RpcHttp.newBuilder().setStatusCode("not-a-number").build();
-        HttpBodyBridge.writeRpcHttpResponse(exchange, response);
-
-        verify(exchange).sendResponseHeaders(500, -1);
+        org.junit.jupiter.api.Assertions.assertThrows(NumberFormatException.class,
+            () -> HttpBodyBridge.writeRpcHttpResponse(exchange, response));
     }
 
     @Test
@@ -281,6 +323,19 @@ public class HttpBodyBridgeTest {
     }
 
     @Test
+    public void writeStreamingResponseClosesSourceWhenHeadersFail() throws Exception {
+        java.io.InputStream body = mock(java.io.InputStream.class);
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(new Headers());
+        doThrow(new IOException("disconnected")).when(exchange).sendResponseHeaders(200, 0);
+
+        org.junit.jupiter.api.Assertions.assertThrows(IOException.class, () ->
+            HttpBodyBridge.writeStreamingResponse(exchange, RpcHttp.getDefaultInstance(), body));
+
+        verify(body).close();
+    }
+
+    @Test
     public void writeStreamingResponseFromIOConsumerInvokesWriterAndFlushes() throws Exception {
         ByteArrayOutputStream captured = new ByteArrayOutputStream();
         Headers responseHeaders = new Headers();
@@ -317,6 +372,47 @@ public class HttpBodyBridgeTest {
         assertSame(expected, thrown);
     }
 
+    @Test
+    public void bodylessStatusesAndHeadNeverReadSource() throws Exception {
+        for (int status : new int[]{200, 204, 205, 304}) {
+            HttpExchange exchange = mock(HttpExchange.class);
+            when(exchange.getResponseHeaders()).thenReturn(new Headers());
+            when(exchange.getRequestMethod()).thenReturn(status == 200 ? "HEAD" : "GET");
+            java.io.InputStream source = mock(java.io.InputStream.class);
+            HttpBodyBridge.writeStreamingResponse(exchange,
+                RpcHttp.newBuilder().setStatusCode(Integer.toString(status)).build(), source);
+            verify(exchange).sendResponseHeaders(status, -1);
+            verify(exchange, never()).getResponseBody();
+            verify(source, never()).read(org.mockito.ArgumentMatchers.any(byte[].class));
+            verify(source).close();
+        }
+    }
+
+    @Test
+    public void headDoesNotInvokeWriterAndIgnoresConflictingFramingHeaders() throws Exception {
+        HttpExchange exchange = mock(HttpExchange.class);
+        Headers headers = new Headers();
+        when(exchange.getResponseHeaders()).thenReturn(headers);
+        when(exchange.getRequestMethod()).thenReturn("HEAD");
+        HttpBodyBridge.writeStreamingResponse(exchange, RpcHttp.newBuilder().setStatusCode("200")
+            .putHeaders("content-length", "999").putHeaders("transfer-encoding", "identity").build(),
+            out -> { throw new AssertionError("HEAD must not invoke a streaming writer"); });
+        verify(exchange).sendResponseHeaders(200, -1);
+        org.junit.jupiter.api.Assertions.assertNull(headers.getFirst("Content-Length"));
+        org.junit.jupiter.api.Assertions.assertNull(headers.getFirst("Transfer-Encoding"));
+    }
+
+    @Test
+    public void numericResponseBodiesUseWireValuesNotProtobufDebugText() throws Exception {
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getResponseHeaders()).thenReturn(new Headers());
+        when(exchange.getResponseBody()).thenReturn(captured);
+        HttpBodyBridge.writeRpcHttpResponse(exchange, RpcHttp.newBuilder()
+            .setBody(TypedData.newBuilder().setInt(42)).build());
+        assertEquals("42", captured.toString("UTF-8"));
+    }
+
     private static HttpExchange mockExchangeWithBody(byte[] body, String contentType) throws IOException {
         HttpExchange exchange = mock(HttpExchange.class);
         Headers headers = new Headers();
@@ -325,6 +421,9 @@ public class HttpBodyBridgeTest {
         }
         when(exchange.getRequestHeaders()).thenReturn(headers);
         when(exchange.getRequestBody()).thenReturn(new ByteArrayInputStream(body));
+        headers.set("Host", "localhost");
+        when(exchange.getRequestMethod()).thenReturn("POST");
+        when(exchange.getRequestURI()).thenReturn(java.net.URI.create("/api/x"));
         return exchange;
     }
 }

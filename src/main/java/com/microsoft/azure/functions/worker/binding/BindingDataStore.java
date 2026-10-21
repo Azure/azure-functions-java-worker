@@ -2,6 +2,7 @@ package com.microsoft.azure.functions.worker.binding;
 
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.microsoft.azure.functions.ExecutionContext;
+import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
 import com.microsoft.azure.functions.worker.broker.CoreTypeResolver;
@@ -151,9 +153,13 @@ public final class BindingDataStore {
         if (promoted == null) {
             return null;
         }
+        DataTarget returnTarget = promoted.get(RETURN_NAME);
+        if (returnTarget != null && returnTarget.getValue() instanceof HttpResponseMessage) {
+            return ((HttpResponseMessage) returnTarget.getValue()).getBody();
+        }
         for (DataTarget target : promoted.values()) {
-            if (target instanceof RpcHttpDataTarget) {
-                return ((RpcHttpDataTarget) target).getBody();
+            if (target.getValue() instanceof HttpResponseMessage) {
+                return ((HttpResponseMessage) target.getValue()).getBody();
             }
         }
         return null;
@@ -164,7 +170,9 @@ public final class BindingDataStore {
         if (this.isDataTargetValid(name, target)) {
             output = this.getTarget(outputId).get(name);
             if (output == null && (this.isDefinitionOutput(name) || ignoreDefinition)) {
-                this.getTarget(outputId).put(name, output = rpcDataTargetFromType(target));
+                Type valueType = name.equals(RETURN_NAME)
+                    ? target : CoreTypeResolver.getParameterizedActualTypeArgumentsType(target);
+                this.getTarget(outputId).put(name, output = rpcDataTargetFromType(valueType));
             }
         }
         return Optional.ofNullable(output).map(out -> new BindingData(out));
@@ -191,7 +199,8 @@ public final class BindingDataStore {
     }
 
     private static DataTarget rpcDataTargetFromType(Type target) {
-        if (CoreTypeResolver.isHttpResponse(target)) {
+        if ((target instanceof Class<?> || target instanceof ParameterizedType)
+                && CoreTypeResolver.isHttpResponse(target)) {
             return new RpcHttpDataTarget();
         }
         return new RpcUnspecifiedDataTarget();

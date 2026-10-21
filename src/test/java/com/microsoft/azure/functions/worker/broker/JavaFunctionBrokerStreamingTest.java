@@ -6,7 +6,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -41,10 +40,10 @@ public class JavaFunctionBrokerStreamingTest {
     }
 
     @Test
-    public void methodHasStreamingHttpBody_inputStreamSubtypeParam_returnsTrue() throws Exception {
+    public void methodHasStreamingHttpBody_inputStreamSubtypeParam_returnsFalse() throws Exception {
         JavaFunctionBroker broker = new JavaFunctionBroker(new DefaultClassLoaderProvider());
         registerMethod(broker, "id-substream", "streamingFnSubtype");
-        assertTrue(broker.methodHasStreamingHttpBody("id-substream"));
+        assertFalse(broker.methodHasStreamingHttpBody("id-substream"));
     }
 
     @Test
@@ -103,12 +102,6 @@ public class JavaFunctionBrokerStreamingTest {
                 (Map<String, ImmutablePair<String, FunctionDefinition>>) getField(broker, "methods");
         methods.put(id, ImmutablePair.of(methodName, functionDefinition));
 
-        // Touch a live stream so the unused-import / classloading paths are
-        // exercised; protects the assertion that the broker logic depends only
-        // on the param type, not on any runtime body.
-        try (InputStream ignored = new ByteArrayInputStream(new byte[0])) {
-            // no-op
-        }
     }
 
     private static Object getField(Object target, String name) throws Exception {

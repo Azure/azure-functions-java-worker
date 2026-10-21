@@ -1,8 +1,13 @@
 package com.microsoft.azure.functions.worker.http;
 
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -22,20 +27,48 @@ import com.sun.net.httpserver.HttpExchange;
  * invocation completes. Slot lookup and creation are atomic so the two halves
  * can race without losing one another.</p>
  *
- * <p>The coordinator does not impose timeouts: the host owns end-to-end
- * timeout enforcement, and per-invocation hangs are observable via the worker's
- * existing health and watchdog telemetry.</p>
+ * <p>The initial handoff is bounded so a missing transport cannot leak a slot
+ * indefinitely. This is not a function execution or streaming duration limit.</p>
  */
-public final class HttpInvocationCoordinator {
-    private final ConcurrentMap<String, HttpInvocationSlot> slots = new ConcurrentHashMap<>();
+public final class HttpInvocationCoordinator implements AutoCloseable {
+    private final Map<String, HttpInvocationSlot> slots = new HashMap<>();
+    private final long handoffTimeout;
+    private final TimeUnit timeoutUnit;
+    private boolean closed;
+
+    public HttpInvocationCoordinator() {
+        this(30, TimeUnit.SECONDS);
+    }
+
+    HttpInvocationCoordinator(long handoffTimeout, TimeUnit timeoutUnit) {
+        this.handoffTimeout = handoffTimeout;
+        this.timeoutUnit = Objects.requireNonNull(timeoutUnit, "timeoutUnit");
+    }
 
     /**
      * Returns the slot for the given invocation, creating it if the other half
      * of the invocation has not arrived yet. Lookup and creation are atomic.
      */
-    public HttpInvocationSlot slotFor(String invocationId) {
+    public synchronized HttpInvocationSlot slotFor(String invocationId) {
         Objects.requireNonNull(invocationId, "invocationId");
+        if (closed) {
+            throw new RejectedExecutionException("HTTP proxy is closed");
+        }
         return slots.computeIfAbsent(invocationId, HttpInvocationSlot::new);
+    }
+
+    public HttpExchange awaitHttpArrival(String invocationId)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        HttpInvocationSlot slot = slotFor(invocationId);
+        if (!slot.invocationArrival().complete(null)) {
+            throw new IllegalStateException("Invocation already registered: " + invocationId);
+        }
+        return slot.httpArrival().get(handoffTimeout, timeoutUnit);
+    }
+
+    void awaitInvocation(HttpInvocationSlot slot)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        slot.invocationArrival().get(handoffTimeout, timeoutUnit);
     }
 
     /**
@@ -45,7 +78,7 @@ public final class HttpInvocationCoordinator {
      *
      * @throws IllegalStateException if HTTP arrival was already registered for this id
      */
-    public HttpInvocationSlot registerHttpArrival(String invocationId, HttpExchange exchange) {
+    public synchronized HttpInvocationSlot registerHttpArrival(String invocationId, HttpExchange exchange) {
         Objects.requireNonNull(exchange, "exchange");
         HttpInvocationSlot slot = slotFor(invocationId);
         if (!slot.httpArrival().complete(exchange)) {
@@ -58,13 +91,14 @@ public final class HttpInvocationCoordinator {
     /**
      * Marks the invocation as complete and removes its slot. Idempotent.
      */
-    public void releaseInvocation(String invocationId) {
+    public synchronized void releaseInvocation(String invocationId) {
         Objects.requireNonNull(invocationId, "invocationId");
         HttpInvocationSlot slot = slots.remove(invocationId);
         if (slot == null) {
             return;
         }
         slot.httpArrival().cancel(false);
+        slot.invocationArrival().complete(null);
         slot.completion().complete(null);
     }
 
@@ -73,7 +107,7 @@ public final class HttpInvocationCoordinator {
      * decides to abort an in-flight invocation (e.g., HTTP handler exception
      * before the user function runs). The slot is removed after failure.
      */
-    public void failInvocation(String invocationId, Throwable cause) {
+    public synchronized void failInvocation(String invocationId, Throwable cause) {
         Objects.requireNonNull(invocationId, "invocationId");
         Objects.requireNonNull(cause, "cause");
         HttpInvocationSlot slot = slots.remove(invocationId);
@@ -81,11 +115,24 @@ public final class HttpInvocationCoordinator {
             return;
         }
         slot.httpArrival().completeExceptionally(cause);
+        slot.invocationArrival().completeExceptionally(cause);
         slot.completion().completeExceptionally(cause);
     }
 
+    @Override
+    public synchronized void close() {
+        closed = true;
+        CancellationException cause = new CancellationException("HTTP proxy is shutting down");
+        for (HttpInvocationSlot slot : slots.values()) {
+            slot.httpArrival().completeExceptionally(cause);
+            slot.invocationArrival().completeExceptionally(cause);
+            slot.completion().completeExceptionally(cause);
+        }
+        slots.clear();
+    }
+
     /** Visible for tests. */
-    public int activeInvocationCount() {
+    public synchronized int activeInvocationCount() {
         return slots.size();
     }
 }

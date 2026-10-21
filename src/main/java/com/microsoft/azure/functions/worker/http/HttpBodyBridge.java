@@ -4,11 +4,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.logging.Level;
 
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
@@ -16,6 +21,7 @@ import com.microsoft.azure.functions.rpc.messages.InvocationRequest;
 import com.microsoft.azure.functions.rpc.messages.ParameterBinding;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 import com.microsoft.azure.functions.rpc.messages.TypedData;
+import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -34,10 +40,9 @@ import com.sun.net.httpserver.HttpExchange;
  *       to the {@code HttpExchange}.</li>
  * </ul>
  *
- * <p>Body classification mirrors the host's {@code PopulateBody} logic and the
- * existing worker behavior for in-process bodies: {@code application/json} →
- * {@code TypedData.json}; {@code text/*} and form-encoded → {@code TypedData.string};
- * everything else (including absent {@code Content-Type}) → {@code TypedData.bytes}.</p>
+ * <p>Matches the host's {@code RpcHttpBodyOnly} contract: octet-stream and
+ * multipart bodies are bytes; other content types, including JSON and an
+ * absent content type, are strings. Empty bodies remain unset.</p>
  */
 public final class HttpBodyBridge {
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
@@ -47,15 +52,14 @@ public final class HttpBodyBridge {
     }
 
     /**
-     * Returns a copy of {@code request} with the body of its HTTP input replaced
-     * by the body read from {@code exchange}. If no input parameter holds an
+     * Returns a copy of {@code request} with HTTP metadata from {@code exchange},
+     * preserving host-resolved route parameters. If no input parameter holds an
      * {@code RpcHttp} payload, {@code request} is returned unchanged.
      *
-     * <p>The body is read eagerly into memory. Functions that declare
-     * {@code HttpRequestMessage<InputStream>} bypass this method and read the
-     * live request stream instead.</p>
+     * <p>When {@code bufferBody} is false, metadata is hydrated without touching
+     * the live request stream.</p>
      */
-    public static InvocationRequest enrichRequestWithBody(InvocationRequest request, HttpExchange exchange)
+    public static InvocationRequest enrichRequest(InvocationRequest request, HttpExchange exchange, boolean bufferBody)
             throws IOException {
         InvocationRequest.Builder builder = request.toBuilder();
         List<ParameterBinding> inputs = request.getInputDataList();
@@ -66,17 +70,61 @@ public final class HttpBodyBridge {
             if (!input.getData().hasHttp()) {
                 continue;
             }
-            if (body == null) {
+            if (bufferBody && body == null) {
                 body = readBody(exchange);
             }
             RpcHttp.Builder httpBuilder = input.getData().getHttp().toBuilder();
-            httpBuilder.setBody(buildBodyTypedData(body, contentType(exchange.getRequestHeaders())));
+            httpBuilder.setMethod(exchange.getRequestMethod());
+            httpBuilder.setUrl(requestUrl(exchange));
+            httpBuilder.clearHeaders();
+            exchange.getRequestHeaders().forEach((name, values) ->
+                httpBuilder.putHeaders(name.toLowerCase(Locale.ROOT), String.join(",", values)));
+            String originalHost = exchange.getRequestHeaders().getFirst("X-Forwarded-Host");
+            if (originalHost != null) {
+                httpBuilder.putHeaders("host", originalHost);
+            }
+            httpBuilder.clearQuery();
+            String query = exchange.getRequestURI().getRawQuery();
+            if (query != null) {
+                Map<String, String> queryValues = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+                for (String entry : query.split("&")) {
+                    if (entry.isEmpty()) {
+                        continue;
+                    }
+                    String[] pair = entry.split("=", 2);
+                    String key = URLDecoder.decode(pair[0], "UTF-8");
+                    String value = pair.length == 2 ? URLDecoder.decode(pair[1], "UTF-8") : "";
+                    queryValues.merge(key, value, (first, second) -> first + "," + second);
+                }
+                queryValues.forEach((key, value) -> {
+                    if (!value.isEmpty()) {
+                        httpBuilder.putQuery(key, value);
+                    }
+                });
+            }
+            if (bufferBody) {
+                httpBuilder.setBody(buildBodyTypedData(body, contentType(exchange.getRequestHeaders())));
+            }
             TypedData.Builder dataBuilder = input.getData().toBuilder().setHttp(httpBuilder);
             ParameterBinding patched = input.toBuilder().setData(dataBuilder).build();
             builder.setInputData(i, patched);
             enriched = true;
         }
         return enriched ? builder.build() : request;
+    }
+
+    private static String requestUrl(HttpExchange exchange) {
+        Headers headers = exchange.getRequestHeaders();
+        String host = headers.getFirst("X-Forwarded-Host");
+        if (host == null) {
+            host = headers.getFirst("Host");
+        }
+        String scheme = headers.getFirst("X-Forwarded-Proto");
+        if (scheme == null) {
+            scheme = "http";
+        }
+        return scheme + "://" + (host != null ? host : exchange.getLocalAddress().getHostString()
+            + ":" + exchange.getLocalAddress().getPort()) + exchange.getRequestURI().toASCIIString();
     }
 
     /**
@@ -87,8 +135,22 @@ public final class HttpBodyBridge {
     public static void writeRpcHttpResponse(HttpExchange exchange, RpcHttp response) throws IOException {
         int status = parseStatus(response.getStatusCode());
         applyResponseHeaders(exchange, response);
+        if (response.getBody().getDataCase() != TypedData.DataCase.BYTES
+                && response.getBody().getDataCase() != TypedData.DataCase.DATA_NOT_SET) {
+            String type = exchange.getResponseHeaders().getFirst(CONTENT_TYPE_HEADER);
+            if (type == null) {
+                type = "text/plain";
+            }
+            if (!type.toLowerCase(Locale.ROOT).contains("charset=")) {
+                type += "; charset=utf-8";
+            }
+            exchange.getResponseHeaders().set(CONTENT_TYPE_HEADER, type);
+        }
         byte[] bodyBytes = extractBodyBytes(response.getBody(), response.getHeadersMap());
-        if (bodyBytes.length == 0) {
+        if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod()) && status != 204 && status != 304) {
+            exchange.getResponseHeaders().set("Content-Length", Integer.toString(bodyBytes.length));
+        }
+        if (!allowsResponseBody(exchange, status) || bodyBytes.length == 0) {
             // -1 == no response body; the response body stream does not need to be opened.
             exchange.sendResponseHeaders(status, -1);
         } else {
@@ -110,15 +172,22 @@ public final class HttpBodyBridge {
      */
     public static void writeStreamingResponse(HttpExchange exchange, RpcHttp envelope, InputStream body)
             throws IOException {
-        int status = parseStatus(envelope.getStatusCode());
-        applyResponseHeaders(exchange, envelope);
-        // length=0 ⇒ chunked transfer-encoding (or close-delimited for HTTP/1.0).
-        exchange.sendResponseHeaders(status, 0);
-        try (InputStream in = body; OutputStream os = exchange.getResponseBody()) {
-            byte[] chunk = new byte[READ_CHUNK];
-            int n;
-            while ((n = in.read(chunk)) != -1) {
-                os.write(chunk, 0, n);
+        try (InputStream in = body) {
+            int status = parseStatus(envelope.getStatusCode());
+            applyResponseHeaders(exchange, envelope);
+            if (!allowsResponseBody(exchange, status)) {
+                exchange.sendResponseHeaders(status, -1);
+                return;
+            }
+            // A zero length selects chunked encoding without buffering the body.
+            exchange.sendResponseHeaders(status, 0);
+            try (OutputStream os = exchange.getResponseBody()) {
+                byte[] chunk = new byte[READ_CHUNK];
+                int n;
+                while ((n = in.read(chunk)) != -1) {
+                    os.write(chunk, 0, n);
+                    os.flush();
+                }
             }
         }
     }
@@ -137,6 +206,10 @@ public final class HttpBodyBridge {
             throws IOException {
         int status = parseStatus(envelope.getStatusCode());
         applyResponseHeaders(exchange, envelope);
+        if (!allowsResponseBody(exchange, status)) {
+            exchange.sendResponseHeaders(status, -1);
+            return;
+        }
         exchange.sendResponseHeaders(status, 0);
         try (OutputStream os = exchange.getResponseBody()) {
             writer.accept(os);
@@ -146,8 +219,17 @@ public final class HttpBodyBridge {
 
     private static void applyResponseHeaders(HttpExchange exchange, RpcHttp envelope) {
         for (Map.Entry<String, String> header : envelope.getHeadersMap().entrySet()) {
-            exchange.getResponseHeaders().add(header.getKey(), header.getValue());
+            // HttpServer owns transport framing, particularly for unknown-length streams.
+            if (!header.getKey().equalsIgnoreCase("Content-Length")
+                    && !header.getKey().equalsIgnoreCase("Transfer-Encoding")) {
+                exchange.getResponseHeaders().set(header.getKey(), header.getValue());
+            }
         }
+    }
+
+    private static boolean allowsResponseBody(HttpExchange exchange, int status) {
+        return !"HEAD".equalsIgnoreCase(exchange.getRequestMethod())
+            && status >= 200 && status != 204 && status != 205 && status != 304;
     }
 
     /**
@@ -158,6 +240,10 @@ public final class HttpBodyBridge {
     public static void writeErrorResponse(HttpExchange exchange, int status, String message) throws IOException {
         byte[] body = (message == null ? "" : message).getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
+        if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(status, -1);
+            return;
+        }
         exchange.sendResponseHeaders(status, body.length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(body);
@@ -165,24 +251,19 @@ public final class HttpBodyBridge {
     }
 
     static TypedData buildBodyTypedData(byte[] bytes, String contentType) {
+        if (bytes.length == 0) {
+            return TypedData.getDefaultInstance();
+        }
         if (contentType != null) {
-            String normalized = contentType.toLowerCase(Locale.ROOT);
-            if (normalized.startsWith("application/json")) {
+            String normalized = contentType.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
+            if (normalized.equals("application/octet-stream") || normalized.contains("multipart/")) {
                 return TypedData.newBuilder()
-                    .setJson(new String(bytes, charsetFromContentType(contentType)))
-                    .build();
-            }
-            if (normalized.startsWith("text/")
-                    || normalized.startsWith("application/x-www-form-urlencoded")
-                    || normalized.startsWith("application/xml")
-                    || normalized.startsWith("application/javascript")) {
-                return TypedData.newBuilder()
-                    .setString(new String(bytes, charsetFromContentType(contentType)))
+                    .setBytes(ByteString.copyFrom(bytes))
                     .build();
             }
         }
         return TypedData.newBuilder()
-            .setBytes(ByteString.copyFrom(bytes))
+            .setString(new String(bytes, charsetFromContentType(contentType)))
             .build();
     }
 
@@ -223,7 +304,9 @@ public final class HttpBodyBridge {
         }
         try {
             return Charset.forName(charset);
-        } catch (RuntimeException ex) {
+        } catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
+            WorkerLogManager.getSystemLogger().log(Level.WARNING,
+                "Unsupported HTTP body charset; using UTF-8", ex);
             return StandardCharsets.UTF_8;
         }
     }
@@ -232,15 +315,11 @@ public final class HttpBodyBridge {
         if (statusCode == null || statusCode.isEmpty()) {
             return 200;
         }
-        try {
-            int status = Integer.parseInt(statusCode);
-            if (status < 100 || status > 599) {
-                return 500;
-            }
-            return status;
-        } catch (NumberFormatException ex) {
-            return 500;
+        int status = Integer.parseInt(statusCode);
+        if (status < 200 || status > 599) {
+            throw new IllegalArgumentException("Invalid final HTTP response status: " + statusCode);
         }
+        return status;
     }
 
     private static byte[] extractBodyBytes(TypedData body, Map<String, String> headers) {
@@ -253,12 +332,16 @@ public final class HttpBodyBridge {
             case STRING:
                 return body.getString().getBytes(charsetFromContentType(headerLookup(headers, "Content-Type")));
             case JSON:
-                return body.getJson().getBytes(StandardCharsets.UTF_8);
+                return ("null".equals(body.getJson().trim()) ? "" : body.getJson())
+                    .getBytes(charsetFromContentType(headerLookup(headers, "Content-Type")));
+            case INT:
+                return Long.toString(body.getInt()).getBytes(StandardCharsets.UTF_8);
+            case DOUBLE:
+                return Double.toString(body.getDouble()).getBytes(StandardCharsets.UTF_8);
             case DATA_NOT_SET:
                 return new byte[0];
             default:
-                // Unsupported body shapes are coerced to their string form so we never drop the response.
-                return body.toString().getBytes(StandardCharsets.UTF_8);
+                throw new IllegalArgumentException("Unsupported HTTP response body: " + body.getDataCase());
         }
     }
 

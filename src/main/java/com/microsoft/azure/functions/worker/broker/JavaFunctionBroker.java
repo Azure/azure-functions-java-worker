@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.azure.functions.HttpRequestMessage;
+import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
 import com.microsoft.azure.functions.cache.CacheKey;
 import com.microsoft.azure.functions.internal.spi.middleware.Middleware;
 import com.microsoft.azure.functions.rpc.messages.*;
@@ -18,6 +19,7 @@ import com.microsoft.azure.functions.spi.inject.FunctionInstanceInjector;
 import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
+import com.microsoft.azure.functions.worker.binding.BindingDefinition;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import com.microsoft.azure.functions.worker.binding.ExecutionRetryContext;
 import com.microsoft.azure.functions.worker.binding.ExecutionTraceContext;
@@ -194,12 +196,21 @@ public class JavaFunctionBroker {
 	public Optional<TypedData> invokeMethod(String id, InvocationRequest request, List<ParameterBinding> outputs)
 			throws Exception {
 		BindingDataStore dataStore = invoke(id, request, null);
+		Object rawBody = dataStore.getHttpResponseRawBody();
+		if (rawBody instanceof InputStream) {
+			try (InputStream ignored = (InputStream) rawBody) {
+				throw new UnsupportedOperationException("Streaming HTTP responses require the HTTP proxy to be enabled.");
+			}
+		}
+		if (rawBody instanceof IOConsumer) {
+			throw new UnsupportedOperationException("Streaming HTTP responses require the HTTP proxy to be enabled.");
+		}
 		outputs.addAll(dataStore.getOutputParameterBindings(true));
 		return dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
 	}
 
 	/**
-	 * Result returned by {@link #invokeMethodForHttpProxy(String, InvocationRequest, List)}.
+	 * Result returned by {@link #invokeMethodForHttpProxy(String, InvocationRequest, InputStream, List)}.
 	 * Exposes both the protobuf return value (for the gRPC reply) and the raw
 	 * (unserialized) HTTP response body so the HTTP proxy path can stream
 	 * {@code InputStream} / {@code HttpResponseMessage.IOConsumer} bodies directly
@@ -245,21 +256,41 @@ public class JavaFunctionBroker {
 			InputStream streamingRequestBody, List<ParameterBinding> outputs) throws Exception {
 		BindingDataStore dataStore = invoke(id, request, streamingRequestBody);
 		Object rawHttpResponseBody = dataStore.getHttpResponseRawBody();
-		outputs.addAll(dataStore.getOutputParameterBindings(true));
-		Optional<TypedData> returnValue = dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
-		return new HttpInvocationOutcome(returnValue, rawHttpResponseBody);
+		try {
+			outputs.addAll(dataStore.getOutputParameterBindings(true));
+			Optional<TypedData> returnValue = dataStore.getDataTargetTypedValue(BindingDataStore.RETURN_NAME);
+			return new HttpInvocationOutcome(returnValue, rawHttpResponseBody);
+		} catch (Exception | Error ex) {
+			closeHttpResponseBody(rawHttpResponseBody, ex);
+			throw ex;
+		}
+	}
+
+	private static void closeHttpResponseBody(Object body, Throwable failure) {
+		if (body instanceof InputStream) {
+			try {
+				((InputStream) body).close();
+			} catch (IOException closeFailure) {
+				failure.addSuppressed(closeFailure);
+			}
+		}
 	}
 
 	private BindingDataStore invoke(String id, InvocationRequest request, InputStream streamingRequestBody)
 			throws Exception {
 		ExecutionContextDataSource executionContextDataSource = buildExecutionContext(id, request, streamingRequestBody);
 
-		if (isJavaSdkTypesEnabled()) {
-			this.functionFactories.get(id).create().doNext(executionContextDataSource);
-		} else {
-			this.invocationChainFactory.create().doNext(executionContextDataSource);
+		try {
+			if (isJavaSdkTypesEnabled()) {
+				this.functionFactories.get(id).create().doNext(executionContextDataSource);
+			} else {
+				this.invocationChainFactory.create().doNext(executionContextDataSource);
+			}
+			return executionContextDataSource.getDataStore();
+		} catch (Exception | Error ex) {
+			closeHttpResponseBody(executionContextDataSource.getDataStore().getHttpResponseRawBody(), ex);
+			throw ex;
 		}
-		return executionContextDataSource.getDataStore();
 	}
 
 	private ExecutionContextDataSource buildExecutionContext(String id, InvocationRequest request,
@@ -296,10 +327,25 @@ public class JavaFunctionBroker {
 		return Optional.ofNullable(this.methods.get(id)).map(entry -> entry.left);
 	}
 
+	public boolean isHttpTrigger(String id) {
+		ImmutablePair<String, FunctionDefinition> entry = this.methods.get(id);
+		return entry != null && entry.right.getBindingDefinitions().values().stream()
+			.anyMatch(BindingDefinition::isHttpTrigger);
+	}
+
+	public boolean isHttpOutput(String id, String name) {
+		ImmutablePair<String, FunctionDefinition> entry = this.methods.get(id);
+		if (entry == null) {
+			return false;
+		}
+		BindingDefinition definition = entry.right.getBindingDefinitions().get(name);
+		return definition != null && definition.isHttpOutput();
+	}
+
 	/**
 	 * Returns true when the function with the given id declares an
 	 * {@link HttpRequestMessage} parameter whose body type argument is
-	 * {@link InputStream} (or any subtype). The HTTP proxy dispatch path uses
+	 * exactly {@link InputStream}. The HTTP proxy dispatch path uses
 	 * this to decide whether to skip the buffered body read and instead expose
 	 * the live HTTP request body as an {@code InputStream}.
 	 */
@@ -322,8 +368,7 @@ public class JavaFunctionBroker {
 			if (args.length == 0) {
 				continue;
 			}
-			if (args[0] instanceof Class<?>
-					&& InputStream.class.isAssignableFrom((Class<?>) args[0])) {
+			if (args[0] == InputStream.class) {
 				return true;
 			}
 		}

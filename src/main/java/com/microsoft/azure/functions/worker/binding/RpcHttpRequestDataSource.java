@@ -95,9 +95,7 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 		HTTP_DATA_OPERATIONS.addGenericOperation(HttpRequestMessage.class, (v, t) -> {
 			Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(t, HttpRequestMessage.class);
 			Type actualType = typeArgs.size() > 0 ? typeArgs.values().iterator().next() : Object.class;
-			if (v.streamingBody != null
-					&& actualType instanceof Class<?>
-					&& InputStream.class.isAssignableFrom((Class<?>) actualType)) {
+			if (v.streamingBody != null && actualType == InputStream.class) {
 				return new HttpRequestMessageImpl(v, v.streamingBody);
 			}
 			BindingData bodyData = v.bodyDataSource.computeByType(actualType).orElseThrow(ClassCastException::new);

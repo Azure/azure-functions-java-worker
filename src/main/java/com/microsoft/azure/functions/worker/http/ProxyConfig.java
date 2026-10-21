@@ -6,13 +6,11 @@ import java.util.Objects;
  * Configuration for the embedded HTTP proxy server used to receive HTTP-triggered
  * invocations directly from the Functions host (HttpUri capability).
  *
- * <p>The configuration deliberately does not impose request body size limits or
- * per-request timeouts. The Functions front-end (nginx) enforces an upstream
- * ceiling, and per-worker overload is managed by the platform — matching the
- * behavior of the Go, Python, and .NET isolated workers.</p>
+ * <p>Request size and invocation limits are enforced by the Functions host.
+ * The coordinator separately bounds the initial transport handoff.</p>
  */
 public final class ProxyConfig {
-    /** Loopback bind address. Other workers also bind to 127.0.0.1 only. */
+    /** Loopback bind address used by the worker. */
     public static final String DEFAULT_BIND_ADDRESS = "127.0.0.1";
 
     /** Ephemeral port. The OS picks an unused port at bind time. */

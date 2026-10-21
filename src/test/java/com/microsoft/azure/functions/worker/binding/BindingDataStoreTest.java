@@ -13,10 +13,36 @@ import java.util.UUID;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.HttpResponseMessage.Builder;
 import com.microsoft.azure.functions.HttpResponseMessage.IOConsumer;
+import com.microsoft.azure.functions.OutputBinding;
 
 import org.junit.jupiter.api.Test;
 
 public class BindingDataStoreTest {
+    private OutputBinding<? super String> wildcardOutput;
+    private OutputBinding<?> unboundedOutput;
+
+    private static class GenericOutput<T> {
+        private OutputBinding<T> output;
+    }
+
+    @Test
+    public void unresolvedOutputValueTypesKeepUnspecifiedSerialization() throws Exception {
+        java.lang.reflect.Type[] types = {
+            getClass().getDeclaredField("wildcardOutput").getGenericType(),
+            getClass().getDeclaredField("unboundedOutput").getGenericType(),
+            GenericOutput.class.getDeclaredField("output").getGenericType()
+        };
+        for (java.lang.reflect.Type type : types) {
+            BindingDataStore store = new BindingDataStore();
+            store.setBindingDefinitions(new HashMap<>());
+            UUID outputId = UUID.randomUUID();
+            assertTrue(store.getOrAddDataTarget(outputId, "queue", type, true).isPresent());
+            store.promoteDataTargets(outputId);
+            store.setDataTargetValue("queue", "ok");
+            assertEquals("ok", store.getDataTargetTypedValue("queue").get().getString());
+        }
+    }
+
 
     @Test
     public void getHttpResponseRawBodyReturnsNullWhenNoTargetsPromoted() {
@@ -60,6 +86,18 @@ public class BindingDataStoreTest {
     public void getHttpResponseRawBodyReturnsStringBody() {
         BindingDataStore store = registerHttpReturnTarget(builder -> builder.body("hello"));
         assertEquals("hello", store.getHttpResponseRawBody());
+    }
+
+    @Test
+    public void getHttpResponseRawBodyReadsAssignedReturnValue() throws Exception {
+        BindingDataStore store = registerHttpReturnTarget(builder -> {});
+        InputStream stream = new ByteArrayInputStream(new byte[]{1, 2, 3});
+        HttpResponseMessage response = new RpcHttpDataTarget().bodyStream(stream).build();
+        store.setDataTargetValue(BindingDataStore.RETURN_NAME, response);
+
+        assertSame(stream, store.getHttpResponseRawBody());
+        assertEquals("200", store.getDataTargetTypedValue(BindingDataStore.RETURN_NAME)
+            .get().getHttp().getStatusCode());
     }
 
     /**

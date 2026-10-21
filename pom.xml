@@ -250,6 +250,9 @@
                 <relocation combine.children="append">
                   <pattern>com.sun</pattern>
                   <shadedPattern>com.microsoft.azure.functions.shaded.com.sun</shadedPattern>
+                  <excludes>
+                    <exclude>com/sun/net/httpserver/**</exclude>
+                  </excludes>
                 </relocation>
                 <relocation combine.children="append">
                   <pattern>android</pattern>
