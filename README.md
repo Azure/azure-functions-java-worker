@@ -244,6 +244,10 @@ mvn javadoc:javadoc
 
 Java worker now shades all its jars, to introduce any new jars it is required by the developers to add a section in the pom file to relocate it.
 
+## Service Bus SDK types
+
+With `JAVA_ENABLE_SDK_TYPES` enabled, the worker hands the raw `model_binding_data` of a deferred binding to the SDK type registry (`azure-functions-java-sdktypes`) through `SdkInvocationContext`. A single message gives one payload and a batch gives one per message, in order. The worker does not decode the payload, open receivers or depend on the Service Bus SDK. The optional `azure-functions-java-servicebus` module does that and also provides `ServiceBusMessageActions`, which a function declares as an unannotated parameter.
+
 # Coding Convention
 
 ## Version Management
