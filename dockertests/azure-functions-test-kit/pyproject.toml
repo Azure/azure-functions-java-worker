@@ -18,6 +18,10 @@ dependencies = [
     "pyjwt>=2.8.0"
 ]
 
+[project.optional-dependencies]
+# Client used by the opt-in Service Bus SDK type docker test
+servicebus = ["azure-servicebus>=7.15.0"]
+
 [project.entry-points.pytest11]
 azure_functions_test_kit = "azure_functions_test_kit.plugin"
 

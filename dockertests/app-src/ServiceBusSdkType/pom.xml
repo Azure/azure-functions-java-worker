@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.microsoft.azure.samples</groupId>
+    <artifactId>functions-java-servicebus-sdk-type</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>Azure Functions Java Service Bus SDK type test app</name>
+    <description>Docker test app for the Service Bus SDK type binding. Opt-in, see dockertests/README.md.</description>
+
+    <!--
+        This app only builds when the unreleased artifacts below are installed in the local Maven
+        repository, so build-apps.ps1 skips it unless -IncludeServiceBus is passed.
+        - azure-functions-java-servicebus, spi and sdktypes: azure-functions-java-additions PR 61
+        - azure-messaging-servicebus 7.19.0-beta.1: azure-sdk-for-java PR 50904 (pulled in by the module above)
+        - azure-functions-maven-plugin 1.42.0: azure-maven-plugins PR 2569 (emits supportsDeferredBinding)
+        Override the versions with -D on the command line once they are released.
+    -->
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>8</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <azure.functions.maven.plugin.version>1.42.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>3.3.0</azure.functions.java.library.version>
+        <azure.functions.java.servicebus.version>1.0.0-SNAPSHOT</azure.functions.java.servicebus.version>
+        <functionAppName>functions-java-servicebus-sdk-type</functionAppName>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.microsoft.azure.functions</groupId>
+            <artifactId>azure-functions-java-library</artifactId>
+            <version>${azure.functions.java.library.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.azure.functions</groupId>
+            <artifactId>azure-functions-java-servicebus</artifactId>
+            <version>${azure.functions.java.servicebus.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>azure-functions-maven-plugin</artifactId>
+                <version>${azure.functions.maven.plugin.version}</version>
+                <configuration>
+                    <appName>${functionAppName}</appName>
+                    <resourceGroup>rg-functions-java-servicebus-sdk-type</resourceGroup>
+                    <region>eastus</region>
+                    <runtime>
+                        <os>linux</os>
+                        <javaVersion>17</javaVersion>
+                    </runtime>
+                    <appSettings>
+                        <property>
+                            <name>FUNCTIONS_EXTENSION_VERSION</name>
+                            <value>~4</value>
+                        </property>
+                    </appSettings>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package-functions</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
