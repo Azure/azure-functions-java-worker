@@ -54,9 +54,12 @@ public class SdkTypeMiddleware implements Middleware {
             ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
-            for (SdkTypeMetaData metaData : this.sdkTypesMetaData) {
-                Parameter param = metaData.getParam();
+            for (SdkTypeMetaData template : this.sdkTypesMetaData) {
+                Parameter param = template.getParam();
                 ParamBindInfo paramBindInfo = new ParamBindInfo(param);
+
+                // The template is shared by every invocation of this function, so fill a fresh copy.
+                SdkTypeMetaData metaData = this.sdkTypeRegistry.createMetaData(template.getFqcn(), param);
 
                 fillMetaData(execCtx, metaData, paramBindInfo.getName());
                 SdkType<?> sdkType = this.sdkTypeRegistry.createSdkType(metaData);
