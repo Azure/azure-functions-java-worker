@@ -23,6 +23,11 @@ public class JavaWorkerClient implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(JavaWorkerClient.class.getName());
     
     public JavaWorkerClient(IApplication app) {
+        this(app, new HostConfigurationSnapshotProvider());
+    }
+
+    JavaWorkerClient(IApplication app, HostConfigurationSnapshotProvider hostConfiguration) {
+        this.hostConfiguration = hostConfiguration;
         WorkerLogManager.initialize(this, app.logToConsole());
         ManagedChannelBuilder<?> chanBuilder = ManagedChannelBuilder.forAddress(app.getHost(), app.getPort());
         if (useTransportSecurity(app.getFunctionsUri())) {
@@ -44,7 +49,7 @@ public class JavaWorkerClient implements AutoCloseable {
     private void addHandlers() {
         JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
         
-        this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
+        this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker, hostConfiguration));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_WARMUP_REQUEST, WorkerWarmupHandler::new);
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_ENVIRONMENT_RELOAD_REQUEST, () -> new FunctionEnvironmentReloadRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.FUNCTION_LOAD_REQUEST, () -> new FunctionLoadRequestHandler(broker));
@@ -143,6 +148,7 @@ public class JavaWorkerClient implements AutoCloseable {
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
+    private final HostConfigurationSnapshotProvider hostConfiguration;
 
     /**
      * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.

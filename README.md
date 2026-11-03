@@ -150,6 +150,59 @@ And the binary will be built to `"./azure-functions-java-worker/target/azure-fun
 
 If you have updated the core interface (azure-functions-java-core), a `mvn clean install` is required for your test functions app to reference the latest core package.
 
+## Host configuration delivery
+
+When an init request contains the exact capability `HostConfiguration = "1"`, the worker
+captures `host.json` beneath its own `FUNCTIONS_APPLICATION_DIRECTORY` environment variable.
+The launcher must provide this variable before the first requested init; neither
+`function_app_directory` from the Host nor the worker installation directory supplies it.
+There is no fallback to the current directory. Explicit relative roots retain native filesystem
+resolution. This repository's worker launcher configuration does not set the variable.
+
+The worker client captures once, lazily and thread-safely, and replays the immutable result
+across subsequent requested inits, including failed captures. Unrequested inits do not access
+the root or file and omit the envelope. Restart the worker to capture changed application content.
+Missing files produce `Missing`; unavailable/invalid roots, read failures and invalid encodings
+produce `Error`. These outcomes do not replace the existing initialization result.
+
+The payload is strict UTF-8 without its source BOM, with UTF-8, UTF-16 LE/BE and UTF-32 LE/BE
+BOM detection. Conversion uses bounded incremental I/O and limits the final UTF-8 payload to
+65,536 bytes, inclusive; exceeding it produces content-free `TooLarge`. The worker does not
+parse JSON, apply defaults, or merge environment settings. Empty files and malformed JSON are
+transported as `Available` for Host validation. File content and path-bearing errors are not logged.
+
+The vendored `FunctionRpc.proto` contains only the APP-01 additions from
+[Azure/azure-functions-language-worker-protobuf#103](https://github.com/Azure/azure-functions-language-worker-protobuf/pull/103),
+pinned at `313666583af4e97f0b534f1cbf61a3812f277c12`: `WorkerInitResponse.host_configuration`
+(field 6) and `HostConfiguration`. Existing Java options and unrelated protocol definitions
+are retained. The usual Maven protobuf plugin generates Java bindings; no generated source
+is checked in and no protocol package upgrade is required. The reference protocol PR must be
+coordinated before release.
+
+Run the focused delivery and existing startup/transport regressions from the repository root:
+
+```powershell
+mvn -B "-Dtest=HostConfigurationSnapshotProviderTest,WorkerInitRequestHandlerTest,HostConfigurationDeliveryTest,ApplicationTest,JavaWorkerClientTest,FunctionEnvironmentReloadRequestHandlerTest,GrpcTransportTest,SimpleParamReturnTest" test
+mvn -B package
+```
+
+For Host/WorkerProxy integration, use a Host containing
+[Azure/azure-functions-host#12101](https://github.com/Azure/azure-functions-host/pull/12101)
+(merge commit `8da994a4e19324233a6f0efecea963a5cc5c5c03`) and a proxy using the same schema.
+Install `target\azure-functions-java-worker-2.19.5.jar` as the launcher's
+`azure-functions-java-worker.jar`, set `FUNCTIONS_APPLICATION_DIRECTORY` in the worker's
+environment to the local application content root, and have the Host request
+`HostConfiguration = "1"`. For a direct proxy launch, retain the existing transport options:
+
+```powershell
+$env:FUNCTIONS_APPLICATION_DIRECTORY = "C:\apps\my-function"
+java -jar .\target\azure-functions-java-worker-2.19.5.jar --functions-uri http://localhost:5000 --functions-worker-id java-worker --functions-request-id init --functions-grpc-max-message-length 134217728
+```
+
+The proxy must already be listening and forward the new envelope opaquely. HTTPS endpoints
+continue to require a trusted server certificate; legacy host/port arguments remain supported.
+Host acceptance, defaults and app-setting precedence are integration concerns, not worker parsing.
+
 ## Pipeline network isolation
 
 The weekly JDK version check and official build use `DefaultDeny` network isolation while retaining
