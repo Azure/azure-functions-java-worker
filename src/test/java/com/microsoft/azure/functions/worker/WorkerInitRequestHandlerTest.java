@@ -83,6 +83,26 @@ class WorkerInitRequestHandlerTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"", "\uFEFF", "[]", "\"s\"", "1", "null", "true", "// c\n[1]"})
+    void invalidObjectRootsDoNotReplaceInitializationResult(String source) {
+        JavaFunctionBroker broker = mock(JavaFunctionBroker.class);
+        HostConfigurationSnapshotProvider provider = new HostConfigurationSnapshotProvider(directory::toString,
+                path -> new ByteArrayInputStream(source.getBytes(StandardCharsets.UTF_8)));
+        WorkerInitRequest request = WorkerInitRequest.newBuilder().putCapabilities("HostConfiguration", "1").build();
+        WorkerInitResponse response = handle(broker, provider, request);
+        assertEquals(HostConfiguration.Status.Error, response.getHostConfiguration().getStatus());
+        assertTrue(response.getHostConfiguration().getContent().isEmpty());
+        assertEquals(StatusResult.Status.Success, response.getResult().getStatus());
+        assertFalse(response.getResult().hasException());
+
+        doThrow(new IllegalStateException("genuine init failure")).when(broker).setWorkerDirectory(anyString());
+        WorkerInitResponse failedInit = handle(broker, provider, request);
+        assertEquals(response.getHostConfiguration(), failedInit.getHostConfiguration());
+        assertEquals(StatusResult.Status.Failure, failedInit.getResult().getStatus());
+        assertTrue(failedInit.getResult().getException().getMessage().contains("genuine init failure"));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {JAVA_ENABLE_OPENTELEMETRY, JAVA_APPLICATIONINSIGHTS_ENABLE_TELEMETRY})
     void telemetryCapabilitiesAndWorkerLocalEnvironmentLookupArePreserved(String setting) throws Exception {
         Map<String, String> original = new HashMap<>(System.getenv());
@@ -132,7 +152,7 @@ class WorkerInitRequestHandlerTest {
             HostConfigurationSnapshotProvider failure = new HostConfigurationSnapshotProvider(() -> secret,
                     path -> { throw new AccessDeniedException(secret); });
             HostConfigurationSnapshotProvider success = new HostConfigurationSnapshotProvider(() -> secret,
-                    path -> new ByteArrayInputStream(("\"" + secret + "\"").getBytes(StandardCharsets.UTF_8)));
+                    path -> new ByteArrayInputStream(("{\"value\":\"" + secret + "\"}").getBytes(StandardCharsets.UTF_8)));
             HostConfigurationSnapshotProvider invalidJson = new HostConfigurationSnapshotProvider(() -> secret,
                     path -> new ByteArrayInputStream(("{\"" + secret + "\":}").getBytes(StandardCharsets.UTF_8)));
             WorkerInitRequest request = WorkerInitRequest.newBuilder().putCapabilities("HostConfiguration", "1").build();

@@ -114,10 +114,7 @@ public final class HostConfigurationSnapshotProvider {
                 // A failed close remains a read failure even when conversion also failed.
                 stream.close();
             }
-            // An empty source is delivered unchanged; the Host owns rejecting it.
-            if (content.length != 0) {
-                content = HostConfigurationJsonNormalizer.normalize(content);
-            }
+            content = HostConfigurationJsonNormalizer.normalize(content);
             if (content.length > MAX_CONTENT_BYTES) {
                 return failure(FailureReason.Oversized);
             }

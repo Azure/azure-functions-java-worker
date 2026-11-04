@@ -3,7 +3,7 @@ package com.microsoft.azure.functions.worker;
 import java.io.ByteArrayOutputStream;
 
 /**
- * Validates JSON and copies raw tokens, removing comments, trailing commas and whitespace.
+ * Validates a JSON object root and copies raw tokens, removing comments, trailing commas and whitespace.
  * The caller supplies already bounded, strictly decoded UTF-8. A DOM or numeric conversion
  * would lose duplicate properties, escape spellings or arbitrarily long number lexemes.
  */
@@ -19,6 +19,10 @@ final class HostConfigurationJsonNormalizer {
 
     static byte[] normalize(byte[] utf8) throws InvalidJsonException {
         HostConfigurationJsonNormalizer normalizer = new HostConfigurationJsonNormalizer(utf8);
+        normalizer.skipTrivia();
+        if (normalizer.peek() != '{') {
+            throw new InvalidJsonException();
+        }
         normalizer.value(0);
         normalizer.skipTrivia();
         if (normalizer.position != utf8.length) {

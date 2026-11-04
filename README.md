@@ -172,18 +172,19 @@ Conversion uses bounded incremental I/O. Both the converted source, before JSON 
 and the normalized payload are limited to 65,536 UTF-8 bytes, inclusive; exceeding either limit
 produces content-free `TooLarge`, even if removing comments would shrink the source below the cap.
 The worker normalizes to strict compact JSON: `//` and `/* */` comments and trailing commas are
-accepted and removed, as is insignificant whitespace. It accepts a single root of any JSON type
+accepted and removed, as is insignificant whitespace. It requires a single JSON object root
 with at most 64 nested containers, retaining duplicate keys, key order, raw string/property
 escapes (including escaped lone surrogates), and number spellings without numeric conversion.
-Empty decoded content (including BOM-only files) stays `Available` with empty content; non-empty
-whitespace/comment-only content and invalid syntax are `Error`. The Host still owns semantic
+Empty decoded content (including BOM-only files), non-object roots, whitespace/comment-only
+content and invalid syntax produce content-free `Error` with reason `InvalidJson`. An empty object
+(`{}`) is valid, as are arrays and scalars nested inside the root object. The Host still owns semantic
 validation, defaults and app-setting overrides; the worker does not merge environment settings.
 
 An `Error` or `TooLarge` capture logs one warning with a fixed reason code and restart guidance.
 It never logs file content, paths or exception details, and cache replay does not repeat the warning.
 `Available`, `Missing`, and unrequested delivery do not produce feature diagnostics. These semantics
 follow [Azure/azure-functions-dotnet-worker#3522](https://github.com/Azure/azure-functions-dotnet-worker/pull/3522)
-at `4c440d8d38526a16eb549ac6fba1082fe5ad4450`.
+at `e7765e7201008340e4cc407486bbd31649abf162`.
 
 The vendored `FunctionRpc.proto` contains only the APP-01 additions from
 [Azure/azure-functions-language-worker-protobuf#103](https://github.com/Azure/azure-functions-language-worker-protobuf/pull/103),

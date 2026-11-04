@@ -34,7 +34,7 @@ class HostConfigurationDeliveryTest {
     Path directory;
 
     @ParameterizedTest
-    @ValueSource(strings = {"available", "openFailure", "invalidJson"})
+    @ValueSource(strings = {"available", "openFailure", "invalidJson", "empty", "nonObject"})
     void clientSharesLazySnapshotAcrossRecreatedConcurrentHandlers(String outcome) throws Exception {
         boolean fail = !"available".equals(outcome);
         BlockingQueue<StreamObserver<StreamingMessage>> streams = new LinkedBlockingQueue<>();
@@ -75,6 +75,12 @@ class HostConfigurationDeliveryTest {
             }
             if ("invalidJson".equals(outcome) && source.get().contains("original")) {
                 return new ByteArrayInputStream("{malformed json".getBytes(StandardCharsets.UTF_8));
+            }
+            if ("empty".equals(outcome) && source.get().contains("original")) {
+                return new ByteArrayInputStream(new byte[0]);
+            }
+            if ("nonObject".equals(outcome) && source.get().contains("original")) {
+                return new ByteArrayInputStream("// comment\n[1,]".getBytes(StandardCharsets.UTF_8));
             }
             return new ByteArrayInputStream(source.get().getBytes(StandardCharsets.UTF_8));
         });
