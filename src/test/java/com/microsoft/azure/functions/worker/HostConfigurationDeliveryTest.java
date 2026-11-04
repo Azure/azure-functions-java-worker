@@ -34,8 +34,9 @@ class HostConfigurationDeliveryTest {
     Path directory;
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void clientSharesLazySnapshotAcrossRecreatedConcurrentHandlers(boolean fail) throws Exception {
+    @ValueSource(strings = {"available", "openFailure", "invalidJson"})
+    void clientSharesLazySnapshotAcrossRecreatedConcurrentHandlers(String outcome) throws Exception {
+        boolean fail = !"available".equals(outcome);
         BlockingQueue<StreamObserver<StreamingMessage>> streams = new LinkedBlockingQueue<>();
         BlockingQueue<StreamingMessage> replies = new LinkedBlockingQueue<>();
         AtomicReference<Throwable> streamFailure = new AtomicReference<>();
@@ -63,14 +64,17 @@ class HostConfigurationDeliveryTest {
         }).build().start();
         AtomicInteger lookups = new AtomicInteger();
         AtomicInteger opens = new AtomicInteger();
-        AtomicReference<String> source = new AtomicReference<>("original");
+        AtomicReference<String> source = new AtomicReference<>("{ /*comment*/ \"value\": \"original\", }");
         HostConfigurationSnapshotProvider provider = new HostConfigurationSnapshotProvider(() -> {
             lookups.incrementAndGet();
             return directory.toString();
         }, path -> {
             opens.incrementAndGet();
-            if (fail && "original".equals(source.get())) {
+            if ("openFailure".equals(outcome) && source.get().contains("original")) {
                 throw new IOException("sensitive path");
+            }
+            if ("invalidJson".equals(outcome) && source.get().contains("original")) {
+                return new ByteArrayInputStream("{malformed json".getBytes(StandardCharsets.UTF_8));
             }
             return new ByteArrayInputStream(source.get().getBytes(StandardCharsets.UTF_8));
         });
@@ -89,8 +93,8 @@ class HostConfigurationDeliveryTest {
             stream.onNext(request("first", true));
             HostConfiguration first = take(replies).getWorkerInitResponse().getHostConfiguration();
             assertEquals(fail ? HostConfiguration.Status.Error : HostConfiguration.Status.Available, first.getStatus());
-            assertEquals(fail ? ByteString.EMPTY : ByteString.copyFromUtf8("original"), first.getContent());
-            source.set("changed");
+            assertEquals(fail ? ByteString.EMPTY : ByteString.copyFromUtf8("{\"value\":\"original\"}"), first.getContent());
+            source.set("{\"value\":\"changed\"}");
             for (int i = 0; i < 16; i++) {
                 stream.onNext(request("retry-" + i, true));
             }

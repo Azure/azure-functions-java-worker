@@ -13,15 +13,19 @@ import java.io.OutputStreamWriter;
 import java.io.PushbackInputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 /**
  * Internal, worker-lifetime snapshot of host.json. Only an enabled init captures it;
@@ -32,6 +36,7 @@ public final class HostConfigurationSnapshotProvider {
     private final Supplier<String> applicationDirectory;
     private final FileOpener fileOpener;
     private HostConfiguration snapshot;
+    private FailureReason failureReason;
 
     public HostConfigurationSnapshotProvider() {
         this(() -> System.getenv("FUNCTIONS_APPLICATION_DIRECTORY"), Files::newInputStream);
@@ -48,40 +53,88 @@ public final class HostConfigurationSnapshotProvider {
         }
         if (snapshot == null) {
             snapshot = capture();
+            if (failureReason != null) {
+                WorkerLogManager.getSystemLogger().log(Level.WARNING,
+                        "Host configuration could not be delivered to the host. Reason: " + failureReason
+                                + ". The failure is retained until the worker process restarts.");
+            }
         }
         return HostConfiguration.newBuilder().setStatus(snapshot.getStatus())
                 .setContent(snapshot.getContent()).build();
     }
 
     private HostConfiguration capture() {
+        String root;
         try {
-            String root = applicationDirectory.get();
+            root = applicationDirectory.get();
+        } catch (RuntimeException ex) {
+            return failure(FailureReason.AppDirectoryUnavailable);
+        }
+
+        Path path;
+        try {
             if (root == null || root.codePoints().allMatch(c ->
                     Character.isWhitespace(c) || Character.isSpaceChar(c) || c == 0x85)) {
-                return outcome(HostConfiguration.Status.Error);
+                return failure(FailureReason.AppDirectoryNotSet);
             }
-            Path path = Paths.get(root).resolve("host.json");
-            InputStream stream;
+            path = Paths.get(root).resolve("host.json");
+        } catch (RuntimeException ex) {
+            return failure(FailureReason.AppDirectoryInvalid);
+        }
+
+        InputStream stream;
+        try {
+            stream = fileOpener.open(path);
+        } catch (NoSuchFileException ex) {
+            // NIO uses the same exception for an absent file and an absent parent.
+            // Only inspect the parent after an unsuccessful open, never before a read.
             try {
-                stream = fileOpener.open(path);
-            } catch (NoSuchFileException ex) {
-                // NIO uses the same exception for an absent file and an absent parent.
-                // Only inspect the parent after an unsuccessful open, never before a read.
-                return outcome(Files.readAttributes(path.getParent(), BasicFileAttributes.class).isDirectory()
-                        ? HostConfiguration.Status.Missing : HostConfiguration.Status.Error);
+                return Files.readAttributes(path.getParent(), BasicFileAttributes.class).isDirectory()
+                        ? outcome(HostConfiguration.Status.Missing) : failure(FailureReason.AppDirectoryNotFound);
+            } catch (NoSuchFileException | NotDirectoryException missingParent) {
+                return failure(FailureReason.AppDirectoryNotFound);
+            } catch (AccessDeniedException | SecurityException denied) {
+                return failure(FailureReason.AccessDenied);
+            } catch (IOException | RuntimeException unavailableParent) {
+                return failure(FailureReason.OpenFailed);
             }
-            try (InputStream input = stream) {
-                return readBounded(input);
-            }
-        } catch (ContentTooLargeException ex) {
-            return outcome(HostConfiguration.Status.TooLarge);
+        } catch (NotDirectoryException ex) {
+            return failure(FailureReason.AppDirectoryNotFound);
+        } catch (AccessDeniedException | SecurityException ex) {
+            return failure(FailureReason.AccessDenied);
         } catch (IOException | RuntimeException ex) {
-            // These are delivery failures, not initialization failures. Never expose exception paths/values.
-            return outcome(HostConfiguration.Status.Error);
+            return failure(FailureReason.OpenFailed);
+        }
+
+        try {
+            byte[] content;
+            try {
+                content = readBounded(stream);
+            } finally {
+                // A failed close remains a read failure even when conversion also failed.
+                stream.close();
+            }
+            // An empty source is delivered unchanged; the Host owns rejecting it.
+            if (content.length != 0) {
+                content = HostConfigurationJsonNormalizer.normalize(content);
+            }
+            if (content.length > MAX_CONTENT_BYTES) {
+                return failure(FailureReason.Oversized);
+            }
+            return HostConfiguration.newBuilder().setStatus(HostConfiguration.Status.Available)
+                    .setContent(ByteString.copyFrom(content)).build();
+        } catch (CharacterCodingException ex) {
+            return failure(FailureReason.InvalidEncoding);
+        } catch (HostConfigurationJsonNormalizer.InvalidJsonException ex) {
+            return failure(FailureReason.InvalidJson);
+        } catch (ContentTooLargeException ex) {
+            return failure(FailureReason.Oversized);
+        } catch (IOException | RuntimeException ex) {
+            return failure(FailureReason.ReadFailed);
         }
     }
 
-    private static HostConfiguration readBounded(InputStream input) throws IOException {
+    private static byte[] readBounded(InputStream input) throws IOException {
         PushbackInputStream stream = new PushbackInputStream(input, 4);
         byte[] head = new byte[4];
         int count = 0;
@@ -123,8 +176,13 @@ public final class HostConfigurationSnapshotProvider {
                 writer.write(chars, 0, length);
             }
         }
-        return HostConfiguration.newBuilder().setStatus(HostConfiguration.Status.Available)
-                .setContent(ByteString.copyFrom(content.bytes.toByteArray())).build();
+        return content.bytes.toByteArray();
+    }
+
+    private HostConfiguration failure(FailureReason reason) {
+        failureReason = reason;
+        return outcome(reason == FailureReason.Oversized
+                ? HostConfiguration.Status.TooLarge : HostConfiguration.Status.Error);
     }
 
     private static HostConfiguration outcome(HostConfiguration.Status status) {
@@ -134,6 +192,19 @@ public final class HostConfigurationSnapshotProvider {
     @FunctionalInterface
     interface FileOpener {
         InputStream open(Path path) throws IOException;
+    }
+
+    private enum FailureReason {
+        AppDirectoryUnavailable,
+        AppDirectoryNotSet,
+        AppDirectoryInvalid,
+        AppDirectoryNotFound,
+        AccessDenied,
+        OpenFailed,
+        ReadFailed,
+        InvalidEncoding,
+        InvalidJson,
+        Oversized
     }
 
     private static final class BoundedContent extends OutputStream {

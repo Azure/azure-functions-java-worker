@@ -162,14 +162,28 @@ resolution. This repository's worker launcher configuration does not set the var
 The worker client captures once, lazily and thread-safely, and replays the immutable result
 across subsequent requested inits, including failed captures. Unrequested inits do not access
 the root or file and omit the envelope. Restart the worker to capture changed application content.
-Missing files produce `Missing`; unavailable/invalid roots, read failures and invalid encodings
-produce `Error`. These outcomes do not replace the existing initialization result.
+Missing files at open produce `Missing`; unavailable/invalid roots, read/close failures, invalid
+encodings and malformed JSON produce `Error`. A not-found failure after opening is a read error,
+not `Missing`. These outcomes do not replace the existing initialization result.
 
 The payload is strict UTF-8 without its source BOM, with UTF-8, UTF-16 LE/BE and UTF-32 LE/BE
-BOM detection. Conversion uses bounded incremental I/O and limits the final UTF-8 payload to
-65,536 bytes, inclusive; exceeding it produces content-free `TooLarge`. The worker does not
-parse JSON, apply defaults, or merge environment settings. Empty files and malformed JSON are
-transported as `Available` for Host validation. File content and path-bearing errors are not logged.
+BOM detection and strict decoding (valid U+FFFD is preserved, not treated as a decoder error).
+Conversion uses bounded incremental I/O. Both the converted source, before JSON normalization,
+and the normalized payload are limited to 65,536 UTF-8 bytes, inclusive; exceeding either limit
+produces content-free `TooLarge`, even if removing comments would shrink the source below the cap.
+The worker normalizes to strict compact JSON: `//` and `/* */` comments and trailing commas are
+accepted and removed, as is insignificant whitespace. It accepts a single root of any JSON type
+with at most 64 nested containers, retaining duplicate keys, key order, raw string/property
+escapes (including escaped lone surrogates), and number spellings without numeric conversion.
+Empty decoded content (including BOM-only files) stays `Available` with empty content; non-empty
+whitespace/comment-only content and invalid syntax are `Error`. The Host still owns semantic
+validation, defaults and app-setting overrides; the worker does not merge environment settings.
+
+An `Error` or `TooLarge` capture logs one warning with a fixed reason code and restart guidance.
+It never logs file content, paths or exception details, and cache replay does not repeat the warning.
+`Available`, `Missing`, and unrequested delivery do not produce feature diagnostics. These semantics
+follow [Azure/azure-functions-dotnet-worker#3522](https://github.com/Azure/azure-functions-dotnet-worker/pull/3522)
+at `4c440d8d38526a16eb549ac6fba1082fe5ad4450`.
 
 The vendored `FunctionRpc.proto` contains only the APP-01 additions from
 [Azure/azure-functions-language-worker-protobuf#103](https://github.com/Azure/azure-functions-language-worker-protobuf/pull/103),
@@ -201,7 +215,7 @@ java -jar .\target\azure-functions-java-worker-2.19.5.jar --functions-uri http:/
 
 The proxy must already be listening and forward the new envelope opaquely. HTTPS endpoints
 continue to require a trusted server certificate; legacy host/port arguments remain supported.
-Host acceptance, defaults and app-setting precedence are integration concerns, not worker parsing.
+Host semantic acceptance, defaults and app-setting precedence remain integration concerns.
 
 ## Pipeline network isolation
 

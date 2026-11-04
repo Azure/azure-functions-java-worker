@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -131,14 +132,18 @@ class WorkerInitRequestHandlerTest {
             HostConfigurationSnapshotProvider failure = new HostConfigurationSnapshotProvider(() -> secret,
                     path -> { throw new AccessDeniedException(secret); });
             HostConfigurationSnapshotProvider success = new HostConfigurationSnapshotProvider(() -> secret,
-                    path -> new ByteArrayInputStream(secret.getBytes(StandardCharsets.UTF_8)));
+                    path -> new ByteArrayInputStream(("\"" + secret + "\"").getBytes(StandardCharsets.UTF_8)));
+            HostConfigurationSnapshotProvider invalidJson = new HostConfigurationSnapshotProvider(() -> secret,
+                    path -> new ByteArrayInputStream(("{\"" + secret + "\":}").getBytes(StandardCharsets.UTF_8)));
             WorkerInitRequest request = WorkerInitRequest.newBuilder().putCapabilities("HostConfiguration", "1").build();
-            for (HostConfigurationSnapshotProvider provider : new HostConfigurationSnapshotProvider[]{failure, success}) {
+            for (HostConfigurationSnapshotProvider provider : new HostConfigurationSnapshotProvider[]{failure, success, invalidJson}) {
                 WorkerInitResponse response = handle(mock(JavaFunctionBroker.class), provider, request);
                 assertEquals(StatusResult.Status.Success, response.getResult().getStatus());
+                assertEquals(provider == success ? HostConfiguration.Status.Available : HostConfiguration.Status.Error,
+                        response.getHostConfiguration().getStatus());
                 assertFalse(response.toBuilder().clearHostConfiguration().build().toString().contains(secret));
             }
-            assertFalse(records.isEmpty());
+            assertEquals(2, records.stream().filter(record -> record.getLevel() == Level.WARNING).count());
             for (LogRecord record : records) {
                 assertFalse(record.getMessage().contains(secret));
                 assertNull(record.getThrown());
@@ -175,7 +180,7 @@ class WorkerInitRequestHandlerTest {
     private HostConfigurationSnapshotProvider provider(HostConfiguration.Status status) throws Exception {
         Path root = Files.createDirectory(directory.resolve(status.name()));
         if (status == HostConfiguration.Status.Available) {
-            Files.write(root.resolve("host.json"), "{not JSON}".getBytes(StandardCharsets.UTF_8));
+            Files.write(root.resolve("host.json"), "{ /*comment*/ \"version\": \"2.0\", }".getBytes(StandardCharsets.UTF_8));
         } else if (status == HostConfiguration.Status.Error) {
             Files.write(root.resolve("host.json"), new byte[]{(byte) 0xFF});
         } else if (status == HostConfiguration.Status.TooLarge) {

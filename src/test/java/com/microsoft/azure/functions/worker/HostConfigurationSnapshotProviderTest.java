@@ -3,6 +3,8 @@ package com.microsoft.azure.functions.worker;
 import com.google.protobuf.ByteString;
 import com.microsoft.azure.functions.rpc.messages.HostConfiguration;
 import com.microsoft.azure.functions.rpc.messages.WorkerInitRequest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +34,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +46,27 @@ class HostConfigurationSnapshotProviderTest {
             .putCapabilities("HostConfiguration", "1").build();
     @TempDir
     Path directory;
+    private final List<LogRecord> records = Collections.synchronizedList(new ArrayList<>());
+    private final Handler collector = new Handler() {
+        @Override
+        public void publish(LogRecord record) {
+            records.add(record);
+        }
+        @Override
+        public void flush() { }
+        @Override
+        public void close() { }
+    };
+
+    @BeforeEach
+    void captureDiagnostics() {
+        WorkerLogManager.getSystemLogger().addHandler(collector);
+    }
+
+    @AfterEach
+    void removeDiagnosticCapture() {
+        WorkerLogManager.getSystemLogger().removeHandler(collector);
+    }
 
     @Test
     void onlyExactGateCapturesAndDisabledRequestsNeverAccessRootOrFile() {
@@ -70,6 +97,7 @@ class HostConfigurationSnapshotProviderTest {
         }
         assertEquals(1, lookups.get());
         assertEquals(1, opens.get());
+        assertTrue(records.isEmpty(), "Disabled requests and empty success must not log");
     }
 
     @ParameterizedTest
@@ -98,7 +126,7 @@ class HostConfigurationSnapshotProviderTest {
 
     @Test
     void usesOnlyWorkerLocalRootAndPreservesNativeRelativeResolution() throws Exception {
-        Files.write(directory.resolve("host.json"), "local".getBytes(StandardCharsets.UTF_8));
+        Files.write(directory.resolve("host.json"), "\"local\"".getBytes(StandardCharsets.UTF_8));
         Path child = Files.createDirectory(directory.resolve("child"));
         Path relative = Paths.get("").toAbsolutePath().relativize(child).resolve("..");
         AtomicReference<Path> opened = new AtomicReference<>();
@@ -109,7 +137,7 @@ class HostConfigurationSnapshotProviderTest {
         HostConfiguration result = provider.getConfiguration(ENABLED.toBuilder()
                 .setFunctionAppDirectory("not-the-local-root").setWorkerDirectory("not-the-local-root").build());
         assertEquals(relative.resolve("host.json"), opened.get());
-        assertEquals(ByteString.copyFromUtf8("local"), result.getContent());
+        assertEquals(ByteString.copyFromUtf8("\"local\""), result.getContent());
     }
 
     @Test
@@ -168,9 +196,26 @@ class HostConfigurationSnapshotProviderTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"valid", "malformedJson", "invalidEncoding", "oversized"})
+    void closeFailureAlwaysRemainsReadFailed(String source) {
+        byte[] content = "oversized".equals(source) ? repeat("x", 65_537).getBytes(StandardCharsets.UTF_8)
+                : "invalidEncoding".equals(source) ? bytes(0xFF)
+                : ("malformedJson".equals(source) ? "{invalid" : "{}").getBytes(StandardCharsets.UTF_8);
+        InputStream stream = new ByteArrayInputStream(content) {
+            @Override
+            public void close() throws IOException {
+                throw new NoSuchFileException("sensitive path");
+            }
+        };
+        assertOutcome(HostConfiguration.Status.Error, provider(stream).getConfiguration(ENABLED));
+        assertReason("ReadFailed");
+    }
+
+    @ParameterizedTest
     @EnumSource(SourceEncoding.class)
     void strictBomConversionSurvivesShortReadsAndSurrogateBoundaries(SourceEncoding encoding) {
-        String text = repeat("x", 4095) + "\uD83D\uDE00\u20AC\u00E9" + repeat("x", 4095) + "\uD83D\uDE00";
+        String text = "\"" + repeat("x", 4094) + "\uD83D\uDE00\u20AC\u00E9"
+                + repeat("x", 4095) + "\uD83D\uDE00\"";
         byte[] source = encoding.encode(text);
         for (int chunkSize : new int[]{1, 3, 4096}) {
             InputStream stream = new ByteArrayInputStream(source) {
@@ -187,45 +232,155 @@ class HostConfigurationSnapshotProviderTest {
 
     @ParameterizedTest
     @EnumSource(SourceEncoding.class)
-    void emptyAndMalformedJsonAreTransportedWithoutParsing(SourceEncoding encoding) {
-        for (String text : Arrays.asList("", "{invalid json", "null", "{\"version\":\"wrong\",\"value\":1}")) {
+    void emptyAndSyntacticallyValidContentRemainForHostInterpretation(SourceEncoding encoding) {
+        for (String text : Arrays.asList("", "null", "{\"version\":\"wrong\",\"value\":1}")) {
             HostConfiguration result = provider(encoding.encode(text)).getConfiguration(ENABLED);
             assertEquals(HostConfiguration.Status.Available, result.getStatus());
             assertEquals(ByteString.copyFromUtf8(text), result.getContent());
         }
+        assertTrue(records.isEmpty());
     }
 
     @ParameterizedTest
     @EnumSource(value = SourceEncoding.class, names = "UTF8", mode = EnumSource.Mode.EXCLUDE)
-    void removesExactlyOneBom(SourceEncoding encoding) {
-        assertEquals(ByteString.copyFromUtf8("\uFEFF{}"),
-                provider(encoding.encode("\uFEFF{}")).getConfiguration(ENABLED).getContent());
+    void aSecondBomIsContentAndNotValidJson(SourceEncoding encoding) {
+        assertOutcome(HostConfiguration.Status.Error,
+                provider(encoding.encode("\uFEFF{}")).getConfiguration(ENABLED));
+        assertReason("InvalidJson");
     }
 
     @ParameterizedTest
     @EnumSource(SourceEncoding.class)
     void finalUtf8LimitIsInclusiveAndIndependentOfSourceLength(SourceEncoding encoding) {
-        String atLimit = repeat("x", 65_536);
+        String atLimit = "\"" + repeat("x", 65_534) + "\"";
         HostConfiguration result = provider(encoding.encode(atLimit)).getConfiguration(ENABLED);
         assertEquals(HostConfiguration.Status.Available, result.getStatus());
         assertEquals(65_536, result.getContent().size());
         assertEquals(ByteString.copyFromUtf8(atLimit), result.getContent());
         assertOutcome(HostConfiguration.Status.TooLarge,
-                provider(encoding.encode(atLimit + "x")).getConfiguration(ENABLED));
+                provider(encoding.encode(atLimit + " ")).getConfiguration(ENABLED));
 
-        String expanded = repeat("\u20AC", 21_845) + "x";
+        String expanded = "\"" + repeat("\u20AC", 21_844) + "xx\"";
         assertEquals(65_536, expanded.getBytes(StandardCharsets.UTF_8).length);
         result = provider(encoding.encode(expanded)).getConfiguration(ENABLED);
         assertEquals(HostConfiguration.Status.Available, result.getStatus());
         assertEquals(ByteString.copyFromUtf8(expanded), result.getContent());
         assertOutcome(HostConfiguration.Status.TooLarge,
-                provider(encoding.encode(expanded + "x")).getConfiguration(ENABLED));
+                provider(encoding.encode(expanded + " ")).getConfiguration(ENABLED));
+    }
+
+    @ParameterizedTest
+    @EnumSource(SourceEncoding.class)
+    void commentsTrailingCommasAndWhitespaceNormalizeWithoutChangingTokens(SourceEncoding encoding) {
+        String expected = "{\"version\":\"2.0\",\"\\u0061\":\"x\\u0041\\n\\/\\\\\\\"\","
+                + "\"a\":[1E+2,-0.50,-0,1e999,123456789012345678901234567890,"
+                + "0.12345678901234567890123456789,true,false,null,{},[]],"
+                + "\"a\":\"\u20AC\uD83D\uDE00\",\"surrogates\":\"\\uD800\\uDE00\\uD800\","
+                + "\"commentText\":\"/* kept */ // kept\","
+                + "\"e\":{}}";
+        String source = "// header\r\n" + expected
+                .replace("[1E+2", "[ /* values */ 1E+2")
+                .replace(",\"e\":{}", ",/* after string */\"e\":{ },")
+                .replace("null,{},[]]", "null,{},[],/* trailing array comma */]") + " /* footer */ // eof";
+        HostConfiguration result = provider(encoding.encode(source)).getConfiguration(ENABLED);
+        assertEquals(HostConfiguration.Status.Available, result.getStatus());
+        assertEquals(ByteString.copyFromUtf8(expected), result.getContent());
+        assertTrue(records.isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "true", "false", "-0", "1E+2", "1e999", "\"text\"", "{}", "[]",
+            "{\"a\":1,\"a\":2}", "\"\\uD800\"", "\"\\uDC00\"", "\"\\u0000\"",
+            "{\"\\uDC00\\uD800\":\"\\uDC00\\uD800\"}",
+            "[1,2,]", "{\"x\":[{},],}", "[ /*comment*/ ]"})
+    void acceptsAnyRootAndOnlyRemovesAllowedTrivia(String source) {
+        HostConfiguration result = provider((" /* prefix */ " + source + "\n// trailing")
+                .getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED);
+        assertEquals(HostConfiguration.Status.Available, result.getStatus());
+        assertEquals(ByteString.copyFromUtf8(source.replace(",]", "]").replace(",}", "}")
+                .replace(" /*comment*/ ", "")), result.getContent());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "\t\r\n", "//comment", "/*comment*/", "{invalid json", "{",
+            "[] {}", "1 2", "1/*comment*/2", "[1/*comment*/2]", "truefalse", "[true false]",
+            "[,]", "{,}", "[1,,]", "{\"x\":,}", "{\"x\":1,,}", "{\"x\",}", "{\"x\":1,",
+            "\"unterminated", "\"\\q\"", "\"\\u123\"", "\"\\uQQQQ\"", "\"control\ncharacter\"",
+            "\"control\tcharacter\"", "'single'", "{unquoted:1}", "{\"x\"=1}", "[1;2]", "[1,,2]",
+            "NaN", "Infinity", "-Infinity", "+1", "01", "-01", "1.", ".1", "1e", "1e+", "--1",
+            "0x12", "True", "NULL", "undefined", "()",
+            "{} /*unterminated", "{} /", "{} #comment", "#comment\n{}", "\uFEFF\uFEFF{}", "\u000B{}",
+            "{}\u00A0", "{}\u2028", "{}\u2029", "{}\u0000", "{\"x\":1},", "[1,] garbage",
+            "{}//\u2028", "{}//\u2029", "//start\u2028\n{}", "[1//comment\u2029\n]"})
+    void malformedOrOverlyLenientJsonIsContentFreeError(String source) {
+        HostConfigurationSnapshotProvider provider = provider(source.getBytes(StandardCharsets.UTF_8));
+        assertOutcome(HostConfiguration.Status.Error, provider.getConfiguration(ENABLED));
+        assertOutcome(HostConfiguration.Status.Error, provider.getConfiguration(ENABLED));
+        assertReason("InvalidJson");
+    }
+
+    @ParameterizedTest
+    @EnumSource(SourceEncoding.class)
+    void literalReplacementCharacterAndUnicodeAreNotEncodingErrors(SourceEncoding encoding) {
+        String json = "{\"text\":\"\uFFFD\uFEFF\u2028\u2029\uD83D\uDE00\"}";
+        HostConfiguration result = provider(encoding.encode(json)).getConfiguration(ENABLED);
+        assertEquals(HostConfiguration.Status.Available, result.getStatus());
+        assertEquals(ByteString.copyFromUtf8(json), result.getContent());
+        assertTrue(records.isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/*\u2028\u2029*/{}", "{}/*\u2028\u2029*/", "// comment\r{}", "// comment\n{}",
+            "{}// eof", "{/*\u0000*/}", "{}//\uFFFD"})
+    void commentsUseAsciiLineEndingsAndBlockCommentsAllowUnicodeSeparators(String source) {
+        assertEquals(ByteString.copyFromUtf8("{}"),
+                provider(source.getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED).getContent());
+        assertTrue(records.isEmpty());
+    }
+
+    @Test
+    void nestingDepthIsLimitedTo64Containers() {
+        for (String[] container : new String[][]{{"[", "]"}, {"{\"x\":", "}"}}) {
+            String boundary = repeat(container[0], 64) + "0" + repeat(container[1], 64);
+            assertEquals(ByteString.copyFromUtf8(boundary),
+                    provider(boundary.getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED).getContent());
+            assertOutcome(HostConfiguration.Status.Error,
+                    provider((container[0] + boundary + container[1]).getBytes(StandardCharsets.UTF_8))
+                            .getConfiguration(ENABLED));
+        }
+    }
+
+    @Test
+    void longNumbersAndExponentsArePreservedWithoutNativeNumericConversion() {
+        for (int length : new int[]{1024, 2048, 8192, 65_536}) {
+            for (String json : new String[]{repeat("9", length), "1e+" + repeat("9", length - 3)}) {
+                HostConfiguration result = provider(json.getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED);
+                assertEquals(HostConfiguration.Status.Available, result.getStatus());
+                assertEquals(ByteString.copyFromUtf8(json), result.getContent());
+            }
+        }
+        assertTrue(records.isEmpty());
+    }
+
+    @Test
+    void convertedLimitIsCheckedBeforeParsingOrCompacting() {
+        String source = "{}/*" + repeat("x", 65_530) + "*/";
+        assertEquals(65_536, source.length());
+        assertEquals(ByteString.copyFromUtf8("{}"),
+                provider(source.getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED).getContent());
+        assertOutcome(HostConfiguration.Status.TooLarge,
+                provider((source + " ").getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED));
+        assertOutcome(HostConfiguration.Status.TooLarge,
+                provider(repeat("?", 65_537).getBytes(StandardCharsets.UTF_8)).getConfiguration(ENABLED));
     }
 
     @ParameterizedTest
     @MethodSource("invalidEncodings")
     void invalidAndTruncatedEncodingsReturnContentFreeError(byte[] source) {
-        assertOutcome(HostConfiguration.Status.Error, provider(source).getConfiguration(ENABLED));
+        HostConfigurationSnapshotProvider provider = provider(source);
+        assertOutcome(HostConfiguration.Status.Error, provider.getConfiguration(ENABLED));
+        assertOutcome(HostConfiguration.Status.Error, provider.getConfiguration(ENABLED));
+        assertReason("InvalidEncoding");
     }
 
     static Stream<byte[]> invalidEncodings() {
@@ -268,7 +423,7 @@ class HostConfigurationSnapshotProviderTest {
         if (status == HostConfiguration.Status.Available) {
             Files.write(file, "{}".getBytes(StandardCharsets.UTF_8));
         } else if (status == HostConfiguration.Status.Error) {
-            Files.write(file, bytes(0xFF));
+            Files.write(file, "{invalid json".getBytes(StandardCharsets.UTF_8));
         } else if (status == HostConfiguration.Status.TooLarge) {
             Files.write(file, repeat("x", 65_537).getBytes(StandardCharsets.UTF_8));
         }
@@ -282,6 +437,13 @@ class HostConfigurationSnapshotProviderTest {
         assertEquals(first, provider.getConfiguration(ENABLED).toBuilder().build());
         first.toBuilder().setStatus(HostConfiguration.Status.Unspecified).clearContent().build();
         assertEquals(second, provider.getConfiguration(ENABLED));
+        if (status == HostConfiguration.Status.Error) {
+            assertReason("InvalidJson");
+        } else if (status == HostConfiguration.Status.TooLarge) {
+            assertReason("Oversized");
+        } else {
+            assertTrue(records.isEmpty(), "Available and Missing must not warn");
+        }
         assertEquals(ByteString.copyFromUtf8("{\"changed\":true}"),
                 physical(directory).getConfiguration(ENABLED).getContent());
     }
@@ -321,11 +483,70 @@ class HostConfigurationSnapshotProviderTest {
             }
             assertEquals(1, lookups.get());
             assertEquals(1, opens.get());
+            if (fail) {
+                assertReason("OpenFailed");
+            } else {
+                assertTrue(records.isEmpty());
+            }
         } finally {
             start.countDown();
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"AppDirectoryUnavailable", "AppDirectoryNotSet", "AppDirectoryInvalid",
+            "AppDirectoryNotFound", "AccessDenied", "OpenFailed", "ReadFailed", "InvalidEncoding",
+            "InvalidJson", "Oversized"})
+    void fixedFailureReasonIsLoggedOnceAndNeverForDisabledRequests(String reason) {
+        String secret = "sensitive-host-path-and-value";
+        HostConfigurationSnapshotProvider provider = new HostConfigurationSnapshotProvider(() -> {
+            switch (reason) {
+                case "AppDirectoryUnavailable": throw new SecurityException(secret);
+                case "AppDirectoryNotSet": return " ";
+                case "AppDirectoryInvalid": return "\u0000" + secret;
+                case "AppDirectoryNotFound": return directory.resolve("absent").toString();
+                default: return directory.toString();
+            }
+        }, path -> {
+            switch (reason) {
+                case "AppDirectoryNotFound": throw new NoSuchFileException(secret);
+                case "AccessDenied": throw new AccessDeniedException(secret);
+                case "OpenFailed": throw new IOException(secret);
+                case "ReadFailed": return new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
+                    @Override
+                    public void close() throws IOException {
+                        throw new NoSuchFileException(secret);
+                    }
+                };
+                case "InvalidEncoding": return new ByteArrayInputStream(bytes(0xFF));
+                case "InvalidJson": return new ByteArrayInputStream(("{\"" + secret + "\":}")
+                        .getBytes(StandardCharsets.UTF_8));
+                case "Oversized": return new ByteArrayInputStream(repeat("x", 65_537)
+                        .getBytes(StandardCharsets.UTF_8));
+                default: throw new AssertionError("Invalid root must not open");
+            }
+        });
+        assertNull(provider.getConfiguration(WorkerInitRequest.getDefaultInstance()));
+        assertNull(provider.getConfiguration(WorkerInitRequest.newBuilder().putCapabilities("hostconfiguration", "1").build()));
+        assertNull(provider.getConfiguration(WorkerInitRequest.newBuilder().putCapabilities("HostConfiguration", "true").build()));
+        assertTrue(records.isEmpty());
+        HostConfiguration first = provider.getConfiguration(ENABLED);
+        assertOutcome("Oversized".equals(reason) ? HostConfiguration.Status.TooLarge : HostConfiguration.Status.Error, first);
+        assertEquals(first, provider.getConfiguration(ENABLED));
+        assertNull(provider.getConfiguration(WorkerInitRequest.getDefaultInstance()));
+        assertReason(reason);
+    }
+
+    private void assertReason(String reason) {
+        assertEquals(1, records.size());
+        LogRecord record = records.get(0);
+        assertEquals(Level.WARNING, record.getLevel());
+        assertEquals("Host configuration could not be delivered to the host. Reason: " + reason
+                + ". The failure is retained until the worker process restarts.", record.getMessage());
+        assertNull(record.getThrown());
+        assertNull(record.getParameters());
     }
 
     private HostConfigurationSnapshotProvider physical(Path root) {
