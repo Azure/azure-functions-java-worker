@@ -10,17 +10,22 @@ import static com.microsoft.azure.functions.worker.Constants.JAVA_APPLICATIONINS
 import static com.microsoft.azure.functions.worker.Constants.JAVA_ENABLE_OPENTELEMETRY;
 
 public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, WorkerInitResponse.Builder> {
-    public WorkerInitRequestHandler(JavaFunctionBroker broker) {
+    public WorkerInitRequestHandler(JavaFunctionBroker broker, HostConfigurationSnapshotProvider hostConfiguration) {
         super(StreamingMessage::getWorkerInitRequest,
               WorkerInitResponse::newBuilder,
               WorkerInitResponse.Builder::setResult,
               StreamingMessage.Builder::setWorkerInitResponse);
         this.broker = broker;
+        this.hostConfiguration = hostConfiguration;
     }
 
     @Override
     String execute(WorkerInitRequest request, WorkerInitResponse.Builder response) {
         WorkerLogManager.getSystemLogger().log(Level.INFO, "WorkerInitRequest received by the Java worker");
+        HostConfiguration configuration = hostConfiguration.getConfiguration(request);
+        if (configuration != null) {
+            response.setHostConfiguration(configuration);
+        }
         broker.setWorkerDirectory(request.getWorkerDirectory());
         response.setWorkerVersion(Application.version());
         response.putCapabilities("TypedDataCollection", "TypedDataCollection");
@@ -51,4 +56,5 @@ public class WorkerInitRequestHandler extends MessageHandler<WorkerInitRequest, 
     }
 
     private final JavaFunctionBroker broker;
+    private final HostConfigurationSnapshotProvider hostConfiguration;
 }

@@ -140,6 +140,36 @@ message WorkerInitResponse {
 
   // Worker metadata captured for telemetry purposes
   WorkerMetadata worker_metadata = 4;
+
+  // Supporting workers capture and attach only for HostConfiguration = "1".
+  // Otherwise omit this field without obtaining or preparing configuration.
+  // Absence means unsupported/not delivered, not a Missing outcome.
+  HostConfiguration host_configuration = 6;
+}
+
+// Immutable Host Configuration JSON snapshot.
+// Capture once on the first HostConfiguration = "1" request and replay the cached
+// outcome, including failures, on subsequent requested inits for the same worker lifetime.
+// Configuration delivery status is independent of WorkerInitResponse.result.
+message HostConfiguration {
+  enum Status {
+    Unspecified = 0;
+    Available = 1;
+    // The application directory exists, but host.json was not found.
+    Missing = 2;
+    // The worker could not read, decode, or validate the configuration.
+    Error = 3;
+    // Converted or normalized UTF-8 content exceeds the payload limit.
+    TooLarge = 4;
+  }
+
+  // Unspecified and unrecognized values are not valid delivery outcomes.
+  Status status = 1;
+
+  // Normalized JSON object encoded as BOM-free UTF-8; at most 65,536 bytes.
+  // Set only for Available; must be empty for every other status.
+  // Never put content, arbitrary configuration values, or path-bearing errors in telemetry.
+  bytes content = 2;
 }
 
 message WorkerMetadata {
