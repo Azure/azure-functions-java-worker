@@ -3,9 +3,8 @@ package com.microsoft.azure.functions.worker;
 import java.io.ByteArrayOutputStream;
 
 /**
- * Validates a JSON object root and copies raw tokens, removing comments, trailing commas and whitespace.
- * The caller supplies already bounded, strictly decoded UTF-8. A DOM or numeric conversion
- * would lose duplicate properties, escape spellings or arbitrarily long number lexemes.
+ * Normalizes a JSON object without re-serializing its tokens, preserving duplicate keys,
+ * string escapes and number spelling. Input must already be bounded, strictly decoded UTF-8.
  */
 final class HostConfigurationJsonNormalizer {
     private final byte[] source;
@@ -171,7 +170,7 @@ final class HostConfigurationJsonNormalizer {
             } else if (next == '/' && position + 1 < source.length && source[position + 1] == '/') {
                 position += 2;
                 while (position < source.length && peek() != '\r' && peek() != '\n') {
-                    // Match Utf8JsonReader: these are neither valid comment text nor line endings.
+                    // For cross-worker JSON compatibility, reject U+2028/U+2029 in line comments.
                     if (position + 2 < source.length && peek() == 0xE2
                             && source[position + 1] == (byte) 0x80
                             && (source[position + 2] == (byte) 0xA8 || source[position + 2] == (byte) 0xA9)) {

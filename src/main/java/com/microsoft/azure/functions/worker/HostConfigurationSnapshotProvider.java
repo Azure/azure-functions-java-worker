@@ -28,8 +28,8 @@ import java.util.function.Supplier;
 import java.util.logging.Level;
 
 /**
- * Internal, worker-lifetime snapshot of host.json. Only an enabled init captures it;
- * all outcomes are immutable until the worker is restarted.
+ * Client-owned, lazily captured host.json snapshot. The first enabled init caches
+ * the outcome, including failures; subsequent enabled inits return fresh envelopes.
  */
 public final class HostConfigurationSnapshotProvider {
     static final int MAX_CONTENT_BYTES = 65_536;
@@ -87,7 +87,7 @@ public final class HostConfigurationSnapshotProvider {
             stream = fileOpener.open(path);
         } catch (NoSuchFileException ex) {
             // NIO uses the same exception for an absent file and an absent parent.
-            // Only inspect the parent after an unsuccessful open, never before a read.
+            // Probe the parent only after open fails to distinguish these outcomes.
             try {
                 return Files.readAttributes(path.getParent(), BasicFileAttributes.class).isDirectory()
                         ? outcome(HostConfiguration.Status.Missing) : failure(FailureReason.AppDirectoryNotFound);
@@ -115,6 +115,7 @@ public final class HostConfigurationSnapshotProvider {
                 stream.close();
             }
             content = HostConfigurationJsonNormalizer.normalize(content);
+            // Retain the output bound defensively; normalization currently only removes bytes.
             if (content.length > MAX_CONTENT_BYTES) {
                 return failure(FailureReason.Oversized);
             }
@@ -145,7 +146,7 @@ public final class HostConfigurationSnapshotProvider {
 
         Charset encoding = StandardCharsets.UTF_8;
         int skip = 0;
-        // The UTF-32 decoders consume their own BOM. Leave it in the stream so a
+        // Java's UTF-32 decoders consume their own BOM. Leave it in the stream so a
         // second U+FEFF in the content is not accidentally stripped as another BOM.
         if (count == 4 && head[0] == (byte) 0xFF && head[1] == (byte) 0xFE && head[2] == 0 && head[3] == 0) {
             encoding = Charset.forName("UTF-32LE");

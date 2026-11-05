@@ -204,14 +204,15 @@ mvn -B package
 For Host/WorkerProxy integration, use a Host containing
 [Azure/azure-functions-host#12101](https://github.com/Azure/azure-functions-host/pull/12101)
 (merge commit `8da994a4e19324233a6f0efecea963a5cc5c5c03`) and a proxy using the same schema.
-Install `target\azure-functions-java-worker-2.19.5.jar` as the launcher's
+Install `target\azure-functions-java-worker-<version>.jar` as the launcher's
 `azure-functions-java-worker.jar`, set `FUNCTIONS_APPLICATION_DIRECTORY` in the worker's
 environment to the local application content root, and have the Host request
-`HostConfiguration = "1"`. For a direct proxy launch, retain the existing transport options:
+`HostConfiguration = "1"`. Replace `<version>` with the worker version in `pom.xml`.
+For a direct proxy launch, retain the existing transport options:
 
 ```powershell
 $env:FUNCTIONS_APPLICATION_DIRECTORY = "C:\apps\my-function"
-java -jar .\target\azure-functions-java-worker-2.19.5.jar --functions-uri http://localhost:5000 --functions-worker-id java-worker --functions-request-id init --functions-grpc-max-message-length 134217728
+java -jar ".\target\azure-functions-java-worker-<version>.jar" --functions-uri http://localhost:5000 --functions-worker-id java-worker --functions-request-id init --functions-grpc-max-message-length 134217728
 ```
 
 The proxy must already be listening and forward the new envelope opaquely. HTTPS endpoints
