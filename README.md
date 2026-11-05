@@ -9,6 +9,76 @@
 
 Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
+# Native HTTP streaming (preview)
+
+Set `FUNCTIONS_JAVA_ENABLE_HTTP_STREAMING=true` to enable native HTTP transport.
+Existing applications stay on buffered gRPC unless they opt in.
+`FUNCTIONS_JAVA_DISABLE_HTTP_PROXY=true` overrides enablement.
+This preview requires a host that supports the `HttpUri` worker capability and
+the companion `azure-functions-java-core-library` API from
+[Azure/azure-functions-java-additions#55](https://github.com/Azure/azure-functions-java-additions/pull/55).
+The current `1.4.0-SNAPSHOT` dependency is for local integration, not a published
+production release. Build and install that companion before building this branch.
+
+Use `HttpRequestMessage<InputStream>` to read the live request body inside your
+function. The stream is single use and valid only during the invocation.
+Closing it prevents further function reads but does not abort the upload.
+The worker retains transport ownership until invocation cleanup.
+Other body types continue to use the existing buffered binding converters.
+The worker reconstructs method, URI, headers and query from the forwarded HTTP
+request and preserves route parameters resolved by the host.
+
+Return a streaming response with either builder overload. The worker consumes
+the stream or callback after the function returns.
+
+```java
+return request.createResponseBuilder(HttpStatus.OK)
+    .header("Content-Type", "application/octet-stream")
+    .bodyStream(Files.newInputStream(path))
+    .build();
+```
+
+```java
+return request.createResponseBuilder(HttpStatus.OK)
+    .header("Content-Type", "text/event-stream")
+    .bodyStream(out -> {
+        out.write("data: ready\n\n".getBytes(StandardCharsets.UTF_8));
+        out.flush();
+    })
+    .build();
+```
+
+Do not close a returned source stream inside the function. The worker closes it
+after consumption or failure. Callback writers must not retain the output stream
+or write after returning. Call `flush()` when an event should be visible before
+the callback finishes. `HEAD`, `204`, `205` and `304` responses do not consume
+response bodies or invoke callbacks. Source streams are still closed.
+An error after headers have been sent cannot replace the response with a `500`.
+
+The host's HTTP/1.1 forwarder finishes uploading a request before reading its
+response. To avoid socket deadlocks, unread request bytes are staged in a temporary
+file after the function returns and removed when the invocation closes. Consume
+the request inside the function to avoid this disk staging. Memory usage remains
+bounded for streaming bodies, but an unread upload needs available temporary disk
+space. Simultaneous request and response streaming over that host connection is
+not guaranteed.
+
+The worker binds its HTTP server to loopback on an ephemeral port. The initial
+HTTP and gRPC handoff has a 30 second timeout, independent of function execution
+or streaming duration. Worker shutdown releases pending handoffs. A legacy host
+that sends full HTTP metadata keeps using gRPC even when the preview is enabled.
+Streaming output on that path fails explicitly rather than returning an empty body.
+
+This transport bypasses the host's buffered response formatters. Text responses
+default to `text/plain; charset=utf-8`, binary responses have no inferred content
+type, and explicit status and headers are retained except transport framing.
+Exact JSON whitespace, floating point formatting and `Accept-Charset` negotiation
+are not compatibility guarantees of the preview. Use explicit content types and
+body serialization when these details matter, or keep the legacy transport.
+
+Run the worker checks from the repository root with `mvn test` and `mvn package`.
+The HTTP integration tests include real sockets and real broker invocations.
+
 # Environment Setup
 
 ## Maven

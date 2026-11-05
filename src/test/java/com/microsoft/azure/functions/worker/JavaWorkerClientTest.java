@@ -7,6 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JavaWorkerClientTest {
     @Test
+    public void nativeHttpRequiresExplicitEnablement() {
+        assertFalse(JavaWorkerClient.httpProxyEnabled(null, null));
+        assertFalse(JavaWorkerClient.httpProxyEnabled("false", null));
+        assertFalse(JavaWorkerClient.httpProxyEnabled("", null));
+        assertFalse(JavaWorkerClient.httpProxyEnabled("invalid", null));
+        assertTrue(JavaWorkerClient.httpProxyEnabled("true", null));
+        assertTrue(JavaWorkerClient.httpProxyEnabled("TRUE", "false"));
+        assertFalse(JavaWorkerClient.httpProxyEnabled("true", "true"));
+    }
+
+    @Test
     public void legacyStartupDefaultsToPlaintextTransport() {
         assertFalse(JavaWorkerClient.useTransportSecurity(null));
     }
