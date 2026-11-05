@@ -128,18 +128,28 @@ class HostConfigurationSnapshotProviderTest {
 
     @Test
     void usesOnlyWorkerLocalRootAndPreservesNativeRelativeResolution() throws Exception {
-        Files.write(directory.resolve("host.json"), "{\"value\":\"local\"}".getBytes(StandardCharsets.UTF_8));
-        Path child = Files.createDirectory(directory.resolve("child"));
-        Path relative = Paths.get("").toAbsolutePath().relativize(child).resolve("..");
-        AtomicReference<Path> opened = new AtomicReference<>();
-        HostConfigurationSnapshotProvider provider = new HostConfigurationSnapshotProvider(relative::toString, path -> {
-            opened.set(path);
-            return Files.newInputStream(path);
-        });
-        HostConfiguration result = provider.getConfiguration(ENABLED.toBuilder()
-                .setFunctionAppDirectory("not-the-local-root").setWorkerDirectory("not-the-local-root").build());
-        assertEquals(relative.resolve("host.json"), opened.get());
-        assertEquals(ByteString.copyFromUtf8("{\"value\":\"local\"}"), result.getContent());
+        // System temp may be on a different drive from the working directory on Windows.
+        Path localDirectory = Files.createTempDirectory(Paths.get("."), "hostcfg-");
+        try {
+            Files.write(localDirectory.resolve("host.json"), "{\"value\":\"local\"}".getBytes(StandardCharsets.UTF_8));
+            Path child = Files.createDirectory(localDirectory.resolve("child"));
+            Path relative = child.resolve("..");
+            assertFalse(relative.isAbsolute());
+            AtomicReference<Path> opened = new AtomicReference<>();
+            HostConfigurationSnapshotProvider provider = new HostConfigurationSnapshotProvider(relative::toString, path -> {
+                opened.set(path);
+                return Files.newInputStream(path);
+            });
+            HostConfiguration result = provider.getConfiguration(ENABLED.toBuilder()
+                    .setFunctionAppDirectory("not-the-local-root").setWorkerDirectory("not-the-local-root").build());
+            assertEquals(relative.resolve("host.json"), opened.get());
+            assertEquals(HostConfiguration.Status.Available, result.getStatus());
+            assertEquals(ByteString.copyFromUtf8("{\"value\":\"local\"}"), result.getContent());
+        } finally {
+            Files.deleteIfExists(localDirectory.resolve("child"));
+            Files.deleteIfExists(localDirectory.resolve("host.json"));
+            Files.delete(localDirectory);
+        }
     }
 
     @Test
