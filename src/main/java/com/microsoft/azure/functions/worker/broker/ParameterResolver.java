@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.microsoft.azure.functions.worker.Constants;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -49,7 +50,11 @@ public class ParameterResolver {
                 else {
                     argument = dataStore.getDataByType(paramType);
                 }
-                BindingData actualArg = argument.orElseThrow(WrongMethodTypeException::new);
+                BindingData actualArg = argument.orElseThrow(() -> new WrongMethodTypeException(String.format(
+                        "Cannot bind parameter '%s' of type %s in function '%s'. If it is an Azure SDK type, "
+                      + "make sure the %s app setting is not 'false'.",
+                        paramName != null ? paramName : param.getParameter().getName(), paramType,
+                        executionContextDataSource.getFunctionName(), Constants.JAVA_ENABLE_SDK_TYPES)));
                 invokeInfo.appendArgument(actualArg.getValue());
             }
 

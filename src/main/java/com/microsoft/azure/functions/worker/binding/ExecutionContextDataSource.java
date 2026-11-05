@@ -50,6 +50,13 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     // these are parameters provided by the middleware, which will override the host provided parameter values
     // currently the values are only Strings, but planning to support other types in the future
     private final Map<String, Object> middlewareParameterValues = new HashMap<>();
+
+    // SDK instances for parameters without a binding name (for example Service Bus message actions),
+    // resolved by parameter type
+    private final Map<Type, Object> middlewareValuesByType = new HashMap<>();
+
+    // the raw host input of every bound parameter, by binding name
+    private final Map<String, TypedData> inputData = new HashMap<>();
     private Object returnValue;
 
     private final FunctionInstanceInjector functionInstanceInjector;
@@ -76,6 +83,9 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
         this.containingClass = containingClass;
         this.parameterDefinitions = getParameterDefinitions(methodBindInfo);
         this.parameterValues = resolveParameterValuesForMiddleware(parameterBindings);
+        for (ParameterBinding parameterBinding : parameterBindings) {
+            this.inputData.put(parameterBinding.getName(), parameterBinding.getData());
+        }
         this.functionInstanceInjector = functionInstanceInjector;
         this.workerObjectCache = workerObjectCache;
         this.setValue(this);
@@ -159,6 +169,21 @@ public final class ExecutionContextDataSource extends DataSource<ExecutionContex
     @Override
     public void updateParameterValue(String name, Object value) {
         this.middlewareParameterValues.put(name, value);
+    }
+
+    public void updateParameterValueByType(Type type, Object value) {
+        this.middlewareValuesByType.put(type, value);
+    }
+
+    /** @return the host input bound to the named parameter, or null if the host sent none */
+    public TypedData getInputData(String name) {
+        return this.inputData.get(name);
+    }
+
+    @Override
+    public Optional<BindingData> computeByType(Type target) {
+        Object value = this.middlewareValuesByType.get(target);
+        return value != null ? Optional.of(new BindingData(value)) : super.computeByType(target);
     }
 
     @Override

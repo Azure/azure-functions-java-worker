@@ -116,6 +116,23 @@ def test_critical_function(test_env):
     pass
 ```
 
+### Service Bus Emulator (optional)
+
+Pass `servicebus_emulator_config` (the emulator `Config.json` as a dict) to start the Service Bus
+emulator and its SQL Server companion on their own docker network next to Azurite. The functions
+container is attached to that network, so use `env.docker_servicebus_connection_string` for the app
+setting and `env.servicebus_connection_string` for a client on the host.
+
+```python
+with LinuxConsumptionTestEnvironment(apps_to_upload=['MyApp'], servicebus_emulator_config=config) as env:
+    ...
+```
+
+Install the extra with `pip install -e "./azure-functions-test-kit[servicebus]"` to get the
+`azure-servicebus` client. The controller refuses to start unless `SERVICEBUS_EMULATOR_ACCEPT_EULA=Y`
+is set, so you accept the emulator and SQL Server license terms explicitly.
+`SERVICEBUS_EMULATOR_IMAGE` and `SERVICEBUS_EMULATOR_SQL_IMAGE` override the images.
+
 ## How It Works
 
 1. **Plugin Discovery**: pytest automatically discovers the plugin via the `pytest11` entry point

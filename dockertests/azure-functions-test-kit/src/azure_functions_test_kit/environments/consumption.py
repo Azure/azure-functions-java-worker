@@ -13,6 +13,7 @@ from azure.storage.blob import BlobServiceClient, generate_container_sas, Contai
 
 from ..controllers.azurite_container_controller import AzuriteContainerController
 from ..controllers.functions_container_controller import FunctionsContainerController
+from ..controllers.servicebus_emulator_controller import ServiceBusEmulatorController
 
 
 class LinuxConsumptionTestEnvironment:
@@ -32,7 +33,8 @@ class LinuxConsumptionTestEnvironment:
                  host_version: Optional[str] = None,
                  worker_directory: Optional[str] = None,
                  docker_flags: Optional[list] = None,
-                 environment_id: Optional[str] = None):
+                 environment_id: Optional[str] = None,
+                 servicebus_emulator_config: Optional[dict] = None):
         """Initialize the environment.
         
         Args:
@@ -56,6 +58,9 @@ class LinuxConsumptionTestEnvironment:
                             If None, reads from FUNCTIONS_TEST_WORKER_DIR env var
             docker_flags: Additional Docker flags for the Functions container
             environment_id: Unique identifier for this environment (auto-generated if None)
+            servicebus_emulator_config: Service Bus emulator Config.json content. When set, the
+                           environment also runs the Service Bus emulator and attaches the
+                           Functions container to its docker network.
         """
         # Read from environment variables with defaults
         self.use_azurite = use_azurite if use_azurite is not None else \
@@ -100,6 +105,12 @@ class LinuxConsumptionTestEnvironment:
             self.azurite = None
             self._storage_connection_string = conn_str
         
+        # Optional Service Bus emulator
+        self.servicebus: Optional[ServiceBusEmulatorController] = None
+        if servicebus_emulator_config is not None:
+            self.servicebus = ServiceBusEmulatorController(
+                servicebus_emulator_config, environment_id=self.environment_id)
+
         # Functions container controller
         self.functions_controller: Optional[FunctionsContainerController] = None
         
@@ -133,6 +144,16 @@ class LinuxConsumptionTestEnvironment:
         return self._storage_connection_string
 
     @property
+    def servicebus_connection_string(self) -> str:
+        """Get the Service Bus emulator connection string for clients on the docker host."""
+        return self.servicebus.connection_string
+
+    @property
+    def docker_servicebus_connection_string(self) -> str:
+        """Get the Service Bus emulator connection string for the Functions container."""
+        return self.servicebus.docker_connection_string
+
+    @property
     def blob_service_client(self) -> BlobServiceClient:
         """Get or create the BlobServiceClient."""
         if self._blob_service_client is None:
@@ -143,6 +164,14 @@ class LinuxConsumptionTestEnvironment:
 
     def start(self) -> 'LinuxConsumptionTestEnvironment':
         """Start the test environment (storage and Functions container)."""
+        try:
+            return self._start()
+        except BaseException:
+            # __exit__ is not called when __enter__ raises, so release what was already started
+            self.stop()
+            raise
+
+    def _start(self) -> 'LinuxConsumptionTestEnvironment':
         print(f"🚀 Starting test environment '{self.environment_id}'...")
         
         # Start Azurite if needed
@@ -150,6 +179,10 @@ class LinuxConsumptionTestEnvironment:
             print("🐳 Starting Azurite emulator...")
             self.azurite.spawn_container()
             print(f"📡 Azurite connection string: {self.storage_connection_string[:100]}...")
+
+        if self.servicebus:
+            print("🐳 Starting Service Bus emulator...")
+            self.servicebus.spawn_container()
         
         # Create blob container
         self._ensure_blob_container()
@@ -173,6 +206,10 @@ class LinuxConsumptionTestEnvironment:
             docker_flags=self.docker_flags
         )
         self.functions_controller.spawn_container()
+
+        if self.servicebus:
+            # Join the emulator network and keep the default bridge, which still reaches Azurite
+            self.servicebus.connect_container(functions_container_name)
         
         print(f"✅ Test environment '{self.environment_id}' ready")
         return self
@@ -183,6 +220,9 @@ class LinuxConsumptionTestEnvironment:
         
         if self.functions_controller:
             self.functions_controller.safe_kill_container()
+
+        if self.servicebus:
+            self.servicebus.safe_kill_container()
         
         if self.use_azurite and self.azurite:
             self.azurite.safe_kill_container()
