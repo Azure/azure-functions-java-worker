@@ -12,33 +12,37 @@ import com.microsoft.azure.functions.worker.cache.WorkerObjectCache;
 import com.microsoft.azure.functions.worker.WorkerLogManager;
 import com.microsoft.azure.functions.sdktype.CachableSdkType;
 import com.microsoft.azure.functions.sdktype.SdkType;
-import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
+import com.microsoft.azure.functions.sdktype.SdkTypeDescriptor;
 import com.microsoft.azure.functions.sdktype.SdkTypeMetaData;
+import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
 
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Logger;
 
 /**
  * Generic middleware that:
- *  1) Loops over discovered SdkTypes
- *  2) parseMetadata
+ *  1) Loops over the SdkTypeDescriptors discovered for the function
+ *  2) Binds each descriptor to this invocation's values, which yields immutable metadata
  *  3) Uses WorkerObjectCache to store/retrieve final object
  *  4) Updates the ExecutionContextDataSource with the instance
  */
 public class SdkTypeMiddleware implements Middleware {
     private static final Logger LOGGER = WorkerLogManager.getSystemLogger();
     private final ClassLoader classLoader;
-    private final List<SdkTypeMetaData> sdkTypesMetaData;
+    // Descriptors are immutable and shared by every invocation of the function.
+    private final List<SdkTypeDescriptor> sdkTypeDescriptors;
     private final SdkTypeRegistry sdkTypeRegistry;
 
 
-    public SdkTypeMiddleware(ClassLoader classLoader, List<SdkTypeMetaData> sdkTypesMetaData, SdkTypeRegistry sdkTypeRegistry) {
+    public SdkTypeMiddleware(ClassLoader classLoader, List<SdkTypeDescriptor> sdkTypeDescriptors, SdkTypeRegistry sdkTypeRegistry) {
         this.classLoader = classLoader;
-        this.sdkTypesMetaData = sdkTypesMetaData;
+        this.sdkTypeDescriptors = Collections.unmodifiableList(new ArrayList<>(sdkTypeDescriptors));
         this.sdkTypeRegistry = sdkTypeRegistry;
     }
 
@@ -54,11 +58,13 @@ public class SdkTypeMiddleware implements Middleware {
             ExecutionContextDataSource execCtx = (ExecutionContextDataSource) context;
             WorkerObjectCache<CacheKey> cache = execCtx.getCache();
 
-            for (SdkTypeMetaData metaData : this.sdkTypesMetaData) {
-                Parameter param = metaData.getParam();
+            for (SdkTypeDescriptor descriptor : this.sdkTypeDescriptors) {
+                Parameter param = descriptor.getParam();
                 ParamBindInfo paramBindInfo = new ParamBindInfo(param);
 
-                fillMetaData(execCtx, metaData, paramBindInfo.getName());
+                // The cache key and the instance below are both derived from this
+                // invocation's immutable metadata, so concurrent invocations cannot mix values.
+                SdkTypeMetaData metaData = bindMetaData(execCtx, descriptor, paramBindInfo.getName());
                 SdkType<?> sdkType = this.sdkTypeRegistry.createSdkType(metaData);
 
                 Object instance = null;
@@ -93,33 +99,29 @@ public class SdkTypeMiddleware implements Middleware {
     }
 
     /**
-     * Populate the {@link SdkTypeMetaData} with required field values and ensure
-     * every required key is present. Throws a single informative exception if any
-     * are missing. 
-     * 
-     * After successfully filling in all required data, a call to 
-     * SdkTypeMetaData::parseAndVerify is made using the input metaData.
+     * Collect the values required by the {@link SdkTypeDescriptor} for this invocation and
+     * bind them into a new immutable {@link SdkTypeMetaData}. Throws a single informative
+     * exception if any required key is missing.
      */
-    private void fillMetaData(ExecutionContextDataSource execCtx, SdkTypeMetaData metaData, String inputSourceName) {
+    private SdkTypeMetaData bindMetaData(ExecutionContextDataSource execCtx, SdkTypeDescriptor descriptor, String inputSourceName) {
 
         BindingDataStore dataStore = execCtx.getDataStore();
-        Set<String> requiredKeys = metaData.getRequiredFields();
+        Map<String, String> rawValues = new HashMap<>();
         List<String> missing = new ArrayList<>();
 
-        for (String key : requiredKeys) {
+        for (String key : descriptor.getRequiredFields()) {
             Optional<BindingData> opt = dataStore
                     .getDataByNameFromInputSource(key, String.class, inputSourceName);
 
-            if (opt.isPresent()) {
-                metaData.setFieldValue(key, opt.get().getValue());
+            Object value = opt.isPresent() ? opt.get().getValue() : null;
+            if (value != null) {
+                rawValues.put(key, value.toString());
             } else {
                 missing.add(key);
             }
         }
 
-        if (missing.isEmpty()) {
-            metaData.parseAndVerify();
-        } else {
+        if (!missing.isEmpty()) {
             throw new IllegalArgumentException(String.format(
                     "Parameter '%s' in function '%s' (invocation %s) is missing %d required "
                   + "key(s): %s",
@@ -129,5 +131,7 @@ public class SdkTypeMiddleware implements Middleware {
                     missing.size(),
                     String.join(", ", missing)));
         }
+
+        return descriptor.bind(rawValues);
     }
 }
