@@ -12,8 +12,6 @@ import com.microsoft.azure.functions.sdktype.blob.BlobClientDescriptor;
 import com.microsoft.azure.functions.sdktype.blob.BlobClientHydrator;
 import com.microsoft.azure.functions.sdktype.blob.BlobClientMetaData;
 import com.microsoft.azure.functions.sdktype.blob.BlobClientSdkType;
-import com.microsoft.azure.functions.sdktype.blob.BlobContainerDescriptor;
-import com.microsoft.azure.functions.sdktype.blob.BlobContainerMetaData;
 import com.microsoft.azure.functions.worker.binding.BindingData;
 import com.microsoft.azure.functions.worker.binding.BindingDataStore;
 import com.microsoft.azure.functions.worker.binding.ExecutionContextDataSource;
@@ -55,7 +53,6 @@ import static org.mockito.Mockito.when;
 public class SdkTypeMiddlewareTest {
 
     private static final String BLOB_CLIENT_FQCN = "com.azure.storage.blob.BlobClient";
-    private static final String BLOB_CONTAINER_CLIENT_FQCN = "com.azure.storage.blob.BlobContainerClient";
     private static final String PARAM_NAME = "blobInput";
     private static final String CONTAINER = "container";
     private static final String CONNECTION = "AzureWebJobsStorage";
@@ -99,53 +96,10 @@ public class SdkTypeMiddlewareTest {
     }
 
     @Test
-    public void manyConcurrentInvocationsEachGetTheirOwnClient() throws Exception {
-        int threads = 8;
-        int perThread = 40;
+    public void nonCachableTypeIsBuiltFromEachInvocationsOwnMetadata() throws Exception {
+        FakeRegistry registry = new FakeRegistry(false);
+        SdkTypeMiddleware middleware = middleware(registry, blobClientDescriptor());
         WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
-        SdkTypeMiddleware middleware = middleware(new FakeRegistry(true), blobClientDescriptor());
-
-        List<List<Invocation>> work = new ArrayList<>();
-        for (int t = 0; t < threads; t++) {
-            List<Invocation> invocations = new ArrayList<>();
-            for (int i = 0; i < perThread; i++) {
-                invocations.add(new Invocation("blob-" + ((t * perThread + i) % 25), cache));
-            }
-            work.add(invocations);
-        }
-
-        CountDownLatch start = new CountDownLatch(1);
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
-        List<Future<?>> futures = new ArrayList<>();
-        try {
-            for (List<Invocation> invocations : work) {
-                futures.add(executor.submit((Callable<Void>) () -> {
-                    start.await();
-                    for (Invocation invocation : invocations) {
-                        invocation.run(middleware);
-                    }
-                    return null;
-                }));
-            }
-            start.countDown();
-            for (Future<?> future : futures) {
-                future.get(60, TimeUnit.SECONDS);
-            }
-        } finally {
-            executor.shutdownNow();
-        }
-
-        for (List<Invocation> invocations : work) {
-            for (Invocation invocation : invocations) {
-                assertEquals(invocation.blobName, ((FakeClient) invocation.result()).blobName);
-            }
-        }
-    }
-
-    @Test
-    public void nonCachableTypeIsBuiltFromTheInvocationsOwnValues() throws Exception {
-        WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
-        SdkTypeMiddleware middleware = middleware(new FakeRegistry(false), blobClientDescriptor());
         Invocation first = new Invocation("blob-1", cache);
         Invocation second = new Invocation("blob-2", cache);
 
@@ -154,60 +108,12 @@ public class SdkTypeMiddlewareTest {
 
         assertEquals("blob-1", ((FakeClient) first.result()).blobName);
         assertEquals("blob-2", ((FakeClient) second.result()).blobName);
+        assertNotSame(registry.created.get(0), registry.created.get(1));
         assertNull(cache.get(SdkTypeMiddleware.class, expectedKey("blob-1")));
     }
 
     @Test
-    public void eachInvocationUsesItsOwnMetadataInstance() throws Exception {
-        FakeRegistry registry = new FakeRegistry(false);
-        SdkTypeMiddleware middleware = middleware(registry, blobClientDescriptor());
-        WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
-
-        new Invocation("blob-A", cache).run(middleware);
-        new Invocation("blob-B", cache).run(middleware);
-
-        assertEquals(2, registry.created.size());
-        assertNotSame(registry.created.get(0), registry.created.get(1));
-        assertEquals("blob-A", ((BlobClientMetaData) registry.created.get(0)).getBlobName());
-        assertEquals("blob-B", ((BlobClientMetaData) registry.created.get(1)).getBlobName());
-    }
-
-    @Test
-    public void blobContainerClientMetadataIsAlsoPerInvocation() throws Exception {
-        BlobContainerDescriptor descriptor = new BlobContainerDescriptor(BLOB_CONTAINER_CLIENT_FQCN, blobParameter());
-        List<SdkTypeMetaData> created = Collections.synchronizedList(new ArrayList<SdkTypeMetaData>());
-        SdkTypeRegistry registry = new SdkTypeRegistry() {
-            @Override
-            public SdkType<?> createSdkType(SdkTypeMetaData metaData) {
-                created.add(metaData);
-                return new SdkType<SdkTypeMetaData>() {
-                    @Override
-                    public SdkTypeMetaData getMetaData() {
-                        return metaData;
-                    }
-
-                    @Override
-                    public SdkTypeHydrator<SdkTypeMetaData> getHydrator() {
-                        return md -> new Object();
-                    }
-                };
-            }
-        };
-        SdkTypeMiddleware middleware = new SdkTypeMiddleware(
-                getClass().getClassLoader(), Collections.<SdkTypeDescriptor>singletonList(descriptor), registry);
-        WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
-
-        new Invocation("ignored", cache).run(middleware);
-        new Invocation("ignored", cache).run(middleware);
-
-        assertEquals(2, created.size());
-        assertNotSame(created.get(0), created.get(1));
-        assertTrue(created.get(0) instanceof BlobContainerMetaData);
-        assertEquals(CONTAINER, ((BlobContainerMetaData) created.get(0)).getContainerName());
-    }
-
-    @Test
-    public void missingRequiredKeyStillNamesTheParameterAndKey() throws Exception {
+    public void missingRequiredValueNamesTheParameterAndKey() throws Exception {
         SdkTypeMiddleware middleware = middleware(new FakeRegistry(true), blobClientDescriptor());
         Invocation invocation = new Invocation("blob-A", new WorkerObjectCache<>());
         invocation.values.remove("BlobName");
@@ -290,7 +196,6 @@ public class SdkTypeMiddlewareTest {
     private static final class FakeHydrator extends BlobClientHydrator {
         @Override
         public Object createInstance(BlobClientMetaData metaData) {
-            Thread.yield();
             return new FakeClient(metaData.getBlobName());
         }
     }

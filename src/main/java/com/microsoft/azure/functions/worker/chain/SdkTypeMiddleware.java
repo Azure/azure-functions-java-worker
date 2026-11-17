@@ -18,7 +18,6 @@ import com.microsoft.azure.functions.sdktype.SdkTypeRegistry;
 
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,7 @@ public class SdkTypeMiddleware implements Middleware {
 
     public SdkTypeMiddleware(ClassLoader classLoader, List<SdkTypeDescriptor> sdkTypeDescriptors, SdkTypeRegistry sdkTypeRegistry) {
         this.classLoader = classLoader;
-        this.sdkTypeDescriptors = Collections.unmodifiableList(new ArrayList<>(sdkTypeDescriptors));
+        this.sdkTypeDescriptors = sdkTypeDescriptors;
         this.sdkTypeRegistry = sdkTypeRegistry;
     }
 
