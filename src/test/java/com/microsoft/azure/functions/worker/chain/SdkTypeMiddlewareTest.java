@@ -69,7 +69,7 @@ public class SdkTypeMiddlewareTest {
     public void concurrentInvocationBuildsAndCachesClientFromItsOwnMetadata() throws Exception {
         GatedCache cache = new GatedCache();
         FakeRegistry registry = new FakeRegistry(true);
-        SdkTypeMiddleware middleware = middleware(registry, blobClientDescriptor());
+        SdkTypeMiddleware middleware = middleware(registry.mock, blobClientDescriptor());
         Invocation invocationA = new Invocation("blob-A", cache);
         Invocation invocationB = new Invocation("blob-B", cache);
 
@@ -98,7 +98,7 @@ public class SdkTypeMiddlewareTest {
     @Test
     public void nonCachableTypeIsBuiltFromEachInvocationsOwnMetadata() throws Exception {
         FakeRegistry registry = new FakeRegistry(false);
-        SdkTypeMiddleware middleware = middleware(registry, blobClientDescriptor());
+        SdkTypeMiddleware middleware = middleware(registry.mock, blobClientDescriptor());
         WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
         Invocation first = new Invocation("blob-1", cache);
         Invocation second = new Invocation("blob-2", cache);
@@ -114,7 +114,7 @@ public class SdkTypeMiddlewareTest {
 
     @Test
     public void missingRequiredValueNamesTheParameterAndKey() throws Exception {
-        SdkTypeMiddleware middleware = middleware(new FakeRegistry(true), blobClientDescriptor());
+        SdkTypeMiddleware middleware = middleware(new FakeRegistry(true).mock, blobClientDescriptor());
         Invocation invocation = new Invocation("blob-A", new WorkerObjectCache<>());
         invocation.values.remove("BlobName");
 
@@ -136,7 +136,7 @@ public class SdkTypeMiddlewareTest {
     private CacheKey expectedKey(String blobName) throws Exception {
         BlobClientMetaData metaData =
                 new BlobClientMetaData(BLOB_CLIENT_FQCN, blobParameter(), CONTAINER, blobName, CONNECTION);
-        return new BlobClientSdkType(metaData, new FakeHydrator()).buildCacheKey();
+        return new BlobClientSdkType(metaData, mock(BlobClientHydrator.class)).buildCacheKey();
     }
 
     /** One simulated function invocation with its own binding data, sharing the given cache. */
@@ -193,11 +193,11 @@ public class SdkTypeMiddlewareTest {
     }
 
     /** Stands in for the real hydrator, which would need a live storage connection. */
-    private static final class FakeHydrator extends BlobClientHydrator {
-        @Override
-        public Object createInstance(BlobClientMetaData metaData) {
-            return new FakeClient(metaData.getBlobName());
-        }
+    private static BlobClientHydrator fakeHydrator() throws Exception {
+        BlobClientHydrator hydrator = mock(BlobClientHydrator.class);
+        when(hydrator.createInstance(any(BlobClientMetaData.class)))
+                .thenAnswer(invocation -> new FakeClient(invocation.<BlobClientMetaData>getArgument(0).getBlobName()));
+        return hydrator;
     }
 
     private static final class NonCachableBlobClientSdkType implements SdkType<BlobClientMetaData> {
@@ -214,25 +214,23 @@ public class SdkTypeMiddlewareTest {
 
         @Override
         public SdkTypeHydrator<BlobClientMetaData> getHydrator() {
-            return new FakeHydrator();
+            return m -> new FakeClient(m.getBlobName());
         }
     }
 
-    private static final class FakeRegistry extends SdkTypeRegistry {
+    private static final class FakeRegistry {
         final List<SdkTypeMetaData> created = Collections.synchronizedList(new ArrayList<SdkTypeMetaData>());
-        private final boolean cachable;
+        final SdkTypeRegistry mock = mock(SdkTypeRegistry.class);
 
-        FakeRegistry(boolean cachable) {
-            this.cachable = cachable;
-        }
-
-        @Override
-        public SdkType<?> createSdkType(SdkTypeMetaData metaData) {
-            created.add(metaData);
-            BlobClientMetaData blobMetaData = (BlobClientMetaData) metaData;
-            return cachable
-                    ? new BlobClientSdkType(blobMetaData, new FakeHydrator())
-                    : new NonCachableBlobClientSdkType(blobMetaData);
+        FakeRegistry(boolean cachable) throws Exception {
+            when(mock.createSdkType(any(SdkTypeMetaData.class))).thenAnswer(invocation -> {
+                SdkTypeMetaData metaData = invocation.getArgument(0);
+                created.add(metaData);
+                BlobClientMetaData blobMetaData = (BlobClientMetaData) metaData;
+                return cachable
+                        ? new BlobClientSdkType(blobMetaData, fakeHydrator())
+                        : new NonCachableBlobClientSdkType(blobMetaData);
+            });
         }
     }
 
