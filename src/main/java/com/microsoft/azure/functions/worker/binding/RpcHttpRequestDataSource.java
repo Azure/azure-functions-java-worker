@@ -1,5 +1,6 @@
 package com.microsoft.azure.functions.worker.binding;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
@@ -18,12 +19,23 @@ import com.microsoft.azure.functions.HttpResponseMessage.Builder;
 import com.microsoft.azure.functions.rpc.messages.RpcHttp;
 
 public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDataSource> {
+
 	public RpcHttpRequestDataSource(String name, RpcHttp value) {
+		this(name, value, null);
+	}
+
+	/**
+	 * @param streamingBody live request body handed to functions that declare
+	 *                      {@code HttpRequestMessage<InputStream>}, or {@code null}
+	 *                      when the body is buffered in {@code value}
+	 */
+	public RpcHttpRequestDataSource(String name, RpcHttp value, InputStream streamingBody) {
 		super(name, null, HTTP_DATA_OPERATIONS);
 		this.httpPayload = value;
 		this.bodyDataSource = BindingDataStore.rpcSourceFromTypedData(null, this.httpPayload.getBody());
 		this.fields = Arrays.asList(this.httpPayload.getHeadersMap(), this.httpPayload.getQueryMap(),
 				this.httpPayload.getParamsMap());
+		this.streamingBody = streamingBody;
 		this.setValue(this);
 	}
 
@@ -76,12 +88,16 @@ public final class RpcHttpRequestDataSource extends DataSource<RpcHttpRequestDat
 	private final RpcHttp httpPayload;
 	private final DataSource<?> bodyDataSource;
 	private final List<Map<String, String>> fields;
+	private final InputStream streamingBody;
 
 	private static final DataOperations<RpcHttpRequestDataSource, Object> HTTP_DATA_OPERATIONS = new DataOperations<>();
 	static {
 		HTTP_DATA_OPERATIONS.addGenericOperation(HttpRequestMessage.class, (v, t) -> {
 			Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(t, HttpRequestMessage.class);
 			Type actualType = typeArgs.size() > 0 ? typeArgs.values().iterator().next() : Object.class;
+			if (v.streamingBody != null && actualType == InputStream.class) {
+				return new HttpRequestMessageImpl(v, v.streamingBody);
+			}
 			BindingData bodyData = v.bodyDataSource.computeByType(actualType).orElseThrow(ClassCastException::new);
 			return new HttpRequestMessageImpl(v, bodyData.getValue());
 		});
