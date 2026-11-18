@@ -8,6 +8,19 @@
     and creates a squashfs package from the target/azure-functions/* contents.
     The packages are placed in the apps directory.
 
+    Apps that need unreleased artifacts are opt-in and skipped by default, so they cannot break
+    the build of the other apps. Pass -IncludeServiceBus or set FUNCTIONS_TEST_SERVICEBUS=true to
+    build ServiceBusSdkType.
+
+.PARAMETER IncludeServiceBus
+    Also build the ServiceBusSdkType app.
+
+.PARAMETER Apps
+    Only build the named apps.
+
+.PARAMETER MavenArgs
+    Extra arguments for mvn, for example '-o' to build from the local repository.
+
 .NOTES
     Requires:
     - Maven (mvn)
@@ -16,7 +29,10 @@
 
 param(
     [string]$AppSrcDir = "app-src",
-    [string]$AppsDir = "app-packages"
+    [string]$AppsDir = "app-packages",
+    [switch]$IncludeServiceBus,
+    [string[]]$Apps = @(),
+    [string[]]$MavenArgs = @()
 )
 
 # Get script directory
@@ -46,7 +62,20 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Get all directories in app-src
-$appDirs = Get-ChildItem -Path $AppSrcPath -Directory
+$appDirs = @(Get-ChildItem -Path $AppSrcPath -Directory)
+
+# Apps that depend on unreleased artifacts only build on request
+$serviceBusEnabled = $IncludeServiceBus -or ($env:FUNCTIONS_TEST_SERVICEBUS -eq 'true')
+if (-not $serviceBusEnabled) {
+    $skipped = @($appDirs | Where-Object { $_.Name -eq 'ServiceBusSdkType' })
+    if ($skipped.Count -gt 0) {
+        Write-Host "[INFO] Skipping ServiceBusSdkType (opt-in, pass -IncludeServiceBus or set FUNCTIONS_TEST_SERVICEBUS=true)" -ForegroundColor Cyan
+    }
+    $appDirs = @($appDirs | Where-Object { $_.Name -ne 'ServiceBusSdkType' })
+}
+if ($Apps.Count -gt 0) {
+    $appDirs = @($appDirs | Where-Object { $Apps -contains $_.Name })
+}
 
 if ($appDirs.Count -eq 0) {
     Write-Host "⚠️  No application directories found in $AppSrcPath" -ForegroundColor Yellow
@@ -75,7 +104,7 @@ foreach ($appDir in $appDirs) {
         Write-Host "[BUILD] Building with Maven..." -ForegroundColor Yellow
         Push-Location $appPath
         
-        $mavenOutput = mvn clean package 2>&1
+        $mavenOutput = mvn clean package @MavenArgs 2>&1
         $mavenExitCode = $LASTEXITCODE
         
         Pop-Location

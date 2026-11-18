@@ -3,6 +3,7 @@ package com.microsoft.azure.functions.worker.broker;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +51,7 @@ public class JavaFunctionBroker {
 	private WorkerObjectCache<CacheKey> workerObjectCache = null;
 	private ClassLoader userContextClassLoader;
 	private volatile Boolean cachedSdkTypesEnabled = null;
+	private URI hostEndpoint;
 
 	private FunctionInstanceInjector newInstanceInjector() {
 		return new FunctionInstanceInjector() {
@@ -89,7 +91,8 @@ public class JavaFunctionBroker {
 		if (hasAnySdkTypes) {
 			functionMws.add(new SdkTypeMiddleware(userContextClassLoader,
 					sdkParameterAnalysisResult.getSdkTypesMetaData(),
-					this.sdkParameterAnalyzer.getRegistry()));
+					this.sdkParameterAnalyzer.getRegistry(),
+					this.hostEndpoint));
 		}
 
 		functionMws.add(getFunctionExecutionMiddleWare(userContextClassLoader));
@@ -318,6 +321,10 @@ public class JavaFunctionBroker {
 
 	public void setWorkerDirectory(String workerDirectory) {
 		this.workerDirectory = workerDirectory;
+	}
+
+	public void setHostEndpoint(URI hostEndpoint) {
+		this.hostEndpoint = hostEndpoint;
 	}
 
 	private boolean isJavaSdkTypesEnabled() {

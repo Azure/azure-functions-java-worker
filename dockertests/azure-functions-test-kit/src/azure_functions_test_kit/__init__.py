@@ -17,10 +17,12 @@ __version__ = "0.1.0"
 # Export main classes for easy import
 from .controllers.azurite_container_controller import AzuriteContainerController
 from .controllers.functions_container_controller import FunctionsContainerController
+from .controllers.servicebus_emulator_controller import ServiceBusEmulatorController
 from .environments.consumption import LinuxConsumptionTestEnvironment
 
 __all__ = [
     "AzuriteContainerController",
     "FunctionsContainerController",
-    "LinuxConsumptionTestEnvironment"
+    "LinuxConsumptionTestEnvironment",
+    "ServiceBusEmulatorController"
 ]

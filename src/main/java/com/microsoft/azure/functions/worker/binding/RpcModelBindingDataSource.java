@@ -21,14 +21,23 @@ public class RpcModelBindingDataSource extends DataSource<ModelBindingData> {
     private static final Logger LOGGER = WorkerLogManager.getSystemLogger();
     private static final Gson GSON = new Gson();
 
-    // This holds the parsed key-value pairs from the model_binding_data.content JSON
-    private final Map<String, String> contentMap;
+    // The parsed model_binding_data.content JSON, or null until first needed. The content is
+    // not JSON for every source, for example Service Bus carries binary AMQP bytes.
+    private Map<String, String> contentMap;
+    private final String name;
 
     public RpcModelBindingDataSource(String name, ModelBindingData modelData) {
         super(name, modelData, MODEL_BINDING_DATA_OPERATIONS);
+        this.name = name;
+    }
+
+    private Map<String, String> contentMap() {
+        if (contentMap != null) {
+            return contentMap;
+        }
 
         // Parse the JSON in modelData.getContent() => Map<String,String>
-        String jsonString = modelData.getContent().toStringUtf8();
+        String jsonString = getValue().getContent().toStringUtf8();
         if (jsonString == null || jsonString.isEmpty()) {
             throw new IllegalArgumentException(
                     "model_binding_data.content is empty or missing for name: " + name
@@ -50,6 +59,7 @@ public class RpcModelBindingDataSource extends DataSource<ModelBindingData> {
             );
         }
         this.contentMap = parsed;
+        return parsed;
     }
 
     /**
@@ -59,6 +69,7 @@ public class RpcModelBindingDataSource extends DataSource<ModelBindingData> {
      */
     @Override
     protected Optional<DataSource<?>> lookupName(String subName) {
+        Map<String, String> contentMap = contentMap();
         if (contentMap.containsKey(subName)) {
             // Create a nested string data source so the code can do
             // getTriggerMetadataByName("ContainerName", String.class)

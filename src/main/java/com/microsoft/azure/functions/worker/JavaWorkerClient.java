@@ -1,5 +1,7 @@
 package com.microsoft.azure.functions.worker;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -32,6 +34,7 @@ public class JavaWorkerClient implements AutoCloseable {
         }
         chanBuilder.maxInboundMessageSize(Integer.MAX_VALUE);
 
+        this.hostEndpoint = buildHostEndpoint(app, useTransportSecurity(app.getFunctionsUri()));
         this.channel = chanBuilder.build();
         this.peer = new AtomicReference<>(null);
         this.handlerSuppliers = new HashMap<>();
@@ -43,6 +46,7 @@ public class JavaWorkerClient implements AutoCloseable {
     @PostConstruct
     private void addHandlers() {
         JavaFunctionBroker broker = new JavaFunctionBroker(classPathProvider);
+        broker.setHostEndpoint(this.hostEndpoint);
         
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_INIT_REQUEST, () -> new WorkerInitRequestHandler(broker));
         this.handlerSuppliers.put(StreamingMessage.ContentCase.WORKER_WARMUP_REQUEST, WorkerWarmupHandler::new);
@@ -143,6 +147,16 @@ public class JavaWorkerClient implements AutoCloseable {
     private final AtomicReference<StreamingMessagePeer> peer;
     private final Map<StreamingMessage.ContentCase, Supplier<MessageHandler<?, ?>>> handlerSuppliers;
     private final ClassLoaderProvider classPathProvider;
+    private final URI hostEndpoint;
+
+    /** The Functions host endpoint the worker connects to, built from the normalized host and port. */
+    static URI buildHostEndpoint(IApplication app, boolean secure) {
+        try {
+            return new URI(secure ? "https" : "http", null, app.getHost(), app.getPort(), null, null, null);
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("Invalid Functions host endpoint " + app.getHost() + ":" + app.getPort(), ex);
+        }
+    }
 
     /**
      * @param functionsUri Host endpoint URI, or null for legacy startup args that only provide host and port.

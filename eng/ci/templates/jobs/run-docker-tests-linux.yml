@@ -2,6 +2,14 @@ parameters:
   - name: poolName
     type: string
     default: ''
+  # The Service Bus SDK type test needs artifacts that are not published yet (additions servicebus
+  # module, the Azure SDK message factory and a Maven plugin that emits supportsDeferredBinding), and
+  # it accepts the Service Bus emulator and SQL Server license terms. It stays off until they ship.
+  # To enable it, set this to true and define the pipeline variable SERVICEBUS_EMULATOR_ACCEPT_EULA=Y
+  # after reviewing those terms.
+  - name: runServiceBusDockerTests
+    type: boolean
+    default: false
 
 jobs:
   - job: "TestDocker"
@@ -104,13 +112,22 @@ jobs:
           pip install -e dockertests/azure-functions-test-kit
         displayName: 'Install Python dependencies'
 
+      - ${{ if parameters.runServiceBusDockerTests }}:
+        - bash: |
+            pip install -e "dockertests/azure-functions-test-kit[servicebus]"
+          displayName: 'Install Service Bus test client'
+
       - pwsh: |
           ./package-pipeline.ps1 -outputDir 'java-worker' -skipNuget
         displayName: 'Package Java worker'
 
       - pwsh: |
           cd dockertests
-          ./build-apps.ps1
+          if ('${{ parameters.runServiceBusDockerTests }}' -eq 'True') {
+            ./build-apps.ps1 -IncludeServiceBus
+          } else {
+            ./build-apps.ps1
+          }
         displayName: 'Build and package test apps'
 
       - bash: |
@@ -124,3 +141,19 @@ jobs:
           FUNCTIONS_TEST_RUNTIME_VERSION: '$(javaVersion)'
           FUNCTIONS_TEST_HOST_VERSION: '4'
           FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)/dockertests/app-packages'
+
+      # One host and one emulator serve all scenarios, so this runs in a single process without reruns.
+      - ${{ if parameters.runServiceBusDockerTests }}:
+        - bash: |
+            cd dockertests
+            pytest linux-consumption-tests/test_servicebus_sdk_types.py -v --reruns 0 --tb=long
+          displayName: 'Run Service Bus SDK type Docker tests'
+          env:
+            FUNCTIONS_TEST_WORKER_DIR: '$(Build.SourcesDirectory)/java-worker'
+            FUNCTIONS_TEST_USE_AZURITE: 'true'
+            FUNCTIONS_TEST_RUNTIME: 'java'
+            FUNCTIONS_TEST_RUNTIME_VERSION: '$(javaVersion)'
+            FUNCTIONS_TEST_HOST_VERSION: '4'
+            FUNCTIONS_TEST_APPS_DIR: '$(Build.SourcesDirectory)/dockertests/app-packages'
+            FUNCTIONS_TEST_SERVICEBUS: 'true'
+            SERVICEBUS_EMULATOR_ACCEPT_EULA: '$(SERVICEBUS_EMULATOR_ACCEPT_EULA)'
