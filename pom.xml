@@ -165,10 +165,20 @@
         </configuration>
         <executions>
           <execution>
+            <id>compile-grpc</id>
             <goals>
               <goal>compile</goal>
               <goal>compile-custom</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>compile-kafka-proto</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <protoSourceRoot>${basedir}/src/main/proto/kafka</protoSourceRoot>
+            </configuration>
           </execution>
         </executions>
       </plugin>
