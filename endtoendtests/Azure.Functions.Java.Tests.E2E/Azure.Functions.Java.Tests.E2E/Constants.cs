@@ -96,5 +96,8 @@ namespace Azure.Functions.Java.Tests.E2E
 
         // SQL Binding tests
         public static string SqlConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsSqlConnectionString");
+		
+		// MySql tests
+		public static string MySqlConnectionStringSetting = Environment.GetEnvironmentVariable("AzureWebJobsMySqlConnectionString");
     }
 }
