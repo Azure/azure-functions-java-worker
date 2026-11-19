@@ -31,8 +31,10 @@ public class InvocationRequestHandler extends MessageHandler<InvocationRequest, 
         response.setInvocationId(invocationId);
        
         List<ParameterBinding> outputBindings = new ArrayList<>();
-        this.broker.invokeMethod(functionId, request, outputBindings).ifPresent(response::setReturnValue);
+        Map<String, String> traceContextAttributes = new HashMap<>(request.getTraceContext().getAttributesMap());
+        this.broker.invokeMethod(functionId, request, outputBindings, traceContextAttributes).ifPresent(response::setReturnValue);
         response.addAllOutputData(outputBindings);
+        response.putAllTraceContextAttributes(traceContextAttributes);
 
         return String.format("Function \"%s\" (Id: %s) invoked by Java Worker",
                 this.broker.getMethodName(functionId).orElse("UNKNOWN"), invocationId);

@@ -1,5 +1,6 @@
 package com.microsoft.azure.functions.worker.functional.tests;
 
+import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.rpc.messages.*;
 import com.microsoft.azure.functions.worker.test.utilities.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,6 +15,11 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 		return stringReturnValue;
 	}
 
+	public String AddTraceContextAttributeFunction(ExecutionContext context) {
+		context.getTraceContext().getAttributes().put("customKey", "customValue");
+		return stringReturnValue;
+	}
+
 	@ParameterizedTest
 	@ValueSource(strings = {"test String"})
 	public void testStringData(String stringInput) throws Exception {
@@ -24,6 +30,18 @@ public class SimpleParamReturnTest extends FunctionsTestBase {
 			InvocationResponse stringResponse = host.call("getret", "returnStringTestId");
 			assertEquals(TypedData.DataCase.STRING, stringResponse.getReturnValue().getDataCase());
 			assertEquals(stringInput, stringResponse.getReturnValue().getString());
+		}
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"test String"})
+	public void testTraceContextAttributesAreAddedToInvocationResponse(String stringInput) throws Exception {
+		stringReturnValue = stringInput;
+		System.setProperty("azure.functions.worker.java.skip.testing", "true");
+		try (FunctionsTestHost host = new FunctionsTestHost()) {
+			this.loadFunction(host, "traceContextTestId", "AddTraceContextAttributeFunction");
+			InvocationResponse response = host.call("traceContext", "traceContextTestId");
+			assertEquals("customValue", response.getTraceContextAttributesMap().get("customKey"));
 		}
 	}
 }
