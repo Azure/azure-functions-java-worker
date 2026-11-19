@@ -58,7 +58,7 @@ public class SdkTypeMiddlewareTest {
     private static final String CONNECTION = "AzureWebJobsStorage";
 
     @SuppressWarnings("unused")
-    private static void blobFunction(@BlobInput(name = PARAM_NAME, path = "container/{name}") String blob) {
+    private static void blobFunction(@BlobInput(name = PARAM_NAME, path = "container/{name}") final String blob) {
     }
 
     private static Parameter blobParameter() throws Exception {
@@ -67,16 +67,16 @@ public class SdkTypeMiddlewareTest {
 
     @Test
     public void concurrentInvocationBuildsAndCachesClientFromItsOwnMetadata() throws Exception {
-        GatedCache cache = new GatedCache();
-        FakeRegistry registry = new FakeRegistry(true);
-        SdkTypeMiddleware middleware = middleware(registry.mock, blobClientDescriptor());
-        Invocation invocationA = new Invocation("blob-A", cache);
-        Invocation invocationB = new Invocation("blob-B", cache);
+        final GatedCache cache = new GatedCache();
+        final FakeRegistry registry = new FakeRegistry(true);
+        final SdkTypeMiddleware middleware = middleware(registry.mock, blobClientDescriptor());
+        final Invocation invocationA = new Invocation("blob-A", cache);
+        final Invocation invocationB = new Invocation("blob-B", cache);
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             // Invocation A stops after its cache key is built and before its client is created.
-            Future<?> a = executor.submit(invocationA.runWith(middleware));
+            final Future<?> a = executor.submit(invocationA.runWith(middleware));
             assertTrue(cache.reached.await(10, TimeUnit.SECONDS), "invocation A never reached the cache");
 
             // Invocation B runs to completion while A is parked at that exact point.
@@ -97,11 +97,11 @@ public class SdkTypeMiddlewareTest {
 
     @Test
     public void nonCachableTypeIsBuiltFromEachInvocationsOwnMetadata() throws Exception {
-        FakeRegistry registry = new FakeRegistry(false);
-        SdkTypeMiddleware middleware = middleware(registry.mock, blobClientDescriptor());
-        WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
-        Invocation first = new Invocation("blob-1", cache);
-        Invocation second = new Invocation("blob-2", cache);
+        final FakeRegistry registry = new FakeRegistry(false);
+        final SdkTypeMiddleware middleware = middleware(registry.mock, blobClientDescriptor());
+        final WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
+        final Invocation first = new Invocation("blob-1", cache);
+        final Invocation second = new Invocation("blob-2", cache);
 
         first.run(middleware);
         second.run(middleware);
@@ -113,18 +113,40 @@ public class SdkTypeMiddlewareTest {
     }
 
     @Test
+    public void changingCallerDescriptorListDoesNotAffectInvocations() throws Exception {
+        final List<SdkTypeDescriptor> descriptors = new ArrayList<>();
+        descriptors.add(blobClientDescriptor());
+        final FakeRegistry registry = new FakeRegistry(false);
+        final SdkTypeMiddleware middleware =
+                new SdkTypeMiddleware(getClass().getClassLoader(), descriptors, registry.mock);
+        final WorkerObjectCache<CacheKey> cache = new WorkerObjectCache<>();
+        final Invocation first = new Invocation("blob-1", cache);
+        final Invocation second = new Invocation("blob-2", cache);
+
+        descriptors.clear();
+        first.run(middleware);
+        descriptors.add(blobClientDescriptor());
+        descriptors.add(blobClientDescriptor());
+        second.run(middleware);
+
+        assertEquals("blob-1", ((FakeClient) first.result()).blobName);
+        assertEquals("blob-2", ((FakeClient) second.result()).blobName);
+        assertEquals(2, registry.created.size(), "each invocation must bind the original descriptor exactly once");
+    }
+
+    @Test
     public void missingRequiredValueNamesTheParameterAndKey() throws Exception {
-        SdkTypeMiddleware middleware = middleware(new FakeRegistry(true).mock, blobClientDescriptor());
-        Invocation invocation = new Invocation("blob-A", new WorkerObjectCache<>());
+        final SdkTypeMiddleware middleware = middleware(new FakeRegistry(true).mock, blobClientDescriptor());
+        final Invocation invocation = new Invocation("blob-A", new WorkerObjectCache<>());
         invocation.values.remove("BlobName");
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> invocation.run(middleware));
+        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> invocation.run(middleware));
 
         assertTrue(ex.getMessage().contains(PARAM_NAME), ex.getMessage());
         assertTrue(ex.getMessage().contains("BlobName"), ex.getMessage());
     }
 
-    private SdkTypeMiddleware middleware(SdkTypeRegistry registry, SdkTypeDescriptor descriptor) {
+    private SdkTypeMiddleware middleware(final SdkTypeRegistry registry, final SdkTypeDescriptor descriptor) {
         return new SdkTypeMiddleware(
                 getClass().getClassLoader(), Collections.singletonList(descriptor), registry);
     }
@@ -133,8 +155,8 @@ public class SdkTypeMiddlewareTest {
         return new BlobClientDescriptor(BLOB_CLIENT_FQCN, blobParameter());
     }
 
-    private CacheKey expectedKey(String blobName) throws Exception {
-        BlobClientMetaData metaData =
+    private CacheKey expectedKey(final String blobName) throws Exception {
+        final BlobClientMetaData metaData =
                 new BlobClientMetaData(BLOB_CLIENT_FQCN, blobParameter(), CONTAINER, blobName, CONNECTION);
         return new BlobClientSdkType(metaData, mock(BlobClientHydrator.class)).buildCacheKey();
     }
@@ -146,15 +168,15 @@ public class SdkTypeMiddlewareTest {
         private final ExecutionContextDataSource context = mock(ExecutionContextDataSource.class);
         private volatile Object result;
 
-        Invocation(String blobName, WorkerObjectCache<CacheKey> cache) {
+        Invocation(final String blobName, final WorkerObjectCache<CacheKey> cache) {
             this.blobName = blobName;
             values.put("ContainerName", CONTAINER);
             values.put("BlobName", blobName);
             values.put("Connection", CONNECTION);
 
-            BindingDataStore store = mock(BindingDataStore.class);
+            final BindingDataStore store = mock(BindingDataStore.class);
             when(store.getDataByNameFromInputSource(anyString(), any(), anyString())).thenAnswer(invocation -> {
-                Object value = values.get(invocation.<String>getArgument(0));
+                final Object value = values.get(invocation.<String>getArgument(0));
                 return value == null ? Optional.empty() : Optional.of(new BindingData(value));
             });
             when(context.getDataStore()).thenReturn(store);
@@ -167,11 +189,11 @@ public class SdkTypeMiddlewareTest {
             }).when(context).updateParameterValue(anyString(), any());
         }
 
-        void run(SdkTypeMiddleware middleware) throws Exception {
+        void run(final SdkTypeMiddleware middleware) throws Exception {
             middleware.invoke(context, mock(MiddlewareChain.class));
         }
 
-        Callable<Void> runWith(SdkTypeMiddleware middleware) {
+        Callable<Void> runWith(final SdkTypeMiddleware middleware) {
             return () -> {
                 run(middleware);
                 return null;
@@ -187,14 +209,14 @@ public class SdkTypeMiddlewareTest {
     private static final class FakeClient {
         final String blobName;
 
-        FakeClient(String blobName) {
+        FakeClient(final String blobName) {
             this.blobName = blobName;
         }
     }
 
     /** Stands in for the real hydrator, which would need a live storage connection. */
     private static BlobClientHydrator fakeHydrator() throws Exception {
-        BlobClientHydrator hydrator = mock(BlobClientHydrator.class);
+        final BlobClientHydrator hydrator = mock(BlobClientHydrator.class);
         when(hydrator.createInstance(any(BlobClientMetaData.class)))
                 .thenAnswer(invocation -> new FakeClient(invocation.<BlobClientMetaData>getArgument(0).getBlobName()));
         return hydrator;
@@ -203,7 +225,7 @@ public class SdkTypeMiddlewareTest {
     private static final class NonCachableBlobClientSdkType implements SdkType<BlobClientMetaData> {
         private final BlobClientMetaData metaData;
 
-        NonCachableBlobClientSdkType(BlobClientMetaData metaData) {
+        NonCachableBlobClientSdkType(final BlobClientMetaData metaData) {
             this.metaData = metaData;
         }
 
@@ -222,11 +244,11 @@ public class SdkTypeMiddlewareTest {
         final List<SdkTypeMetaData> created = Collections.synchronizedList(new ArrayList<SdkTypeMetaData>());
         final SdkTypeRegistry mock = mock(SdkTypeRegistry.class);
 
-        FakeRegistry(boolean cachable) throws Exception {
+        FakeRegistry(final boolean cachable) throws Exception {
             when(mock.createSdkType(any(SdkTypeMetaData.class))).thenAnswer(invocation -> {
-                SdkTypeMetaData metaData = invocation.getArgument(0);
+                final SdkTypeMetaData metaData = invocation.getArgument(0);
                 created.add(metaData);
-                BlobClientMetaData blobMetaData = (BlobClientMetaData) metaData;
+                final BlobClientMetaData blobMetaData = (BlobClientMetaData) metaData;
                 return cachable
                         ? new BlobClientSdkType(blobMetaData, fakeHydrator())
                         : new NonCachableBlobClientSdkType(blobMetaData);
@@ -241,12 +263,12 @@ public class SdkTypeMiddlewareTest {
         private final AtomicBoolean gated = new AtomicBoolean();
 
         @Override
-        public Object computeIfAbsent(Class<?> namespace, CacheKey key, Supplier<Object> creator) {
+        public Object computeIfAbsent(final Class<?> namespace, final CacheKey key, final Supplier<Object> creator) {
             if (gated.compareAndSet(false, true)) {
                 reached.countDown();
                 try {
                     release.await(10, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
