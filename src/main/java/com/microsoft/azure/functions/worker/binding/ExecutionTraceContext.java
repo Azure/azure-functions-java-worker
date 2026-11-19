@@ -5,8 +5,10 @@ import java.util.Map;
 import com.microsoft.azure.functions.TraceContext;
 
 final public class ExecutionTraceContext implements TraceContext {
-    public ExecutionTraceContext(String traceParent, String traceState,  Map<String, String> attributes) {
+    public ExecutionTraceContext(String traceParent, String traceState, Map<String, String> attributes,
+                                 Map<String, String> baggage) {
         this.Attributes = attributes;
+        this.Baggage = baggage;
         this.Traceparent = traceParent;
         this.Tracestate = traceState;
     }
@@ -20,7 +22,10 @@ final public class ExecutionTraceContext implements TraceContext {
     @Override
     public Map<String, String> getAttributes() { return this.Attributes; }
 
+    public Map<String, String> getBaggage() { return this.Baggage; }
+
     private final String Traceparent;
     private final String Tracestate;
     private final Map<String, String> Attributes;
+    private final Map<String, String> Baggage;
 }
