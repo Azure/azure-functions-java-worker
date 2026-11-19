@@ -88,7 +88,7 @@ public class JavaFunctionBroker {
 
 		if (hasAnySdkTypes) {
 			functionMws.add(new SdkTypeMiddleware(userContextClassLoader,
-					sdkParameterAnalysisResult.getSdkTypesMetaData(),
+					sdkParameterAnalysisResult.getSdkTypeDescriptors(),
 					this.sdkParameterAnalyzer.getRegistry()));
 		}
 
